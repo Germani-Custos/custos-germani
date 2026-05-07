@@ -150,3 +150,8 @@ th { color: #cbd5e1; font-size: 11px; text-transform: uppercase; }
   .filters-grid { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
   .top-variations-grid { grid-template-columns: 1fr; }
 }
+.temporal-panel { height: 380px; }
+.temporal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
+.badge.trend.up { color: #fecaca; background: rgba(239,68,68,0.22); }
+.badge.trend.down { color: #bbf7d0; background: rgba(16,185,129,0.2); }
+.badge.trend.stable { color: #bfdbfe; background: rgba(59,130,246,0.22); }

@@ -114,7 +114,14 @@
               </article>
             </div>
           </div>
-          <div id="trendChartPanel" class="panel chart-panel"><canvas id="trendChart"></canvas></div>
+          <div id="trendChartPanel" class="panel chart-panel temporal-panel">
+            <div class="temporal-header">
+              <h3 id="trendTitle">Evolução Temporal de Custos</h3>
+              <span id="trendBadge" class="badge trend stable">🟢 Estável</span>
+            </div>
+            <p id="trendFallback" class="help-text hidden">Histórico insuficiente para análise temporal</p>
+            <canvas id="trendChart"></canvas>
+          </div>
         </div>
       </section>
     </main>

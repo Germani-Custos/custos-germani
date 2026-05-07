@@ -41,7 +41,10 @@ const dom = {
   topIncreasesList: document.getElementById('topIncreasesList'),
   topReductionsList: document.getElementById('topReductionsList'),
   trendChartPanel: document.getElementById('trendChartPanel'),
-  trendChart: document.getElementById('trendChart')
+  trendChart: document.getElementById('trendChart'),
+  trendTitle: document.getElementById('trendTitle'),
+  trendBadge: document.getElementById('trendBadge'),
+  trendFallback: document.getElementById('trendFallback')
 };
 
 async function init() {
@@ -366,7 +369,7 @@ async function confirmColumnMapping(headers, detectedMapping) {
 }
 
 async function runReport(options = {}) {
-  const { silent = false } = options;
+  const { silent = false, selectedProduct = null } = options;
   const start = dom.dtStart.value;
   const end = dom.dtEnd.value;
   if (!start || !end) {
@@ -417,7 +420,12 @@ async function runReport(options = {}) {
     item: dom.selI.value
   });
   renderTable(rows, { hasSingleItemAnalysis });
-  const hasTrendData = await renderTrendByFilters(data);
+  const hasTrendData = await renderTemporalAnalysis(data, {
+    origem: dom.selO.value,
+    familia: dom.selF.value,
+    agrupamento: dom.selA.value,
+    item: selectedProduct || dom.selI.value
+  });
   applyReportLayout({ hasSingleItemAnalysis, hasImportComparison, hasTrendData });
   dom.reportContent.classList.remove('hidden');
 }
@@ -480,15 +488,13 @@ function renderTable(rows, options = {}) {
   const tableRows = dom.tableBody.querySelectorAll('tr');
   tableRows.forEach(tr => {
     tr.addEventListener('click', async () => {
-      await renderTrendChart(tr.dataset.codigo);
-      dom.trendChartPanel.classList.remove('hidden');
+      const selected = tr.dataset.codigo;
+      await runReport({ silent: true, selectedProduct: selected });
     });
   });
 
-  if (hasSingleItemAnalysis && rows[0]?.codigo) {
-    renderTrendChart(rows[0].codigo);
-  }
 }
+
 
 function formatCurrencyCell(value) {
   if (value === null || value === undefined) return '-';
@@ -567,84 +573,87 @@ async function renderImportComparisonChart(filters) {
   return true;
 }
 
-async function renderTrendChart(codigo) {
-  const { data, error } = await api.getTrendsByProduct(codigo);
-  if (error) {
-    showToast('error', 'Falha ao buscar tendência do produto.');
-    return;
+
+function buildTemporalSeries(rows = [], filters = {}) {
+  const grouped = new Map();
+  (rows || []).forEach(row => {
+    const key = row.data_referencia;
+    if (!key) return;
+    if (!grouped.has(key)) grouped.set(key, { sum: 0, count: 0 });
+    const entry = grouped.get(key);
+    entry.sum += Number(row.custo_total || 0);
+    entry.count += 1;
+  });
+
+  const mode = filters.item && filters.item !== 'TODOS' ? 'produto' : 'agregado';
+  const labels = [...grouped.keys()].sort((a, b) => a.localeCompare(b));
+  const values = labels.map(label => {
+    const entry = grouped.get(label);
+    return mode === 'produto' ? Number(entry.sum.toFixed(4)) : Number((entry.sum / Math.max(entry.count, 1)).toFixed(4));
+  });
+
+  return { labels, values, mode };
+}
+
+function getTrendStatus(values = []) {
+  if (values.length < 2) return { text: '🟢 Estável', className: 'stable' };
+  const first = Number(values[0] || 0);
+  const last = Number(values[values.length - 1] || 0);
+  const variation = first === 0 ? 0 : ((last - first) / Math.abs(first)) * 100;
+  if (variation > 1) return { text: '🔺 Tendência de Alta', className: 'up' };
+  if (variation < -1) return { text: '🔻 Tendência de Queda', className: 'down' };
+  return { text: '🟢 Estável', className: 'stable' };
+}
+
+async function renderTemporalAnalysis(data, filters) {
+  const { labels, values, mode } = buildTemporalSeries(data, filters);
+  if (labels.length < 2) {
+    if (state.trendChart) state.trendChart.destroy();
+    dom.trendFallback.textContent = 'Histórico insuficiente para análise temporal';
+    dom.trendFallback.classList.remove('hidden');
+    dom.trendChart.classList.add('hidden');
+    dom.trendBadge.textContent = '🟢 Estável';
+    dom.trendBadge.className = 'badge trend stable';
+    return false;
   }
+
+  const avg = values.reduce((acc, cur) => acc + Number(cur || 0), 0) / values.length;
+  const trend = getTrendStatus(values);
+  dom.trendTitle.textContent = 'Evolução Temporal de Custos';
+  dom.trendBadge.textContent = trend.text;
+  dom.trendBadge.className = `badge trend ${trend.className}`;
+  dom.trendFallback.classList.add('hidden');
+  dom.trendChart.classList.remove('hidden');
 
   if (state.trendChart) state.trendChart.destroy();
   state.trendChart = new Chart(dom.trendChart, {
     type: 'line',
     data: {
-      labels: (data || []).map(x => x.data_referencia),
-      datasets: [{ label: `Tendência 6M - ${codigo}`, data: (data || []).map(x => Number(x.custo_total || 0)), borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.15)', tension: 0.25, fill: true }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          ticks: {
-            callback: value => formatCurrencyBRL(value)
-          }
-        }
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: context => `R$ ${formatCurrencyBRL(context.parsed.y)}`
-          }
-        }
-      }
-    }
-  });
-}
-
-async function renderTrendByFilters(data) {
-  const groupedByDate = (data || []).reduce((acc, row) => {
-    const key = row.data_referencia;
-    if (!acc[key]) acc[key] = { total: 0, count: 0 };
-    acc[key].total += Number(row.custo_total || 0);
-    acc[key].count += 1;
-    return acc;
-  }, {});
-
-  const labels = Object.keys(groupedByDate).sort((a, b) => a.localeCompare(b));
-  if (labels.length < 2) {
-    if (state.trendChart) state.trendChart.destroy();
-    return false;
-  }
-  const values = labels.map(label => {
-    const entry = groupedByDate[label];
-    return Number((entry.total / Math.max(entry.count, 1)).toFixed(4));
-  });
-
-  if (state.trendChart) state.trendChart.destroy();
-  state.trendChart = new Chart(dom.trendChart, {
-    type: 'bar',
-    data: {
       labels,
-      datasets: [{ label: 'Histórico de custo médio', data: values, backgroundColor: '#38bdf8' }]
+      datasets: [
+        { label: mode === 'produto' ? 'Custo do produto' : 'Custo médio agregado', data: values, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.14)', fill: true, tension: 0.25 },
+        { label: 'Média histórica', data: labels.map(() => avg), borderColor: '#f59e0b', borderDash: [6, 6], pointRadius: 0, fill: false }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: {
-        y: {
-          ticks: {
-            callback: value => formatCurrencyBRL(value)
-          }
-        }
-      },
       plugins: {
         tooltip: {
           callbacks: {
-            label: context => `R$ ${formatCurrencyBRL(context.parsed.y)}`
+            title: items => new Date(items?.[0]?.label || '').toLocaleDateString('pt-BR'),
+            label: ctx => `R$ ${formatCurrencyBRL(ctx.parsed.y)}`,
+            afterLabel: ctx => {
+              if (ctx.dataIndex === 0 || ctx.datasetIndex > 0) return '';
+              const prev = Number(values[ctx.dataIndex - 1] || 0);
+              const curr = Number(values[ctx.dataIndex] || 0);
+              const delta = prev === 0 ? 0 : ((curr - prev) / Math.abs(prev)) * 100;
+              return `Variação vs anterior: ${delta.toFixed(2)}%`;
+            }
           }
         }
-      }
+      },
+      scales: { y: { ticks: { callback: value => `R$ ${formatCurrencyBRL(value)}` } } }
     }
   });
   return true;
