@@ -10,3 +10,10 @@
 - Filtros dinâmicos e em cascata.
 - Remoção de valores nulos/inválidos em selects.
 - Atualização por realtime (histórico e dicionário).
+
+## Auditoria temporal (novo)
+- Painel: **Evolução Temporal de Custos**.
+- Renderização em `Chart.js` (linha), com média histórica tracejada.
+- Respeita filtros ativos: período, origem, família, agrupamento e produto.
+- Processamento local da série temporal a partir do dataset já retornado por `api.getHistorico`.
+- Fallback visual para histórico insuficiente (<2 pontos).

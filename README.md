@@ -168,3 +168,36 @@ Características dos filtros:
 - `docs/`: documentação técnica padronizada do projeto kustos.
 - `docs/arquitetura/indice-documentacao-kustos.md`: índice central da documentação.
 - `docs/troubleshooting/playbook-operacional.md`: playbook operacional com passo a passo atualizado.
+
+---
+
+## 9. Evolução Temporal de Custos (Auditoria)
+
+A Auditoria agora exibe o painel **"Evolução Temporal de Custos"** com análise histórica no período filtrado.
+
+### Lógica temporal
+- Fonte: registros de `historico_custos` já carregados na auditoria (`api.getHistorico`).
+- Não usa RPC e não executa SQL bruto no frontend.
+- A série é processada localmente para evitar queries repetidas.
+
+### Agregações por seleção
+- **Produto individual** (`selI != TODOS`): série temporal com linha única do produto.
+- **Origem/Família/Agrupamento** (sem produto específico): série agregada por data com **média de custo** dos produtos do recorte.
+  - Escolha adotada por legibilidade (menos distorção por volume de itens em comparação com soma bruta).
+
+### Indicadores e UX
+- Tooltip com:
+  - valor exato em BRL,
+  - data completa,
+  - variação vs ponto anterior.
+- Badge de tendência:
+  - 🟢 Estável
+  - 🔺 Tendência de Alta
+  - 🔻 Tendência de Queda
+- Linha auxiliar opcional implementada:
+  - **Média histórica** (tracejada).
+
+### Fallback
+- Quando existir apenas 1 ponto temporal:
+  - exibe `Histórico insuficiente para análise temporal`;
+  - oculta o canvas para evitar gráfico vazio.
