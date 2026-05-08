@@ -8,11 +8,13 @@ O sistema automatiza a auditoria de custos de produtos importados de planilhas (
 
 Fluxo operacional real:
 1. Usuário seleciona `data_referencia` e importa planilha `.xlsx`.
-2. O frontend valida/mapeia 5 colunas obrigatórias.
-3. Os dados são normalizados e enviados ao Supabase.
-4. O sistema garante existência do produto em `dicionario_produtos`.
-5. O histórico é gravado em `historico_custos`.
-6. A tela de auditoria consulta custos e aplica filtros dinâmicos (Origem → Família → Agrupamento → Produto).
+2. O frontend detecta e confirma o mapeamento das 5 colunas obrigatórias.
+3. O sistema gera preview inteligente (até 20 linhas) com status por linha (`🟢 válida`, `🟡 atenção`, `🔴 erro`).
+4. O usuário confirma a importação após revisar o preview.
+5. Apenas linhas sem erro são normalizadas e enviadas ao Supabase.
+6. O sistema garante existência do produto em `dicionario_produtos`.
+7. O histórico é gravado em `historico_custos`.
+8. A tela de auditoria consulta custos e aplica filtros dinâmicos (Origem → Família → Agrupamento → Produto).
 
 ---
 
@@ -82,11 +84,29 @@ A importação exige mapeamento dos campos:
 - Colunas extras são aceitas e ignoradas.
 - O processamento não falha por colunas adicionais.
 - Cabeçalhos podem ser detectados por aliases e confirmação manual.
+- Alias tolera variações de caixa e nomes próximos (ex.: `Cod Produto`, `Código`, `Vl Total`).
+- Colunas irrelevantes (ex.: CIF, Derivação e códigos extras) permanecem fora do mapeamento obrigatório.
+
+### Preview e validações antes da gravação
+- Exibe amostra de 10~20 linhas com:
+  - Produto,
+  - Descrição,
+  - Custos normalizados,
+  - Status por linha.
+- Valida por linha:
+  - produto ausente,
+  - produto não encontrado no cadastro,
+  - descrição vazia,
+  - custo negativo,
+  - custo total zerado,
+  - conversão numérica para zero.
+- Linhas com erro não bloqueiam o lote inteiro: apenas são excluídas da carga final.
 
 ### Parsing numérico
 - Remove separador de milhar quando necessário.
 - Converte vírgula decimal para ponto.
 - Arredonda/normaliza para até **4 casas decimais**.
+- UI sempre exibe no padrão financeiro brasileiro com **3 casas decimais**.
 - Valores inválidos são tratados como inválidos e podem gerar rejeição da linha na validação final.
 
 ### Robustez

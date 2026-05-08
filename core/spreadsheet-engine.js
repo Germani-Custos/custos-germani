@@ -2,11 +2,11 @@
 
 export const REQUIRED_FIELDS = ['codigo_produto', 'descricao', 'custo_variavel', 'custo_direto_fixo', 'custo_total'];
 const FIELD_ALIASES = {
-  codigo_produto: ['produto', 'codigo', 'cod', 'item'],
+  codigo_produto: ['produto', 'codigo', 'cod', 'item', 'cod produto', 'codigo produto'],
   descricao: ['descricao', 'descrição', 'desc'],
   custo_variavel: ['custo variavel', 'custo var', 'variavel'],
   custo_direto_fixo: ['fixo', 'direto fixo', 'custo fixo'],
-  custo_total: ['total', 'custo total']
+  custo_total: ['total', 'custo total', 'vl total', 'valor total']
 };
 
 export function normalizeText(value) {
@@ -151,6 +151,10 @@ function roundTo4(value) {
 }
 
 export function parseCurrency(value) {
+  return parseBrazilianNumber(value);
+}
+
+export function parseBrazilianNumber(value) {
   if (value === null || value === undefined) return 0;
 
   if (typeof value === 'number') {
@@ -174,6 +178,14 @@ export function parseCurrency(value) {
   if (!Number.isFinite(num)) return 0;
 
   return roundTo4(num);
+}
+
+export function formatBrazilianFinancial(value, decimals = 3) {
+  if (!Number.isFinite(Number(value))) return '0,000';
+  return Number(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
 }
 
 export function readWorkbook(arrayBuffer) {
