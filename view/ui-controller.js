@@ -589,6 +589,39 @@ function formatDateTimeBR(value) {
   return parsed.toLocaleString('pt-BR');
 }
 
+
+const chartA11yTheme = {
+  textColor: '#FFFFFF',
+  gridColor: 'rgba(255,255,255,0.22)',
+  gridBorderColor: 'rgba(255,255,255,0.4)',
+  tooltipBg: 'rgba(15,23,42,0.95)'
+};
+
+function getReadableChartOptions() {
+  return {
+    color: chartA11yTheme.textColor,
+    plugins: {
+      legend: { labels: { color: chartA11yTheme.textColor, usePointStyle: true } },
+      tooltip: {
+        titleColor: chartA11yTheme.textColor,
+        bodyColor: chartA11yTheme.textColor,
+        backgroundColor: chartA11yTheme.tooltipBg,
+        borderColor: chartA11yTheme.gridBorderColor,
+        borderWidth: 1
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: chartA11yTheme.textColor },
+        grid: { color: chartA11yTheme.gridColor, borderColor: chartA11yTheme.gridBorderColor }
+      },
+      y: {
+        ticks: { color: chartA11yTheme.textColor },
+        grid: { color: chartA11yTheme.gridColor, borderColor: chartA11yTheme.gridBorderColor }
+      }
+    }
+  };
+}
 async function renderImportComparisonChart(filters) {
   const { data, error } = await api.getLatestImportComparison(filters);
   if (error) {
@@ -606,6 +639,7 @@ async function renderImportComparisonChart(filters) {
   const values = imports.map(item => Number(item.media || 0));
   const counts = imports.map(item => Number(item.quantidade || 0));
   const variacao = Number(data?.resumo?.variacao_percentual_media || 0);
+  const baseA11yOptions = getReadableChartOptions();
 
   if (state.chart) state.chart.destroy();
   state.chart = new Chart(dom.mainChart, {
@@ -615,17 +649,23 @@ async function renderImportComparisonChart(filters) {
       datasets: [{ label: 'Custo médio por importação', data: values, backgroundColor: ['#0ea5e9', '#6366f1'] }]
     },
     options: {
+      ...baseA11yOptions,
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        ...baseA11yOptions.scales,
         y: {
+          ...baseA11yOptions.scales.y,
           ticks: {
+            ...baseA11yOptions.scales.y.ticks,
             callback: value => `R$ ${formatCurrencyBRL(value)}`
           }
         }
       },
       plugins: {
+        ...baseA11yOptions.plugins,
         tooltip: {
+          ...baseA11yOptions.plugins.tooltip,
           callbacks: {
             title: items => {
               const idx = items?.[0]?.dataIndex ?? 0;
@@ -699,6 +739,7 @@ async function renderTemporalAnalysis(data, filters) {
   dom.trendBadge.className = `badge trend ${trend.className}`;
   dom.trendFallback.classList.add('hidden');
   dom.trendChart.classList.remove('hidden');
+  const baseA11yOptions = getReadableChartOptions();
 
   if (state.trendChart) state.trendChart.destroy();
   state.trendChart = new Chart(dom.trendChart, {
@@ -711,10 +752,13 @@ async function renderTemporalAnalysis(data, filters) {
       ]
     },
     options: {
+      ...baseA11yOptions,
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        ...baseA11yOptions.plugins,
         tooltip: {
+          ...baseA11yOptions.plugins.tooltip,
           callbacks: {
             title: items => new Date(items?.[0]?.label || '').toLocaleDateString('pt-BR'),
             label: ctx => `R$ ${formatCurrencyBRL(ctx.parsed.y)}`,
@@ -728,7 +772,16 @@ async function renderTemporalAnalysis(data, filters) {
           }
         }
       },
-      scales: { y: { ticks: { callback: value => `R$ ${formatCurrencyBRL(value)}` } } }
+      scales: {
+        ...baseA11yOptions.scales,
+        y: {
+          ...baseA11yOptions.scales.y,
+          ticks: {
+            ...baseA11yOptions.scales.y.ticks,
+            callback: value => `R$ ${formatCurrencyBRL(value)}`
+          }
+        }
+      }
     }
   });
   return true;
