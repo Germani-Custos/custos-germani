@@ -211,6 +211,11 @@ A Auditoria agora exibe o painel **"Evolução Temporal de Custos"** com anális
 - **Origem/Família/Agrupamento** (sem produto específico): série agregada por data com **média de custo** dos produtos do recorte.
   - Escolha adotada por legibilidade (menos distorção por volume de itens em comparação com soma bruta).
 
+### Acessibilidade visual (gráficos da Auditoria)
+- Textos principais dos gráficos (`labels`, eixos, valores e legendas) padronizados em `#FFFFFF`.
+- Grid/bordas em branco translúcido para melhorar leitura da escala sem alterar a lógica dos dados.
+- Tooltips com contraste reforçado (texto branco e fundo escuro).
+
 ### Indicadores e UX
 - Tooltip com:
   - valor exato em BRL,

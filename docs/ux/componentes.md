@@ -14,3 +14,9 @@
   - `🔺 Tendência de Alta`
   - `🔻 Tendência de Queda`
 - Mensagem de fallback: `#trendFallback` para cenários de histórico insuficiente.
+
+
+## Acessibilidade visual dos gráficos
+- Labels, eixos, valores e legendas dos gráficos da Auditoria usam `#FFFFFF` para alto contraste com o fundo escuro.
+- Grid e bordas do gráfico usam tons claros translúcidos para manter referência visual sem poluição.
+- Tooltip usa fundo escuro com texto branco para leitura consistente durante hover.
