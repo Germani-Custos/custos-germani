@@ -1,6 +1,6 @@
 /* Responsabilidade: controle de interface, auto-auth, eventos e gráficos. */
 import { api } from '../src/services/api.js';
-import { readWorkbook, scanHeaders, mapRowsToPayload, countValidMappedColumns, REQUIRED_FIELDS } from '../core/spreadsheet-engine.js';
+import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial } from '../core/spreadsheet-engine.js';
 import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis } from '../core/report-engine.js';
 
 const state = {
@@ -222,12 +222,20 @@ async function handleImport(file) {
     return;
   }
 
-  const payload = mapRowsToPayload(rows, state.importMapping, refDate);
-  const confirmed = await confirmImport(payload.length, countValidMappedColumns(mapping));
+  const preview = buildImportPreview(rows, state.importMapping, state.masters.produtos || []);
+  const confirmed = await confirmImportPreview(preview, countValidMappedColumns(mapping));
   if (!confirmed) {
     dom.dropZone.classList.remove('processing');
     return;
   }
+  const payload = preview.validRows.map(row => ({
+    codigo_produto: row.codigo_produto,
+    descricao: row.descricao,
+    custo_variavel: row.custo_variavel,
+    custo_direto_fixo: row.custo_direto_fixo,
+    custo_total: row.custo_total,
+    data_referencia: refDate
+  }));
 
   const { data: resultadoImportacao, error } = await api.importarHistoricoCustosComLog(payload, {
     dataReferencia: refDate
@@ -267,24 +275,83 @@ async function handleImport(file) {
   await fetchMetadata();
 }
 
-async function confirmImport(totalProdutos, totalColunasValidas, familySummary = {}) {
-  const hasFamilySummary = Object.keys(familySummary).length > 0;
-  const summaryHtml = Object.entries(familySummary)
-    .sort((a, b) => b[1] - a[1])
-    .map(([familia, total]) => `• <b>${familia}</b>: ${total}`)
-    .join('<br/>');
-  const familySection = hasFamilySummary
-    ? `<br/><br/>Famílias categorizadas:<br/>${summaryHtml}`
-    : '';
+function buildImportPreview(rows, mapping, produtos = []) {
+  const produtoSet = new Set((produtos || []).map(item => String(item.codigo_produto || '').trim()).filter(Boolean));
+  const statuses = { valid: 0, warning: 0, error: 0 };
+  const analyzedRows = rows.map((row, index) => {
+    const codigo = String(row[mapping.codigo_produto] || '').trim();
+    const descricao = String(row[mapping.descricao] || '').trim();
+    const custoVariavel = parseBrazilianNumber(row[mapping.custo_variavel]);
+    const custoDiretoFixo = parseBrazilianNumber(row[mapping.custo_direto_fixo]);
+    const custoTotal = parseBrazilianNumber(row[mapping.custo_total]);
+    const issues = [];
+
+    if (!codigo) issues.push({ level: 'error', text: 'Produto ausente' });
+    if (codigo && !produtoSet.has(codigo)) issues.push({ level: 'warning', text: 'Produto não encontrado no cadastro' });
+    if (!descricao) issues.push({ level: 'error', text: 'Descrição vazia' });
+    if (custoVariavel < 0 || custoDiretoFixo < 0 || custoTotal < 0) issues.push({ level: 'warning', text: 'Valor negativo' });
+    if (custoTotal === 0) issues.push({ level: 'warning', text: 'Custo total zerado' });
+    if ((String(row[mapping.custo_total] || '').trim()) && custoTotal === 0) issues.push({ level: 'warning', text: 'Número convertido para 0' });
+
+    const hasError = issues.some(issue => issue.level === 'error');
+    const hasWarning = issues.some(issue => issue.level === 'warning');
+    const status = hasError ? 'error' : (hasWarning ? 'warning' : 'valid');
+    statuses[status] += 1;
+
+    return {
+      index: index + 1,
+      codigo_produto: codigo,
+      descricao,
+      custo_variavel: custoVariavel,
+      custo_direto_fixo: custoDiretoFixo,
+      custo_total: custoTotal,
+      status,
+      issues
+    };
+  });
+
+  return {
+    rows: analyzedRows,
+    validRows: analyzedRows.filter(row => row.status !== 'error'),
+    statuses
+  };
+}
+
+async function confirmImportPreview(preview, totalColunasValidas) {
+  const previewRows = preview.rows.slice(0, 20).map(row => {
+    const statusIcon = row.status === 'valid' ? '🟢 válida' : row.status === 'warning' ? '🟡 atenção' : '🔴 erro';
+    return `
+      <tr>
+        <td>${row.index}</td>
+        <td>${escapeHtml(row.codigo_produto)}</td>
+        <td>${escapeHtml(row.descricao)}</td>
+        <td>${formatBrazilianFinancial(row.custo_variavel)}</td>
+        <td>${formatBrazilianFinancial(row.custo_direto_fixo)}</td>
+        <td>${formatBrazilianFinancial(row.custo_total)}</td>
+        <td>${statusIcon}<br><small>${escapeHtml(row.issues.map(item => item.text).join('; ') || 'OK')}</small></td>
+      </tr>
+    `;
+  }).join('');
 
   const result = await Swal.fire({
     icon: 'question',
-    title: 'Resumo da detecção',
-    html: `Detectamos <b>${totalProdutos}</b> produtos e <b>${totalColunasValidas}</b> colunas válidas.${familySection}<br/><br/>Deseja prosseguir?`,
+    title: 'Preview da importação',
+    width: 1100,
+    html: `
+      <p>Colunas válidas: <b>${totalColunasValidas}/5</b> | Linhas: <b>${preview.rows.length}</b> | 🟢 ${preview.statuses.valid} | 🟡 ${preview.statuses.warning} | 🔴 ${preview.statuses.error}</p>
+      <div style="max-height:360px; overflow:auto; text-align:left;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead><tr><th>#</th><th>Produto</th><th>Descrição</th><th>C. Variável</th><th>C. Direto Fixo</th><th>C. Total</th><th>Status</th></tr></thead>
+          <tbody>${previewRows}</tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Somente linhas sem erro serão gravadas.</p>
+    `,
     showCancelButton: true,
-    confirmButtonText: 'Prosseguir',
+    confirmButtonText: `Confirmar importação (${preview.validRows.length} linhas)`,
     cancelButtonText: 'Cancelar'
   });
+
   return result.isConfirmed;
 }
 
