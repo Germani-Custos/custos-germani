@@ -424,7 +424,7 @@ export const api = {
       for (const registro of payloadValido) {
         const { data, error } = await supabase
           .from(TABLES.historico)
-          .insert(registro);
+          .upsert(registro, { onConflict: 'codigo_produto,data_referencia' });
 
         if (error) {
           linhasErro += 1;
