@@ -3,8 +3,8 @@
 ## Situação atual (maio/2026)
 
 - Não existe mais `autoAuthenticate`.
-- A UI só libera carregamento de dados após login real no Supabase (`signInWithPassword`).
-- Sessão ativa é validada por `getCurrentUser` no bootstrap.
+- Em 14/05/2026 o login obrigatório foi temporariamente removido para acesso aberto de investigação.
+- O bootstrap define sessão visual como `acesso público` e libera carregamento sem prompt.
 
 ## Configuração
 
