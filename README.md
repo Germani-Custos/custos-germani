@@ -259,7 +259,7 @@ Seta o Item diretamente e executa o relatório em 1 interação.
 
 ## 12. Segurança e Configuração por Ambiente
 
-A aplicação usa configuração por ambiente com estratégia híbrida de runtime: prioriza `import.meta.env` (quando disponível), aplica fallback para `window.__ENV__`/`window.__RUNTIME_CONFIG__` e, em runtime browser clássico, aceita `<meta name="VITE_*">` no HTML servido.
+A aplicação usa configuração por ambiente com estratégia de runtime real do deploy estático: prioriza `window.__ENV__` (arquivo `runtime-config.js` carregado antes do bootstrap), com fallback de compatibilidade para `window.__RUNTIME_CONFIG__`, `import.meta.env` e `<meta name="VITE_*">` no HTML servido.
 
 ### Arquivos de configuração
 
