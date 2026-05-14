@@ -259,23 +259,20 @@ Seta o Item diretamente e executa o relatório em 1 interação.
 
 ## 12. Segurança e Configuração por Ambiente
 
-A aplicação deixou de usar credenciais hardcoded e passou a usar configuração centralizada por ambiente.
+A aplicação usa configuração por ambiente via `import.meta.env` (padrão Vite) e não depende de injeção global em runtime.
 
 ### Arquivos de configuração
 
 - `.env`: variáveis locais (não versionar segredos reais)
 - `.env.example`: modelo mínimo obrigatório
-- `runtime-config.js`: configuração carregada no browser
-- `runtime-config.example.js`: template para gerar `runtime-config.js`
+- `README_SETUP.md`: setup operacional local e Vercel
 - `src/config/app-config.js`: módulo central de leitura/validação de config
 
 ### Variáveis mínimas
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `APP_ENV` (`development`/`production`)
-- `APP_MODE` (`secure_gate`)
-- `ENABLE_VERBOSE_LOGS` (`true`/`false`)
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_ENABLE_VERBOSE_LOGS` (`true`/`false`)
 
 ### Gate de autenticação
 

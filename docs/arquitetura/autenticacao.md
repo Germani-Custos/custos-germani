@@ -10,9 +10,9 @@
 
 As credenciais de conexão não ficam no código-fonte dos módulos de serviço.
 
-- `src/config/app-config.js` centraliza leitura de `window.__KUSTOS_CONFIG__`
-- `runtime-config.js` injeta as variáveis em runtime no browser
-- `.env` e `.env.example` definem contrato de variáveis por ambiente
+- `src/config/app-config.js` centraliza leitura de `import.meta.env`
+- `.env` e `.env.example` definem contrato de variáveis por ambiente (`VITE_*`)
+- bootstrap captura falha de configuração e mostra tela operacional amigável
 
 ## Compatibilidade com RLS
 

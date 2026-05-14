@@ -12,8 +12,30 @@
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="runtime-config.js"></script>
-  <script type="module" src="view/ui-controller.js"></script>
+  <script type="module">
+    const showConfigErrorScreen = error => {
+      console.error(error);
+      document.body.innerHTML = `
+        <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#0f172a;color:#e2e8f0;font-family:Inter,Arial,sans-serif;">
+          <section style="max-width:680px;background:#111827;border:1px solid #374151;border-radius:12px;padding:24px;line-height:1.6;">
+            <h1 style="margin-top:0;color:#f8fafc;">Configuração do ambiente não encontrada.</h1>
+            <p>Verifique as variáveis:</p>
+            <ul>
+              <li><code>VITE_SUPABASE_URL</code></li>
+              <li><code>VITE_SUPABASE_ANON_KEY</code></li>
+            </ul>
+            <p>Consulte <code>README_SETUP.md</code>.</p>
+            <details>
+              <summary>Detalhes técnicos</summary>
+              <pre style="white-space:pre-wrap;word-break:break-word;">${error?.message || error}</pre>
+            </details>
+          </section>
+        </main>
+      `;
+    };
+
+    import('./view/ui-controller.js').catch(showConfigErrorScreen);
+  </script>
 </head>
 <body>
   <div id="appShell" class="app-shell">
