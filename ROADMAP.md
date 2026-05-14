@@ -113,3 +113,8 @@ Objetivo: antecipar investigação humana.
 - Header sticky e densidade visual ajustada para leitura vertical contínua.
 - Chips removíveis de filtros ativos para acelerar mudança de recorte sem reset manual de todos os campos.
 - Contexto investigativo pré-interpretado por linha (sequência de alta/queda e sinais de oscilação crescente).
+
+## Atualização contínua — 14/05/2026 (configuração frontend)
+
+- Migração completa da configuração de runtime global para `import.meta.env` com contrato `VITE_*`.
+- Tela de falha amigável no bootstrap quando variáveis obrigatórias não estiverem definidas.

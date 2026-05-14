@@ -133,3 +133,5 @@ Banner visível na tela de importação quando há produtos sem categorização 
 - Categorização automática de novos produtos via código de negócio
 
 - Segurança operacional mínima (config por ambiente + autenticação real) é pré-requisito para escala do motor investigativo.
+
+- Configuração de frontend padronizada em `import.meta.env` (Vite), removendo dependência de runtime global para reduzir falhas de bootstrap.

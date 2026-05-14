@@ -8,3 +8,14 @@
 1. Publicar arquivos estáticos (`index.html`, `assets`, `core`, `view`, `src`).
 2. Validar acesso ao Supabase.
 3. Testar importação e relatório com filtros.
+
+
+## Variáveis de ambiente (Vercel)
+
+Definir em Development, Preview e Production:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_ENABLE_VERBOSE_LOGS`
+
+O frontend lê as configurações exclusivamente por `import.meta.env`.
