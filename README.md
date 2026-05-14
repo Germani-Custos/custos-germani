@@ -284,13 +284,12 @@ A aplicação usa configuração por ambiente com estratégia de runtime real do
 
 ### Gate de autenticação
 
-`autoAuthenticate()` foi removido. O acesso agora exige autenticação real via Supabase (`signInWithPassword`) antes de carregar dados operacionais.
+O gate de login foi **temporariamente desativado em 14/05/2026** para manter acesso aberto durante a fase atual de investigação operacional.
 
-Hardening adicional (14/05/2026):
-- Removido mapeamento residual de login alternativo (`username` -> e-mail) no frontend/API.
-- Login só é considerado válido com `data.user` **e** `data.session.access_token` retornados pelo Supabase.
-- Em falha de autenticação, a sessão é invalidada (`signOut`) e o acesso permanece bloqueado (fail-closed).
+- O bootstrap da UI não exige mais `signInWithPassword` para liberar carregamento.
+- A identificação de sessão no header passa a exibir `acesso público`.
+- A camada de dados continua restrita a `supabase.from()` e sem SQL bruto no frontend.
 
 ### Preparação para RLS
 
-A camada `src/services/api.js` continua usando exclusivamente `supabase.from()` e agora depende de sessão autenticada para leitura/escrita, reduzindo acoplamento a acesso irrestrito e facilitando ativação progressiva de políticas RLS.
+A arquitetura permanece compatível com RLS e pode reativar autenticação por sessão quando a estratégia de acesso controlado voltar a ser necessária.

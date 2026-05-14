@@ -123,6 +123,10 @@ Objetivo: antecipar investigação humana.
 
 ## Atualização contínua — 14/05/2026 (autenticação)
 
+- Modo temporário de acesso aberto ativado no frontend (sem prompt de login) para acelerar uso investigativo imediato.
+- Header de sessão padronizado como `acesso público` durante a janela sem autenticação.
+- Fluxo de autenticação hardening mantido como base para futura reativação de controle de acesso.
+
 - Auditoria de fluxo de autenticação com hardening fail-closed no bootstrap.
 - Remoção de alias de credenciais (`username` interno) para eliminar superfície de bypass.
 - Validação estrita de sucesso de login: usuário + sessão/token obrigatórios antes de liberar acesso.

@@ -18,67 +18,15 @@ async function init() {
   bindUpload();
   bindFilters();
   bindSearch();
-  await requireAuthentication();
+  await allowOpenAccess();
   await loadMasters({ force: true });
   await fetchMetadata();
 }
 
-async function requireAuthentication() {
-  const { data: currentUserData, error: currentUserError } = await api.getCurrentUser();
-  if (currentUserError) {
-    await api.signOut();
-  }
-
-  if (currentUserData?.user) {
-    state.user = currentUserData.user;
-    dom.userBox.textContent = `Usuário: ${state.user.email}`;
-    return;
-  }
-
-  let authenticated = false;
-  while (!authenticated) {
-    const { value: credentials } = await Swal.fire({
-      title: 'Acesso operacional',
-      html: `
-        <input id="authLogin" class="swal2-input" placeholder="E-mail" autocomplete="username" />
-        <input id="authPassword" type="password" class="swal2-input" placeholder="Senha" autocomplete="current-password" />
-      `,
-      confirmButtonText: 'Entrar',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showCancelButton: false,
-      focusConfirm: false,
-      preConfirm: () => {
-        const login = document.getElementById('authLogin')?.value?.trim();
-        const password = document.getElementById('authPassword')?.value || '';
-        if (!login || !password) {
-          Swal.showValidationMessage('Informe e-mail e senha.');
-          return null;
-        }
-        return { login, password };
-      }
-    });
-
-    if (!credentials) {
-      throw new Error('Autenticação obrigatória não informada.');
-    }
-
-    const { data, error } = await api.signIn(credentials.login, credentials.password);
-    if (error || !data?.user || !data?.session?.access_token) {
-      await Swal.fire({
-        icon: 'error',
-        title: 'Acesso negado',
-        text: 'Falha de autenticação. Verifique e-mail/senha e tente novamente.'
-      });
-      continue;
-    }
-
-    state.user = data.user;
-    dom.userBox.textContent = `Usuário: ${state.user.email}`;
-    authenticated = true;
-  }
+async function allowOpenAccess() {
+  state.user = { email: 'acesso_publico' };
+  dom.userBox.textContent = 'Usuário: acesso público';
 }
-
 async function loadMasters(options = {}) {
   const { force = false } = options;
   const masters = await api.getMasters();
