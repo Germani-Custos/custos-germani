@@ -14,6 +14,7 @@ VITE_ENABLE_VERBOSE_LOGS=false
 
 - Em ambiente com bundler Vite, use variáveis com prefixo `VITE_` no frontend.
 - Em deploy estático sem `import.meta.env`, injete `window.__ENV__` (ou `window.__RUNTIME_CONFIG__`) antes do bootstrap com as mesmas chaves (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENABLE_VERBOSE_LOGS`).
+- Se o runtime não permitir objeto global, o frontend também aceita fallback via `<meta name="VITE_SUPABASE_URL" ...>` e `<meta name="VITE_SUPABASE_ANON_KEY" ...>` no `index.html` servido.
 - Nunca commitar `.env` com credenciais reais.
 - Em Vercel (Development/Preview/Production), configure as mesmas chaves no painel de Environment Variables.
 
@@ -41,3 +42,8 @@ npm run build
 ```
 
 Se aparecer erro de `package.json` ausente, o workspace atual não montou a raiz do frontend.
+
+
+## Diagnóstico rápido de bootstrap
+
+Quando faltar configuração obrigatória, a mensagem agora inclui quais fontes foram avaliadas (`import.meta.env`, `window.__ENV__/__RUNTIME_CONFIG__`, `meta[name=VITE_*]`) para acelerar investigação operacional em produção.
