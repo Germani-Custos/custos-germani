@@ -1,4 +1,4 @@
-# Setup de Ambiente (Frontend Runtime Híbrido)
+# Setup de Ambiente (Frontend com runtime-config.js)
 
 ## Variáveis obrigatórias
 
@@ -12,8 +12,9 @@ VITE_ENABLE_VERBOSE_LOGS=false
 
 ## Regras operacionais
 
-- Em ambiente com bundler Vite, use variáveis com prefixo `VITE_` no frontend.
-- Em deploy estático sem `import.meta.env`, injete `window.__ENV__` (ou `window.__RUNTIME_CONFIG__`) antes do bootstrap com as mesmas chaves (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENABLE_VERBOSE_LOGS`).
+- Em deploy estático/browser clássico, publique `runtime-config.js` na raiz com `window.__ENV__` e as chaves `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENABLE_VERBOSE_LOGS`.
+- `runtime-config.js` deve ser carregado antes do bootstrap em `index.html`.
+- Em ambiente com bundler Vite, `import.meta.env` segue aceito apenas como fallback de compatibilidade.
 - Se o runtime não permitir objeto global, o frontend também aceita fallback via `<meta name="VITE_SUPABASE_URL" ...>` e `<meta name="VITE_SUPABASE_ANON_KEY" ...>` no `index.html` servido.
 - Nunca commitar `.env` com credenciais reais.
 - Em Vercel (Development/Preview/Production), configure as mesmas chaves no painel de Environment Variables.
@@ -46,4 +47,4 @@ Se aparecer erro de `package.json` ausente, o workspace atual não montou a raiz
 
 ## Diagnóstico rápido de bootstrap
 
-Quando faltar configuração obrigatória, a mensagem agora inclui quais fontes foram avaliadas (`import.meta.env`, `window.__ENV__/__RUNTIME_CONFIG__`, `meta[name=VITE_*]`) para acelerar investigação operacional em produção.
+Quando faltar configuração obrigatória, a mensagem inclui as fontes avaliadas (`window.__ENV__/__RUNTIME_CONFIG__`, `import.meta.env`, `meta[name=VITE_*]`) para acelerar investigação operacional em produção.

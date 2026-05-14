@@ -188,3 +188,6 @@ Toda mudança de comportamento temporal, de filtro ou de modelo de dados DEVE se
 
 
 - Atualização 2026-05-14 (diagnóstico runtime híbrido): bootstrap frontend deve testar `import.meta.env` → `window.__ENV__/window.__RUNTIME_CONFIG__` → `<meta name="VITE_*">` e expor diagnóstico de fonte avaliada ao falhar validação obrigatória.
+
+
+- Atualização 2026-05-14 (runtime real de deploy estático): priorizar `runtime-config.js` (`window.__ENV__`) como fonte principal no browser; manter fallback de compatibilidade para `window.__RUNTIME_CONFIG__`, `import.meta.env` e `<meta name="VITE_*">`, com validação obrigatória de `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.

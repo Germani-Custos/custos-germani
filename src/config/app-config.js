@@ -51,13 +51,13 @@ function readMetaTagEnv() {
 function resolveEnvSource() {
   const diagnostics = [];
 
-  const importMetaEnv = typeof import.meta !== 'undefined' && import.meta?.env ? normalizeEnv(import.meta.env) : null;
-  diagnostics.push(importMetaEnv ? 'import.meta.env:ok' : 'import.meta.env:empty');
-  if (importMetaEnv) return { source: 'import.meta.env', env: importMetaEnv, diagnostics };
-
   const runtimeEnv = readWindowEnv();
   diagnostics.push(runtimeEnv ? `${runtimeEnv.source}:ok` : 'window runtime env:empty');
   if (runtimeEnv) return { source: runtimeEnv.source, env: normalizeEnv(runtimeEnv.env), diagnostics };
+
+  const importMetaEnv = typeof import.meta !== 'undefined' && import.meta?.env ? normalizeEnv(import.meta.env) : null;
+  diagnostics.push(importMetaEnv ? 'import.meta.env:ok' : 'import.meta.env:empty');
+  if (importMetaEnv) return { source: 'import.meta.env', env: importMetaEnv, diagnostics };
 
   const metaEnv = readMetaTagEnv();
   diagnostics.push(metaEnv ? 'meta[name=VITE_*]:ok' : 'meta[name=VITE_*]:empty');
