@@ -74,3 +74,15 @@ Quando faltar configuração obrigatória, a mensagem inclui as fontes avaliadas
 - Esse script valida `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de deploy e gera `runtime-config.js` com `window.__ENV__` preenchido.
 - Se faltar variável obrigatória, o build falha cedo para evitar publicação de frontend inválido.
 - O browser **não usa** `process.env`; `process.env` é usado apenas no build/deploy para materializar `runtime-config.js`.
+
+
+## Checklist pós-setup investigativo
+
+Após configurar ambiente e autenticação, valide também o fluxo de exportação operacional:
+
+1. Rode uma análise com período preenchido (`data_referencia`) e dados importados com pelo menos dois eventos (`criado_em`).
+2. Exporte XLSX e confirme as abas `Contexto` e `Fila Investigativa`.
+3. Sem ordenação manual na UI, confirme ordenação automática por criticidade/regime/magnitude/reincidência/instabilidade.
+4. Confirme no nome do arquivo o período analisado para rastreabilidade operacional.
+
+> Importante: use `data_referencia` para competência da análise e `criado_em` para eventos de importação; ambos devem estar explícitos no contexto exportado.

@@ -44,7 +44,7 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
    - **Alertas (>5%)**: variações relevantes entre importações
    - **Mudanças de Regime**: produtos que eram ESTÁVEL e ficaram instáveis
    - **Média de variação**: variações positivas
-6. Exportar relatório para Excel
+6. Exportar relatório operacional para Excel (XLSX com abas `Contexto` e `Fila Investigativa`)
 
 ---
 
@@ -141,6 +141,16 @@ Semântica investigativa do gráfico temporal:
 - Quando não há produto selecionado: plota média agregada por competência com base no snapshot mais recente de cada produto
 
 Isso evita inflação por soma indevida de múltiplas importações da mesma competência.
+
+
+### Exportação Investigativa (XLSX)
+
+A exportação foi desenhada para preservar contexto operacional e acelerar handoff investigativo:
+
+- Gera duas abas: **`Contexto`** (filtros/período/metadata da execução) e **`Fila Investigativa`** (itens priorizados para ação).
+- Sem ordenação manual ativa, aplica ordenação automática por prioridade investigativa: **criticidade → mudança de regime → magnitude → reincidência → instabilidade**.
+- Cada linha exportada inclui **contexto pré-interpretado** para reduzir leitura manual posterior.
+- O nome do arquivo inclui o **período analisado** para rastreabilidade.
 
 ### TOP VARIAÇÕES
 
