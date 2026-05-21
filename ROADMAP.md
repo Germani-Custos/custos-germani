@@ -131,3 +131,13 @@ Objetivo: antecipar investigação humana.
 - Remoção de alias de credenciais (`username` interno) para eliminar superfície de bypass.
 - Validação estrita de sucesso de login: usuário + sessão/token obrigatórios antes de liberar acesso.
 - Em qualquer inconsistência no login, sessão é encerrada e o acesso continua bloqueado.
+
+
+## Marco concluído — Export investigativo operacional (2026-05-21)
+
+- [x] export orientado por fila investigativa (não dump)
+- [x] ordenação automática por criticidade/regime/magnitude/reincidência/instabilidade
+- [x] contexto investigativo automático por item
+- [x] snapshot do estado ativo da investigação (filtros + período + fila)
+- [x] metadados de rastreabilidade temporal em aba dedicada
+

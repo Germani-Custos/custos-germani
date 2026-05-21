@@ -137,3 +137,12 @@ Banner visível na tela de importação quando há produtos sem categorização 
 - Configuração de frontend com prioridade para `import.meta.env`, fallback seguro para `window.__ENV__`/`window.__RUNTIME_CONFIG__` e fallback final via `<meta name="VITE_*">`, evitando falhas de bootstrap em runtimes sem Vite.
 
 - Confiabilidade de bootstrap em runtime estático é tratada como requisito investigativo: sem `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` válidas, o deploy deve falhar antes de publicar.
+
+
+### Export é instrumento de investigação (Atualização 2026-05-21)
+
+Exportação não é mais planilha administrativa. Deve funcionar como relatório operacional de decisão:
+- topo do relatório = itens com maior urgência investigativa;
+- contexto automático por linha para acelerar triagem;
+- rastreabilidade temporal explícita (`data_referencia` x `criado_em`) sem ambiguidade semântica.
+

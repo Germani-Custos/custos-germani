@@ -194,3 +194,7 @@ Toda mudança de comportamento temporal, de filtro ou de modelo de dados DEVE se
 
 
 - Atualização 2026-05-14 (geração de config em deploy): em Vercel, `runtime-config.js` deve ser gerado no build via `scripts/generate-runtime-config.mjs` (não editado manualmente), com falha obrigatória quando `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` estiverem ausentes.
+
+
+- Atualização 2026-05-21 (export investigativo): exportação XLSX deve gerar relatório operacional com duas abas (`Contexto` e `Fila Investigativa`), ordenação automática por criticidade/regime/magnitude/reincidência/instabilidade (quando não houver ordenação manual ativa), contexto automático por linha e nome de arquivo com período analisado.
+

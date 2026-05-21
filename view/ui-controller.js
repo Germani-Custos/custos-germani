@@ -776,6 +776,54 @@ async function renderDrillThrough(codigoProduto) {
   dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+
+function getInvestigationRankScore(row) {
+  const prioridade = getOperationalPriority(row);
+  const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
+  const regimePeso = row.mudouRegime ? 1 : 0;
+  const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
+  const reincidencia = Math.abs(Number(row.variacaoTemporal || 0)) >= 5 ? 1 : 0;
+  const instabilidade = Number(row.scoreInstabilidade || 0);
+  return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
+}
+
+function compareByInvestigativePriority(a, b) {
+  const ra = getInvestigationRankScore(a);
+  const rb = getInvestigationRankScore(b);
+  if (rb.criticidadePeso !== ra.criticidadePeso) return rb.criticidadePeso - ra.criticidadePeso;
+  if (rb.regimePeso !== ra.regimePeso) return rb.regimePeso - ra.regimePeso;
+  if (rb.magnitude !== ra.magnitude) return rb.magnitude - ra.magnitude;
+  if (rb.reincidencia !== ra.reincidencia) return rb.reincidencia - ra.reincidencia;
+  if (rb.instabilidade !== ra.instabilidade) return rb.instabilidade - ra.instabilidade;
+  return String(a.codigo || '').localeCompare(String(b.codigo || ''), 'pt-BR');
+}
+
+function getRowsFromCurrentInvestigationState() {
+  const filteredRows = state.reportRows.filter(row => {
+    if (state.reportView.quickFilter === 'alerts') return row.variacao > 5;
+    if (state.reportView.quickFilter === 'positive') return row.variacao > 0;
+    if (state.reportView.quickFilter === 'regime') return row.mudouRegime === true;
+    return true;
+  });
+
+  const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
+  if (hasManualSort) {
+    return [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
+  }
+
+  return [...filteredRows].sort(compareByInvestigativePriority);
+}
+
+function buildExportFilename() {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(now.getUTCDate()).padStart(2, '0');
+  const periodStart = dom.dtStart.value || 'inicio';
+  const periodEnd = dom.dtEnd.value || 'fim';
+  return `auditoria_criticos_${periodStart}_a_${periodEnd}_${yyyy}${mm}${dd}.xlsx`;
+}
+
 // ── Exportação ────────────────────────────────────────────────────────────────
 
 function exportReport() {
@@ -784,29 +832,62 @@ function exportReport() {
     return;
   }
 
-  const exportData = state.reportRows.map(row => ({
-    'Código': row.codigo,
-    'Descrição': row.descricao,
-    'Último Custo': row.ultimoCusto ?? '',
-    'Penúltimo Custo': row.penultimoCusto ?? '',
-    'Diferença (R$)': row.diferenca ?? '',
-    'Competência (último)': row.dataCompetencia ?? '',
-    'Importado em': row.ultimaAtualizacao ?? '',
-    'Custo Inicial': row.inicial,
-    'Custo Final': row.final,
-    'Variação (%)': row.variacao.toFixed(2),
-    'Score Instabilidade (%)': row.scoreInstabilidade.toFixed(2),
-    'Classificação': row.classificacaoInstabilidade,
-    'Mudança de Regime': row.mudouRegime ? 'SIM' : 'NÃO',
-    'Alerta': row.alert ? 'ALERTA' : 'OK'
-  }));
+  const investigationRows = getRowsFromCurrentInvestigationState();
+  const filtrosAtivos = [
+    `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
+    `Família: ${dom.selF.options[dom.selF.selectedIndex]?.textContent || 'TODAS'}`,
+    `Agrupamento: ${dom.selA.options[dom.selA.selectedIndex]?.textContent || 'TODOS'}`,
+    `Produto: ${dom.selI.value || 'TODOS'}`,
+    `Fila: ${state.reportView.quickFilter}`
+  ].join(' | ');
 
-  const ws = XLSX.utils.json_to_sheet(exportData);
+  const metadataRows = [
+    { Campo: 'Tipo de relatório', Valor: 'Relatório Investigativo Operacional de Custos' },
+    { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
+    { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
+    { Campo: 'Filtros ativos', Valor: filtrosAtivos },
+    { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
+    { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
+  ];
+
+  const exportData = investigationRows.map((row, idx) => {
+    const prioridade = getOperationalPriority(row);
+    const rank = getInvestigationRankScore(row);
+    return {
+      'Prioridade #': idx + 1,
+      'Produto (código)': row.codigo,
+      'Produto (descrição)': row.descricao,
+      'Criticidade': prioridade.label,
+      'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
+      'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
+      'Variação no período (%)': row.variacao.toFixed(2),
+      'Delta monetário última importação (R$)': row.diferenca ?? '—',
+      'Contexto investigativo': buildInvestigativeSummary(row),
+      'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
+      'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
+      'Regime': row.classificacaoInstabilidade,
+      'Competência de referência (data_referencia)': row.dataCompetencia || '—',
+      'Importado em (criado_em)': row.ultimaAtualizacao || '—',
+      'Último custo (R$)': row.ultimoCusto ?? '—',
+      'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
+      'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
+    };
+  });
+
+  const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
+  const wsData = XLSX.utils.json_to_sheet(exportData);
+  wsData['!autofilter'] = { ref: wsData['!ref'] };
+  wsData['!cols'] = [
+    { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
+    { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
+  ];
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Auditoria');
-  const filename = `auditoria_custos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');
+  XLSX.utils.book_append_sheet(wb, wsData, 'Fila Investigativa');
+  const filename = buildExportFilename();
   XLSX.writeFile(wb, filename);
-  showToast('success', `Relatório exportado: ${filename}`);
+  showToast('success', `Relatório investigativo exportado: ${filename}`);
 }
 
 // ── Gráficos ──────────────────────────────────────────────────────────────────
