@@ -293,3 +293,17 @@ O gate de login foi **temporariamente desativado em 14/05/2026** para manter ace
 ### Preparação para RLS
 
 A arquitetura permanece compatível com RLS e pode reativar autenticação por sessão quando a estratégia de acesso controlado voltar a ser necessária.
+
+
+## Exportação investigativa operacional (Atualização 2026-05-21)
+
+A exportação `.xlsx` deixou de ser dump de tabela e passou a refletir o **estado investigativo ativo**:
+
+- respeita filtros ativos, fila rápida e contexto temporal selecionado;
+- prioriza ordenação operacional (`criticidade > mudança de regime > magnitude > reincidência > instabilidade`) quando não houver ordenação manual explícita;
+- inclui coluna de **contexto investigativo automático** para reduzir interpretação manual;
+- preserva rastreabilidade separando explicitamente `data_referencia` (competência) e `criado_em` (importação);
+- gera duas abas: `Contexto` (metadados investigativos) e `Fila Investigativa` (priorização de ação).
+
+Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>_<YYYYMMDD>.xlsx`.
+
