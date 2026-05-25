@@ -50,6 +50,22 @@ function applyCascadeFilterInMemory(rows, filters) {
   });
 }
 
+function normalizeCascadeFilters(filters = {}) {
+  return {
+    origem: filters?.origem || 'TODAS',
+    familia: filters?.familia || 'TODAS',
+    agrupamento: filters?.agrupamento || 'TODOS',
+    item: filters?.item || 'TODOS'
+  };
+}
+
+function createApiError(message, details = {}) {
+  const error = new Error(message);
+  error.name = 'OperationalContractError';
+  error.details = details;
+  return error;
+}
+
 function isValidDateValue(value) {
   return Boolean(normalizeISODate(value));
 }
@@ -146,6 +162,35 @@ async function getHistoricoWithClientFallback(filters) {
     });
 
   return { data: applyCascadeFilterInMemory(enrichedRows, filters), error: null };
+}
+
+async function enrichRowsWithDicionario(rows = []) {
+  const codigos = [...new Set((rows || [])
+    .map(item => String(item?.codigo_produto || '').trim())
+    .filter(Boolean))];
+
+  if (!codigos.length) return rows;
+
+  const { data: dicionarioRows, error: dicionarioError } = await supabase
+    .from(TABLES.dicionario)
+    .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
+    .in('codigo_produto', codigos);
+
+  if (dicionarioError) return { data: null, error: dicionarioError };
+
+  const byCodigo = new Map((dicionarioRows || []).map(row => [String(row.codigo_produto).trim(), row]));
+  const enriched = (rows || []).map(row => {
+    const dict = byCodigo.get(String(row?.codigo_produto || '').trim());
+    return {
+      ...row,
+      descricao: dict?.descricao || row?.descricao || null,
+      origem_id: dict?.origem_id ?? null,
+      familia_id: dict?.familia_id ?? null,
+      agrupamento_cod: dict?.agrupamento_cod ?? null
+    };
+  });
+
+  return { data: enriched, error: null };
 }
 
 async function runDiagnosticoSemAgrupamento() {
@@ -582,16 +627,14 @@ export const api = {
 
     if (error) return { data: null, error };
 
-    const filteredRows = applyCascadeFilterInMemory((rows || []).filter(item => {
+    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
+    if (enrichError) return { data: null, error: enrichError };
+
+    const filteredRows = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
       if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
       if (filters.end && String(item?.data_referencia || '') > String(filters.end)) return false;
       return true;
-    }), {
-      origem: filters.origem || 'TODAS',
-      familia: filters.familia || 'TODAS',
-      agrupamento: filters.agrupamento || 'TODOS',
-      item: filters.item || 'TODOS'
-    });
+    }), normalizeCascadeFilters(filters));
 
     const statsByImport = [latestImport, previousImport].map(importDate => {
       const importData = filteredRows.filter(row => row.criado_em === importDate);
@@ -632,10 +675,15 @@ export const api = {
   },
 
   async getProductHistory(codigoProduto) {
+    const codigo = String(codigoProduto || '').trim();
+    if (!codigo) {
+      return { data: null, error: createApiError('codigoProduto é obrigatório para drill-through.', { metodo: 'getProductHistory' }) };
+    }
+
     const { data, error } = await supabase
       .from(TABLES.historico)
       .select('codigo_produto, descricao, custo_total, custo_variavel, custo_direto_fixo, data_referencia, criado_em')
-      .eq('codigo_produto', String(codigoProduto || '').trim())
+      .eq('codigo_produto', codigo)
       .order('data_referencia', { ascending: true })
       .order('criado_em', { ascending: true });
 
@@ -680,16 +728,14 @@ export const api = {
       .in('criado_em', [ultimaImportacao, penultimaImportacao]);
     if (error) return { data: null, error };
 
-    const rowsFiltered = applyCascadeFilterInMemory((rows || []).filter(item => {
+    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
+    if (enrichError) return { data: null, error: enrichError };
+
+    const rowsFiltered = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
       if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
       if (filters.end && String(item?.data_referencia || '') > String(filters.end)) return false;
       return true;
-    }), {
-      origem: filters.origem || 'TODAS',
-      familia: filters.familia || 'TODAS',
-      agrupamento: filters.agrupamento || 'TODOS',
-      item: filters.item || 'TODOS'
-    });
+    }), normalizeCascadeFilters(filters));
 
     const byProduct = new Map();
     rowsFiltered.forEach(row => {

@@ -61,6 +61,11 @@ Dois eixos de tempo sempre presentes:
 
 Esses dois conceitos são distintos e não devem ser confundidos na UI.
 
+### 7. Contratos entre camadas são parte do produto
+
+Confiabilidade investigativa depende de contrato explícito entre UI, API, banco e engine analítica.
+Método fantasma, coluna presumida ou payload implícito é defeito de produto, não detalhe técnico.
+
 ---
 
 ## Capacidades Investigativas (estado atual)
@@ -145,4 +150,3 @@ Exportação não é mais planilha administrativa. Deve funcionar como relatóri
 - topo do relatório = itens com maior urgência investigativa;
 - contexto automático por linha para acelerar triagem;
 - rastreabilidade temporal explícita (`data_referencia` x `criado_em`) sem ambiguidade semântica.
-

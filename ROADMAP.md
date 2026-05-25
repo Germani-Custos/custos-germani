@@ -132,6 +132,12 @@ Objetivo: antecipar investigação humana.
 - Validação estrita de sucesso de login: usuário + sessão/token obrigatórios antes de liberar acesso.
 - Em qualquer inconsistência no login, sessão é encerrada e o acesso continua bloqueado.
 
+## Atualização contínua — 25/05/2026 (auditoria de contratos)
+
+- Matriz operacional de contratos publicada em `docs/arquitetura/matriz-contratos-operacionais.md`.
+- Correção de desalinhamento crítico de cascata nos métodos `getLatestImportComparison` e `getTopVariacoesImportacao` (enriquecimento via dimensão antes dos filtros).
+- Hardening fail-fast em `getProductHistory` para bloquear chamadas ambíguas com código vazio.
+
 
 ## Marco concluído — Export investigativo operacional (2026-05-21)
 
@@ -140,4 +146,3 @@ Objetivo: antecipar investigação humana.
 - [x] contexto investigativo automático por item
 - [x] snapshot do estado ativo da investigação (filtros + período + fila)
 - [x] metadados de rastreabilidade temporal em aba dedicada
-
