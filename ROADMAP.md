@@ -151,3 +151,8 @@ Objetivo: antecipar investigação humana.
 - [x] contexto investigativo automático por item
 - [x] snapshot do estado ativo da investigação (filtros + período + fila)
 - [x] metadados de rastreabilidade temporal em aba dedicada
+
+
+## Atualização contínua — 25/05/2026 (saneamento operacional do banco)
+
+- Entregue: hardening de schema com constraints temporais (`unique_produto_data`), índices de investigação e contrato explícito para órfãos de agrupamento via `SEM_AGRUPAMENTO` + `vw_produtos_orfaos_agrupamento`.

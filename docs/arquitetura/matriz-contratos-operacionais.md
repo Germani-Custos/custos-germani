@@ -90,3 +90,12 @@ Formato mínimo esperado em todos os métodos API:
 - [ ] Todo método UI→API deve estar listado e testado após mudança de assinatura.
 - [ ] Todo payload de escrita deve ser validado por whitelist de colunas da tabela alvo.
 - [ ] Toda mudança de contrato deve atualizar `README.md`, `VISION.md`, `ROADMAP.md` e esta matriz.
+
+
+## 6) Saneamento de schema Supabase (2026-05-25)
+
+- `historico_custos` alinhada com payload/API: `custo_variavel`, `custo_direto_fixo`, `custo_total`, `data_referencia`, `criado_em`.
+- `unique_produto_data` garantido para deduplicação por competência.
+- Órfãos de agrupamento tratados com fallback explícito `SEM_AGRUPAMENTO` (sem mascaramento).
+- Índices críticos de investigação e drill-through reforçados.
+- View `vw_produtos_orfaos_agrupamento` adicionada para auditoria contínua.

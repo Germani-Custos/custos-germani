@@ -150,3 +150,8 @@ Exportação não é mais planilha administrativa. Deve funcionar como relatóri
 - topo do relatório = itens com maior urgência investigativa;
 - contexto automático por linha para acelerar triagem;
 - rastreabilidade temporal explícita (`data_referencia` x `criado_em`) sem ambiguidade semântica.
+
+
+## Atualização 2026-05-25 — Saneamento operacional de dados
+
+- Contrato investigativo reforçado: todo produto deve permanecer investigável mesmo sem categorização completa, usando fallback explícito `SEM_AGRUPAMENTO` e auditoria ativa de órfãos.

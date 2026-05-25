@@ -317,3 +317,8 @@ A exportação `.xlsx` deixou de ser dump de tabela e passou a refletir o **esta
 - gera duas abas: `Contexto` (metadados investigativos) e `Fila Investigativa` (priorização de ação).
 
 Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>_<YYYYMMDD>.xlsx`.
+
+
+### Atualização contínua — 25/05/2026 (saneamento de schema)
+
+- Saneamento operacional do schema Supabase com hardening de constraints, índices, fallback explícito para órfãos de agrupamento e view de auditoria (`sql/2026-05-25_saneamento_operacional_schema.sql`).
