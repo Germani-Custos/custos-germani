@@ -122,7 +122,7 @@ O nome do arquivo já vem com o período analisado (ex.: `auditoria_criticos_202
 ## 7. Tela de Documentação (consultar e editar)
 
 No menu **Documentação** você consulta e edita os próprios manuais, sem sair do sistema:
-1. Escolha o documento no seletor (Manual do Usuário, Técnico, Operação ou Regras Gerais).
+1. Escolha o documento no seletor, agrupado em **Manuais**, **Regras** e **Auditoria técnica** (segurança, robustez, performance, backlog etc.).
 2. O conteúdo aparece formatado.
 3. Para alterar, clique em **Editar**: surge o texto em **Markdown** à esquerda e a **pré-visualização** à direita, atualizada enquanto você digita.
 4. Clique em **Salvar** para gravar, ou **Cancelar** para descartar.

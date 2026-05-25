@@ -3,10 +3,17 @@ import { debounce, escapeHtml, showToast } from './ui-utils.js';
 
 // Fonte única: arquivos .md versionados no repositório. A edição grava neles via /api/save-doc (commit no GitHub).
 const DOCS = [
-  { chave: 'usuario', titulo: 'Manual do Usuário', caminho: 'docs/manuais/manual-usuario.md' },
-  { chave: 'tecnico', titulo: 'Manual de Uso Técnico', caminho: 'docs/manuais/manual-tecnico.md' },
-  { chave: 'operacao', titulo: 'Manual de Operação', caminho: 'docs/manuais/manual-operacao.md' },
-  { chave: 'regras', titulo: 'Regras Gerais', caminho: 'docs/regras-gerais.md' }
+  { chave: 'usuario', titulo: 'Manual do Usuário', caminho: 'docs/manuais/manual-usuario.md', grupo: 'Manuais' },
+  { chave: 'tecnico', titulo: 'Manual de Uso Técnico', caminho: 'docs/manuais/manual-tecnico.md', grupo: 'Manuais' },
+  { chave: 'operacao', titulo: 'Manual de Operação', caminho: 'docs/manuais/manual-operacao.md', grupo: 'Manuais' },
+  { chave: 'regras', titulo: 'Regras Gerais', caminho: 'docs/regras-gerais.md', grupo: 'Regras' },
+  { chave: 'aud-indice', titulo: 'Índice da auditoria', caminho: 'docs/auditoria/README.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-seguranca', titulo: 'Segurança', caminho: 'docs/auditoria/seguranca.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-robustez', titulo: 'Robustez, erros e validação', caminho: 'docs/auditoria/robustez-erros-validacao.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-manutenibilidade', titulo: 'Manutenibilidade', caminho: 'docs/auditoria/manutenibilidade.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-performance', titulo: 'Performance e otimização', caminho: 'docs/auditoria/performance-otimizacao.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-tooling', titulo: 'Tooling e configuração', caminho: 'docs/auditoria/tooling-configuracao.md', grupo: 'Auditoria técnica' },
+  { chave: 'aud-backlog', titulo: 'Backlog priorizado', caminho: 'docs/auditoria/backlog-priorizado.md', grupo: 'Auditoria técnica' }
 ];
 
 const SAVE_ENDPOINT = '/api/save-doc';
@@ -26,8 +33,15 @@ export function bindDocumentationView(dom) {
 
   const state = { atual: DOCS[0], conteudo: '' };
 
-  dom.docSelector.innerHTML = DOCS
-    .map(doc => `<option value="${escapeHtml(doc.chave)}">${escapeHtml(doc.titulo)}</option>`)
+  const grupos = [...new Set(DOCS.map(doc => doc.grupo))];
+  dom.docSelector.innerHTML = grupos
+    .map(grupo => {
+      const options = DOCS
+        .filter(doc => doc.grupo === grupo)
+        .map(doc => `<option value="${escapeHtml(doc.chave)}">${escapeHtml(doc.titulo)}</option>`)
+        .join('');
+      return `<optgroup label="${escapeHtml(grupo)}">${options}</optgroup>`;
+    })
     .join('');
 
   function exitEditMode() {
