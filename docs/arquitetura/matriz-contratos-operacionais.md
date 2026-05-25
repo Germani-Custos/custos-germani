@@ -68,6 +68,10 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
    - Causa: `codigoProduto` vazio gerava consulta ambígua.
    - Correção: validação explícita + erro operacional padronizado.
 
+3. **Inconsistência de retorno e erro contextual** em métodos críticos da API.
+   - Causa: respostas heterogêneas e propagação direta de erros sem contexto operacional.
+   - Correção: padronização de retorno `{ data, error }` + `OperationalContractError` com `details` e causa em `getHistorico`, `upsertHistoricoCustos`, `getLatestImportComparison`, `getTopVariacoesImportacao` e `getProductHistory`.
+
 ## Contrato padronizado de erro (operacional)
 
 Formato mínimo esperado em todos os métodos API:

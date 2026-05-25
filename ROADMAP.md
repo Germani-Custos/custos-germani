@@ -137,6 +137,11 @@ Objetivo: antecipar investigação humana.
 - Matriz operacional de contratos publicada em `docs/arquitetura/matriz-contratos-operacionais.md`.
 - Correção de desalinhamento crítico de cascata nos métodos `getLatestImportComparison` e `getTopVariacoesImportacao` (enriquecimento via dimensão antes dos filtros).
 - Hardening fail-fast em `getProductHistory` para bloquear chamadas ambíguas com código vazio.
+- Refatoração de confiabilidade da camada `src/services/api.js` com:
+  - sanitização explícita e whitelist de payload no `upsertHistoricoCustos`;
+  - padronização de contratos de retorno `{ data, error }` nos métodos críticos de comparação/drill-through;
+  - erros operacionais contextualizados (sem crash silencioso) em `getHistorico`, `getLatestImportComparison`, `getTopVariacoesImportacao` e `getProductHistory`;
+  - normalização explícita de recortes temporais (`data_referencia`) antes de aplicar filtros de cascata.
 
 
 ## Marco concluído — Export investigativo operacional (2026-05-21)

@@ -66,6 +66,19 @@ function createApiError(message, details = {}) {
   return error;
 }
 
+function ok(data) {
+  return { data, error: null };
+}
+
+function fail(message, details = {}, upstreamError = null) {
+  const error = createApiError(message, details);
+  if (upstreamError) {
+    error.cause = upstreamError;
+    error.details = { ...details, cause: upstreamError.message || String(upstreamError) };
+  }
+  return { data: null, error };
+}
+
 function isValidDateValue(value) {
   return Boolean(normalizeISODate(value));
 }
@@ -136,8 +149,8 @@ async function getHistoricoWithClientFallback(filters) {
     .lte('data_referencia', filters.end)
     .order('data_referencia', { ascending: true });
 
-  if (historicoError) return { data: null, error: historicoError };
-  if (!historicoBase?.length) return { data: [], error: null };
+  if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
+  if (!historicoBase?.length) return ok([]);
 
   const codigos = [...new Set(historicoBase.map(item => item.codigo_produto).filter(Boolean))];
   const { data: dicionarioRows, error: dicionarioError } = await supabase
@@ -145,7 +158,7 @@ async function getHistoricoWithClientFallback(filters) {
     .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
     .in('codigo_produto', codigos);
 
-  if (dicionarioError) return { data: null, error: dicionarioError };
+  if (dicionarioError) return fail('Falha ao enriquecer histórico com dimensão de produtos.', { metodo: 'getHistorico', tabela: TABLES.dicionario }, dicionarioError);
 
   const dicionarioByCodigo = new Map((dicionarioRows || []).map(row => [String(row.codigo_produto), row]));
 
@@ -161,7 +174,7 @@ async function getHistoricoWithClientFallback(filters) {
       };
     });
 
-  return { data: applyCascadeFilterInMemory(enrichedRows, filters), error: null };
+  return ok(applyCascadeFilterInMemory(enrichedRows, filters));
 }
 
 async function enrichRowsWithDicionario(rows = []) {
@@ -404,7 +417,28 @@ export const api = {
   },
 
   async upsertHistoricoCustos(payload) {
-    return supabase.from(TABLES.historico).upsert(payload, { onConflict: 'codigo_produto,data_referencia' });
+    const rows = Array.isArray(payload) ? payload : [];
+    const sanitized = rows.map(row => ({
+      codigo_produto: String(row?.codigo_produto || '').trim(),
+      descricao: row?.descricao ?? null,
+      custo_variavel: normalizeMoneyValue(row?.custo_variavel),
+      custo_direto_fixo: normalizeMoneyValue(row?.custo_direto_fixo),
+      custo_total: normalizeMoneyValue(row?.custo_total),
+      data_referencia: normalizeISODate(row?.data_referencia)
+    }));
+
+    const invalidRows = sanitized.filter(row => !validateHistoricoRow(row).valido);
+    if (invalidRows.length) {
+      return fail('Payload de upsert inválido para historico_custos.', { metodo: 'upsertHistoricoCustos', invalidRows: invalidRows.length });
+    }
+
+    const { data, error } = await supabase
+      .from(TABLES.historico)
+      .upsert(sanitized, { onConflict: 'codigo_produto,data_referencia' })
+      .select('codigo_produto, data_referencia, criado_em');
+
+    if (error) return fail('Falha ao realizar upsert no histórico de custos.', { metodo: 'upsertHistoricoCustos' }, error);
+    return ok(data || []);
   },
 
   async signIn(login, password) {
@@ -601,7 +635,7 @@ export const api = {
   },
 
   async getHistorico(filters) {
-    return getHistoricoWithClientFallback(filters);
+    return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), start: normalizeISODate(filters?.start), end: normalizeISODate(filters?.end) });
   },
 
   async getLatestImportComparison(filters = {}) {
@@ -611,11 +645,11 @@ export const api = {
       .order('criado_em', { ascending: false })
       .limit(1000);
 
-    if (importError) return { data: null, error: importError };
+    if (importError) return fail('Falha ao listar importações para comparação.', { metodo: 'getLatestImportComparison' }, importError);
 
     const latestImports = [...new Set((importRows || []).map(row => row?.criado_em).filter(Boolean))].slice(0, 2);
     if (latestImports.length < 2) {
-      return { data: { imports: [], resumo: null }, error: null };
+      return ok({ imports: [], resumo: null });
     }
 
     const [latestImport, previousImport] = latestImports;
@@ -625,10 +659,10 @@ export const api = {
       .select('*')
       .in('criado_em', [latestImport, previousImport]);
 
-    if (error) return { data: null, error };
+    if (error) return fail('Falha ao carregar base de comparação entre importações.', { metodo: 'getLatestImportComparison' }, error);
 
     const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
-    if (enrichError) return { data: null, error: enrichError };
+    if (enrichError) return fail('Falha ao enriquecer comparação de importações com dimensão.', { metodo: 'getLatestImportComparison' }, enrichError);
 
     const filteredRows = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
       if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
@@ -648,16 +682,13 @@ export const api = {
     const previous = statsByImport[1];
     const variacaoPercentual = previous.media === 0 ? 0 : roundTo4(((latest.media - previous.media) / previous.media) * 100);
 
-    return {
-      data: {
+    return ok({
         imports: statsByImport,
         resumo: {
           variacao_percentual_media: variacaoPercentual,
           delta_media: roundTo4(latest.media - previous.media)
         }
-      },
-      error: null
-    };
+      });
   },
 
   async getTrendsByProduct(codigoProduto) {
@@ -687,7 +718,7 @@ export const api = {
       .order('data_referencia', { ascending: true })
       .order('criado_em', { ascending: true });
 
-    if (error) return { data: null, error };
+    if (error) return fail('Falha ao carregar histórico detalhado do produto.', { metodo: 'getProductHistory', codigo_produto: codigo }, error);
 
     const sorted = data || [];
     const annotated = sorted.map((row, i) => {
@@ -705,7 +736,7 @@ export const api = {
       };
     });
 
-    return { data: annotated, error: null };
+    return ok(annotated);
   },
 
   async getTopVariacoesImportacao(filters = {}) {
@@ -715,10 +746,10 @@ export const api = {
       .order('criado_em', { ascending: false })
       .limit(1000);
 
-    if (importError) return { data: null, error: importError };
+    if (importError) return fail('Falha ao listar importações para cálculo de variações.', { metodo: 'getTopVariacoesImportacao' }, importError);
 
     const latestImports = [...new Set((importRows || []).map(row => row?.criado_em).filter(Boolean))].slice(0, 2);
-    if (latestImports.length < 2) return { data: { aumentos: [], reducoes: [], imports: latestImports }, error: null };
+    if (latestImports.length < 2) return ok({ aumentos: [], reducoes: [], imports: latestImports });
 
     const [ultimaImportacao, penultimaImportacao] = latestImports;
 
@@ -726,10 +757,10 @@ export const api = {
       .from(TABLES.historico)
       .select('codigo_produto, descricao, custo_total, criado_em, data_referencia')
       .in('criado_em', [ultimaImportacao, penultimaImportacao]);
-    if (error) return { data: null, error };
+    if (error) return fail('Falha ao carregar base de variações por importação.', { metodo: 'getTopVariacoesImportacao' }, error);
 
     const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
-    if (enrichError) return { data: null, error: enrichError };
+    if (enrichError) return fail('Falha ao enriquecer variações com dimensão de produtos.', { metodo: 'getTopVariacoesImportacao' }, enrichError);
 
     const rowsFiltered = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
       if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
@@ -755,13 +786,10 @@ export const api = {
       }))
       .sort((a, b) => b.variacao_percentual - a.variacao_percentual);
 
-    return {
-      data: {
+    return ok({
         imports: latestImports,
         aumentos: variacoes.filter(item => item.variacao_percentual > 0).slice(0, 5),
         reducoes: [...variacoes].reverse().filter(item => item.variacao_percentual < 0).slice(0, 5)
-      },
-      error: null
-    };
+      });
   }
 };
