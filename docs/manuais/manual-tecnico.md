@@ -141,7 +141,14 @@ A "rota" é uma `<section class="view">` mostrada/escondida por classe. Para cri
 
 Componentes/classes reutilizáveis (`.panel`, `.btn-primary`, `.btn-outline`, `.kpi`, `.badge`): [`docs/ux/componentes.md`](../ux/componentes.md). Utils prontos em `view/ui-utils.js` (`escapeHtml`, `debounce`, `showToast`, formatadores) — **sempre** escape entrada de usuário antes de `innerHTML` (ver `SEC-01`).
 
-> A **tela de Documentação editável** (consulta/edição dos manuais em produção, com commit via Serverless Function) está planejada como Fase 2. Quando implementada, documente-a aqui e no `AGENTS.md`.
+### Tela de Documentação editável (`view/documentation-controller.js`)
+Implementada (Fase 2). Permite **consultar e editar** os manuais (`docs/manuais/*.md` e `docs/regras-gerais.md`) pela própria UI:
+- **Render**: `marked` + `DOMPurify` (CDN fixados no `index.html`); o markdown é **sempre sanitizado** antes de ir ao DOM.
+- **Leitura**: `fetch` dos `.md` servidos estaticamente (ex.: `docs/manuais/manual-usuario.md`).
+- **Gravação**: POST para a Serverless Function `api/save-doc.js`, que comita via **GitHub Contents API** (GET sha → PUT) na branch publicada. Após o commit, a Vercel redeploya e o `.md` atualizado passa a ser servido (latência ~30-60s).
+- **Env da Function** (Vercel): `GITHUB_TOKEN` (PAT fine-grained, Contents: write só neste repo — **secreto**), `GITHUB_REPO` (`owner/repo`), `GITHUB_BRANCH` (default `main`).
+- **Segurança**: endpoint público (decisão de produto); mitigações no servidor — **allowlist de caminho** (`docs/manuais/*.md`, `docs/regras-gerais.md`), **limite de 200 KB**, e o token vive só no servidor. Para tornar outro documento editável, inclua-o no array `DOCS` do controller **e** na allowlist (`ALLOWED_PATHS`) da Function.
+- **Vercel**: a função vive em `api/save-doc.js`; confirme que a pasta `api/` está sendo publicada como Serverless Function (o roteamento `/api/*` tem precedência sobre o estático).
 
 ---
 

@@ -119,7 +119,18 @@ O nome do arquivo já vem com o período analisado (ex.: `auditoria_criticos_202
 
 ---
 
-## 7. Glossário rápido
+## 7. Tela de Documentação (consultar e editar)
+
+No menu **Documentação** você consulta e edita os próprios manuais, sem sair do sistema:
+1. Escolha o documento no seletor (Manual do Usuário, Técnico, Operação ou Regras Gerais).
+2. O conteúdo aparece formatado.
+3. Para alterar, clique em **Editar**: surge o texto em **Markdown** à esquerda e a **pré-visualização** à direita, atualizada enquanto você digita.
+4. Clique em **Salvar** para gravar, ou **Cancelar** para descartar.
+
+> Ao salvar, a alteração é registrada no repositório (um commit) e **publicada após o redeploy** (cerca de 30 a 60 segundos) — por isso a versão publicada não muda instantaneamente.
+> **Atenção:** a edição é **aberta** (sem senha). Edite com cuidado, pois a mudança vale para todos.
+
+## 8. Glossário rápido
 
 - **Competência** — mês ao qual o custo pertence (`data_referencia`).
 - **Importação** — quando a planilha entrou no sistema (`criado_em`).
@@ -130,7 +141,7 @@ O nome do arquivo já vem com o período analisado (ex.: `auditoria_criticos_202
 
 ---
 
-## 8. Problemas comuns
+## 9. Problemas comuns
 
 | Situação | O que fazer |
 |---|---|

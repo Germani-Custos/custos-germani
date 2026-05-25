@@ -5,6 +5,7 @@ import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis } f
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
 import { debounce, escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
+import { bindDocumentationView } from './documentation-controller.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
@@ -18,6 +19,7 @@ async function init() {
   bindUpload();
   bindFilters();
   bindSearch();
+  bindDocumentationView(dom);
   await allowOpenAccess();
   await loadMasters({ force: true });
   await fetchMetadata();
