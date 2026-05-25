@@ -12,6 +12,8 @@
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="./runtime-config.js"></script>
   <script type="module">
     const showConfigErrorScreen = error => {
@@ -56,6 +58,10 @@
         <button class="nav-item" data-view-trigger="report">
           <i class="ri-bar-chart-box-line"></i>
           <span>Auditoria</span>
+        </button>
+        <button class="nav-item" data-view-trigger="documentation">
+          <i class="ri-book-open-line"></i>
+          <span>Documentação</span>
         </button>
       </nav>
     </aside>
@@ -197,6 +203,45 @@
             </div>
             <p id="trendFallback" class="help-text hidden">Histórico insuficiente para análise temporal</p>
             <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: DOCUMENTAÇÃO ===== -->
+      <section id="view-documentation" class="view hidden">
+        <header class="view-header">
+          <h2>Documentação</h2>
+          <p>Consulte e edite os manuais. As edições são gravadas no repositório (commit) e publicadas após o redeploy.</p>
+        </header>
+
+        <div class="panel">
+          <div class="doc-toolbar">
+            <div class="field max-420">
+              <label for="docSelector">Documento</label>
+              <select id="docSelector"></select>
+            </div>
+            <div class="actions-row">
+              <button id="docEditBtn" class="btn-outline"><i class="ri-edit-line"></i> Editar</button>
+              <button id="docSaveBtn" class="btn-primary hidden"><i class="ri-save-3-line"></i> Salvar</button>
+              <button id="docCancelBtn" class="btn-outline hidden"><i class="ri-close-line"></i> Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="docViewPanel" class="panel">
+          <article id="docContent" class="doc-content" aria-live="polite"></article>
+        </div>
+
+        <div id="docEditPanel" class="panel hidden">
+          <div class="doc-editor-grid">
+            <div class="field">
+              <label for="docEditor">Markdown</label>
+              <textarea id="docEditor" class="doc-editor" spellcheck="false" aria-label="Editor de markdown"></textarea>
+            </div>
+            <div class="field">
+              <label>Pré-visualização</label>
+              <article id="docPreview" class="doc-content doc-preview"></article>
+            </div>
           </div>
         </div>
       </section>

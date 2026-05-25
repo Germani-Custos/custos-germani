@@ -88,6 +88,13 @@ Obrigatórias em Production/Preview/Development:
 
 Se faltarem, **o build falha** (proposital). Checklist completo: [`docs/arquitetura/deploy.md`](../arquitetura/deploy.md).
 
+Para a **tela de Documentação editável** (gravação dos manuais via commit), a Serverless Function `api/save-doc.js` exige:
+- `GITHUB_TOKEN` — PAT fine-grained com **Contents: Read and write** apenas neste repositório. **Secreto** — nunca commitar nem expor no frontend.
+- `GITHUB_REPO` — `owner/repo` (ex.: `Germani-Custos/custos-germani`).
+- `GITHUB_BRANCH` — branch publicada (default `main`).
+
+> A edição em tela é **pública** (sem senha): qualquer pessoa com a URL pode editar os manuais (com allowlist de caminho e limite de tamanho no servidor). Avalie um gate/rotação de token se isso for sensível.
+
 ### Rollback
 Pelo painel da Vercel: **Deployments → escolher o deploy estável anterior → Promote to Production** (ou "Rollback"). Como o app é estático, o rollback é imediato e seguro. Mudanças de **banco** (migrações SQL) **não** voltam com o rollback do frontend — reverta-as manualmente no Supabase se necessário.
 
