@@ -1,4 +1,4 @@
-# Manual do Usuário — Kustos Germani
+# Manual do Usuário — Custos Germani
 
 Guia de uso para quem **opera** o sistema no dia a dia (analistas, controladoria). Linguagem direta, sem jargão técnico. Para dúvidas de instalação/infra veja o [Manual Técnico](./manual-tecnico.md); para rotina e problemas veja o [Manual de Operação](./manual-operacao.md).
 
