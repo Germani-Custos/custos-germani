@@ -14,7 +14,11 @@
  * limite de tamanho e o token vive apenas no servidor (nunca no frontend).
  */
 
-const ALLOWED_PATHS = [/^docs\/manuais\/[a-z0-9-]+\.md$/, /^docs\/regras-gerais\.md$/];
+const ALLOWED_PATHS = [
+  /^docs\/manuais\/[a-z0-9-]+\.md$/,
+  /^docs\/auditoria\/[A-Za-z0-9-]+\.md$/,
+  /^docs\/regras-gerais\.md$/
+];
 const MAX_BYTES = 200 * 1024; // 200 KB
 
 module.exports = async (req, res) => {
