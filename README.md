@@ -12,6 +12,7 @@ Sistema operacional de auditoria analítica de custos. Não é um dashboard gen�
 - `ROADMAP.md`: fases entregues e próximas, com raciocínio de priorização
 - `AGENTS.md`: guia para agentes e desenvolvedores (regras técnicas e de produto)
 - `docs/arquitetura/indice-documentacao-kustos.md`: índice da documentação técnica
+- `docs/arquitetura/matriz-contratos-operacionais.md`: auditoria de contratos UI ↔ API ↔ banco ↔ engines
 
 ---
 
@@ -316,4 +317,3 @@ A exportação `.xlsx` deixou de ser dump de tabela e passou a refletir o **esta
 - gera duas abas: `Contexto` (metadados investigativos) e `Fila Investigativa` (priorização de ação).
 
 Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>_<YYYYMMDD>.xlsx`.
-
