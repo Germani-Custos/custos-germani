@@ -1,0 +1,57 @@
+# Auditoria — Tooling e Configuração
+
+Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o **runtime é estático via CDN, sem bundler** (decisão de arquitetura). As melhorias abaixo **não devem introduzir bundler nem mudar o runtime** — apenas ferramentas de desenvolvimento.
+
+---
+
+## CFG-01 · 🟠 Médio · Sem linter
+
+- **Evidência:** não há `.eslintrc*`. Foi a ausência de lint que deixou passar o XSS de `SEC-01`.
+- **Correção recomendada:** adicionar **ESLint** (flat config) rodando sobre ES Modules de browser. Regras de maior valor aqui: `no-unsanitized/property` (plugin) ou regra custom para flagrar `innerHTML` com template literal contendo `${`; `no-unused-vars` (pegaria `MNT-06`); `no-undef` com globals `XLSX`, `Chart`, `Swal`, `supabase`. Rodar via `npx eslint` (sem instalar no runtime).
+- **Critério de aceite:** `npx eslint .` roda limpo (ou com baseline conhecida); a regra de `innerHTML` não-escapado dispararia em `SEC-01` antes da correção.
+
+---
+
+## CFG-02 · 🟠 Médio · Sem checagem de tipos (caminho leve recomendado)
+
+- **Contexto:** migrar para TypeScript implicaria build/bundler — **contra** a arquitetura atual. O caminho proporcional é **JSDoc + `// @ts-check`** com `checkJs`, que dá verificação de tipos no editor/CI **sem alterar o runtime**.
+- **Correção recomendada:** adicionar `jsconfig.json` com `{ "compilerOptions": { "checkJs": true, "strict": true, "module": "esnext", "target": "es2022" }, "include": ["core", "src", "view"] }`; adicionar `// @ts-check` no topo dos módulos `core/` e `src/services/`; documentar os contratos como `@typedef` (ver `MNT-05`). Rodar `npx tsc --noEmit` em CI.
+- **Critério de aceite:** `npx tsc --noEmit` passa; erros reais de tipo (ex.: `row.variacao` possivelmente `null` em `toFixed`) ficam visíveis.
+
+---
+
+## CFG-03 · 🟠 Médio · Sem testes automatizados (cobertura 0%)
+
+- **Evidência:** nenhum `*.test.js`/`*.spec.js`, nenhuma config de runner. Refatorar (`MNT-01/02`) sem rede de segurança é arriscado.
+- **Correção recomendada:** adicionar **Vitest** (roda ESM nativo, sem precisar de bundler do app). Priorizar testes de **lógica pura**, que é onde mora o valor e o risco:
+  - `core/report-engine.js`: `buildReportRows` (variação, regime, instabilidade), `calculateKpis`, `calculateCascadeOptions`.
+  - `core/spreadsheet-engine.js`: `parseBrazilianNumber`, `normalizeCodigoProduto` (notação científica — `VAL-01`), `detectColumnMapping` (fuzzy).
+  - `src/services/validation.js` (após `MNT-02`): `validateHistoricoRow`, `normalizeISODate`.
+  Mockar Supabase nos métodos `api.*` ou deixá-los para teste de integração separado.
+- **Critério de aceite:** `npx vitest run` executa; cobertura inicial ≥ 60% em `core/`; os bugs `VAL-01` e `LOG-01` têm teste de regressão.
+
+---
+
+## CFG-04 · 🟡 Baixo · Adicionar `package.json` apenas para DEV (sem tocar no runtime)
+
+- **Contexto:** hoje não há `package.json` (o app carrega tudo por CDN). Para viabilizar `CFG-01/02/03` é preciso um `package.json`, mas ele deve conter **somente `devDependencies` e scripts de qualidade** — o `index.html` continua usando CDN.
+- **Correção recomendada:** criar `package.json` com `"private": true`, `devDependencies` (eslint, typescript, vitest e plugins) e scripts:
+  ```json
+  { "scripts": { "lint": "eslint .", "typecheck": "tsc --noEmit", "test": "vitest run", "build": "node scripts/generate-runtime-config.mjs" } }
+  ```
+  Manter o `buildCommand` da Vercel apontando para o script de runtime-config (`vercel.json`). Adicionar `node_modules/` ao `.gitignore` (verificar se já está).
+- **Critério de aceite:** `npm install` instala só dev tools; `npm run lint|typecheck|test` funcionam; o deploy estático na Vercel permanece inalterado (CDN no `index.html`).
+
+---
+
+## CFG-05 · 🟡 Baixo · Integração contínua (CI) mínima
+
+- **Correção recomendada:** após `CFG-01/02/03`, um workflow de CI (GitHub Actions) rodando `lint`, `typecheck` e `test` em PRs para a branch de produção. Barato e previne regressão dos itens desta auditoria.
+- **Critério de aceite:** PRs exibem o status dos três jobs; merge bloqueado se algum falhar (conforme política do repo).
+
+---
+
+## OK / fora de escopo
+
+- **`scripts/generate-runtime-config.mjs`** (build da Vercel) é simples e adequado ao modelo estático — manter.
+- **Acessibilidade** parcial já presente (`aria-label` na nav e dropzone, tema de contraste nos gráficos em `getReadableChartOptions`). Melhorias de a11y são desejáveis mas de menor prioridade que segurança/correção — registrar no `ROADMAP.md` se relevante.

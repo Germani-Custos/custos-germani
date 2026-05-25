@@ -165,14 +165,23 @@ E NÃO para:
 
 # DOCUMENTAÇÃO
 
-SEMPRE atualizar ao fazer mudanças relevantes:
+## SEMPRE consultar ANTES de mudar
+
+Antes de qualquer alteração, leia a documentação relevante: este `AGENTS.md`, `docs/regras-gerais.md`, os manuais em `docs/manuais/` e a auditoria em `docs/auditoria/` (para saber se o ponto já tem fragilidade mapeada).
+
+## SEMPRE atualizar DEPOIS de mudar (no mesmo PR/commit)
+
 * `README.md`
 * `VISION.md`
 * `ROADMAP.md`
-* `AGENTS.md` (este arquivo)
+* `AGENTS.md` (este arquivo — registre entrada datada no log abaixo)
+* `docs/manuais/` (usuário/técnico/operação) sempre que o comportamento visível ou operacional mudar
+* `docs/auditoria/backlog-priorizado.md` — marque o item resolvido e referencie o ID no commit
 * `docs/` conforme aplicável
 
 Toda mudança de comportamento temporal, de filtro ou de modelo de dados DEVE ser documentada com a distinção `data_referencia` vs. `criado_em`.
+
+Documentação desatualizada é tratada como defeito. Detalhes do processo: `docs/regras-gerais.md`.
 
 - Atualização 2026-05-11: credenciais Supabase devem entrar via config de ambiente/runtime; `autoAuthenticate` está proibido.
 
@@ -201,3 +210,5 @@ Toda mudança de comportamento temporal, de filtro ou de modelo de dados DEVE se
 - Atualização 2026-05-25 (auditoria de contratos): manter matriz viva em `docs/arquitetura/matriz-contratos-operacionais.md`; toda chamada UI→API deve estar listada, métodos de comparação de importação devem enriquecer dimensão antes da cascata, e métodos de drill-through devem falhar explicitamente quando parâmetros obrigatórios estiverem ausentes.
 
 - Atualização 2026-05-25 (saneamento operacional de schema): migração base em `sql/2026-05-25_saneamento_operacional_schema.sql` para alinhar colunas de custo, garantir `unique_produto_data`, reforçar índices investigativos e tratar órfãos via fallback explícito `SEM_AGRUPAMENTO` + `vw_produtos_orfaos_agrupamento`.
+
+- Atualização 2026-05-25 (auditoria técnica + manuais): publicada auditoria técnica acionável em `docs/auditoria/` (segurança, robustez, manutenibilidade, performance, tooling + `backlog-priorizado.md`) para execução por agente de desenvolvimento; criados os manuais em `docs/manuais/` (usuário/técnico/operação) e as regras gerais em `docs/regras-gerais.md`. Achado crítico registrado: XSS real em `fillSelect` (`core/report-engine.js`) — ver `SEC-01`. A tela de Documentação editável (consulta/edição dos manuais com commit via Serverless Function) fica como Fase 2.
