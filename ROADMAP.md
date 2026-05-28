@@ -156,3 +156,8 @@ Objetivo: antecipar investigação humana.
 ## Atualização contínua — 25/05/2026 (saneamento operacional do banco)
 
 - Entregue: hardening de schema com constraints temporais (`unique_produto_data`), índices de investigação e contrato explícito para órfãos de agrupamento via `SEM_AGRUPAMENTO` + `vw_produtos_orfaos_agrupamento`.
+
+## Atualização contínua — 28/05/2026 (ERR-01)
+
+- Concluído o item **ERR-01** do backlog: fronteiras operacionais de erro em `init()`, `runReport()` e handlers assíncronos críticos do frontend.
+- Próximo foco permanece nos demais itens da Onda 1, sem refatoração ampla: `SEC-01`, `VAL-01`, `LOG-01`, `SEC-04` e `SEC-05`.

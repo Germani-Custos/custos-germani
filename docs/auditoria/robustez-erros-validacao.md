@@ -11,6 +11,7 @@ Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção
 - **Impacto:** uma instабilidade de rede no carregamento inicial deixa a UI **parcialmente renderizada e travada**, sem feedback ao usuário (os toasts de `loadMasters` só cobrem o `masters.error`, não a exceção).
 - **Correção recomendada:** padronizar um wrapper de erro de fronteira. Ex.: envolver o corpo de `init()` em `try/catch` com `showToast('error', ...)` + estado de "falha ao iniciar"; e tratar os `await render*` de `runReport` (que já retornam `false` em erro, mas podem lançar). Não adicionar `try/catch` ornamental em código que não faz I/O — focar nas fronteiras (chamadas de rede, `XLSX.read`, `Chart`).
 - **Critério de aceite:** simular falha de rede (DevTools offline) ao abrir o app e ao clicar "Analisar"; a UI mostra mensagem de erro clara e permanece utilizável, sem `Uncaught (in promise)` no console.
+- **Status 2026-05-28:** resolvido em `view/ui-controller.js` com helper `normalizeOperationalError`, `executeOperationalBoundary`, fail-fast no carregamento de tabelas de apoio e degradação controlada dos painéis auxiliares do relatório.
 
 ---
 

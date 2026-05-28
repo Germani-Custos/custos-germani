@@ -322,3 +322,9 @@ Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>
 ### Atualização contínua — 25/05/2026 (saneamento de schema)
 
 - Saneamento operacional do schema Supabase com hardening de constraints, índices, fallback explícito para órfãos de agrupamento e view de auditoria (`sql/2026-05-25_saneamento_operacional_schema.sql`).
+
+## Atualização 2026-05-28 — ERR-01: fronteiras operacionais de erro
+
+- `init()` e `runReport()` agora possuem fronteiras explícitas para falhas assíncronas, evitando tela branca ou `Uncaught (in promise)` no fluxo principal de investigação.
+- Falhas em filtros, metadata, drill-through e exportação exibem mensagem operacional amigável, preservam o contexto atual da tela e registram detalhes técnicos apenas quando `VITE_ENABLE_VERBOSE_LOGS=true`.
+- A mudança não altera contratos Supabase, regras de negócio, semântica temporal (`data_referencia` x `criado_em`) nem visual do relatório.

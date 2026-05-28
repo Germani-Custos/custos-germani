@@ -9,7 +9,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 ## Onda 1 — Segurança e correção (fazer primeiro)
 
 - [ ] **SEC-01** 🔴 P — Escapar `value`/`label` em `fillSelect` (`core/report-engine.js:9,13`); mover `escapeHtml` para util compartilhada. → [`seguranca.md`](./seguranca.md)
-- [ ] **ERR-01** 🔴 M — `try/catch` de fronteira em `init()` e nos `await` de `runReport` (`view/ui-controller.js:16-24,508-524`). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
+- [x] **ERR-01** 🔴 M — `try/catch` de fronteira em `init()` e nos `await` de `runReport` (`view/ui-controller.js:16-24,508-524`). Resolvido no commit `fix(ERR-01): adiciona fronteiras operacionais e tratamento robusto de erros`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **VAL-01** 🟠 P — Normalizar código de produto (notação científica) no fluxo ativo, reusando `normalizeCodigoProduto`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card (`core/report-engine.js:181` × `view/ui-controller.js:539,803`). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)

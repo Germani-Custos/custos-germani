@@ -129,3 +129,7 @@ Playbook detalhado: [`docs/troubleshooting/playbook-operacional.md`](../troubles
 1. Consulte [Manual Técnico](./manual-tecnico.md), [Manual do Usuário](./manual-usuario.md) e `docs/arquitetura/`.
 2. Para fragilidades/itens em aberto, veja [`docs/auditoria/`](../auditoria/README.md).
 3. **Atualize esta documentação** ao descobrir um procedimento novo — ver [Regras Gerais](../regras-gerais.md). Documentação desatualizada é incidente operacional.
+
+## Atualização 2026-05-28 — diagnóstico operacional de falhas da UI
+
+Se a abertura do app, a análise, o drill-through ou a exportação falhar, a UI deve exibir mensagem operacional e manter o contexto possível da investigação. Para diagnóstico controlado, ative temporariamente `VITE_ENABLE_VERBOSE_LOGS=true`, reproduza a operação e use o `timestamp`/`operation` do log estruturado; desative a flag após a análise para manter o console limpo em produção.

@@ -4,6 +4,7 @@ import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, pa
 import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
+import { debugLog } from '../src/config/app-config.js';
 import { debounce, escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
 import { bindDocumentationView } from './documentation-controller.js';
 
@@ -11,6 +12,40 @@ const state = createInitialState();
 const dom = getDomRefs();
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
+
+function normalizeOperationalError(error, operation = 'operação desconhecida') {
+  const rawMessage = error?.message || (typeof error === 'string' ? error : 'Falha operacional inesperada.');
+  const technical = {
+    name: error?.name || 'OperationalError',
+    message: String(rawMessage).slice(0, 240),
+    code: error?.code || error?.status || null
+  };
+
+  return {
+    message: 'Não foi possível concluir a operação. Tente novamente ou acione o suporte com o horário do erro.',
+    technical,
+    timestamp: new Date().toISOString(),
+    operation
+  };
+}
+
+function handleOperationalError(error, { operation, message } = {}) {
+  const operationalError = normalizeOperationalError(error, operation);
+  if (message) operationalError.message = message;
+  showToast('error', operationalError.message);
+  debugLog('Erro operacional controlado', operationalError);
+  return operationalError;
+}
+
+async function executeOperationalBoundary(operation, action, options = {}) {
+  try {
+    return await action();
+  } catch (error) {
+    handleOperationalError(error, { operation, message: options.message });
+    if (options.rethrow) throw error;
+    return options.fallback;
+  }
+}
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
@@ -20,9 +55,16 @@ async function init() {
   bindFilters();
   bindSearch();
   bindDocumentationView(dom);
-  await allowOpenAccess();
-  await loadMasters({ force: true });
-  await fetchMetadata();
+
+  // Fronteira operacional do bootstrap: falha crítica interrompe o carregamento parcial.
+  await executeOperationalBoundary('init', async () => {
+    await allowOpenAccess();
+    await loadMasters({ force: true });
+    await fetchMetadata();
+  }, {
+    message: 'Falha ao iniciar dados operacionais. Verifique a conexão e tente recarregar a página.',
+    fallback: null
+  });
 }
 
 async function allowOpenAccess() {
@@ -33,7 +75,8 @@ async function loadMasters(options = {}) {
   const { force = false } = options;
   const masters = await api.getMasters();
   if (masters.error) {
-    showToast('error', `Falha ao carregar tabelas de apoio: ${masters.error.message}`);
+    // Fail-fast: filtros sem tabelas de apoio podem induzir investigação incorreta.
+    throw new Error(`Falha ao carregar tabelas de apoio: ${masters.error.message}`);
   }
 
   if (!force && state.masters.dicionario.length && !masters.dicionario?.length) return;
@@ -53,7 +96,7 @@ async function loadMasters(options = {}) {
   if (orphanCount > 0) {
     dom.orphansCount.textContent = orphanCount;
     dom.orphansBanner.classList.remove('hidden');
-    console.warn(`Diagnóstico: ${orphanCount} produto(s) sem agrupamento válido.`);
+    debugLog('Diagnóstico operacional de órfãos', { orphanCount });
   } else {
     dom.orphansBanner.classList.add('hidden');
   }
@@ -102,7 +145,11 @@ function bindNavigation() {
       btn.classList.add('active');
       Object.values(dom.views).forEach(v => v.classList.add('hidden'));
       dom.views[view].classList.remove('hidden');
-      if (view === 'report') fetchMetadata();
+      if (view === 'report') {
+        executeOperationalBoundary('carregar filtros ao abrir relatório', () => fetchMetadata(), {
+          message: 'Falha ao atualizar filtros do relatório. Os filtros anteriores foram preservados.'
+        });
+      }
     });
   });
 }
@@ -116,7 +163,11 @@ function bindUpload() {
   });
 
   dom.fileInput.addEventListener('change', async () => {
-    if (dom.fileInput.files?.[0]) await handleImport(dom.fileInput.files[0]);
+    if (dom.fileInput.files?.[0]) {
+      await executeOperationalBoundary('importação via seletor de arquivo', () => handleImport(dom.fileInput.files[0]), {
+        message: 'Falha ao importar a planilha. Confira o arquivo e tente novamente.'
+      });
+    }
   });
 
   ['dragenter', 'dragover'].forEach(evt => {
@@ -127,7 +178,11 @@ function bindUpload() {
   });
   dom.dropZone.addEventListener('drop', async (e) => {
     const file = e.dataTransfer.files?.[0];
-    if (file) await handleImport(file);
+    if (file) {
+      await executeOperationalBoundary('importação por arrastar arquivo', () => handleImport(file), {
+        message: 'Falha ao importar a planilha. Confira o arquivo e tente novamente.'
+      });
+    }
   });
 }
 
@@ -139,68 +194,67 @@ async function handleImport(file) {
   }
 
   dom.dropZone.classList.add('processing');
-  const rows = readWorkbook(await file.arrayBuffer());
-  const { headers, mapping: detectedMapping } = scanHeaders(rows);
-  const mapping = await confirmColumnMapping(headers, detectedMapping);
-  if (!mapping) {
+  try {
+    const rows = readWorkbook(await file.arrayBuffer());
+    const { headers, mapping: detectedMapping } = scanHeaders(rows);
+    const mapping = await confirmColumnMapping(headers, detectedMapping);
+    if (!mapping) return;
+    state.importMapping = { ...mapping };
+
+    if (countValidMappedColumns(mapping) < REQUIRED_FIELDS.length) {
+      showToast('error', 'Todos os 5 campos obrigatórios devem ser mapeados antes do envio.');
+      return;
+    }
+
+    const preview = buildImportPreview(rows, state.importMapping, state.masters.produtos || []);
+    const confirmed = await confirmImportPreview(preview, countValidMappedColumns(mapping));
+    if (!confirmed) return;
+
+    const payload = preview.validRows.map(row => ({
+      codigo_produto: row.codigo_produto,
+      descricao: row.descricao,
+      custo_variavel: row.custo_variavel,
+      custo_direto_fixo: row.custo_direto_fixo,
+      custo_total: row.custo_total,
+      data_referencia: refDate
+    }));
+
+    const { data: resultadoImportacao, error } = await api.importarHistoricoCustosComLog(payload, {
+      dataReferencia: refDate
+    });
+    if (error) {
+      showToast('error', `Erro na importação: ${error.message}`);
+      return;
+    }
+
+    const resumo = resultadoImportacao?.resumo || { total_linhas: payload.length, linhas_importadas: payload.length, linhas_erro: 0 };
+    if (resultadoImportacao?.log_error) {
+      debugLog('Falha controlada ao registrar log da importação', { message: resultadoImportacao.log_error?.message || String(resultadoImportacao.log_error) });
+    }
+
+    const successCount = Number(resumo.linhas_importadas || 0);
+    const errorCount = Number(resumo.linhas_erro || 0);
+    const successMessage = `${successCount} itens importados com sucesso`;
+    showToast('success', successMessage);
+    await Swal.fire({
+      icon: errorCount > 0 ? 'warning' : 'success',
+      title: successMessage,
+      html: `
+        <div style="text-align:left;">
+          <p><b>Total de linhas:</b> ${resumo.total_linhas}</p>
+          <p><b>Importadas:</b> ${successCount}</p>
+          <p><b>Falhas:</b> ${errorCount}</p>
+          ${errorCount > 0 ? `<p><b>${errorCount} itens falharam</b></p>` : ''}
+        </div>
+      `
+    });
+
+    await executeOperationalBoundary('recarregar filtros após importação', () => fetchMetadata(), {
+      message: 'Importação concluída, mas não foi possível atualizar os filtros automaticamente.'
+    });
+  } finally {
     dom.dropZone.classList.remove('processing');
-    return;
   }
-  state.importMapping = { ...mapping };
-
-  if (countValidMappedColumns(mapping) < REQUIRED_FIELDS.length) {
-    dom.dropZone.classList.remove('processing');
-    showToast('error', 'Todos os 5 campos obrigatórios devem ser mapeados antes do envio.');
-    return;
-  }
-
-  const preview = buildImportPreview(rows, state.importMapping, state.masters.produtos || []);
-  const confirmed = await confirmImportPreview(preview, countValidMappedColumns(mapping));
-  if (!confirmed) {
-    dom.dropZone.classList.remove('processing');
-    return;
-  }
-  const payload = preview.validRows.map(row => ({
-    codigo_produto: row.codigo_produto,
-    descricao: row.descricao,
-    custo_variavel: row.custo_variavel,
-    custo_direto_fixo: row.custo_direto_fixo,
-    custo_total: row.custo_total,
-    data_referencia: refDate
-  }));
-
-  const { data: resultadoImportacao, error } = await api.importarHistoricoCustosComLog(payload, {
-    dataReferencia: refDate
-  });
-  dom.dropZone.classList.remove('processing');
-  if (error) {
-    showToast('error', `Erro na importação: ${error.message}`);
-    return;
-  }
-
-  const resumo = resultadoImportacao?.resumo || { total_linhas: payload.length, linhas_importadas: payload.length, linhas_erro: 0 };
-  if (resultadoImportacao?.log_error) {
-    console.warn('Falha ao registrar log da importação:', resultadoImportacao.log_error);
-  }
-
-  const successCount = Number(resumo.linhas_importadas || 0);
-  const errorCount = Number(resumo.linhas_erro || 0);
-  const successMessage = `${successCount} itens importados com sucesso`;
-  showToast('success', successMessage);
-  await Swal.fire({
-    icon: errorCount > 0 ? 'warning' : 'success',
-    title: successMessage,
-    html: `
-      <div style="text-align:left;">
-        <p><b>Total de linhas:</b> ${resumo.total_linhas}</p>
-        <p><b>Importadas:</b> ${successCount}</p>
-        <p><b>Falhas:</b> ${errorCount}</p>
-        ${errorCount > 0 ? `<p><b>${errorCount} itens falharam</b></p>` : ''}
-      </div>
-    `
-  });
-
-  await fetchMetadata();
 }
 
 function buildImportPreview(rows, mapping, produtos = []) {
@@ -397,14 +451,19 @@ function bindFilters() {
   dom.selA.addEventListener('change', () => refreshCascade('agrupamento'));
   dom.selI.addEventListener('change', () => autoRefreshReport());
   [dom.dtStart, dom.dtEnd].forEach(input => input.addEventListener('change', () => autoRefreshReport()));
-  dom.analyzeBtn.addEventListener('click', runReport);
-  dom.exportBtn.addEventListener('click', exportReport);
+  dom.analyzeBtn.addEventListener('click', () => runReport());
+  dom.exportBtn.addEventListener('click', () => exportReport());
   dom.drillClose.addEventListener('click', () => dom.drillPanel.classList.add('hidden'));
   bindInteractiveTableControls();
 
   if (state.unsubscribeFiltersRealtime) state.unsubscribeFiltersRealtime();
   state.unsubscribeFiltersRealtime = api.subscribeFiltrosRealtime(
-    debounce(async () => { await fetchMetadata(); }, 2000)
+    debounce(async () => {
+      // Degradação controlada: mantém filtros atuais se o realtime disparar durante instabilidade.
+      await executeOperationalBoundary('atualização realtime de filtros', () => fetchMetadata(), {
+        message: 'Falha ao atualizar filtros em tempo real. Mantendo o contexto atual.'
+      });
+    }, 2000)
   );
 }
 
@@ -480,57 +539,72 @@ async function runReport(options = {}) {
     return;
   }
 
-  const { data, error } = await api.getHistorico({
-    start,
-    end,
-    origem: dom.selO.value,
-    familia: dom.selF.value,
-    agrupamento: dom.selA.value,
-    item: dom.selI.value
-  });
-  if (error) {
-    Swal.fire({ icon: 'error', title: 'Erro na consulta', text: error.message });
-    return;
-  }
-  if (!data?.length) {
-    dom.reportContent.classList.add('hidden');
-    if (!silent) showToast('info', 'Sem dados para os filtros selecionados.');
-    return;
-  }
+  // Fronteira operacional do relatório: falhas críticas não devem quebrar a tela.
+  await executeOperationalBoundary('executar relatório investigativo', async () => {
+    const { data, error } = await api.getHistorico({
+      start,
+      end,
+      origem: dom.selO.value,
+      familia: dom.selF.value,
+      agrupamento: dom.selA.value,
+      item: dom.selI.value
+    });
+    if (error) throw new Error(error.message || 'Erro na consulta do histórico de custos.');
+    if (!data?.length) {
+      dom.reportContent.classList.add('hidden');
+      if (!silent) showToast('info', 'Sem dados para os filtros selecionados.');
+      return;
+    }
 
-  const rows = buildReportRows(data, state.masters);
-  const hasSingleItemAnalysis = rows.length === 1;
-  const kpis = calculateKpis(rows);
+    const rows = buildReportRows(data, state.masters);
+    const hasSingleItemAnalysis = rows.length === 1;
+    const kpis = calculateKpis(rows);
 
-  dom.kpiItens.textContent = kpis.totalItens;
-  dom.kpiAlertas.textContent = kpis.totalAlertas;
-  dom.kpiRegime.textContent = kpis.mudancasRegime;
-  dom.kpiMedia.textContent = `${kpis.mediaVariacao.toFixed(2).replace('.', ',')}%`;
+    dom.kpiItens.textContent = kpis.totalItens;
+    dom.kpiAlertas.textContent = kpis.totalAlertas;
+    dom.kpiRegime.textContent = kpis.mudancasRegime;
+    dom.kpiMedia.textContent = `${kpis.mediaVariacao.toFixed(2).replace('.', ',')}%`;
 
-  const hasImportComparison = await renderImportComparisonChart({
-    start, end,
-    origem: dom.selO.value,
-    familia: dom.selF.value,
-    agrupamento: dom.selA.value,
-    item: dom.selI.value
+    const chartFilters = {
+      start, end,
+      origem: dom.selO.value,
+      familia: dom.selF.value,
+      agrupamento: dom.selA.value,
+      item: dom.selI.value
+    };
+
+    // Degradação controlada: a fila investigativa continua mesmo sem gráficos auxiliares.
+    const hasImportComparison = await executeOperationalBoundary(
+      'renderizar comparação entre importações',
+      () => renderImportComparisonChart(chartFilters),
+      { message: 'Relatório carregado, mas a comparação entre importações ficou indisponível.', fallback: false }
+    );
+
+    await executeOperationalBoundary(
+      'renderizar top variações',
+      () => renderTopVariationsPanel(chartFilters),
+      { message: 'Relatório carregado, mas o painel TOP VARIAÇÕES ficou indisponível.' }
+    );
+
+    state.reportRows = rows;
+    applyTableView({ hasSingleItemAnalysis });
+
+    const hasTrendData = await executeOperationalBoundary(
+      'renderizar análise temporal',
+      () => renderTemporalAnalysis(data, {
+        origem: dom.selO.value,
+        familia: dom.selF.value,
+        agrupamento: dom.selA.value,
+        item: selectedProduct || dom.selI.value
+      }),
+      { message: 'Relatório carregado, mas a análise temporal ficou indisponível.', fallback: false }
+    );
+
+    applyReportLayout({ hasSingleItemAnalysis, hasImportComparison, hasTrendData });
+    dom.reportContent.classList.remove('hidden');
+  }, {
+    message: 'Falha ao executar relatório. O contexto atual foi preservado para nova tentativa.'
   });
-  await renderTopVariationsPanel({
-    start, end,
-    origem: dom.selO.value,
-    familia: dom.selF.value,
-    agrupamento: dom.selA.value,
-    item: dom.selI.value
-  });
-  state.reportRows = rows;
-  applyTableView({ hasSingleItemAnalysis });
-  const hasTrendData = await renderTemporalAnalysis(data, {
-    origem: dom.selO.value,
-    familia: dom.selF.value,
-    agrupamento: dom.selA.value,
-    item: selectedProduct || dom.selI.value
-  });
-  applyReportLayout({ hasSingleItemAnalysis, hasImportComparison, hasTrendData });
-  dom.reportContent.classList.remove('hidden');
 }
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
@@ -650,7 +724,9 @@ function renderTable(rows, options = {}) {
     tr.addEventListener('click', async event => {
       if (event.target.closest('.row-details-toggle')) return;
       const codigo = tr.dataset.codigo;
-      await renderDrillThrough(codigo);
+      await executeOperationalBoundary('drill-through do produto', () => renderDrillThrough(codigo), {
+        message: 'Falha ao carregar o histórico completo do produto.'
+      });
       await runReport({ silent: true, selectedProduct: codigo });
     });
   });
@@ -834,62 +910,67 @@ function exportReport() {
     return;
   }
 
-  const investigationRows = getRowsFromCurrentInvestigationState();
-  const filtrosAtivos = [
-    `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
-    `Família: ${dom.selF.options[dom.selF.selectedIndex]?.textContent || 'TODAS'}`,
-    `Agrupamento: ${dom.selA.options[dom.selA.selectedIndex]?.textContent || 'TODOS'}`,
-    `Produto: ${dom.selI.value || 'TODOS'}`,
-    `Fila: ${state.reportView.quickFilter}`
-  ].join(' | ');
+  // Fronteira operacional da exportação: mantém a análise atual mesmo se XLSX falhar.
+  executeOperationalBoundary('exportar relatório investigativo', async () => {
+    const investigationRows = getRowsFromCurrentInvestigationState();
+    const filtrosAtivos = [
+      `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
+      `Família: ${dom.selF.options[dom.selF.selectedIndex]?.textContent || 'TODAS'}`,
+      `Agrupamento: ${dom.selA.options[dom.selA.selectedIndex]?.textContent || 'TODOS'}`,
+      `Produto: ${dom.selI.value || 'TODOS'}`,
+      `Fila: ${state.reportView.quickFilter}`
+    ].join(' | ');
 
-  const metadataRows = [
-    { Campo: 'Tipo de relatório', Valor: 'Relatório Investigativo Operacional de Custos' },
-    { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
-    { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
-    { Campo: 'Filtros ativos', Valor: filtrosAtivos },
-    { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
-    { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
-  ];
+    const metadataRows = [
+      { Campo: 'Tipo de relatório', Valor: 'Relatório Investigativo Operacional de Custos' },
+      { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
+      { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
+      { Campo: 'Filtros ativos', Valor: filtrosAtivos },
+      { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
+      { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
+    ];
 
-  const exportData = investigationRows.map((row, idx) => {
-    const prioridade = getOperationalPriority(row);
-    const rank = getInvestigationRankScore(row);
-    return {
-      'Prioridade #': idx + 1,
-      'Produto (código)': row.codigo,
-      'Produto (descrição)': row.descricao,
-      'Criticidade': prioridade.label,
-      'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
-      'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
-      'Variação no período (%)': row.variacao.toFixed(2),
-      'Delta monetário última importação (R$)': row.diferenca ?? '—',
-      'Contexto investigativo': buildInvestigativeSummary(row),
-      'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
-      'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
-      'Regime': row.classificacaoInstabilidade,
-      'Competência de referência (data_referencia)': row.dataCompetencia || '—',
-      'Importado em (criado_em)': row.ultimaAtualizacao || '—',
-      'Último custo (R$)': row.ultimoCusto ?? '—',
-      'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
-      'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
-    };
+    const exportData = investigationRows.map((row, idx) => {
+      const prioridade = getOperationalPriority(row);
+      const rank = getInvestigationRankScore(row);
+      return {
+        'Prioridade #': idx + 1,
+        'Produto (código)': row.codigo,
+        'Produto (descrição)': row.descricao,
+        'Criticidade': prioridade.label,
+        'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
+        'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
+        'Variação no período (%)': row.variacao.toFixed(2),
+        'Delta monetário última importação (R$)': row.diferenca ?? '—',
+        'Contexto investigativo': buildInvestigativeSummary(row),
+        'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
+        'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
+        'Regime': row.classificacaoInstabilidade,
+        'Competência de referência (data_referencia)': row.dataCompetencia || '—',
+        'Importado em (criado_em)': row.ultimaAtualizacao || '—',
+        'Último custo (R$)': row.ultimoCusto ?? '—',
+        'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
+        'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
+      };
+    });
+
+    const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
+    const wsData = XLSX.utils.json_to_sheet(exportData);
+    wsData['!autofilter'] = { ref: wsData['!ref'] };
+    wsData['!cols'] = [
+      { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
+      { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');
+    XLSX.utils.book_append_sheet(wb, wsData, 'Fila Investigativa');
+    const filename = buildExportFilename();
+    XLSX.writeFile(wb, filename);
+    showToast('success', `Relatório investigativo exportado: ${filename}`);
+  }, {
+    message: 'Falha ao exportar o relatório. A análise atual foi preservada.'
   });
-
-  const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
-  const wsData = XLSX.utils.json_to_sheet(exportData);
-  wsData['!autofilter'] = { ref: wsData['!ref'] };
-  wsData['!cols'] = [
-    { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
-    { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');
-  XLSX.utils.book_append_sheet(wb, wsData, 'Fila Investigativa');
-  const filename = buildExportFilename();
-  XLSX.writeFile(wb, filename);
-  showToast('success', `Relatório investigativo exportado: ${filename}`);
 }
 
 // ── Gráficos ──────────────────────────────────────────────────────────────────

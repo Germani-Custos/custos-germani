@@ -155,3 +155,7 @@ Exportação não é mais planilha administrativa. Deve funcionar como relatóri
 ## Atualização 2026-05-25 — Saneamento operacional de dados
 
 - Contrato investigativo reforçado: todo produto deve permanecer investigável mesmo sem categorização completa, usando fallback explícito `SEM_AGRUPAMENTO` e auditoria ativa de órfãos.
+
+## Atualização 2026-05-28 — robustez como velocidade investigativa
+
+A execução do **ERR-01** reforça que falhas de rede, Supabase ou bibliotecas auxiliares não podem interromper silenciosamente a investigação. O produto deve preservar o contexto operacional, explicar a falha em linguagem de uso e emitir diagnóstico técnico apenas em modo debug.
