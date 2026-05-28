@@ -11,7 +11,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 - [ ] **SEC-01** 🔴 P — Escapar `value`/`label` em `fillSelect` (`core/report-engine.js:9,13`); mover `escapeHtml` para util compartilhada. → [`seguranca.md`](./seguranca.md)
 - [x] **ERR-01** 🔴 M — `try/catch` de fronteira em `init()` e nos `await` de `runReport` (`view/ui-controller.js:16-24,508-524`). Resolvido no commit `fix(ERR-01): adiciona fronteiras operacionais e tratamento robusto de erros`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [x] **VAL-01** 🟠 P — Normalizar código de produto (notação científica) no fluxo ativo, reusando `normalizeCodigoProduto`. Resolvido no commit `fix(VAL-01): unifica normalização de código de produto no pipeline operacional`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [ ] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card (`core/report-engine.js:181` × `view/ui-controller.js:539,803`). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
+- [x] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card. Resolvido no commit `fix(LOG-01): unifica regra operacional dos alertas investigativos`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)
 - [ ] **SEC-05** 🟠 P — Fixar versões de `xlsx`/`chart.js` (+ SRI) em `index.html`. → [`seguranca.md`](./seguranca.md)
 - [ ] **SEC-03** 🔵 G — Registrar decisão de acesso público + checklist de reativação de RLS/Auth; idealmente RLS de escrita já. → [`seguranca.md`](./seguranca.md)

@@ -128,6 +128,11 @@ Playbook detalhado: [`docs/troubleshooting/playbook-operacional.md`](../troubles
 
 ---
 
+
+## Conferência de alertas (>5%)
+
+Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** deve bater exatamente com a quantidade de linhas exibidas ao clicar no card e com a quantidade exportada quando a fila `alerts` está ativa. A regra operacional é variação absoluta ≥ 5% entre última e penúltima importação (`criado_em`); o período do relatório continua sendo competência (`data_referencia`). Se houver divergência, tratar como incidente de cálculo e ativar `VITE_ENABLE_VERBOSE_LOGS=true` apenas para coletar o log estruturado.
+
 ## 8. Quando algo não estiver coberto aqui
 
 1. Consulte [Manual Técnico](./manual-tecnico.md), [Manual do Usuário](./manual-usuario.md) e `docs/arquitetura/`.

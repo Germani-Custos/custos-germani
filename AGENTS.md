@@ -220,3 +220,6 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 - Atualização 2026-05-28 (ERR-01): `view/ui-controller.js` deve manter fronteiras operacionais explícitas para `init()`, `runReport()` e handlers assíncronos críticos; erros devem ser normalizados com `{ message, technical, timestamp, operation }`, exibidos ao usuário sem quebrar o contexto atual e registrados apenas via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`.
 
 - Atualização 2026-05-28 (VAL-01): `normalizeCodigoProduto()` em `core/spreadsheet-engine.js` é a normalização canônica de `codigo_produto`; fluxos de preview, payload, API, dicionário, cascata, relatório, drill-through e exportação derivada devem reutilizá-la, bloquear linha inválida/ambígua e registrar apenas amostras via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`.
+
+
+- Atualização 2026-05-28 (LOG-01): `classifyAlert()`/`isAlertaCritico()` em `core/report-engine.js` é a fonte canônica do KPI **Alertas (>5%)**; UI, filtros rápidos, tabela, drill-through, ranking/reincidência e exportação devem reutilizar o helper/`filterAlertRows()`, considerando `abs(variacaoTemporal) >= 5` no eixo `criado_em` sem arredondamento prévio; `data_referencia` permanece como recorte de competência.

@@ -15,13 +15,14 @@ Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção
 
 ---
 
-## LOG-01 · 🟠 Médio · KPI "Alertas (>5%)" e seu filtro rápido medem coisas diferentes
+## LOG-01 · ✅ Resolvido em 2026-05-28 · KPI "Alertas (>5%)" e filtro rápido alinhados
 
-- **Local:** contagem do KPI em `core/report-engine.js:181` (`totalAlertas = rows.filter(r => r.alert)`); filtro rápido do card em `view/ui-controller.js:539` e `803` (`row.variacao > 5`).
-- **Evidência:** o KPI **Alertas** conta `row.alert`, que é definido por `alertaImportacao` = variação **entre as duas últimas importações** (`variacaoTemporal`, `core/report-engine.js:140-142`). Já o filtro rápido acionado ao **clicar no card** (`data-kpi-filter="alerts"`) filtra por `row.variacao > 5`, que é a variação **do período inteiro** (`inicial → final`). São métricas distintas.
+- **Local original:** contagem do KPI em `core/report-engine.js:181` (`totalAlertas = rows.filter(r => r.alert)`); filtro rápido do card em `view/ui-controller.js:539` e `803` (`row.variacao > 5`).
+- **Evidência original:** o KPI **Alertas** conta `row.alert`, que é definido por `alertaImportacao` = variação **entre as duas últimas importações** (`variacaoTemporal`, `core/report-engine.js:140-142`). Já o filtro rápido acionado ao **clicar no card** (`data-kpi-filter="alerts"`) filtra por `row.variacao > 5`, que é a variação **do período inteiro** (`inicial → final`). São métricas distintas.
 - **Impacto:** o número exibido no card e a quantidade de linhas que aparecem ao clicá-lo **não batem**, minando a confiança do investigador (contradiz o princípio "encontrar o problema em segundos"). Também há assimetria: `> 5` ignora quedas ≤ -5%, embora "alerta" semântico inclua variações relevantes em ambos os sentidos.
-- **Correção recomendada:** unificar o critério. Filtrar o card "alerts" por `row.alert === true` (mesma base do KPI). Avaliar usar `Math.abs(...) >= 5` para capturar quedas. Centralizar o predicado num único lugar (ex.: função `isAlertRow(row)` em `report-engine.js`) usada pelo KPI **e** pelo filtro.
-- **Critério de aceite:** com dados reais, o número do card "Alertas (>5%)" é **igual** à contagem de linhas exibidas ao clicá-lo.
+- **Correção aplicada (2026-05-28 / LOG-01):** `core/report-engine.js` centraliza a regra em `classifyAlert()`/`isAlertaCritico()` e expõe `filterAlertRows()`. O KPI, filtro rápido, tabela, drill-through, ranking/reincidência e exportação reutilizam essa fonte única.
+- **Semântica padronizada:** alerta é `abs(variacaoTemporal) >= 5` entre as duas últimas importações (`criado_em`), sem arredondamento antes da comparação; altas e quedas são equivalentes. `null` significa sem comparativo e não alerta; `undefined`, `NaN` ou payload sem `variacaoTemporal`/`deltaPerc`/`variacaoPercentual` falham rápido com log apenas via `debugLog`.
+- **Critério de aceite:** com dados reais, o número do card "Alertas (>5%)" é **igual** à contagem de linhas exibidas ao clicá-lo e ao total exportado quando o filtro rápido está ativo.
 
 ---
 

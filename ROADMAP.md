@@ -32,7 +32,7 @@ Objetivo: transformar o sistema de dashboard em motor de investigação.
 ### Entregues
 
 - Score de instabilidade com classificação automática (ESTÁVEL / OSCILANDO / MUITO INSTÁVEL)
-- Alertas automáticos (variação > 5% entre importações)
+- Alertas automáticos (variação absoluta ≥ 5% entre importações, com regra canônica compartilhada por KPI/filtro/exportação)
 - TOP VARIAÇÕES entre últimas 2 importações
 - Evolução temporal de custos com gráfico de linha
 - Badge de tendência (🟢 Estável / 🔺 Alta / 🔻 Queda)
@@ -61,7 +61,7 @@ Objetivo: registrar comportamento histórico e identificar padrões.
 
 ### Funcionalidades planejadas
 
-- Histórico de alertas por produto (quando foi alertado, com que frequência)
+- Histórico de alertas por produto (quando foi alertado, com que frequência, mantendo a regra canônica `abs(variacaoTemporal) >= 5`)
 - Detecção de reincidência (produto que voltou a oscilar após período estável)
 - Linha do tempo de regime: quando um produto mudou de ESTÁVEL → INSTÁVEL → ESTÁVEL
 - Comparação entre períodos equivalentes (este mês vs. mesmo mês do ano anterior)

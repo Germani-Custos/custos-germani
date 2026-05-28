@@ -1,7 +1,7 @@
 /* Responsabilidade: controle de interface, eventos, gráficos e fluxo investigativo. */
 import { api } from '../src/services/api.js';
 import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial, normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
-import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis } from '../core/report-engine.js';
+import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico, filterAlertRows } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
 import { debugLog } from '../src/config/app-config.js';
@@ -621,14 +621,16 @@ async function runReport(options = {}) {
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
 
+function getRowsMatchingQuickFilter(rows, operation) {
+  if (state.reportView.quickFilter === 'alerts') return filterAlertRows(rows, { operation });
+  if (state.reportView.quickFilter === 'positive') return rows.filter(row => row.variacao > 0);
+  if (state.reportView.quickFilter === 'regime') return rows.filter(row => row.mudouRegime === true);
+  return rows;
+}
+
 function applyTableView(options = {}) {
   const { hasSingleItemAnalysis = false } = options;
-  const filteredRows = state.reportRows.filter(row => {
-    if (state.reportView.quickFilter === 'alerts') return row.variacao > 5;
-    if (state.reportView.quickFilter === 'positive') return row.variacao > 0;
-    if (state.reportView.quickFilter === 'regime') return row.mudouRegime === true;
-    return true;
-  });
+  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'filtro rápido Alertas (>5%)');
   const sortedRows = [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
   renderTable(sortedRows, { hasSingleItemAnalysis });
   renderActiveFilterChips();
@@ -705,7 +707,7 @@ function renderTable(rows, options = {}) {
     const prioridade = getOperationalPriority(row);
     const contexto = buildInvestigativeSummary(row);
     return `
-      <tr class="investigation-row ${row.alert ? 'row-alert' : row.mudouRegime ? 'row-regime' : ''}" data-codigo="${escapeHtml(row.codigo)}" data-row-type="main">
+      <tr class="investigation-row ${isAlertaCritico(row) ? 'row-alert' : row.mudouRegime ? 'row-regime' : ''}" data-codigo="${escapeHtml(row.codigo)}" data-row-type="main">
         <td>
           <div class="product-main"><strong>${escapeHtml(row.codigo)}</strong><small>${escapeHtml(row.descricao)}</small></div>
         </td>
@@ -757,11 +759,11 @@ function renderTable(rows, options = {}) {
 
 function getOperationalPriority(row) {
   const absVariacao = Math.abs(Number(row.variacao || 0));
-  const reincidencia = Math.abs(Number(row.variacaoTemporal || 0)) >= 5;
+  const reincidencia = isAlertaCritico(row);
   if (row.mudouRegime || row.classificacaoInstabilidade === 'MUITO INSTÁVEL' || absVariacao >= 20) {
     return { label: '🔴 Crítico', className: 'critical', reason: 'Mudança de regime, instabilidade extrema ou variação muito alta.' };
   }
-  if (row.alert || absVariacao >= 10 || row.classificacaoInstabilidade === 'OSCILANDO') {
+  if (isAlertaCritico(row) || absVariacao >= 10 || row.classificacaoInstabilidade === 'OSCILANDO') {
     return { label: '🟠 Atenção', className: 'attention', reason: 'Variação relevante com potencial impacto operacional.' };
   }
   if (reincidencia || absVariacao >= 3) {
@@ -782,7 +784,7 @@ function buildInvestigativeSummary(row) {
   if (row.mudouRegime) return 'Mudou regime após fase estável; priorizar investigação temporal.';
   if (row.classificacaoInstabilidade === 'MUITO INSTÁVEL') return 'Oscilação crescente com comportamento instável no período.';
   if (Math.abs(Number(row.variacao || 0)) >= 10) return `Variação expressiva de ${row.variacao.toFixed(2)}% no recorte analisado.`;
-  if (Math.abs(Number(row.variacaoTemporal || 0)) >= 5) return 'Nova variação relevante na última importação (reincidência).';
+  if (isAlertaCritico(row)) return 'Nova variação relevante na última importação (reincidência).';
   return 'Comportamento sem ruptura relevante; manter monitoramento contínuo.';
 }
 
@@ -835,7 +837,7 @@ async function renderDrillThrough(codigoProduto) {
       </thead>
       <tbody>
         ${history.map(row => {
-          const isAlert = row.deltaPerc !== null && Math.abs(row.deltaPerc) >= 5;
+          const isAlert = isAlertaCritico({ deltaPerc: row.deltaPerc });
           const deltaText = row.delta !== null
             ? `${row.delta >= 0 ? '+' : ''}R$ ${formatCurrencyBRL(Math.abs(row.delta))}`
             : '—';
@@ -872,7 +874,7 @@ function getInvestigationRankScore(row) {
   const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
   const regimePeso = row.mudouRegime ? 1 : 0;
   const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
-  const reincidencia = Math.abs(Number(row.variacaoTemporal || 0)) >= 5 ? 1 : 0;
+  const reincidencia = isAlertaCritico(row) ? 1 : 0;
   const instabilidade = Number(row.scoreInstabilidade || 0);
   return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
 }
@@ -889,12 +891,7 @@ function compareByInvestigativePriority(a, b) {
 }
 
 function getRowsFromCurrentInvestigationState() {
-  const filteredRows = state.reportRows.filter(row => {
-    if (state.reportView.quickFilter === 'alerts') return row.variacao > 5;
-    if (state.reportView.quickFilter === 'positive') return row.variacao > 0;
-    if (state.reportView.quickFilter === 'regime') return row.mudouRegime === true;
-    return true;
-  });
+  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa');
 
   const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
   if (hasManualSort) {

@@ -96,6 +96,15 @@ Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operac
 
 > ⚠️ O método `importarHistoricoCustosComLog` segue grande e há caminho legado de payload — ver `MNT-06` antes de refatorar. O item `VAL-01` foi resolvido centralizando `codigo_produto` em `normalizeCodigoProduto()` no preview, payload, API, relatório e drill-through.
 
+
+### Contrato de alerta investigativo (LOG-01)
+
+- `classifyAlert()`/`isAlertaCritico()` em `core/report-engine.js` é a única fonte de verdade para o KPI **Alertas (>5%)** e derivados.
+- Base temporal: `variacaoTemporal`, calculada entre última e penúltima importação pelo eixo `criado_em`; `data_referencia` continua sendo apenas o recorte de competência do relatório.
+- Critério: `Math.abs(percentual) >= 5`, sem arredondamento antes da comparação; variação negativa (queda) alerta com a mesma prioridade operacional que alta.
+- `null` representa ausência legítima de comparativo e retorna não alerta; `undefined`, `NaN` ou payload sem percentual canônico deve lançar erro para impedir contagem silenciosa divergente.
+- UI, tabela, drill-through, ranking/reincidência e exportação devem chamar o helper ou `filterAlertRows()`, nunca comparar `> 5` inline.
+
 ### Contrato de código de produto
 
 - `normalizeCodigoProduto()` em `core/spreadsheet-engine.js` é a única normalização canônica de identificadores de produto.

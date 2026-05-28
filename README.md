@@ -42,7 +42,7 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
 4. Clicar em qualquer linha da tabela → abre **drill-through** com histórico completo de importações
 5. Usar KPIs clicáveis para filtrar rapidamente:
    - **Itens analisados**: todos
-   - **Alertas (>5%)**: variações relevantes entre importações
+   - **Alertas (>5%)**: variações absolutas ≥ 5% entre as duas últimas importações (`criado_em`), usando a mesma regra do filtro rápido/exportação
    - **Mudanças de Regime**: produtos que eram ESTÁVEL e ficaram instáveis
    - **Média de variação**: variações positivas
 6. Exportar relatório operacional para Excel (XLSX com abas `Contexto` e `Fila Investigativa`)
@@ -161,7 +161,7 @@ Compara automaticamente os dois últimos eventos de importação (`criado_em`):
 
 ### Alerta de Importação
 
-Variação > 5% entre os dois últimos imports de um produto → badge ALERTA.
+Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`criado_em`) de um produto → badge ALERTA, usando a mesma regra do KPI/filtro.
 
 ---
 
@@ -237,6 +237,11 @@ Variação > 5% entre os dois últimos imports de um produto → badge ALERTA.
 ### Normalização de código de produto
 
 `normalizeCodigoProduto()` é a função canônica para todo identificador de produto. O mesmo código é normalizado antes do preview, do payload de importação, da validação API, dos filtros/cascata, do relatório, do drill-through e da exportação. Ela remove espaços/caracteres invisíveis, preserva zeros à esquerda quando vêm como texto, expande notação científica do Excel e bloqueia códigos ambíguos em vez de persistir uma chave parcialmente mutada. Logs de mutação são emitidos apenas via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`, com amostras limitadas.
+
+
+### Regra operacional de alerta (>5%)
+
+`isAlertaCritico()` / `classifyAlert()` em `core/report-engine.js` é a fonte única para alerta investigativo. A regra usa a variação percentual entre as duas últimas importações (`variacaoTemporal`, eixo `criado_em`) e considera alerta quando `abs(variação) >= 5`, sem arredondar antes da comparação. Altas e quedas entram no mesmo conjunto lógico. Quando não há comparativo anterior (`null`), o item não é alerta; `undefined`, `NaN` ou payload sem percentual canônico geram falha operacional para evitar KPI/filtro/exportação inconsistentes. O período escolhido continua filtrado por `data_referencia`, mas o alerta mede mudança entre importações.
 
 ### Produto novo
 
@@ -340,3 +345,10 @@ Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>
 - A importação passou a centralizar o identificador de produto em `normalizeCodigoProduto()` para impedir divergência causada por Excel/notação científica, espaços invisíveis, zeros à esquerda textuais e formatos numéricos mistos.
 - Linhas com código inválido são bloqueadas no preview/API e contabilizadas como falha de linha, sem derrubar o lote e sem persistência ambígua.
 - A mudança não altera contratos Supabase, regras investigativas nem a distinção temporal: `data_referencia` continua sendo competência operacional; `criado_em` continua sendo evento de importação.
+
+
+## Atualização 2026-05-28 (LOG-01)
+
+- O KPI **Alertas (>5%)**, o filtro rápido do card, os destaques da tabela, o drill-through e a exportação passaram a reutilizar a mesma regra canônica `isAlertaCritico()`/`classifyAlert()`.
+- A semântica ficou explícita: alerta é `abs(variacaoTemporal) >= 5` entre as duas últimas importações (`criado_em`), sem arredondamento prévio, cobrindo altas e quedas; ausência real de comparativo (`null`) não alerta, mas `undefined`/`NaN` falha rápido.
+- A mudança não altera visual, KPIs existentes, Supabase, `scoreInstabilidade` nem a distinção temporal: `data_referencia` filtra a competência analisada; `criado_em` define última/penúltima importação.
