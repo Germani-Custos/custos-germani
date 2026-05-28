@@ -1,6 +1,6 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
-Atualizado em: **2026-05-25**.
+Atualizado em: **2026-05-28**.
 
 ## Objetivo
 
@@ -57,6 +57,18 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 - Fail-fast: código vazio, decimal ambíguo ou não inteiro em identificador numérico gera erro de linha; o lote segue com as demais linhas válidas.
 - Temporalidade preservada: a normalização altera apenas a chave de negócio `codigo_produto`; `data_referencia` e `criado_em` mantêm seus significados separados.
 
+
+### Regra canônica de alerta (`LOG-01`)
+
+| Camada | Método/Campo | Esperado | Existe? | Status |
+|---|---|---|---|---|
+| report-engine | `classifyAlert()` / `isAlertaCritico()` | Fonte única para alerta `abs(percentual) >= 5` sem arredondamento prévio | Sim | ✅ |
+| report-engine/UI | `filterAlertRows()` | KPI **Alertas (>5%)**, filtro rápido e exportação retornam o mesmo conjunto lógico | Sim | ✅ |
+| UI drill-through | `deltaPerc` via `isAlertaCritico({deltaPerc})` | Destaque visual usa o mesmo threshold absoluto, inclusive quedas | Sim | ✅ |
+| exportação | fila `alerts` | Exporta exatamente as linhas do filtro rápido ativo | Sim | ✅ |
+
+Temporalidade: a seleção do relatório continua por `data_referencia`; o alerta compara última vs. penúltima importação no eixo `criado_em`. `null` é ausência legítima de comparativo e não alerta; `undefined`/`NaN` falha rápido.
+
 ## 5) Matriz Exportação → report-engine/UI
 
 | Camada | Método/Campo | Esperado | Existe? | Status |
@@ -78,6 +90,11 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 3. **Inconsistência de retorno e erro contextual** em métodos críticos da API.
    - Causa: respostas heterogêneas e propagação direta de erros sem contexto operacional.
    - Correção: padronização de retorno `{ data, error }` + `OperationalContractError` com `details` e causa em `getHistorico`, `upsertHistoricoCustos`, `getLatestImportComparison`, `getTopVariacoesImportacao` e `getProductHistory`.
+
+
+4. **Divergência do KPI/filtro de alertas (LOG-01)**.
+   - Causa: KPI contava `row.alert` por `variacaoTemporal`, enquanto filtro rápido/exportação usavam `row.variacao > 5` do período.
+   - Correção: helper canônico `classifyAlert()`/`isAlertaCritico()` e `filterAlertRows()` aplicados a KPI, filtro, tabela, drill-through, ranking e exportação.
 
 ## Contrato padronizado de erro (operacional)
 

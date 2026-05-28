@@ -78,7 +78,7 @@ Clicar em qualquer produto na tabela abre o histórico completo de importações
 - Competência (data_referencia): período de vigência do custo
 - Importado em (criado_em): quando o dado entrou no sistema
 - Delta monetário e percentual vs. registro anterior
-- Destaque visual para variações acima de 5%
+- Destaque visual para variações absolutas ≥ 5% pela regra canônica de alerta
 
 ### Fila investigativa com baixa carga cognitiva
 A tabela principal prioriza leitura operacional com hierarquia clara:
@@ -127,7 +127,7 @@ Banner visível na tela de importação quando há produtos sem categorização 
 ### Médio prazo
 
 - Priorização automática de investigação (ranking de risco)
-- Memória comportamental: histórico de alertas por produto
+- Memória comportamental: histórico de alertas por produto (reutilizando a semântica canônica de alerta ≥5% por `criado_em`)
 - Detecção de sazonalidade vs. ruptura
 - Insights operacionais textuais ("produto X oscilou 3 meses seguidos")
 
@@ -164,3 +164,8 @@ A execução do **ERR-01** reforça que falhas de rede, Supabase ou bibliotecas 
 ## Atualização 2026-05-28 — identidade operacional de produto
 
 A execução do **VAL-01** reforça que `codigo_produto` é chave investigativa, não dado visual de planilha. O mesmo produto deve atravessar preview, importação, relatório, drill-through e exportação com a mesma chave canônica, mesmo quando o Excel apresentar notação científica ou formatações mistas. A mudança preserva a separação temporal: `data_referencia` é competência; `criado_em` é importação.
+
+
+## Atualização 2026-05-28 — LOG-01 e confiança operacional dos alertas
+
+A execução do **LOG-01** transforma o alerta investigativo em contrato explícito: KPI, filtro rápido, fila, drill-through e exportação usam a mesma função canônica. Alerta significa variação absoluta ≥ 5% entre a última e a penúltima importação (`criado_em`), sem arredondamento prévio e incluindo altas e quedas. O recorte temporal do relatório segue sendo `data_referencia`; a regra de alerta apenas qualifica a mudança observada entre eventos de importação.

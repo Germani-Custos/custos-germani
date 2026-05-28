@@ -1,7 +1,13 @@
 /* Responsabilidade: cálculos analíticos e lógica de cascata (Origem -> Família -> Agrupamento -> Item). */
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
+import { debugLog } from '../src/config/app-config.js';
 
-const LIMIAR_ALERTA_VARIACAO_PERCENTUAL = 5;
+const ALERTA_CRITICO_CONFIG = Object.freeze({
+  thresholdPercent: 5,
+  comparison: 'absolute_greater_or_equal',
+  basis: 'variacaoTemporal',
+  temporalAxis: 'criado_em'
+});
 const LIMIAR_ESTAVEL = 3;
 const LIMIAR_OSCILANDO = 8;
 const MIN_PONTOS_REGIME = 4;
@@ -18,6 +24,90 @@ export function fillSelect(select, options, first, selectedValue = null) {
     const hasOption = [first.value, ...options.map(opt => opt.value)].includes(String(selectedValue));
     select.value = hasOption ? String(selectedValue) : String(first.value);
   }
+}
+
+
+function assertValidAlertThreshold() {
+  if (!Number.isFinite(ALERTA_CRITICO_CONFIG.thresholdPercent) || ALERTA_CRITICO_CONFIG.thresholdPercent <= 0) {
+    debugLog('LOG-01 threshold de alerta inválido', { threshold: ALERTA_CRITICO_CONFIG.thresholdPercent });
+    throw new Error('Configuração operacional inválida: limiar de alerta crítico.');
+  }
+}
+
+function extractAlertPercentual(input) {
+  if (typeof input === 'number') return { value: input, field: 'number' };
+  if (!input || typeof input !== 'object') {
+    throw new Error('Payload de alerta crítico inválido: objeto ausente.');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(input, 'variacaoTemporal')) {
+    return { value: input.variacaoTemporal, field: 'variacaoTemporal' };
+  }
+  if (Object.prototype.hasOwnProperty.call(input, 'deltaPerc')) {
+    return { value: input.deltaPerc, field: 'deltaPerc' };
+  }
+  if (Object.prototype.hasOwnProperty.call(input, 'variacaoPercentual')) {
+    return { value: input.variacaoPercentual, field: 'variacaoPercentual' };
+  }
+
+  debugLog('LOG-01 payload de alerta sem percentual canônico', {
+    keys: Object.keys(input).slice(0, 12),
+    codigo: input.codigo || input.codigo_produto || null
+  });
+  throw new Error('Payload de alerta crítico inválido: percentual canônico ausente.');
+}
+
+export function getAlertaCriticoConfig() {
+  return ALERTA_CRITICO_CONFIG;
+}
+
+export function classifyAlert(input) {
+  assertValidAlertThreshold();
+  const { value, field } = extractAlertPercentual(input);
+
+  if (value === null) {
+    return { isAlert: false, thresholdPercent: ALERTA_CRITICO_CONFIG.thresholdPercent, percentual: null, field, reason: 'sem_comparativo' };
+  }
+
+  if (value === undefined) {
+    debugLog('LOG-01 percentual de alerta indefinido', { field, codigo: input?.codigo || input?.codigo_produto || null });
+    throw new Error(`Cálculo crítico ausente para alerta: ${field}.`);
+  }
+
+  const percentual = Number(value);
+  if (!Number.isFinite(percentual)) {
+    debugLog('LOG-01 percentual de alerta não numérico', { field, value, codigo: input?.codigo || input?.codigo_produto || null });
+    throw new Error(`Cálculo crítico inválido para alerta: ${field}.`);
+  }
+
+  return {
+    isAlert: Math.abs(percentual) >= ALERTA_CRITICO_CONFIG.thresholdPercent,
+    thresholdPercent: ALERTA_CRITICO_CONFIG.thresholdPercent,
+    percentual,
+    field,
+    reason: Math.abs(percentual) >= ALERTA_CRITICO_CONFIG.thresholdPercent ? 'variacao_absoluta_critica' : 'abaixo_do_limiar'
+  };
+}
+
+export function isAlertaCritico(input) {
+  return classifyAlert(input).isAlert;
+}
+
+export function filterAlertRows(rows, context = {}) {
+  return (rows || []).filter(row => {
+    const computed = classifyAlert(row).isAlert;
+    if (Object.prototype.hasOwnProperty.call(row, 'alert') && row.alert !== computed) {
+      debugLog('LOG-01 divergência de alerta crítico', {
+        operation: context.operation || 'filtro de alerta',
+        codigo: row.codigo || row.codigo_produto || null,
+        alertPersistido: row.alert,
+        alertCalculado: computed,
+        variacaoTemporal: row.variacaoTemporal
+      });
+      throw new Error('Divergência operacional no cálculo de alertas críticos.');
+    }
+    return computed;
+  });
 }
 
 function isNullLike(value) {
@@ -140,9 +230,7 @@ export function buildReportRows(historico, masters = { origens: [], familias: []
     const variacaoTemporal = penultimo && penultimoCusto > 0
       ? ((ultimoCusto - penultimoCusto) / penultimoCusto) * 100
       : null;
-    const alertaImportacao = Number.isFinite(variacaoTemporal)
-      ? Math.abs(variacaoTemporal) >= LIMIAR_ALERTA_VARIACAO_PERCENTUAL
-      : false;
+    const alertaImportacao = classifyAlert({ variacaoTemporal }).isAlert;
 
     const scoreInstabilidade = calcInstabilityScore(byPeriodo);
     const classificacaoInstabilidade = classifyInstability(scoreInstabilidade);
@@ -181,7 +269,7 @@ export function buildReportRows(historico, masters = { origens: [], familias: []
 
 export function calculateKpis(rows) {
   const totalItens = rows.length;
-  const totalAlertas = rows.filter(r => r.alert).length;
+  const totalAlertas = filterAlertRows(rows, { operation: 'KPI Alertas (>5%)' }).length;
   const mudancasRegime = rows.filter(r => r.mudouRegime).length;
   const mediaVariacao = totalItens ? rows.reduce((acc, cur) => acc + cur.variacao, 0) / totalItens : 0;
   return { totalItens, totalAlertas, mediaVariacao, mudancasRegime };

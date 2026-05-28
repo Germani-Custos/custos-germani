@@ -85,7 +85,7 @@ São **clicáveis** — clicar filtra a tabela:
 | Indicador | O que mostra |
 |---|---|
 | **Itens analisados** | Quantos produtos entraram no recorte. |
-| **Alertas (>5%)** | Produtos com variação relevante entre as duas últimas importações. |
+| **Alertas (>5%)** | Produtos com variação absoluta ≥ 5% entre as duas últimas importações (`criado_em`); o número do card é o mesmo conjunto do filtro rápido e da exportação. |
 | **Mudanças de Regime** | Produtos que eram **estáveis** e ficaram **instáveis** — a anomalia mais importante. |
 | **Média de variação** | Variação média do período (clicar mostra os de variação positiva). |
 
