@@ -166,3 +166,7 @@ Implementada (Fase 2). Permite **consultar e editar** os manuais (`docs/manuais/
 - Índice da documentação de arquitetura: [`docs/arquitetura/indice-documentacao-kustos.md`](../arquitetura/indice-documentacao-kustos.md).
 - Operação e troubleshooting: [Manual de Operação](./manual-operacao.md) · [`docs/troubleshooting/playbook-operacional.md`](../troubleshooting/playbook-operacional.md) · [`docs/troubleshooting/guia-integracao.md`](../troubleshooting/guia-integracao.md).
 - Auditoria técnica e backlog: [`docs/auditoria/`](../auditoria/README.md).
+
+## Atualização 2026-05-28 — ERR-01 / fronteiras assíncronas da UI
+
+`view/ui-controller.js` passou a centralizar erros operacionais em `normalizeOperationalError(error, operation)` e `executeOperationalBoundary(operation, action, options)`. Use esse padrão em novos handlers assíncronos de fronteira (rede, Supabase, XLSX, Chart), preservando contexto de tela e usando `debugLog` para detalhes técnicos somente quando `VITE_ENABLE_VERBOSE_LOGS=true`. Não registrar payloads completos nem dados sensíveis.

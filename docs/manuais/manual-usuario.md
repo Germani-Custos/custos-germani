@@ -153,3 +153,7 @@ No menu **Documentação** você consulta e edita os próprios manuais, sem sair
 | Tela de "Configuração do ambiente não encontrada" | É problema técnico de configuração — acione o responsável ([Manual de Operação](./manual-operacao.md)). |
 
 > Esta documentação é viva. Se algo na tela não corresponder a este manual, **atualize o manual** (ou avise quem mantém) — ver [Regras Gerais](../regras-gerais.md).
+
+## Atualização 2026-05-28 — mensagens de falha operacional
+
+Quando ocorrer instabilidade de rede, Supabase indisponível ou falha em gráficos/exportação, a tela deve mostrar uma mensagem amigável e preservar os filtros e resultados já carregados sempre que possível. Se o relatório principal não puder ser consultado, corrija a conexão/ambiente e rode a análise novamente; os conceitos temporais exibidos continuam os mesmos: `data_referencia` é competência operacional e `criado_em` é evento de importação.
