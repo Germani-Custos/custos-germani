@@ -1,4 +1,5 @@
 /* Responsabilidade: cálculos analíticos e lógica de cascata (Origem -> Família -> Agrupamento -> Item). */
+import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 
 const LIMIAR_ALERTA_VARIACAO_PERCENTUAL = 5;
 const LIMIAR_ESTAVEL = 3;
@@ -47,7 +48,7 @@ export function calculateCascadeOptions(state, masters) {
   const hierarchySource = (masters.hierarquia || []).length ? masters.hierarquia : (masters.dicionario || []);
   const dictionary = hierarchySource.map(item => ({
     ...item,
-    codigo_produto: item?.codigo_produto ?? item?.produto ?? item?.codigo ?? null,
+    codigo_produto: normalizeCodigoProduto(item?.codigo_produto ?? item?.produto ?? item?.codigo),
     descricao: item?.descricao ?? item?.nome ?? item?.produto_descricao ?? null
   }))
     .filter(item => !isNullLike(item?.codigo_produto));
@@ -86,7 +87,7 @@ export function calculateCascadeOptions(state, masters) {
 
   const allProducts = (masters.produtos || [])
     .map(item => ({
-      codigo_produto: String(item?.codigo_produto || '').trim(),
+      codigo_produto: normalizeCodigoProduto(item?.codigo_produto),
       descricao: item?.descricao || '-'
     }))
     .filter(item => !isNullLike(item?.codigo_produto));
@@ -94,7 +95,7 @@ export function calculateCascadeOptions(state, masters) {
   const selectedAnyFilter = state.origem !== 'TODAS' || state.familia !== 'TODAS' || state.agrupamento !== 'TODOS';
   const productCodesByCascade = new Set(byFamilia
     .filter(item => state.agrupamento === 'TODOS' || String(item.agrupamento_cod) === String(state.agrupamento))
-    .map(item => String(item?.codigo_produto || '').trim())
+    .map(item => normalizeCodigoProduto(item?.codigo_produto))
     .filter(Boolean));
   const productBase = selectedAnyFilter
     ? allProducts.filter(item => productCodesByCascade.has(item.codigo_produto))
@@ -103,7 +104,7 @@ export function calculateCascadeOptions(state, masters) {
   const productMap = new Map();
   productBase.forEach(item => {
     if (!item.codigo_produto) return;
-    const codigo = String(item.codigo_produto).trim();
+    const codigo = normalizeCodigoProduto(item.codigo_produto);
     if (!productMap.has(codigo)) {
       productMap.set(codigo, { value: codigo, label: `${codigo} - ${item.descricao || '-'}` });
     }
@@ -116,8 +117,10 @@ export function calculateCascadeOptions(state, masters) {
 export function buildReportRows(historico, masters = { origens: [], familias: [], agrupamentos: [] }) {
   const grouped = {};
   historico.forEach(item => {
-    if (!grouped[item.codigo_produto]) grouped[item.codigo_produto] = [];
-    grouped[item.codigo_produto].push(item);
+    const codigo = normalizeCodigoProduto(item?.codigo_produto);
+    if (!codigo) return;
+    if (!grouped[codigo]) grouped[codigo] = [];
+    grouped[codigo].push({ ...item, codigo_produto: codigo });
   });
 
   return Object.values(grouped).map(items => {

@@ -160,4 +160,11 @@ Objetivo: antecipar investigação humana.
 ## Atualização contínua — 28/05/2026 (ERR-01)
 
 - Concluído o item **ERR-01** do backlog: fronteiras operacionais de erro em `init()`, `runReport()` e handlers assíncronos críticos do frontend.
-- Próximo foco permanece nos demais itens da Onda 1, sem refatoração ampla: `SEC-01`, `VAL-01`, `LOG-01`, `SEC-04` e `SEC-05`.
+- Próximo foco permanece nos demais itens da Onda 1, sem refatoração ampla: `SEC-01`, `LOG-01`, `SEC-04` e `SEC-05`. `VAL-01` foi concluído em 28/05/2026.
+
+
+## Atualização contínua — 28/05/2026 (VAL-01)
+
+- Concluído o item **VAL-01** do backlog: normalização canônica de `codigo_produto` com `normalizeCodigoProduto()` em preview, payload, API, cascata, relatório, drill-through e exportação derivada.
+- O fluxo agora bloqueia linha com código inválido/ambíguo, preserva zeros à esquerda quando a origem vem textual e reduz mutações causadas por notação científica do Excel.
+- Sem alteração na arquitetura FATO × DIMENSÃO nem na semântica temporal (`data_referencia` competência; `criado_em` importação).

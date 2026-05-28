@@ -218,3 +218,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 - Atualização 2026-05-25 (documentação na tela — auditoria): a view "Documentação" passou a incluir também os docs de `docs/auditoria/*.md` (seletor agrupado em Manuais / Regras / Auditoria técnica); allowlist da Function `api/save-doc.js` estendida para `docs/auditoria/*.md` (aceita `README.md`).
 
 - Atualização 2026-05-28 (ERR-01): `view/ui-controller.js` deve manter fronteiras operacionais explícitas para `init()`, `runReport()` e handlers assíncronos críticos; erros devem ser normalizados com `{ message, technical, timestamp, operation }`, exibidos ao usuário sem quebrar o contexto atual e registrados apenas via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`.
+
+- Atualização 2026-05-28 (VAL-01): `normalizeCodigoProduto()` em `core/spreadsheet-engine.js` é a normalização canônica de `codigo_produto`; fluxos de preview, payload, API, dicionário, cascata, relatório, drill-through e exportação derivada devem reutilizá-la, bloquear linha inválida/ambígua e registrar apenas amostras via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`.

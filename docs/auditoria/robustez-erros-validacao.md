@@ -25,13 +25,13 @@ Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção
 
 ---
 
-## VAL-01 · 🟠 Médio · Código de produto em notação científica não é normalizado no fluxo ativo
+## VAL-01 · ✅ Resolvido · Código de produto em notação científica normalizado no fluxo ativo
 
-- **Local:** fluxo ativo `view/ui-controller.js:208` (`buildImportPreview` faz `String(row[mapping.codigo_produto]).trim()`); existe a função correta `normalizeCodigoProduto` em `core/spreadsheet-engine.js:137-147`, **mas ela só é usada por `mapRowsToPayload`, que está morto** (ver `MNT-06`).
-- **Evidência:** o Excel converte códigos numéricos longos (ex.: `7891234560123`) para notação científica (`7.89123e+12`). `normalizeCodigoProduto` (linhas 141-143) detecta e reverte isso; o caminho ativo **não**, gravando o código corrompido.
+- **Local original:** fluxo ativo `view/ui-controller.js` (`buildImportPreview`) fazia `String(row[mapping.codigo_produto]).trim()`; a função `normalizeCodigoProduto` existia em `core/spreadsheet-engine.js`, mas não era usada em todos os caminhos ativos.
+- **Evidência original:** o Excel podia converter códigos numéricos longos (ex.: `7891234560123`) para notação científica (`7.89123e+12`), e caminhos paralelos gravavam o código corrompido.
 - **Impacto:** **integridade de dados** — o mesmo produto entra com códigos diferentes em competências diferentes, quebrando o drill-through, a deduplicação `unique_produto_data` e a análise temporal. Difícil de perceber (silencioso).
-- **Correção recomendada:** aplicar `normalizeCodigoProduto` no fluxo ativo (em `buildImportPreview` e/ou ao montar o `payload` em `handleImport`, `view/ui-controller.js:161-168`), reutilizando a função existente em vez de duplicar.
-- **Critério de aceite:** importar planilha com um código que o Excel exibe como `7,89123E+12`; o registro gravado tem o código inteiro original e o drill-through encontra todo o histórico sob um único código.
+- **Correção aplicada (2026-05-28 / VAL-01):** `normalizeCodigoProduto()` foi promovida a função canônica exportada e reutilizada no preview, payload, API de importação, garantia de dicionário, filtros/cascata, relatório, drill-through e comparações/exportação derivadas. A leitura XLSX passou a usar `raw:true` para reduzir mutação por formatação visual do Excel.
+- **Critério de aceite:** importar planilha com um código que o Excel exibe como `7,89123E+12`; o registro gravado tem o código inteiro original e o drill-through encontra todo o histórico sob um único código. Linhas com código ambíguo/inválido são bloqueadas por linha, sem derrubar o lote.
 
 ---
 

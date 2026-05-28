@@ -2,6 +2,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 import { appConfig, debugLog } from '../config/app-config.js';
+import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
 
 const TABLES = {
   historico: 'historico_custos',
@@ -45,7 +46,7 @@ function applyCascadeFilterInMemory(rows, filters) {
     if (filters.origem !== 'TODAS' && String(item?.origem_id) !== String(filters.origem)) return false;
     if (filters.familia !== 'TODAS' && String(item?.familia_id) !== String(filters.familia)) return false;
     if (filters.agrupamento !== 'TODOS' && String(item?.agrupamento_cod) !== String(filters.agrupamento)) return false;
-    if (filters.item !== 'TODOS' && String(item.codigo_produto) !== String(filters.item)) return false;
+    if (filters.item !== 'TODOS' && normalizeCodigoProduto(item.codigo_produto) !== normalizeCodigoProduto(filters.item)) return false;
     return true;
   });
 }
@@ -115,7 +116,7 @@ function normalizeMoneyValue(value) {
 function validateHistoricoRow(row = {}) {
   const erros = [];
 
-  if (!String(row?.codigo_produto || '').trim()) erros.push('codigo_produto vazio');
+  if (!normalizeCodigoProduto(row?.codigo_produto)) erros.push('codigo_produto inválido ou vazio');
   if (!String(row?.descricao || '').trim()) erros.push('descricao vazia');
   if (!String(row?.custo_total ?? '').trim()) erros.push('custo_total vazio');
   const custoVariavel = normalizeMoneyValue(row?.custo_variavel);
@@ -133,7 +134,7 @@ function mapHierarchyRows(dicionario = []) {
   return (dicionario || [])
     .filter(item => !isNullLike(item?.codigo_produto))
     .map(item => ({
-      codigo_produto: String(item.codigo_produto).trim(),
+      codigo_produto: normalizeCodigoProduto(item.codigo_produto),
       origem_id: item?.origem_id ?? null,
       familia_id: item?.familia_id ?? null,
       agrupamento_cod: item?.agrupamento_cod ?? null,
@@ -152,7 +153,7 @@ async function getHistoricoWithClientFallback(filters) {
   if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
   if (!historicoBase?.length) return ok([]);
 
-  const codigos = [...new Set(historicoBase.map(item => item.codigo_produto).filter(Boolean))];
+  const codigos = [...new Set(historicoBase.map(item => normalizeCodigoProduto(item.codigo_produto)).filter(Boolean))];
   const { data: dicionarioRows, error: dicionarioError } = await supabase
     .from(TABLES.dicionario)
     .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
@@ -160,11 +161,12 @@ async function getHistoricoWithClientFallback(filters) {
 
   if (dicionarioError) return fail('Falha ao enriquecer histórico com dimensão de produtos.', { metodo: 'getHistorico', tabela: TABLES.dicionario }, dicionarioError);
 
-  const dicionarioByCodigo = new Map((dicionarioRows || []).map(row => [String(row.codigo_produto), row]));
+  const dicionarioByCodigo = new Map((dicionarioRows || []).map(row => [normalizeCodigoProduto(row.codigo_produto), row]));
 
   const enrichedRows = historicoBase
     .map(item => {
-      const dictionaryEntry = dicionarioByCodigo.get(String(item.codigo_produto));
+      const codigoNormalizado = normalizeCodigoProduto(item.codigo_produto);
+      const dictionaryEntry = dicionarioByCodigo.get(codigoNormalizado);
       return {
         ...item,
         descricao: dictionaryEntry?.descricao || item.descricao || null,
@@ -179,7 +181,7 @@ async function getHistoricoWithClientFallback(filters) {
 
 async function enrichRowsWithDicionario(rows = []) {
   const codigos = [...new Set((rows || [])
-    .map(item => String(item?.codigo_produto || '').trim())
+    .map(item => normalizeCodigoProduto(item?.codigo_produto))
     .filter(Boolean))];
 
   if (!codigos.length) return rows;
@@ -191,9 +193,9 @@ async function enrichRowsWithDicionario(rows = []) {
 
   if (dicionarioError) return { data: null, error: dicionarioError };
 
-  const byCodigo = new Map((dicionarioRows || []).map(row => [String(row.codigo_produto).trim(), row]));
+  const byCodigo = new Map((dicionarioRows || []).map(row => [normalizeCodigoProduto(row.codigo_produto), row]));
   const enriched = (rows || []).map(row => {
-    const dict = byCodigo.get(String(row?.codigo_produto || '').trim());
+    const dict = byCodigo.get(normalizeCodigoProduto(row?.codigo_produto));
     return {
       ...row,
       descricao: dict?.descricao || row?.descricao || null,
@@ -219,14 +221,14 @@ async function runDiagnosticoSemAgrupamento() {
   }
 
   const codigosComHistorico = new Set((historicoRows || [])
-    .map(item => String(item?.codigo_produto || '').trim())
+    .map(item => normalizeCodigoProduto(item?.codigo_produto))
     .filter(Boolean));
   const agrupamentosValidos = new Set((agrupamentoRows || [])
     .map(item => String(item?.codigo || '').trim())
     .filter(Boolean));
 
   return (dicionarioRows || [])
-    .filter(item => codigosComHistorico.has(String(item?.codigo_produto || '').trim()))
+    .filter(item => codigosComHistorico.has(normalizeCodigoProduto(item?.codigo_produto)))
     .filter(item => {
       const agrupamentoCod = String(item?.agrupamento_cod || '').trim();
       return !agrupamentoCod || !agrupamentosValidos.has(agrupamentoCod);
@@ -236,7 +238,7 @@ async function runDiagnosticoSemAgrupamento() {
 }
 
 async function garantirProdutoNoDicionario(produto, descricao) {
-  const codigoProduto = String(produto || '').trim();
+  const codigoProduto = normalizeCodigoProduto(produto);
   if (!codigoProduto) return { ok: false, reason: 'codigo_vazio' };
 
   const { data, error } = await supabase
@@ -274,7 +276,7 @@ async function garantirProdutoNoDicionario(produto, descricao) {
 async function garantirProdutosNoDicionarioEmLote(produtos = []) {
   const unicos = new Map();
   (produtos || []).forEach(item => {
-    const codigo = String(item?.codigo_produto || '').trim();
+    const codigo = normalizeCodigoProduto(item?.codigo_produto);
     if (!codigo) return;
     if (!unicos.has(codigo)) {
       unicos.set(codigo, {
@@ -299,7 +301,7 @@ async function garantirProdutosNoDicionarioEmLote(produtos = []) {
     return { ok: false, inseridos: 0, erros: [{ tipo: 'dicionario_busca', mensagem: erroExistentes.message }] };
   }
 
-  const existentesSet = new Set((existentes || []).map(row => String(row?.codigo_produto || '').trim()));
+  const existentesSet = new Set((existentes || []).map(row => normalizeCodigoProduto(row?.codigo_produto)));
   const pendentes = codigos.filter(codigo => !existentesSet.has(codigo)).map(codigo => unicos.get(codigo));
   if (!pendentes.length) return { ok: true, inseridos: 0, erros: [] };
 
@@ -338,7 +340,7 @@ export const api = {
 
     const historicoNormalizado = (historicoRows || [])
       .map(item => ({
-        codigo_produto: String(item?.codigo_produto || '').trim(),
+        codigo_produto: normalizeCodigoProduto(item?.codigo_produto),
         descricao: String(item?.descricao || '').trim() || null
       }))
       .filter(item => !isNullLike(item?.codigo_produto));
@@ -349,15 +351,15 @@ export const api = {
       .map(value => String(value).trim()));
 
     const dicionarioComCusto = (dicionarioRaw || [])
-      .filter(item => codigosComCusto.has(String(item?.codigo_produto || '').trim()));
+      .filter(item => codigosComCusto.has(normalizeCodigoProduto(item?.codigo_produto)));
 
     const dicionarioByCodigo = new Map((dicionarioComCusto || [])
       .filter(item => !isNullLike(item?.codigo_produto))
-      .map(item => [String(item.codigo_produto).trim(), item]));
+      .map(item => [normalizeCodigoProduto(item.codigo_produto), item]));
 
     const produtosMap = new Map();
     historicoNormalizado.forEach(item => {
-      const codigo = String(item.codigo_produto).trim();
+      const codigo = normalizeCodigoProduto(item.codigo_produto);
       if (!codigo || produtosMap.has(codigo)) return;
       const itemDicionario = dicionarioByCodigo.get(codigo);
       const descricao = item.descricao || itemDicionario?.descricao || '-';
@@ -419,7 +421,7 @@ export const api = {
   async upsertHistoricoCustos(payload) {
     const rows = Array.isArray(payload) ? payload : [];
     const sanitized = rows.map(row => ({
-      codigo_produto: String(row?.codigo_produto || '').trim(),
+      codigo_produto: normalizeCodigoProduto(row?.codigo_produto),
       descricao: row?.descricao ?? null,
       custo_variavel: normalizeMoneyValue(row?.custo_variavel),
       custo_direto_fixo: normalizeMoneyValue(row?.custo_direto_fixo),
@@ -490,17 +492,22 @@ export const api = {
     let linhasImportadas = 0;
     let linhasErro = 0;
     const erros = [];
+    const normalizacoesCodigo = [];
 
     const rows = Array.isArray(payload) ? payload : [];
     const payloadValido = [];
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index];
-      const produto = String(row?.codigo_produto || '').trim();
+      const produtoOriginal = row?.codigo_produto;
+      const produto = normalizeCodigoProduto(produtoOriginal);
+      if (produto && String(produtoOriginal ?? '').trim() !== produto && normalizacoesCodigo.length < 5) {
+        normalizacoesCodigo.push({ linha: index + 1, antes: String(produtoOriginal ?? '').slice(0, 40), depois: produto });
+      }
       const custoTotal = normalizeMoneyValue(row?.custo_total);
       const dataReferencia = normalizeISODate(row?.data_referencia || dataReferenciaSelecionada);
 
       if (!produto || custoTotal === null || !dataReferencia) {
-        console.error('DADO INVÁLIDO', { produto, custoTotal, dataReferencia });
+        debugLog('Linha bloqueada por validação de importação', { linha: index + 1, produto, custoTotal, dataReferencia });
         linhasErro += 1;
         erros.push({
           linha: index + 1,
@@ -532,6 +539,12 @@ export const api = {
         custo_direto_fixo: normalizeMoneyValue(rowNormalizada.custo_direto_fixo),
         custo_total: custoTotal,
         data_referencia: dataReferencia
+      });
+    }
+
+    if (normalizacoesCodigo.length) {
+      debugLog('Normalização de código de produto no payload de importação', {
+        amostras: normalizacoesCodigo
       });
     }
 
@@ -610,7 +623,7 @@ export const api = {
   },
 
   async suggestCategory(product, masters) {
-    const codigo = String(product?.codigo_produto || '').trim();
+    const codigo = normalizeCodigoProduto(product?.codigo_produto);
     if (!codigo) {
       return { data: { origem_id: null, familia_id: null, agrupamento_cod: null, status: 'PENDENTE' }, error: null };
     }
@@ -696,17 +709,20 @@ export const api = {
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 6);
 
+    const codigo = normalizeCodigoProduto(codigoProduto);
+    if (!codigo) return { data: null, error: createApiError('codigoProduto é obrigatório para tendências do produto.', { metodo: 'getTrendsByProduct' }) };
+
     return supabase
       .from(TABLES.historico)
       .select('codigo_produto, custo_total, data_referencia')
-      .eq('codigo_produto', codigoProduto)
+      .eq('codigo_produto', codigo)
       .gte('data_referencia', startDate.toISOString().slice(0, 10))
       .lte('data_referencia', endDate.toISOString().slice(0, 10))
       .order('data_referencia', { ascending: true });
   },
 
   async getProductHistory(codigoProduto) {
-    const codigo = String(codigoProduto || '').trim();
+    const codigo = normalizeCodigoProduto(codigoProduto);
     if (!codigo) {
       return { data: null, error: createApiError('codigoProduto é obrigatório para drill-through.', { metodo: 'getProductHistory' }) };
     }
@@ -770,7 +786,7 @@ export const api = {
 
     const byProduct = new Map();
     rowsFiltered.forEach(row => {
-      const codigo = String(row.codigo_produto || '').trim();
+      const codigo = normalizeCodigoProduto(row.codigo_produto);
       if (!codigo) return;
       if (!byProduct.has(codigo)) byProduct.set(codigo, { codigo_produto: codigo, descricao: row.descricao || '-', novo: null, antigo: null });
       const bucket = byProduct.get(codigo);

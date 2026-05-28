@@ -33,7 +33,7 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-state.js            # createInitialState(): estado central
   ui-utils.js            # escapeHtml, debounce, showToast, formatadores
 core/                    # Regra de negócio pura (sem DOM, sem Supabase)
-  spreadsheet-engine.js  # Parsing XLSX, fuzzy match de colunas, normalização numérica
+  spreadsheet-engine.js  # Parsing XLSX, fuzzy match de colunas, normalização numérica e normalizeCodigoProduto
   report-engine.js       # Cascata, variação, score de instabilidade, regime, KPIs, fillSelect
   heuristic-engine.js    # Sugestão de categoria (NÃO integrado — ver MNT-04)
 src/
@@ -88,13 +88,20 @@ Fachada `api` com os métodos consumidos pela UI. Todos retornam o padrão `{ da
 | `getProductHistory(codigo)` | Drill-through: histórico completo do produto com Δ/Δ%. |
 | `getLatestImportComparison(filters)` | Comparação entre as 2 últimas importações (por `criado_em`). |
 | `getTopVariacoesImportacao(filters)` | TOP aumentos/reduções entre as 2 últimas importações. |
-| `importarHistoricoCustosComLog(payload, {dataReferencia})` | Importação resiliente: valida linha-a-linha, garante produtos no dicionário, upsert em chunks de 400, grava `log_importacao`. |
+| `importarHistoricoCustosComLog(payload, {dataReferencia})` | Importação resiliente: normaliza `codigo_produto` com `normalizeCodigoProduto`, valida linha-a-linha, garante produtos no dicionário, upsert em chunks de 400, grava `log_importacao`. |
 | `subscribeFiltrosRealtime(cb)` | Assina mudanças em `historico_custos`/`dicionario_produtos`. |
 | `signIn/signOut/getCurrentUser` | Supabase Auth (hoje não usados no bootstrap — ver `SEC-03`). |
 
 Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operacionais.md`](../arquitetura/matriz-contratos-operacionais.md) · camada de serviço: [`docs/arquitetura/services-frontend.md`](../arquitetura/services-frontend.md) · endpoints: [`docs/arquitetura/mapa-endpoints.md`](../arquitetura/mapa-endpoints.md).
 
-> ⚠️ O método `importarHistoricoCustosComLog` tem **141 linhas** e a UI tem **dois** geradores de payload (um morto) — ver `MNT-06`/`VAL-01` antes de mexer em importação.
+> ⚠️ O método `importarHistoricoCustosComLog` segue grande e há caminho legado de payload — ver `MNT-06` antes de refatorar. O item `VAL-01` foi resolvido centralizando `codigo_produto` em `normalizeCodigoProduto()` no preview, payload, API, relatório e drill-through.
+
+### Contrato de código de produto
+
+- `normalizeCodigoProduto()` em `core/spreadsheet-engine.js` é a única normalização canônica de identificadores de produto.
+- Não usar `Number()`, `parseFloat()` ou `String(...).trim()` isolado para chaves de produto em novos fluxos.
+- O contrato cobre células numéricas/string, notação científica, espaços, caracteres invisíveis, separadores de milhar e zeros à esquerda preserváveis quando a origem vem como texto.
+- Código inválido deve falhar por linha (preview/API) e nunca gerar persistência parcial em `historico_custos` ou `dicionario_produtos`.
 
 ---
 

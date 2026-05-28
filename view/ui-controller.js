@@ -1,6 +1,6 @@
 /* Responsabilidade: controle de interface, eventos, gráficos e fluxo investigativo. */
 import { api } from '../src/services/api.js';
-import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial } from '../core/spreadsheet-engine.js';
+import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial, normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
 import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
@@ -258,17 +258,22 @@ async function handleImport(file) {
 }
 
 function buildImportPreview(rows, mapping, produtos = []) {
-  const produtoSet = new Set((produtos || []).map(item => String(item.codigo_produto || '').trim()).filter(Boolean));
+  const produtoSet = new Set((produtos || []).map(item => normalizeCodigoProduto(item.codigo_produto)).filter(Boolean));
   const statuses = { valid: 0, warning: 0, error: 0 };
+  const normalizacoes = [];
   const analyzedRows = rows.map((row, index) => {
-    const codigo = String(row[mapping.codigo_produto] || '').trim();
+    const codigoOriginal = row[mapping.codigo_produto];
+    const codigo = normalizeCodigoProduto(codigoOriginal);
     const descricao = String(row[mapping.descricao] || '').trim();
     const custoVariavel = parseBrazilianNumber(row[mapping.custo_variavel]);
     const custoDiretoFixo = parseBrazilianNumber(row[mapping.custo_direto_fixo]);
     const custoTotal = parseBrazilianNumber(row[mapping.custo_total]);
     const issues = [];
 
-    if (!codigo) issues.push({ level: 'error', text: 'Produto ausente' });
+    if (!codigo) issues.push({ level: 'error', text: 'Produto inválido ou ausente' });
+    if (codigo && String(codigoOriginal ?? '').trim() !== codigo) {
+      normalizacoes.push({ linha: index + 1, antes: String(codigoOriginal ?? '').slice(0, 40), depois: codigo });
+    }
     if (codigo && !produtoSet.has(codigo)) issues.push({ level: 'warning', text: 'Produto não encontrado no cadastro' });
     if (!descricao) issues.push({ level: 'error', text: 'Descrição vazia' });
     if (custoVariavel < 0 || custoDiretoFixo < 0 || custoTotal < 0) issues.push({ level: 'warning', text: 'Valor negativo' });
@@ -291,6 +296,13 @@ function buildImportPreview(rows, mapping, produtos = []) {
       issues
     };
   });
+
+  if (normalizacoes.length) {
+    debugLog('Normalização de código de produto no preview de importação', {
+      total: normalizacoes.length,
+      amostras: normalizacoes.slice(0, 5)
+    });
+  }
 
   return {
     rows: analyzedRows,
@@ -413,8 +425,8 @@ function bindSearch() {
     const raw = dom.searchProduct.value.trim();
     if (!raw) return;
 
-    const code = raw.includes(' - ') ? raw.split(' - ')[0].trim() : raw;
-    const product = state.masters.produtos.find(p => String(p.codigo_produto).trim() === code);
+    const code = normalizeCodigoProduto(raw.includes(' - ') ? raw.split(' - ')[0] : raw);
+    const product = state.masters.produtos.find(p => normalizeCodigoProduto(p.codigo_produto) === code);
 
     if (product) {
       jumpToProduct(product.codigo_produto);
@@ -1110,16 +1122,16 @@ function applyReportLayout({ hasSingleItemAnalysis, hasImportComparison, hasTren
 }
 
 function buildTemporalSeries(rows = [], filters = {}) {
-  const selectedItem = filters.item && filters.item !== 'TODOS' ? String(filters.item) : null;
+  const selectedItem = filters.item && filters.item !== 'TODOS' ? normalizeCodigoProduto(filters.item) : null;
   const scopedRows = (rows || []).filter(row => {
     if (!selectedItem) return true;
-    return String(row?.codigo_produto || '') === selectedItem;
+    return normalizeCodigoProduto(row?.codigo_produto) === selectedItem;
   });
 
   const latestByProductAndCompetencia = new Map();
   scopedRows.forEach(row => {
     const competencia = row?.data_referencia;
-    const codigoProduto = String(row?.codigo_produto || '').trim();
+    const codigoProduto = normalizeCodigoProduto(row?.codigo_produto);
     if (!competencia || !codigoProduto) return;
     const dedupeKey = `${codigoProduto}__${competencia}`;
     const current = latestByProductAndCompetencia.get(dedupeKey);

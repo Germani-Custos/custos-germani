@@ -159,3 +159,8 @@ Exportação não é mais planilha administrativa. Deve funcionar como relatóri
 ## Atualização 2026-05-28 — robustez como velocidade investigativa
 
 A execução do **ERR-01** reforça que falhas de rede, Supabase ou bibliotecas auxiliares não podem interromper silenciosamente a investigação. O produto deve preservar o contexto operacional, explicar a falha em linguagem de uso e emitir diagnóstico técnico apenas em modo debug.
+
+
+## Atualização 2026-05-28 — identidade operacional de produto
+
+A execução do **VAL-01** reforça que `codigo_produto` é chave investigativa, não dado visual de planilha. O mesmo produto deve atravessar preview, importação, relatório, drill-through e exportação com a mesma chave canônica, mesmo quando o Excel apresentar notação científica ou formatações mistas. A mudança preserva a separação temporal: `data_referencia` é competência; `criado_em` é importação.
