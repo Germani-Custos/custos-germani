@@ -49,6 +49,7 @@ Exemplo: em 25/05 você importa a planilha de **março/2026**. A competência é
    - 🟡 **atenção** — será gravada, mas confira (ex.: "produto não encontrado no cadastro", "valor negativo", "custo total zerado").
    - 🔴 **erro** — **não** será gravada (ex.: produto ou descrição em branco).
    > O preview mostra as primeiras 20 linhas, mas a importação grava **todas** as linhas sem erro do arquivo.
+   > O código do produto é normalizado automaticamente no preview e na gravação: espaços, caracteres invisíveis e notação científica do Excel são tratados para evitar histórico quebrado. Se o código ficar ambíguo/inválido, a linha aparece como 🔴 erro e não é gravada.
 7. Clique em **"Confirmar importação"**. Ao final, um resumo mostra **Total de linhas / Importadas / Falhas**.
 
 ### Banner de produtos sem categoria ("órfãos")

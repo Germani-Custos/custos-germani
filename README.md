@@ -234,6 +234,10 @@ Variação > 5% entre os dois últimos imports de um produto → badge ALERTA.
 - Arredonda para 4 casas decimais (exibição em 2-4 casas)
 - Trata notação científica em códigos de produto
 
+### Normalização de código de produto
+
+`normalizeCodigoProduto()` é a função canônica para todo identificador de produto. O mesmo código é normalizado antes do preview, do payload de importação, da validação API, dos filtros/cascata, do relatório, do drill-through e da exportação. Ela remove espaços/caracteres invisíveis, preserva zeros à esquerda quando vêm como texto, expande notação científica do Excel e bloqueia códigos ambíguos em vez de persistir uma chave parcialmente mutada. Logs de mutação são emitidos apenas via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`, com amostras limitadas.
+
 ### Produto novo
 
 Se o código não existe em `dicionario_produtos`, é criado automaticamente com categorização nula.
@@ -328,3 +332,11 @@ Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>
 - `init()` e `runReport()` agora possuem fronteiras explícitas para falhas assíncronas, evitando tela branca ou `Uncaught (in promise)` no fluxo principal de investigação.
 - Falhas em filtros, metadata, drill-through e exportação exibem mensagem operacional amigável, preservam o contexto atual da tela e registram detalhes técnicos apenas quando `VITE_ENABLE_VERBOSE_LOGS=true`.
 - A mudança não altera contratos Supabase, regras de negócio, semântica temporal (`data_referencia` x `criado_em`) nem visual do relatório.
+
+---
+
+## Atualização 2026-05-28 (VAL-01)
+
+- A importação passou a centralizar o identificador de produto em `normalizeCodigoProduto()` para impedir divergência causada por Excel/notação científica, espaços invisíveis, zeros à esquerda textuais e formatos numéricos mistos.
+- Linhas com código inválido são bloqueadas no preview/API e contabilizadas como falha de linha, sem derrubar o lote e sem persistência ambígua.
+- A mudança não altera contratos Supabase, regras investigativas nem a distinção temporal: `data_referencia` continua sendo competência operacional; `criado_em` continua sendo evento de importação.

@@ -32,6 +32,10 @@ Cada importação grava um registro com `status`, `total_linhas`, `linhas_import
 
 Após categorizar, o produto passa a aparecer corretamente nos filtros (o realtime/recarna atualiza os masters).
 
+## 2.1. Conferir códigos normalizados após importação
+
+O item `VAL-01` faz o fluxo ativo usar `normalizeCodigoProduto()` em preview, payload e API. Se uma planilha vier com produto em notação científica (ex.: `7,89123E+12`), espaços, caracteres invisíveis ou separador de milhar, o sistema grava a chave normalizada ou bloqueia a linha como erro. Em modo verbose (`VITE_ENABLE_VERBOSE_LOGS=true`), as mutações críticas aparecem em `debugLog` com amostras limitadas, nunca com a planilha inteira. A competência continua sendo `data_referencia`; o momento de entrada continua sendo `criado_em`.
+
 ---
 
 ## 3. Banco de dados (Supabase)
@@ -108,7 +112,7 @@ Pelo painel da Vercel: **Deployments → escolher o deploy estável anterior →
 | App carrega mas sem dados / "Falha ao carregar tabelas de apoio" | Supabase indisponível, chave inválida, ou RLS bloqueando | Verificar status do Supabase, validade da `anon key`, e políticas de RLS (se ativadas). |
 | Importação com muitas falhas (🔴) | Colunas mal mapeadas ou dados em branco | Revisar mapeamento e a planilha; ver `linhas_erro`/erros no resultado. |
 | Produto sumiu dos filtros | Órfão (sem categoria) | Seção 2 — categorizar em `dicionario_produtos`. |
-| Mesmo produto com históricos separados | Código corrompido (notação científica do Excel) | Bug conhecido `VAL-01` ([auditoria](../auditoria/robustez-erros-validacao.md)); padronizar o código e reimportar. |
+| Mesmo produto com históricos separados | Importação antiga anterior ao `VAL-01` ou código já salvo incorretamente | Novas importações normalizam o código no preview/API; para legado, padronizar registros existentes e reimportar a competência afetada. |
 | Auditoria lenta com base grande | Tabela sem virtualização | Limitação conhecida `PERF-01`; refinar filtros como paliativo. |
 | Logs detalhados necessários | — | Ativar `VITE_ENABLE_VERBOSE_LOGS=true` temporariamente (ativa `debugLog`). |
 

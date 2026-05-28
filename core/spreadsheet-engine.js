@@ -134,16 +134,44 @@ function detectColumnMapping(headers = []) {
   return mapping;
 }
 
-function normalizeCodigoProduto(value) {
-  const raw = String(value || '').trim().replace(',', '.');
+export function normalizeCodigoProduto(value) {
+  if (value === null || value === undefined) return '';
+
+  const raw = String(value)
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
+
   if (!raw) return '';
 
-  if (/^\d+(\.\d+)?e[+-]?\d+$/i.test(raw)) {
-    const num = Number(raw);
-    if (Number.isFinite(num)) return num.toLocaleString('fullwide', { useGrouping: false });
+  const withoutSpaces = raw.replace(/[\s\u00A0]+/g, '');
+  if (!withoutSpaces) return '';
+
+  if (/^-/.test(withoutSpaces)) return '';
+
+  if (/^\d{1,3}([.,]\d{3})+$/.test(withoutSpaces)) {
+    return withoutSpaces.replace(/[.,]/g, '');
   }
 
-  return raw.replace(/\s+/g, '');
+  const scientificCandidate = withoutSpaces.replace(',', '.');
+  if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(scientificCandidate)) {
+    const num = Number(scientificCandidate);
+    if (!Number.isFinite(num) || !Number.isInteger(num)) return '';
+    return num.toLocaleString('fullwide', { useGrouping: false });
+  }
+
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || !Number.isInteger(value)) return '';
+    return value.toLocaleString('fullwide', { useGrouping: false });
+  }
+
+  if (/^[+-]?\d+[,.]0+$/.test(withoutSpaces)) {
+    return withoutSpaces.replace(/[,.]0+$/, '').replace(/^\+/, '');
+  }
+
+  if (/^[+-]?\d+[,.]\d+$/.test(withoutSpaces)) return '';
+
+  return withoutSpaces.replace(/^\+/, '');
 }
 
 function roundTo4(value) {
@@ -191,7 +219,7 @@ export function formatBrazilianFinancial(value, decimals = 3) {
 export function readWorkbook(arrayBuffer) {
   const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const matrixRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, blankrows: false });
+  const matrixRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: false });
 
   const headerRowIndex = findHeaderRowIndex(matrixRows);
   const safeHeaderIndex = headerRowIndex >= 0 ? headerRowIndex : 0;

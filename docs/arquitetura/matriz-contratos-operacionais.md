@@ -17,7 +17,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | Camada | Método/Campo | Esperado | Existe? | Status |
 |---|---|---|---|---|
 | UI → API | `api.getMasters()` | Retornar `{origens,familias,agrupamentos,produtos,dicionario,hierarquia,diagnostico_sem_mapa,error}` | Sim | ✅ |
-| UI → API | `api.importarHistoricoCustosComLog(payload,{dataReferencia})` | Import resiliente + `log_importacao` + erros linha a linha | Sim | ✅ |
+| UI → API | `api.importarHistoricoCustosComLog(payload,{dataReferencia})` | Import resiliente + `log_importacao` + erros linha a linha + `codigo_produto` normalizado por `normalizeCodigoProduto()` | Sim | ✅ |
 | UI → API | `api.getHistorico(filters)` | Retornar histórico com `data_referencia` + `criado_em` + dimensões para cascata | Sim | ✅ |
 | UI → API | `api.getProductHistory(codigoProduto)` | Drill-through completo com delta e delta% | Sim | ✅ (fail-fast adicionado p/ código vazio) |
 | UI → API | `api.getLatestImportComparison(filters)` | Comparar últimas 2 importações (`criado_em`) respeitando filtros cascata | Sim | ✅ (enriquecimento de dimensão corrigido) |
@@ -27,7 +27,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 
 | Camada | Método/Campo | Esperado | Existe? | Status |
 |---|---|---|---|---|
-| API → DB | `historico_custos`: `codigo_produto, descricao, custo_variavel, custo_direto_fixo, custo_total, data_referencia, criado_em` | Fato temporal completo | Sim | ✅ |
+| API → DB | `historico_custos`: `codigo_produto, descricao, custo_variavel, custo_direto_fixo, custo_total, data_referencia, criado_em` | Fato temporal completo com `codigo_produto` canônico | Sim | ✅ |
 | API → DB | `dicionario_produtos`: `codigo_produto, descricao, origem_id, familia_id, agrupamento_cod` | Dimensão de categorização | Sim | ✅ |
 | API → DB | `log_importacao`: `status,total_linhas,linhas_importadas,linhas_erro,iniciado_em,finalizado_em,data_referencia` | Rastrear execução de import | Sim | ✅ |
 | API → DB | `upsert` em `historico_custos` com `onConflict(codigo_produto,data_referencia)` | Deduplicação por competência | Sim | ✅ |
@@ -45,10 +45,17 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 
 | Camada | Método/Campo | Esperado | Existe? | Status |
 |---|---|---|---|---|
-| importação | validação por linha (`validateHistoricoRow`) | Falha parcial não derruba lote | Sim | ✅ |
+| importação | validação por linha (`validateHistoricoRow`) | Falha parcial não derruba lote; código inválido é bloqueado sem persistência ambígua | Sim | ✅ |
 | importação | chunking (400) no upsert | Escala operacional | Sim | ✅ |
 | importação | tolerância a colunas extras (normalização) | Não quebrar lote por excesso de coluna | Sim | ✅ |
-| importação | produtos sem dicionário → criação/órfão visível | Sem silenciamento | Sim | ✅ |
+| importação | produtos sem dicionário → criação/órfão visível | Sem silenciamento; criação usa o mesmo código normalizado do histórico | Sim | ✅ |
+
+### Normalização de código de produto (`VAL-01`)
+
+- Função canônica: `normalizeCodigoProduto()` em `core/spreadsheet-engine.js`.
+- Pontos cobertos: leitura XLSX com `raw:true`, preview, payload, API de importação, garantia de dicionário, filtros/cascata, relatório, drill-through, comparação entre importações e exportação derivada da fila investigativa.
+- Fail-fast: código vazio, decimal ambíguo ou não inteiro em identificador numérico gera erro de linha; o lote segue com as demais linhas válidas.
+- Temporalidade preservada: a normalização altera apenas a chave de negócio `codigo_produto`; `data_referencia` e `criado_em` mantêm seus significados separados.
 
 ## 5) Matriz Exportação → report-engine/UI
 
@@ -89,6 +96,7 @@ Formato mínimo esperado em todos os métodos API:
 - [ ] Toda query temporal deve explicitar eixo (`data_referencia` vs `criado_em`).
 - [ ] Todo método UI→API deve estar listado e testado após mudança de assinatura.
 - [ ] Todo payload de escrita deve ser validado por whitelist de colunas da tabela alvo.
+- [ ] Todo novo fluxo com `codigo_produto` deve chamar `normalizeCodigoProduto()` e falhar explicitamente se o retorno for vazio.
 - [ ] Toda mudança de contrato deve atualizar `README.md`, `VISION.md`, `ROADMAP.md` e esta matriz.
 
 
