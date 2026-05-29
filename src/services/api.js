@@ -87,20 +87,34 @@ function isValidDateValue(value) {
 function normalizeISODate(value) {
   if (!value) return null;
 
+  let iso = null;
+
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toISOString().slice(0, 10);
+    iso = value.toISOString().slice(0, 10);
+  } else if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (isoDateRegex.test(trimmed)) {
+      iso = trimmed;
+    } else {
+      const parsed = new Date(trimmed);
+      if (Number.isNaN(parsed.getTime())) return null;
+      iso = parsed.toISOString().slice(0, 10);
+    }
+  } else {
+    return null;
   }
 
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
+  // SEC-04: validar faixa de ano plausível para dados operacionais
+  const year = parseInt(iso.slice(0, 4), 10);
+  const month = parseInt(iso.slice(5, 7), 10);
+  const day = parseInt(iso.slice(8, 10), 10);
+  if (year < 2000 || year > 2100) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
 
-  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (isoDateRegex.test(trimmed)) return trimmed;
-
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString().slice(0, 10);
+  return iso;
 }
 
 function roundTo4(value) {
@@ -116,8 +130,13 @@ function normalizeMoneyValue(value) {
 function validateHistoricoRow(row = {}) {
   const erros = [];
 
-  if (!normalizeCodigoProduto(row?.codigo_produto)) erros.push('codigo_produto inválido ou vazio');
-  if (!String(row?.descricao || '').trim()) erros.push('descricao vazia');
+  const codigoProdutoStr = normalizeCodigoProduto(row?.codigo_produto);
+  if (!codigoProdutoStr) erros.push('codigo_produto inválido ou vazio');
+  // SEC-04: limitar comprimento de campos de texto
+  if (codigoProdutoStr && codigoProdutoStr.length > 64) erros.push('codigo_produto excede 64 caracteres');
+  const descricaoStr = String(row?.descricao || '').trim();
+  if (!descricaoStr) erros.push('descricao vazia');
+  if (descricaoStr.length > 256) erros.push('descricao excede 256 caracteres');
   if (!String(row?.custo_total ?? '').trim()) erros.push('custo_total vazio');
   const custoVariavel = normalizeMoneyValue(row?.custo_variavel);
   const custoDiretoFixo = normalizeMoneyValue(row?.custo_direto_fixo);
@@ -318,13 +337,9 @@ async function garantirProdutosNoDicionarioEmLote(produtos = []) {
 
 export const api = {
   async getMasters() {
-    const [
-      { data: historicoRows, error: historicoError },
-      { data: origensRaw, error: origensError },
-      { data: familiasRaw, error: familiasError },
-      { data: agrupamentosRaw, error: agrupamentosError },
-      { data: dicionarioRaw, error: dicionarioError }
-    ] = await Promise.all([
+    // ERR-02: Promise.allSettled permite degradação parcial — dimensões que falharem
+    // retornam vazias mas as demais continuam carregando normalmente.
+    const settled = await Promise.allSettled([
       supabase.from(TABLES.historico).select('codigo_produto, descricao'),
       supabase.from(TABLES.origem).select('*').order('descricao'),
       supabase.from(TABLES.familia).select('*').order('descricao'),
@@ -333,10 +348,22 @@ export const api = {
         .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
     ]);
 
-    const error = historicoError || origensError || familiasError || agrupamentosError || dicionarioError;
-    if (error) {
-      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: [], error };
+    const resolve = (result) => result.status === 'fulfilled' ? result.value : { data: null, error: result.reason };
+    const [
+      { data: historicoRows, error: historicoError },
+      { data: origensRaw,   error: origensError },
+      { data: familiasRaw,  error: familiasError },
+      { data: agrupamentosRaw, error: agrupamentosError },
+      { data: dicionarioRaw, error: dicionarioError }
+    ] = settled.map(resolve);
+
+    // Historico é crítico: sem ele não há nada para mostrar
+    if (historicoError) {
+      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: [], error: historicoError };
     }
+    // Dimensões com erro degradam parcialmente (log + array vazio)
+    const error = origensError || familiasError || agrupamentosError || dicionarioError;
+    if (error) debugLog('getMasters: degradação parcial em dimensão', { origensError, familiasError, agrupamentosError, dicionarioError });
 
     const historicoNormalizado = (historicoRows || [])
       .map(item => ({

@@ -8,12 +8,12 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ## Onda 1 — Segurança e correção (fazer primeiro)
 
-- [ ] **SEC-01** 🔴 P — Escapar `value`/`label` em `fillSelect` (`core/report-engine.js:9,13`); mover `escapeHtml` para util compartilhada. → [`seguranca.md`](./seguranca.md)
+- [x] **SEC-01** 🔴 P — Escapar `value`/`label` em `fillSelect` (`core/report-engine.js:9,13`); mover `escapeHtml` para util compartilhada. → [`seguranca.md`](./seguranca.md)
 - [x] **ERR-01** 🔴 M — `try/catch` de fronteira em `init()` e nos `await` de `runReport` (`view/ui-controller.js:16-24,508-524`). Resolvido no commit `fix(ERR-01): adiciona fronteiras operacionais e tratamento robusto de erros`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [x] **VAL-01** 🟠 P — Normalizar código de produto (notação científica) no fluxo ativo, reusando `normalizeCodigoProduto`. Resolvido no commit `fix(VAL-01): unifica normalização de código de produto no pipeline operacional`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [x] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card. Resolvido no commit `fix(LOG-01): unifica regra operacional dos alertas investigativos`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [ ] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)
-- [ ] **SEC-05** 🟠 P — Fixar versões de `xlsx`/`chart.js` (+ SRI) em `index.html`. → [`seguranca.md`](./seguranca.md)
+- [x] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)
+- [x] **SEC-05** 🟠 P — Fixar versões de `xlsx`/`chart.js` (+ SRI) em `index.html`. → [`seguranca.md`](./seguranca.md)
 - [ ] **SEC-03** 🔵 G — Registrar decisão de acesso público + checklist de reativação de RLS/Auth; idealmente RLS de escrita já. → [`seguranca.md`](./seguranca.md)
 
 ## Onda 2 — Ferramentas (rede de segurança antes de refatorar)
@@ -36,10 +36,10 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 - [ ] **MNT-02** 🟠 M — Fatiar `src/services/api.js` (fachada + validation + enrichment + client). → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (um commit por fluxo). → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **MNT-03** 🟠 M — Centralizar cascata e `fillSelect`. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [ ] **MNT-04** 🟡 P — Decidir integrar/remover `heuristic-engine`, `getTrendsByProduct`, `upsertHistoricoCustos`. → [`manutenibilidade.md`](./manutenibilidade.md)
+- [x] **MNT-04** 🟡 P — Decidir integrar/remover `heuristic-engine`, `getTrendsByProduct`, `upsertHistoricoCustos`. → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **MNT-05** 🟡 M — JSDoc/`@typedef` dos contratos (`Masters`, `HistoricoRow`, `ReportRow`). → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **MNT-07** 🟡 P — Documentar/centralizar limiares e tetos (`.limit(1000)`, limiares de regime). → [`manutenibilidade.md`](./manutenibilidade.md)
-- [ ] **ERR-02** 🟡 P — `Promise.allSettled` em `getMasters` (degradação parcial). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
+- [x] **ERR-02** 🟡 P — `Promise.allSettled` em `getMasters` (degradação parcial). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **VAL-02** 🟡 M — Validador de "linha de custo" único (preview = API). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [ ] **SEC-02** 🟡 M — Helper de "HTML seguro" + regra de lint (depende de `CFG-01`). → [`seguranca.md`](./seguranca.md)
 

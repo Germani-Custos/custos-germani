@@ -913,6 +913,16 @@ function buildExportFilename() {
 
 // ── Exportação ────────────────────────────────────────────────────────────────
 
+// SEC-04: sanitiza campos de texto para evitar formula injection no Excel/Sheets.
+// Prefixar com ' previne que valores como =CMD, +CMD sejam interpretados como fórmula.
+function sanitizeCsvFormula(value) {
+  const str = String(value ?? '');
+  if ([' =', '+', '-', '@', '\t', '\r'].some(ch => str.startsWith(ch)) || str.startsWith('=')) {
+    return "'" + str;
+  }
+  return str;
+}
+
 function exportReport() {
   if (!state.reportRows.length) {
     showToast('warning', 'Rode a análise antes de exportar.');
@@ -944,14 +954,14 @@ function exportReport() {
       const rank = getInvestigationRankScore(row);
       return {
         'Prioridade #': idx + 1,
-        'Produto (código)': row.codigo,
-        'Produto (descrição)': row.descricao,
+        'Produto (código)': sanitizeCsvFormula(row.codigo),
+        'Produto (descrição)': sanitizeCsvFormula(row.descricao),
         'Criticidade': prioridade.label,
         'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
         'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
         'Variação no período (%)': row.variacao.toFixed(2),
         'Delta monetário última importação (R$)': row.diferenca ?? '—',
-        'Contexto investigativo': buildInvestigativeSummary(row),
+        'Contexto investigativo': sanitizeCsvFormula(buildInvestigativeSummary(row)),
         'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
         'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
         'Regime': row.classificacaoInstabilidade,

@@ -1,6 +1,7 @@
 /* Responsabilidade: cálculos analíticos e lógica de cascata (Origem -> Família -> Agrupamento -> Item). */
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 import { debugLog } from '../src/config/app-config.js';
+import { escapeHtml } from '../src/utils/html.js';
 
 const ALERTA_CRITICO_CONFIG = Object.freeze({
   thresholdPercent: 5,
@@ -13,11 +14,11 @@ const LIMIAR_OSCILANDO = 8;
 const MIN_PONTOS_REGIME = 4;
 
 export function fillSelect(select, options, first, selectedValue = null) {
-  select.innerHTML = `<option value="${first.value}">${first.label}</option>`;
+  select.innerHTML = `<option value="${escapeHtml(first.value)}">${escapeHtml(first.label)}</option>`;
   options
     .filter(opt => !isNullLike(opt?.value) && !isNullLike(opt?.label))
     .forEach(opt => {
-      select.innerHTML += `<option value="${opt.value}">${opt.label}</option>`;
+      select.innerHTML += `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`;
     });
 
   if (selectedValue !== null) {
