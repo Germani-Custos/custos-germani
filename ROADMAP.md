@@ -47,7 +47,7 @@ Objetivo: transformar o sistema de dashboard em motor de investigação.
 - **Detecção de mudança de regime**: 4º KPI — identifica produtos que eram ESTÁVEL e ficaram instáveis no período
 - **Coluna "Regime"** na tabela analítica com badge visual
 - **Coluna "Competência"** separando claramente data de vigência do custo vs. data de importação
-- **Banner de órfãos**: alerta visível quando há produtos sem categorização no dicionário
+- **Banner de órfãos**: alerta visível quando há produtos sem categorização no dicionário; falhas do diagnóstico aparecem como estado operacional indisponível, nunca como lista vazia
 - **Debounce de 2s** no listener de real-time (evita reloads em cascata durante imports)
 - **Segurança**: remoção de credenciais hardcoded do código-fonte
 

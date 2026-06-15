@@ -101,7 +101,7 @@ Disponível como KPI clicável e como coluna na tabela.
 O relatório atual pode ser exportado como `.xlsx` com todos os campos analíticos, incluindo classificação de regime.
 
 ### Alerta de produtos sem categoria
-Banner visível na tela de importação quando há produtos sem categorização completa no dicionário.
+Banner visível na tela de importação quando há produtos sem categorização completa no dicionário. Quando o diagnóstico de órfãos está indisponível, o sistema deve avisar explicitamente que não foi possível validar produtos sem agrupamento, diferenciando falha operacional de ausência real de órfãos.
 
 ---
 

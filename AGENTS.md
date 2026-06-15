@@ -223,3 +223,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 
 
 - Atualização 2026-05-28 (LOG-01): `classifyAlert()`/`isAlertaCritico()` em `core/report-engine.js` é a fonte canônica do KPI **Alertas (>5%)**; UI, filtros rápidos, tabela, drill-through, ranking/reincidência e exportação devem reutilizar o helper/`filterAlertRows()`, considerando `abs(variacaoTemporal) >= 5` no eixo `criado_em` sem arredondamento prévio; `data_referencia` permanece como recorte de competência.
+
+- Atualização 2026-06-15 (diagnóstico de órfãos): `runDiagnosticoSemAgrupamento` deve tolerar divergência de schema em `categorias_agrupamento` via `supabase.from().select('*')` + resolução canônica de chave (`codigo`/`id`/`cod`) e retornar estado explícito `indisponivel` em falha operacional; a UI deve mostrar "Não foi possível validar produtos sem agrupamento." e nunca tratar falha como zero órfãos.
