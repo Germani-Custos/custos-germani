@@ -55,10 +55,11 @@ async function init() {
   bindFilters();
   bindSearch();
   bindDocumentationView(dom);
+  dom.logoutBtn?.addEventListener('click', handleLogout);
 
   // Fronteira operacional do bootstrap: falha crítica interrompe o carregamento parcial.
   await executeOperationalBoundary('init', async () => {
-    await allowOpenAccess();
+    await requireLogin();
     await loadMasters({ force: true });
     await fetchMetadata();
   }, {
@@ -67,9 +68,74 @@ async function init() {
   });
 }
 
-async function allowOpenAccess() {
-  state.user = { email: 'acesso_publico' };
-  dom.userBox.textContent = 'Usuário: acesso público';
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+
+async function requireLogin() {
+  // 1. Verificar sessão ativa (refresh automático do Supabase)
+  const { data: { user } } = await api.getCurrentUser();
+  if (user) {
+    setLoggedInState(user);
+    return;
+  }
+  // 2. Sem sessão ativa: exibir tela de login
+  await showLoginGate();
+}
+
+function setLoggedInState(user) {
+  state.user = user;
+  const label = user.user_metadata?.username || user.email || 'Usuário';
+  dom.userLabel.textContent = 'Olá, ' + label;
+  dom.logoutBtn.classList.remove('hidden');
+  dom.loginOverlay.classList.add('hidden');
+}
+
+function showLoginGate() {
+  return new Promise((resolve) => {
+    dom.loginOverlay.classList.remove('hidden');
+    dom.loginUsername.focus();
+
+    // Permite Enter no campo de senha
+    dom.loginPassword.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') dom.loginForm.requestSubmit();
+    }, { once: false });
+
+    dom.loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      dom.loginError.classList.add('hidden');
+      dom.loginBtn.disabled = true;
+      dom.loginBtn.textContent = 'Verificando...';
+
+      const username = dom.loginUsername.value.trim();
+      const password = dom.loginPassword.value;
+
+      const { data, error } = await api.signIn(username, password);
+
+      if (error || !data?.user) {
+        dom.loginError.classList.remove('hidden');
+        dom.loginBtn.disabled = false;
+        dom.loginBtn.innerHTML = '<i class="ri-login-circle-line"></i> Entrar';
+        dom.loginPassword.value = '';
+        dom.loginPassword.focus();
+        return;
+      }
+
+      setLoggedInState(data.user);
+      resolve();
+    }, { once: true });
+  });
+}
+
+async function handleLogout() {
+  await api.signOut();
+  state.user = null;
+  dom.userLabel.textContent = 'Carregando...';
+  dom.logoutBtn.classList.add('hidden');
+  dom.loginForm.reset();
+  dom.loginError.classList.add('hidden');
+  dom.loginBtn.disabled = false;
+  dom.loginBtn.innerHTML = '<i class="ri-login-circle-line"></i> Entrar';
+  await showLoginGate();
+  await loadMasters({ force: true });
 }
 async function loadMasters(options = {}) {
   const { force = false } = options;
@@ -113,7 +179,7 @@ function updateProductSuggestions() {
 }
 
 async function fetchMetadata() {
-  await loadMasters({ force: true });
+  // PERF-03: loadMasters já foi chamado em init() — apenas repopula os selects
   fillSelect(
     dom.selO,
     state.masters.origens.map(item => ({ value: String(item.id), label: item.nome || item.descricao || String(item.id) })),

@@ -39,8 +39,83 @@
 
     import('./view/ui-controller.js').catch(showConfigErrorScreen);
   </script>
+  <style>
+    /* ── Login overlay ─────────────────────────────────────── */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10,15,28,0.97);
+      backdrop-filter: blur(8px);
+      transition: opacity 0.3s;
+    }
+    .login-overlay.hidden { display: none; }
+    .login-card {
+      width: 100%; max-width: 380px;
+      background: #131c2e; border: 1px solid #1e293b;
+      border-radius: 16px; padding: 40px 36px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+    .login-brand { text-align: center; margin-bottom: 32px; }
+    .login-brand i { font-size: 40px; color: #38bdf8; }
+    .login-brand h1 { font-size: 1.4rem; color: #e2e8f0; margin: 8px 0 4px; }
+    .login-brand p  { font-size: 0.8rem; color: #64748b; }
+    .login-form { display: flex; flex-direction: column; gap: 16px; }
+    .login-field { display: flex; flex-direction: column; gap: 6px; }
+    .login-field label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
+    .login-field input {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 10px 14px; color: #e2e8f0; font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: #38bdf8; }
+    .login-error { color: #f87171; font-size: 0.82rem; margin: 0; }
+    .login-submit {
+      margin-top: 8px; padding: 12px; border-radius: 8px;
+      background: #38bdf8; color: #0f172a; font-weight: 700;
+      font-size: 0.95rem; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .login-submit:hover { background: #7dd3fc; }
+    .login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* ── User box com logout ────────────────────────────────── */
+    .user-box { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .logout-btn {
+      background: none; border: 1px solid #334155; border-radius: 6px;
+      color: #94a3b8; cursor: pointer; padding: 4px 8px; font-size: 1rem;
+      transition: color 0.2s, border-color 0.2s;
+      display: flex; align-items: center;
+    }
+    .logout-btn:hover { color: #f87171; border-color: #f87171; }
+  </style>
 </head>
 <body>
+
+  <!-- ===== MODAL DE LOGIN ===== -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card glass">
+      <div class="login-brand">
+        <i class="ri-shield-check-line"></i>
+        <h1>Germani Custos</h1>
+        <p>Motor de Investigação de Custos</p>
+      </div>
+      <form id="loginForm" class="login-form" autocomplete="on">
+        <div class="login-field">
+          <label for="loginUsername">Usuário</label>
+          <input id="loginUsername" type="text" placeholder="Ex: Pedrok" autocomplete="username" />
+        </div>
+        <div class="login-field">
+          <label for="loginPassword">Senha</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <p id="loginError" class="login-error hidden">Usuário ou senha inválidos.</p>
+        <button id="loginBtn" type="submit" class="btn-primary login-submit">
+          <i class="ri-login-circle-line"></i> Entrar
+        </button>
+      </form>
+    </div>
+  </div>
+
   <div id="appShell" class="app-shell">
     <aside class="sidebar glass">
       <div class="brand-card">
@@ -48,7 +123,7 @@
         <p>Motor de Investigação de Custos</p>
       </div>
 
-      <div class="user-box" id="userBox">Usuário: carregando...</div>
+      <div class="user-box" id="userBox"><span id="userLabel">Carregando...</span><button id="logoutBtn" class="logout-btn hidden" title="Sair"><i class="ri-logout-circle-line"></i></button></div>
 
       <nav class="nav" aria-label="Navegação principal">
         <button class="nav-item active" data-view-trigger="import">

@@ -471,12 +471,20 @@ export const api = {
   },
 
   async signIn(login, password) {
-    const email = String(login || '').trim().toLowerCase();
+    const rawLogin = String(login || '').trim();
     const sanitizedPassword = String(password || '');
 
-    if (!email || !sanitizedPassword) {
+    if (!rawLogin || !sanitizedPassword) {
       return { data: null, error: new Error('Credenciais obrigatórias.') };
     }
+
+    // Mapeamento de username → email do Supabase Auth
+    // Permite login com nome de usuário curto (ex: "Pedrok")
+    const USERNAME_MAP = {
+      'pedrok': 'pedrok@germani.local'
+    };
+    const key = rawLogin.toLowerCase();
+    const email = USERNAME_MAP[key] || (rawLogin.includes('@') ? rawLogin : rawLogin + '@germani.local');
 
     const response = await supabase.auth.signInWithPassword({ email, password: sanitizedPassword });
     if (response.error || !response.data?.user || !response.data?.session?.access_token) {

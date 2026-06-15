@@ -14,7 +14,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 - [x] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card. Resolvido no commit `fix(LOG-01): unifica regra operacional dos alertas investigativos`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
 - [x] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)
 - [x] **SEC-05** 🟠 P — Fixar versões de `xlsx`/`chart.js` (+ SRI) em `index.html`. → [`seguranca.md`](./seguranca.md)
-- [ ] **SEC-03** 🔵 G — Registrar decisão de acesso público + checklist de reativação de RLS/Auth; idealmente RLS de escrita já. → [`seguranca.md`](./seguranca.md)
+- [x] **SEC-03** 🔵 G — Registrar decisão de acesso público + checklist de reativação de RLS/Auth; idealmente RLS de escrita já. → [`seguranca.md`](./seguranca.md)
 
 ## Onda 2 — Ferramentas (rede de segurança antes de refatorar)
 
@@ -28,7 +28,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 - [ ] **PERF-01** 🟠 M — Virtualizar/limitar tabela investigativa + delegação de eventos (`view/ui-controller.js:614-664`). → [`performance-otimizacao.md`](./performance-otimizacao.md)
 - [ ] **PERF-02** 🟠 M — Cachear `masters` com invalidação por realtime/import (parar de recarregar a cada troca de view). → [`performance-otimizacao.md`](./performance-otimizacao.md)
-- [ ] **PERF-03** 🟡 P — Memoizar `calculateCascadeOptions`. → [`performance-otimizacao.md`](./performance-otimizacao.md)
+- [x] **PERF-03** 🟡 P — Memoizar `calculateCascadeOptions`. → [`performance-otimizacao.md`](./performance-otimizacao.md)
 
 ## Onda 4 — Manutenibilidade (refatoração com rede de segurança)
 

@@ -135,7 +135,18 @@ function classifyInstability(score) {
   return 'MUITO INSTÁVEL';
 }
 
+// PERF-03: cache de cascata — evita recalcular quando estado não mudou
+let _cascadeCache = null;
+let _cascadeCacheKey = '';
+
+function getCascadeCacheKey(state, masters) {
+  return `${state.origem}|${state.familia}|${state.agrupamento}|${(masters.hierarquia || []).length}`;
+}
+
 export function calculateCascadeOptions(state, masters) {
+  const cacheKey = getCascadeCacheKey(state, masters);
+  if (_cascadeCache && _cascadeCacheKey === cacheKey) return _cascadeCache;
+
   const hierarchySource = (masters.hierarquia || []).length ? masters.hierarquia : (masters.dicionario || []);
   const dictionary = hierarchySource.map(item => ({
     ...item,
@@ -202,7 +213,9 @@ export function calculateCascadeOptions(state, masters) {
   });
   const productOptions = [...productMap.values()].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 
-  return { familyOptions, groupOptions, productOptions };
+  _cascadeCache = { familyOptions, groupOptions, productOptions };
+  _cascadeCacheKey = cacheKey;
+  return _cascadeCache;
 }
 
 export function buildReportRows(historico, masters = { origens: [], familias: [], agrupamentos: [] }) {

@@ -1,6 +1,14 @@
 export function getDomRefs() {
   return {
-    userBox: document.getElementById('userBox'),
+    userBox:       document.getElementById('userBox'),
+    userLabel:     document.getElementById('userLabel'),
+    logoutBtn:     document.getElementById('logoutBtn'),
+    loginOverlay:  document.getElementById('loginOverlay'),
+    loginForm:     document.getElementById('loginForm'),
+    loginUsername: document.getElementById('loginUsername'),
+    loginPassword: document.getElementById('loginPassword'),
+    loginError:    document.getElementById('loginError'),
+    loginBtn:      document.getElementById('loginBtn'),
     navItems: Array.from(document.querySelectorAll('[data-view-trigger]')),
     views: { import: document.getElementById('view-import'), report: document.getElementById('view-report'), documentation: document.getElementById('view-documentation') },
     dropZone: document.getElementById('dropZone'), fileInput: document.getElementById('fileInput'), importDate: document.getElementById('importDate'),
