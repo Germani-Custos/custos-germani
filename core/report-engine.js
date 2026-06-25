@@ -1,7 +1,7 @@
+// @ts-check
 /* Responsabilidade: cálculos analíticos e lógica de cascata (Origem -> Família -> Agrupamento -> Item). */
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 import { debugLog } from '../src/config/app-config.js';
-import { escapeHtml } from '../src/utils/html.js';
 
 const ALERTA_CRITICO_CONFIG = Object.freeze({
   thresholdPercent: 5,
@@ -13,13 +13,30 @@ const LIMIAR_ESTAVEL = 3;
 const LIMIAR_OSCILANDO = 8;
 const MIN_PONTOS_REGIME = 4;
 
+/**
+ * Preenche um select usando APIs DOM em vez de innerHTML para reduzir superfície de XSS.
+ * @param {HTMLSelectElement} select
+ * @param {Array<{value: unknown, label: unknown}>} options
+ * @param {{value: unknown, label: unknown}} first
+ * @param {unknown} [selectedValue]
+ * @returns {void}
+ */
 export function fillSelect(select, options, first, selectedValue = null) {
-  select.innerHTML = `<option value="${escapeHtml(first.value)}">${escapeHtml(first.label)}</option>`;
+  const createOption = (value, label) => {
+    const option = document.createElement('option');
+    option.value = String(value ?? '');
+    option.textContent = String(label ?? '');
+    return option;
+  };
+
+  const safeOptions = [createOption(first.value, first.label)];
   options
     .filter(opt => !isNullLike(opt?.value) && !isNullLike(opt?.label))
     .forEach(opt => {
-      select.innerHTML += `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`;
+      safeOptions.push(createOption(opt.value, opt.label));
     });
+
+  select.replaceChildren(...safeOptions);
 
   if (selectedValue !== null) {
     const hasOption = [first.value, ...options.map(opt => opt.value)].includes(String(selectedValue));
@@ -62,6 +79,11 @@ export function getAlertaCriticoConfig() {
   return ALERTA_CRITICO_CONFIG;
 }
 
+/**
+ * Classifica o alerta operacional canônico LOG-01.
+ * @param {number|Record<string, unknown>} input
+ * @returns {{isAlert:boolean, thresholdPercent:number, percentual:number|null, field:string, reason:string}}
+ */
 export function classifyAlert(input) {
   assertValidAlertThreshold();
   const { value, field } = extractAlertPercentual(input);
@@ -71,13 +93,13 @@ export function classifyAlert(input) {
   }
 
   if (value === undefined) {
-    debugLog('LOG-01 percentual de alerta indefinido', { field, codigo: input?.codigo || input?.codigo_produto || null });
+    debugLog('LOG-01 percentual de alerta indefinido', { field, codigo: typeof input === 'object' && input ? (input.codigo || input.codigo_produto || null) : null });
     throw new Error(`Cálculo crítico ausente para alerta: ${field}.`);
   }
 
   const percentual = Number(value);
   if (!Number.isFinite(percentual)) {
-    debugLog('LOG-01 percentual de alerta não numérico', { field, value, codigo: input?.codigo || input?.codigo_produto || null });
+    debugLog('LOG-01 percentual de alerta não numérico', { field, value, codigo: typeof input === 'object' && input ? (input.codigo || input.codigo_produto || null) : null });
     throw new Error(`Cálculo crítico inválido para alerta: ${field}.`);
   }
 
@@ -218,6 +240,12 @@ export function calculateCascadeOptions(state, masters) {
   return _cascadeCache;
 }
 
+/**
+ * Agrupa histórico por produto e calcula linhas da fila investigativa.
+ * `data_referencia` ordena a competência; `criado_em` identifica última/penúltima importação.
+ * @param {Array<Record<string, unknown>>} historico
+ * @param {{origens?:Array<Record<string, unknown>>, familias?:Array<Record<string, unknown>>, agrupamentos?:Array<Record<string, unknown>>}} [masters]
+ */
 export function buildReportRows(historico, masters = { origens: [], familias: [], agrupamentos: [] }) {
   const grouped = {};
   historico.forEach(item => {

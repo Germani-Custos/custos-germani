@@ -352,3 +352,24 @@ Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>
 - O KPI **Alertas (>5%)**, o filtro rápido do card, os destaques da tabela, o drill-through e a exportação passaram a reutilizar a mesma regra canônica `isAlertaCritico()`/`classifyAlert()`.
 - A semântica ficou explícita: alerta é `abs(variacaoTemporal) >= 5` entre as duas últimas importações (`criado_em`), sem arredondamento prévio, cobrindo altas e quedas; ausência real de comparativo (`null`) não alerta, mas `undefined`/`NaN` falha rápido.
 - A mudança não altera visual, KPIs existentes, Supabase, `scoreInstabilidade` nem a distinção temporal: `data_referencia` filtra a competência analisada; `criado_em` define última/penúltima importação.
+
+## 12. Tooling de Qualidade (Onda 2 — 25/06/2026)
+
+A rede de segurança antes de refatorações foi adicionada sem alterar o runtime estático/CDN do produto:
+
+- `package.json` contém apenas `devDependencies` e scripts de desenvolvimento (`lint`, `typecheck`, `test`, `build`).
+- ESLint usa flat config para qualidade básica, variáveis/imports mortos e bloqueio de `innerHTML` interpolado sem revisão explícita.
+- `jsconfig.json` habilita type checking leve para JavaScript (`checkJs`) sem migração para TypeScript nem bundler.
+- Vitest cobre regressões do núcleo (`core/`) para VAL-01 (`normalizeCodigoProduto`) e LOG-01 (`classifyAlert`/`filterAlertRows`/KPIs), além da semântica temporal `data_referencia` × `criado_em` em `buildReportRows`.
+- GitHub Actions executa `npm run lint`, `npm run typecheck` e `npm test` em Pull Requests, sem deploy e sem alteração do fluxo Vercel.
+
+Comandos locais:
+
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm test
+```
+
+Observação: warnings atuais de `no-unused-vars` são baseline de manutenibilidade já exposto pelo lint e devem ser tratados em itens de refatoração dedicados, sem misturar com a Onda 2.
