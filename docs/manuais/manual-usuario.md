@@ -53,7 +53,7 @@ Exemplo: em 25/05 você importa a planilha de **março/2026**. A competência é
 7. Clique em **"Confirmar importação"**. Ao final, um resumo mostra **Total de linhas / Importadas / Falhas**.
 
 ### Banner de produtos sem categoria ("órfãos")
-Se entrarem produtos novos **sem Origem/Família/Agrupamento**, aparece um aviso amarelo na Importação. Esses produtos existem, mas **não aparecem direito nos filtros** até serem categorizados. Avise quem cuida do cadastro (ver [Manual de Operação](./manual-operacao.md)).
+Se entrarem produtos novos **sem Origem/Família/Agrupamento**, aparece um aviso amarelo na Importação. Esses produtos existem, mas **não aparecem direito nos filtros** até serem categorizados. Avise quem cuida do cadastro (ver [Manual de Operação](./manual-operacao.md)). Se o aviso disser **“Não foi possível validar produtos sem agrupamento.”**, trate como diagnóstico indisponível: não significa que não existem órfãos, significa que o sistema não conseguiu validar a categoria.
 
 > **Reimportar o mesmo mês é seguro:** o sistema atualiza o registro daquele produto/competência em vez de duplicar.
 

@@ -227,26 +227,45 @@ async function enrichRowsWithDicionario(rows = []) {
   return { data: enriched, error: null };
 }
 
+function createDiagnosticoSemAgrupamentoUnavailable(upstreamError, etapa) {
+  const error = createApiError('Não foi possível validar produtos sem agrupamento.', {
+    metodo: 'runDiagnosticoSemAgrupamento',
+    etapa,
+    tabela: etapa === 'agrupamentos' ? TABLES.agrupamento : null
+  });
+  if (upstreamError) {
+    error.cause = upstreamError;
+    error.details = { ...error.details, code: upstreamError.code || null, cause: upstreamError.message || String(upstreamError) };
+  }
+  debugLog('Diagnóstico de agrupamento indisponível.', error.details);
+  return { status: 'indisponivel', rows: [], error };
+}
+
+function createDiagnosticoSemAgrupamentoOk(rows = []) {
+  return { status: 'ok', rows, error: null };
+}
+
 async function runDiagnosticoSemAgrupamento() {
   const [{ data: historicoRows, error: historicoError }, { data: dicionarioRows, error: dicionarioError }, { data: agrupamentoRows, error: agrupamentoError }] = await Promise.all([
     supabase.from(TABLES.historico).select('codigo_produto'),
     supabase.from(TABLES.dicionario).select('codigo_produto, agrupamento_cod'),
-    supabase.from(TABLES.agrupamento).select('codigo')
+    // Selecionar '*' evita acoplar o diagnóstico a uma variante específica do schema
+    // (`codigo`, `id` ou `cod`) e impede que o erro 42703 seja mascarado como “zero órfãos”.
+    supabase.from(TABLES.agrupamento).select('*')
   ]);
 
-  if (historicoError || dicionarioError || agrupamentoError) {
-    console.warn('Diagnóstico de agrupamento indisponível.', historicoError || dicionarioError || agrupamentoError);
-    return [];
-  }
+  if (historicoError) return createDiagnosticoSemAgrupamentoUnavailable(historicoError, 'historico');
+  if (dicionarioError) return createDiagnosticoSemAgrupamentoUnavailable(dicionarioError, 'dicionario');
+  if (agrupamentoError) return createDiagnosticoSemAgrupamentoUnavailable(agrupamentoError, 'agrupamentos');
 
   const codigosComHistorico = new Set((historicoRows || [])
     .map(item => normalizeCodigoProduto(item?.codigo_produto))
     .filter(Boolean));
   const agrupamentosValidos = new Set((agrupamentoRows || [])
-    .map(item => String(item?.codigo || '').trim())
+    .map(item => String(resolveMasterId(item) || '').trim())
     .filter(Boolean));
 
-  return (dicionarioRows || [])
+  const rows = (dicionarioRows || [])
     .filter(item => codigosComHistorico.has(normalizeCodigoProduto(item?.codigo_produto)))
     .filter(item => {
       const agrupamentoCod = String(item?.agrupamento_cod || '').trim();
@@ -254,6 +273,8 @@ async function runDiagnosticoSemAgrupamento() {
     })
     .map(item => ({ codigo_produto: item.codigo_produto }))
     .sort((a, b) => String(a.codigo_produto).localeCompare(String(b.codigo_produto)));
+
+  return createDiagnosticoSemAgrupamentoOk(rows);
 }
 
 async function garantirProdutoNoDicionario(produto, descricao) {

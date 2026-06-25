@@ -158,13 +158,26 @@ async function loadMasters(options = {}) {
 
   updateProductSuggestions();
 
-  const orphanCount = masters.diagnostico_sem_mapa?.length ?? 0;
-  if (orphanCount > 0) {
-    dom.orphansCount.textContent = orphanCount;
+  const diagnosticoSemMapa = masters.diagnostico_sem_mapa || { status: 'ok', rows: [] };
+  if (diagnosticoSemMapa.status === 'indisponivel') {
+    dom.orphansCount.textContent = '!';
+    if (dom.orphansMessage) {
+      dom.orphansMessage.textContent = 'Não foi possível validar produtos sem agrupamento.';
+    }
     dom.orphansBanner.classList.remove('hidden');
-    debugLog('Diagnóstico operacional de órfãos', { orphanCount });
+    debugLog('Diagnóstico operacional de órfãos indisponível', diagnosticoSemMapa.error?.details || {});
   } else {
-    dom.orphansBanner.classList.add('hidden');
+    const orphanCount = diagnosticoSemMapa.rows?.length ?? 0;
+    if (orphanCount > 0) {
+      dom.orphansCount.textContent = orphanCount;
+      if (dom.orphansMessage) {
+        dom.orphansMessage.textContent = 'produto(s) sem categorização completa detectado(s). Categorize no Supabase antes de analisar para evitar dados ausentes nos filtros.';
+      }
+      dom.orphansBanner.classList.remove('hidden');
+      debugLog('Diagnóstico operacional de órfãos', { orphanCount });
+    } else {
+      dom.orphansBanner.classList.add('hidden');
+    }
   }
 
   fillSelect(dom.selO, state.masters.origens.map(x => ({ value: String(x.id), label: x.descricao })), { value: 'TODAS', label: 'TODAS' }, dom.selO.value || 'TODAS');

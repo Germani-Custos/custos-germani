@@ -12,7 +12,7 @@ export function getDomRefs() {
     navItems: Array.from(document.querySelectorAll('[data-view-trigger]')),
     views: { import: document.getElementById('view-import'), report: document.getElementById('view-report'), documentation: document.getElementById('view-documentation') },
     dropZone: document.getElementById('dropZone'), fileInput: document.getElementById('fileInput'), importDate: document.getElementById('importDate'),
-    orphansBanner: document.getElementById('orphansBanner'), orphansCount: document.getElementById('orphansCount'),
+    orphansBanner: document.getElementById('orphansBanner'), orphansCount: document.getElementById('orphansCount'), orphansMessage: document.getElementById('orphansMessage'),
     searchProduct: document.getElementById('searchProduct'), productSuggestions: document.getElementById('productSuggestions'),
     dtStart: document.getElementById('dtStart'), dtEnd: document.getElementById('dtEnd'), selO: document.getElementById('selO'), selF: document.getElementById('selF'), selA: document.getElementById('selA'), selI: document.getElementById('selI'),
     analyzeBtn: document.getElementById('analyzeBtn'), exportBtn: document.getElementById('exportBtn'), activeFilterChips: document.getElementById('activeFilterChips'),

@@ -106,6 +106,7 @@ Formato mínimo esperado em todos os métodos API:
 
 - Erros de contrato interno usam `name = "OperationalContractError"` e `details` para diagnóstico.
 - Sem fallback mágico silencioso quando parâmetro obrigatório faltar.
+- Diagnóstico de órfãos deve distinguir `{ status: 'ok', rows: [] }` (nenhum órfão encontrado) de `{ status: 'indisponivel', rows: [], error }` (não foi possível validar produtos sem agrupamento).
 
 ## Checklist de prevenção contínua
 

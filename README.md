@@ -246,7 +246,7 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 ### Produto novo
 
 Se o código não existe em `dicionario_produtos`, é criado automaticamente com categorização nula.
-O banner de órfãos sinaliza quantos produtos estão sem categoria.
+O banner de órfãos sinaliza quantos produtos estão sem categoria. Se o diagnóstico não puder ser executado por falha operacional ou divergência de schema em `categorias_agrupamento`, o banner não assume zero órfãos: exibe explicitamente `Não foi possível validar produtos sem agrupamento.` para impedir investigação com categorização mascarada.
 
 ---
 

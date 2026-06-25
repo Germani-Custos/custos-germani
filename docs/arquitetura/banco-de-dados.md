@@ -45,6 +45,7 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 
 - Produto sem `agrupamento_cod` recebe fallback explícito `SEM_AGRUPAMENTO`.
 - Inconsistência não é mascarada: usar a view `vw_produtos_orfaos_agrupamento` para triagem (`PENDENTE_CATEGORIZACAO`, `AGRUPAMENTO_INVALIDO`, `OK`).
+- O diagnóstico frontend usa apenas `supabase.from()` e não deve depender de uma coluna única de `categorias_agrupamento`; a chave válida é resolvida por `codigo`/`id`/`cod`. Falha de consulta retorna estado `indisponivel`, não `[]`.
 
 ## Índices operacionais críticos
 

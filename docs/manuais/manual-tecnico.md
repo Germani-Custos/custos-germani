@@ -83,7 +83,7 @@ Fachada `api` com os métodos consumidos pela UI. Todos retornam o padrão `{ da
 
 | Método | Uso |
 |---|---|
-| `getMasters()` | Carrega dimensões + produtos com custo + diagnóstico de órfãos. |
+| `getMasters()` | Carrega dimensões + produtos com custo + diagnóstico de órfãos (`diagnostico_sem_mapa.status`: `ok` ou `indisponivel`). |
 | `getHistorico(filters)` | Histórico por período + cascata (enriquece dimensão antes de filtrar). |
 | `getProductHistory(codigo)` | Drill-through: histórico completo do produto com Δ/Δ%. |
 | `getLatestImportComparison(filters)` | Comparação entre as 2 últimas importações (por `criado_em`). |
@@ -104,6 +104,13 @@ Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operac
 - Critério: `Math.abs(percentual) >= 5`, sem arredondamento antes da comparação; variação negativa (queda) alerta com a mesma prioridade operacional que alta.
 - `null` representa ausência legítima de comparativo e retorna não alerta; `undefined`, `NaN` ou payload sem percentual canônico deve lançar erro para impedir contagem silenciosa divergente.
 - UI, tabela, drill-through, ranking/reincidência e exportação devem chamar o helper ou `filterAlertRows()`, nunca comparar `> 5` inline.
+
+### Contrato do diagnóstico de órfãos
+
+- `runDiagnosticoSemAgrupamento()` não retorna mais `[]` para falha operacional; retorna `{ status: 'indisponivel', rows: [], error }`.
+- `{ status: 'ok', rows: [] }` é o único estado que significa “nenhum órfão encontrado”.
+- A consulta de `categorias_agrupamento` usa `supabase.from().select('*')` e resolve a chave por `codigo`/`id`/`cod` para tolerar divergência de schema sem usar RPC ou SQL bruto no frontend.
+- A UI deve exibir “Não foi possível validar produtos sem agrupamento.” quando o diagnóstico estiver indisponível, preservando ERR-01 e sem quebrar o bootstrap.
 
 ### Contrato de código de produto
 

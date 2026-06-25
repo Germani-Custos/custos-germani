@@ -112,6 +112,7 @@ Pelo painel da Vercel: **Deployments → escolher o deploy estável anterior →
 | App carrega mas sem dados / "Falha ao carregar tabelas de apoio" | Supabase indisponível, chave inválida, ou RLS bloqueando | Verificar status do Supabase, validade da `anon key`, e políticas de RLS (se ativadas). |
 | Importação com muitas falhas (🔴) | Colunas mal mapeadas ou dados em branco | Revisar mapeamento e a planilha; ver `linhas_erro`/erros no resultado. |
 | Produto sumiu dos filtros | Órfão (sem categoria) | Seção 2 — categorizar em `dicionario_produtos`. |
+| Banner mostra “Não foi possível validar produtos sem agrupamento.” | Diagnóstico de órfãos indisponível (ex.: divergência de schema/permissão em `categorias_agrupamento`) | Não interpretar como zero órfãos; verificar `categorias_agrupamento`, permissões/RLS e logs com `VITE_ENABLE_VERBOSE_LOGS=true`. |
 | Mesmo produto com históricos separados | Importação antiga anterior ao `VAL-01` ou código já salvo incorretamente | Novas importações normalizam o código no preview/API; para legado, padronizar registros existentes e reimportar a competência afetada. |
 | Auditoria lenta com base grande | Tabela sem virtualização | Limitação conhecida `PERF-01`; refinar filtros como paliativo. |
 | Logs detalhados necessários | — | Ativar `VITE_ENABLE_VERBOSE_LOGS=true` temporariamente (ativa `debugLog`). |
