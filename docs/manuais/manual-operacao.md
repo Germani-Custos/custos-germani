@@ -143,3 +143,7 @@ Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** dev
 ## Atualização 2026-05-28 — diagnóstico operacional de falhas da UI
 
 Se a abertura do app, a análise, o drill-through ou a exportação falhar, a UI deve exibir mensagem operacional e manter o contexto possível da investigação. Para diagnóstico controlado, ative temporariamente `VITE_ENABLE_VERBOSE_LOGS=true`, reproduza a operação e use o `timestamp`/`operation` do log estruturado; desative a flag após a análise para manter o console limpo em produção.
+
+## CI e validação de Pull Request — 25/06/2026
+
+O repositório agora possui GitHub Actions para validação de qualidade em Pull Requests. O workflow executa lint, typecheck leve e testes automatizados, mas não realiza deploy nem altera o fluxo da Vercel. A publicação continua dependente da configuração existente de deploy estático e da geração de `runtime-config.js` com variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.

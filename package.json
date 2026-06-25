@@ -1,0 +1,17 @@
+{
+  "name": "kustos-germani",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p jsconfig.json",
+    "test": "vitest run",
+    "build": "node scripts/generate-runtime-config.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.29.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

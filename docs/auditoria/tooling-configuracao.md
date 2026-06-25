@@ -55,3 +55,16 @@ Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o *
 
 - **`scripts/generate-runtime-config.mjs`** (build da Vercel) é simples e adequado ao modelo estático — manter.
 - **Acessibilidade** parcial já presente (`aria-label` na nav e dropzone, tema de contraste nos gráficos em `getReadableChartOptions`). Melhorias de a11y são desejáveis mas de menor prioridade que segurança/correção — registrar no `ROADMAP.md` se relevante.
+
+## Atualização 2026-06-25 — Onda 2 implementada
+
+- **CFG-04 concluído:** `package.json` e `package-lock.json` adicionados somente com devDependencies e scripts de qualidade; produção continua usando CDN e `vercel.json` mantém `node scripts/generate-runtime-config.mjs`.
+- **CFG-01 concluído:** ESLint flat config (`eslint.config.js`) roda sobre módulos ESM, reconhece globals de browser/CDN/Node e bloqueia interpolação direta em `innerHTML`. O lint passa com warnings de baseline (`no-unused-vars`) que ficam como insumo de manutenção, não como mudança funcional desta onda.
+- **CFG-02 concluído:** `jsconfig.json`, tipos globais em `types/globals.d.ts`, `// @ts-check` e JSDoc inicial no núcleo habilitam checagem estática leve sem TypeScript/bundler no runtime.
+- **CFG-03 concluído:** Vitest cobre contratos críticos do núcleo, especialmente normalização canônica de produto (VAL-01), regra canônica de alerta (LOG-01) e separação entre competência (`data_referencia`) e importação (`criado_em`).
+- **CFG-05 concluído:** `.github/workflows/ci.yml` executa lint, typecheck e testes em Pull Requests e pushes para branches principais, sem deploy.
+
+### Observações de baseline levantadas pelo tooling
+
+- O lint expõe variáveis/funções não usadas em `src/services/api.js`, `view/ui-controller.js` e argumento não usado em `core/report-engine.js`; prioridade média/baixa, recomendado tratar junto de MNT-06/MNT-01/MNT-02.
+- Ainda existe HTML dinâmico em partes da UI legada. A regra bloqueia padrões interpolados novos e há exceção documentada no drill-through até SEC-02 centralizar helper de HTML seguro.
