@@ -214,3 +214,17 @@ Contratos cobertos inicialmente:
 - Semântica temporal: relatórios continuam separando competência (`data_referencia`) de evento de importação (`criado_em`).
 
 Warnings de lint não devem ser silenciados sem análise; trate-os em refatorações dedicadas ou documente a exceção quando existir contrato operacional envolvido.
+
+### Nota de CI — ESLint local vs runner limpo (29/06/2026)
+
+Para validar tooling, não confie em binários globais instalados na máquina. A reprodução correta da GitHub Actions é:
+
+```bash
+rm -rf node_modules
+npm ci
+npm run lint
+npm run typecheck
+npm test
+```
+
+O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js` fornece presets/regras, mas não substitui o executável `eslint` usado pelo script `npm run lint`.

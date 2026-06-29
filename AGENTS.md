@@ -227,3 +227,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 - Atualização 2026-06-15 (diagnóstico de órfãos): `runDiagnosticoSemAgrupamento` deve tolerar divergência de schema em `categorias_agrupamento` via `supabase.from().select('*')` + resolução canônica de chave (`codigo`/`id`/`cod`) e retornar estado explícito `indisponivel` em falha operacional; a UI deve mostrar "Não foi possível validar produtos sem agrupamento." e nunca tratar falha como zero órfãos.
 
 - Atualização 2026-06-25 (Onda 2 — tooling): adicionada rede de segurança de desenvolvimento sem impacto em runtime/CDN: `package.json` apenas com devDependencies/scripts, ESLint flat config com bloqueio de `innerHTML` interpolado, `jsconfig.json` + `// @ts-check`/JSDoc inicial em `core/`, Vitest com regressões VAL-01/LOG-01 e CI GitHub Actions para lint/typecheck/test em PRs.
+
+- Atualização 2026-06-29 (CI Onda 2): `eslint` deve permanecer explicitamente em `devDependencies`; `@eslint/js` não fornece o binário do CLI. Validações de tooling devem reproduzir a Actions com ambiente limpo (`rm -rf node_modules && npm ci`) para evitar falso positivo por binários globais no `PATH`.
