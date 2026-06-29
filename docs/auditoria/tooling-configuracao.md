@@ -74,8 +74,3 @@ Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o *
 - **Causa raiz:** `package.json` declarava `@eslint/js`, mas não declarava o pacote executável `eslint`. Localmente o comando `npm run lint` passava porque havia um `eslint` global no `PATH`; no runner limpo da GitHub Actions, após `npm ci`, `node_modules/.bin/eslint` não existia e o step **Lint** falhava com exit code `127`.
 - **Correção:** `eslint` foi adicionado explicitamente a `devDependencies`, mantendo a arquitetura de runtime intacta (nenhuma dependência de produção, nenhum bundler, nenhum carregamento em CDN alterado).
 - **Prevenção:** validações da Onda 2 devem ser reproduzidas sempre a partir de ambiente limpo com `rm -rf node_modules && npm ci` antes de considerar a CI confiável. Não use binários globais como evidência de sucesso local.
-
-## Atualização 2026-06-29 — Verificação explícita do executável ESLint na CI
-
-- O workflow passou a usar `npm ci --include=dev` para deixar explícito que a pipeline de qualidade depende de `devDependencies`, mesmo se algum ambiente externo definir `NODE_ENV=production` no futuro.
-- Após a instalação, a CI executa `npm ls eslint`, `npx eslint --version` e `ls node_modules/.bin` antes do lint. Esses comandos documentam no log do runner que o pacote e o executável do ESLint foram instalados corretamente antes de rodar `npm run lint`.
