@@ -18,11 +18,11 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ## Onda 2 — Ferramentas (rede de segurança antes de refatorar)
 
-- [ ] **CFG-04** 🟡 P — `package.json` só com `devDependencies` + scripts (sem tocar no runtime CDN). → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [ ] **CFG-01** 🟠 P — ESLint com regra anti-`innerHTML` não escapado e `no-unused-vars`. → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [ ] **CFG-03** 🟠 M — Vitest sobre `core/` (testes de regressão para `VAL-01` e `LOG-01`). → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [ ] **CFG-02** 🟠 M — `jsconfig.json` + `// @ts-check` + JSDoc (`MNT-05`). → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [ ] **CFG-05** 🟡 P — CI (GitHub Actions) rodando lint/typecheck/test em PR. → [`tooling-configuracao.md`](./tooling-configuracao.md)
+- [x] **CFG-04** 🟡 P — `package.json` só com `devDependencies` + scripts (sem tocar no runtime CDN). → [`tooling-configuracao.md`](./tooling-configuracao.md)
+- [x] **CFG-01** 🟠 P — ESLint com regra anti-`innerHTML` não escapado e `no-unused-vars`. → [`tooling-configuracao.md`](./tooling-configuracao.md)
+- [x] **CFG-03** 🟠 M — Vitest sobre `core/` (testes de regressão para `VAL-01` e `LOG-01`). → [`tooling-configuracao.md`](./tooling-configuracao.md)
+- [x] **CFG-02** 🟠 M — `jsconfig.json` + `// @ts-check` + JSDoc (`MNT-05`). → [`tooling-configuracao.md`](./tooling-configuracao.md)
+- [x] **CFG-05** 🟡 P — CI (GitHub Actions) rodando lint/typecheck/test em PR. → [`tooling-configuracao.md`](./tooling-configuracao.md)
 
 ## Onda 3 — Performance (com testes já no lugar)
 
