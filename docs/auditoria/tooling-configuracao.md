@@ -68,9 +68,3 @@ Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o *
 
 - O lint expõe variáveis/funções não usadas em `src/services/api.js`, `view/ui-controller.js` e argumento não usado em `core/report-engine.js`; prioridade média/baixa, recomendado tratar junto de MNT-06/MNT-01/MNT-02.
 - Ainda existe HTML dinâmico em partes da UI legada. A regra bloqueia padrões interpolados novos e há exceção documentada no drill-through até SEC-02 centralizar helper de HTML seguro.
-
-## Atualização 2026-06-29 — Correção da falha de CI da Onda 2
-
-- **Causa raiz:** `package.json` declarava `@eslint/js`, mas não declarava o pacote executável `eslint`. Localmente o comando `npm run lint` passava porque havia um `eslint` global no `PATH`; no runner limpo da GitHub Actions, após `npm ci`, `node_modules/.bin/eslint` não existia e o step **Lint** falhava com exit code `127`.
-- **Correção:** `eslint` foi adicionado explicitamente a `devDependencies`, mantendo a arquitetura de runtime intacta (nenhuma dependência de produção, nenhum bundler, nenhum carregamento em CDN alterado).
-- **Prevenção:** validações da Onda 2 devem ser reproduzidas sempre a partir de ambiente limpo com `rm -rf node_modules && npm ci` antes de considerar a CI confiável. Não use binários globais como evidência de sucesso local.
