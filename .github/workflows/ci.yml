@@ -19,12 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dev dependencies
-        run: npm ci --include=dev
-      - name: Verify ESLint executable
-        run: |
-          npm ls eslint
-          npx eslint --version
-          ls node_modules/.bin
+        run: npm ci
       - name: Lint
         run: npm run lint
       - name: Typecheck
