@@ -10,6 +10,19 @@ const FIELD_ALIASES = {
   custo_total: ['total', 'custo total', 'vl total', 'valor total']
 };
 
+/**
+ * Fuzzy matching: limiares e pesos para detecção de colunas.
+ * Cada limiar governa como o score de compatibilidade entre cabeçalho e alias é calculado.
+ */
+const FUZZY_MATCH_CONFIG = Object.freeze({
+  EXACT_MATCH: 1,           // Coluna normalizada é idêntica ao alias: score máximo
+  SUBSTRING_MATCH: 0.92,    // Alias está contido no cabeçalho: alta confiança
+  TOKEN_BASELINE: 0.65,     // Score base de overlap de tokens (palavras em comum)
+  TOKEN_BONUS_RATE: 0.2,    // Incremento por cada token em comum (até 0.85 total)
+  DICE_THRESHOLD: 0.72,     // Mínimo de similitude bigrâmica para considerar match fuzzy
+  DICE_WEIGHT: 0.85         // Fator atenuador aplicado ao score Dice
+});
+
 export function normalizeText(value) {
   return String(value || '')
     .normalize('NFD')
@@ -73,11 +86,11 @@ function scoreHeaderMatch(header, aliases = []) {
     if (!normalizedAlias) return;
 
     if (normalizedHeader === normalizedAlias) {
-      bestScore = Math.max(bestScore, 1);
+      bestScore = Math.max(bestScore, FUZZY_MATCH_CONFIG.EXACT_MATCH);
       return;
     }
     if (normalizedHeader.includes(normalizedAlias)) {
-      bestScore = Math.max(bestScore, 0.92);
+      bestScore = Math.max(bestScore, FUZZY_MATCH_CONFIG.SUBSTRING_MATCH);
       return;
     }
 
@@ -86,12 +99,12 @@ function scoreHeaderMatch(header, aliases = []) {
       ? aliasTokens.filter(token => headerTokens.includes(token)).length / aliasTokens.length
       : 0;
     if (tokenOverlap > 0) {
-      bestScore = Math.max(bestScore, 0.65 + (tokenOverlap * 0.2));
+      bestScore = Math.max(bestScore, FUZZY_MATCH_CONFIG.TOKEN_BASELINE + (tokenOverlap * FUZZY_MATCH_CONFIG.TOKEN_BONUS_RATE));
     }
 
     const fuzzyScore = calculateDiceSimilarity(normalizedHeader, normalizedAlias);
-    if (fuzzyScore >= 0.72) {
-      bestScore = Math.max(bestScore, fuzzyScore * 0.85);
+    if (fuzzyScore >= FUZZY_MATCH_CONFIG.DICE_THRESHOLD) {
+      bestScore = Math.max(bestScore, fuzzyScore * FUZZY_MATCH_CONFIG.DICE_WEIGHT);
     }
   });
 
@@ -126,7 +139,7 @@ function detectColumnMapping(headers = []) {
       if (score > best.score) best = { header, score };
     });
 
-    if (best.header && best.score >= 0.72) {
+    if (best.header && best.score >= FUZZY_MATCH_CONFIG.DICE_THRESHOLD) {
       mapping[field] = best.header;
       usedHeaders.add(best.header);
     }
