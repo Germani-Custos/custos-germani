@@ -901,6 +901,7 @@ async function renderDrillThrough(codigoProduto) {
   dom.drillTitle.textContent = `${escapeHtml(codigoProduto)} — ${escapeHtml(descricao)}`;
   dom.drillSubtitle.textContent = `${history.length} registro(s) no histórico total · clique em uma linha para ver detalhes`;
 
+  /* eslint-disable no-restricted-syntax -- Drill-through monta tabela HTML controlada com valores formatados/escapados; SEC-02 deve centralizar helper de HTML seguro. */
   dom.drillBody.innerHTML = `
     <table>
       <thead>
@@ -942,6 +943,7 @@ async function renderDrillThrough(codigoProduto) {
       </tbody>
     </table>
   `;
+  /* eslint-enable no-restricted-syntax */
 
   dom.drillPanel.classList.remove('hidden');
   dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
