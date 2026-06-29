@@ -1,3 +1,4 @@
+// @ts-check
 /* Responsabilidade: parsing e normalização de planilhas XLSX (Smart Scraper). */
 
 export const REQUIRED_FIELDS = ['codigo_produto', 'descricao', 'custo_variavel', 'custo_direto_fixo', 'custo_total'];
@@ -134,6 +135,12 @@ function detectColumnMapping(headers = []) {
   return mapping;
 }
 
+/**
+ * Normaliza o código de produto preservando a chave de negócio textual sempre que possível.
+ * Bloqueia valores ambíguos (decimais, negativos, notação científica não inteira).
+ * @param {unknown} value
+ * @returns {string}
+ */
 export function normalizeCodigoProduto(value) {
   if (value === null || value === undefined) return '';
 
@@ -182,6 +189,11 @@ export function parseCurrency(value) {
   return parseBrazilianNumber(value);
 }
 
+/**
+ * Converte número em formato brasileiro/ERP para número arredondado a 4 casas.
+ * @param {unknown} value
+ * @returns {number}
+ */
 export function parseBrazilianNumber(value) {
   if (value === null || value === undefined) return 0;
 
@@ -249,6 +261,13 @@ export function scanHeaders(rows) {
   };
 }
 
+/**
+ * Mapeia linhas já lidas da planilha para o contrato de gravação de historico_custos.
+ * @param {Array<Record<string, unknown>>} rows
+ * @param {Record<string, string>} mapping
+ * @param {string|Date} dataReferencia
+ * @returns {Array<{codigo_produto:string, descricao:string, custo_variavel:number, custo_direto_fixo:number, custo_total:number, data_referencia:string}>}
+ */
 export function mapRowsToPayload(rows, mapping, dataReferencia) {
   if (!mapping || typeof mapping !== 'object') {
     console.error('Importação abortada: objeto de mapeamento inválido.', mapping);

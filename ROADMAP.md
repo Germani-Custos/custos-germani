@@ -168,3 +168,13 @@ Objetivo: antecipar investigação humana.
 - Concluído o item **VAL-01** do backlog: normalização canônica de `codigo_produto` com `normalizeCodigoProduto()` em preview, payload, API, cascata, relatório, drill-through e exportação derivada.
 - O fluxo agora bloqueia linha com código inválido/ambíguo, preserva zeros à esquerda quando a origem vem textual e reduz mutações causadas por notação científica do Excel.
 - Sem alteração na arquitetura FATO × DIMENSÃO nem na semântica temporal (`data_referencia` competência; `criado_em` importação).
+
+## Atualização contínua — 25/06/2026 (Onda 2 — Ferramentas)
+
+- [x] CFG-04 — `package.json` criado apenas para tooling, sem dependências de produção e sem alterar runtime CDN.
+- [x] CFG-01 — ESLint flat config adicionado para qualidade mínima, globals do browser/CDN/Node e regra contra `innerHTML` interpolado sem revisão explícita.
+- [x] CFG-03 — Vitest adicionado com testes de regressão de núcleo para VAL-01, LOG-01 e semântica temporal do relatório.
+- [x] CFG-02 — `jsconfig.json`, `// @ts-check` e JSDoc inicial adicionados para type checking leve em JavaScript.
+- [x] CFG-05 — GitHub Actions criado para lint/typecheck/test em PRs, sem deploy.
+
+Próximo foco recomendado: usar os warnings do lint como entrada objetiva para MNT-06/MNT-01/MNT-02, sem ampliar escopo da Onda 2.

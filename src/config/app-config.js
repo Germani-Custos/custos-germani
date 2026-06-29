@@ -8,6 +8,10 @@ function requireValue(key, value, diagnostics) {
   return value;
 }
 
+/**
+ * @param {unknown} rawEnv
+ * @returns {Record<string, string>|null}
+ */
 function normalizeEnv(rawEnv) {
   if (!rawEnv || typeof rawEnv !== 'object') return null;
 
@@ -17,7 +21,7 @@ function normalizeEnv(rawEnv) {
     if (value == null || value === '') return acc;
     acc[key] = value;
     return acc;
-  }, {});
+  }, /** @type {Record<string, string>} */ ({}));
 
   return Object.keys(normalized).length ? normalized : null;
 }
@@ -63,7 +67,7 @@ function resolveEnvSource() {
   diagnostics.push(metaEnv ? 'meta[name=VITE_*]:ok' : 'meta[name=VITE_*]:empty');
   if (metaEnv) return { source: metaEnv.source, env: metaEnv.env, diagnostics };
 
-  return { source: 'none', env: {}, diagnostics };
+  return { source: 'none', env: /** @type {Record<string, string>} */ ({}), diagnostics };
 }
 
 function parseBoolean(value) {

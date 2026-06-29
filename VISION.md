@@ -169,3 +169,7 @@ A execução do **VAL-01** reforça que `codigo_produto` é chave investigativa,
 ## Atualização 2026-05-28 — LOG-01 e confiança operacional dos alertas
 
 A execução do **LOG-01** transforma o alerta investigativo em contrato explícito: KPI, filtro rápido, fila, drill-through e exportação usam a mesma função canônica. Alerta significa variação absoluta ≥ 5% entre a última e a penúltima importação (`criado_em`), sem arredondamento prévio e incluindo altas e quedas. O recorte temporal do relatório segue sendo `data_referencia`; a regra de alerta apenas qualifica a mudança observada entre eventos de importação.
+
+## Atualização contínua — 25/06/2026 (rede de segurança técnica)
+
+A Onda 2 reforça a visão de motor investigativo ao reduzir risco de regressão antes das próximas refatorações. ESLint, type checking leve, Vitest e CI foram adicionados exclusivamente como ferramentas de desenvolvimento, preservando a arquitetura estática/CDN e evitando dependências de produção. A prioridade permanece velocidade de investigação: a rede de segurança existe para permitir evoluções futuras com menor risco sobre contratos críticos como VAL-01, LOG-01 e a separação temporal `data_referencia` × `criado_em`.
