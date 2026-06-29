@@ -193,3 +193,38 @@ Implementada (Fase 2). Permite **consultar e editar** os manuais (`docs/manuais/
 ## Atualização 2026-05-28 — ERR-01 / fronteiras assíncronas da UI
 
 `view/ui-controller.js` passou a centralizar erros operacionais em `normalizeOperationalError(error, operation)` e `executeOperationalBoundary(operation, action, options)`. Use esse padrão em novos handlers assíncronos de fronteira (rede, Supabase, XLSX, Chart), preservando contexto de tela e usando `debugLog` para detalhes técnicos somente quando `VITE_ENABLE_VERBOSE_LOGS=true`. Não registrar payloads completos nem dados sensíveis.
+
+## Tooling de desenvolvimento — Onda 2 (25/06/2026)
+
+A partir desta entrega, a validação técnica local passa a usar Node apenas como ferramenta de desenvolvimento. O runtime do Kustos Germani permanece estático via CDN.
+
+Comandos recomendados antes de abrir PR:
+
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm test
+```
+
+Contratos cobertos inicialmente:
+
+- VAL-01: `normalizeCodigoProduto()` preserva códigos textuais, converte notação científica inteira e bloqueia valores ambíguos.
+- LOG-01: `classifyAlert()`/`filterAlertRows()`/KPIs usam `abs(variacaoTemporal) >= 5` no eixo de importação (`criado_em`).
+- Semântica temporal: relatórios continuam separando competência (`data_referencia`) de evento de importação (`criado_em`).
+
+Warnings de lint não devem ser silenciados sem análise; trate-os em refatorações dedicadas ou documente a exceção quando existir contrato operacional envolvido.
+
+### Nota de CI — ESLint local vs runner limpo (29/06/2026)
+
+Para validar tooling, não confie em binários globais instalados na máquina. A reprodução correta da GitHub Actions é:
+
+```bash
+rm -rf node_modules
+npm ci
+npm run lint
+npm run typecheck
+npm test
+```
+
+O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js` fornece presets/regras, mas não substitui o executável `eslint` usado pelo script `npm run lint`.
