@@ -13,7 +13,7 @@ Cada arquivo cobre uma dimensão. Comece pelo **backlog priorizado** para saber 
 
 | Arquivo | Conteúdo |
 |---|---|
-| [`backlog-priorizado.md`](./backlog-priorizado.md) | **Ponto de partida.** Tabela única ordenada por severidade × esforço, com checkboxes e critério de aceite. |
+| [`backlog-priorizado.md`](./backlog-priorizado.md) | **Ponto de partida.** Backlog reavaliado em 2026-07-02 e ordenado por dependência arquitetural, risco × benefício, desbloqueio e preservação de contratos, com checkboxes e critério de aceite. |
 | [`seguranca.md`](./seguranca.md) | XSS, acesso público/RLS, validação de upload, dependências (CDN). |
 | [`robustez-erros-validacao.md`](./robustez-erros-validacao.md) | `try/catch` ausente, validação, e **bugs de correção** (notação científica, inconsistência de KPI). |
 | [`manutenibilidade.md`](./manutenibilidade.md) | Arquivos gigantes, duplicação, código morto, tipos/JSDoc. |

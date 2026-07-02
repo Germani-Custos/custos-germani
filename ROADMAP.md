@@ -177,4 +177,4 @@ Objetivo: antecipar investigação humana.
 - [x] CFG-02 — `jsconfig.json`, `// @ts-check` e JSDoc inicial adicionados para type checking leve em JavaScript.
 - [x] CFG-05 — GitHub Actions criado para lint/typecheck/test em PRs, sem deploy.
 
-Próximo foco recomendado: usar os warnings do lint como entrada objetiva para MNT-06/MNT-01/MNT-02, sem ampliar escopo da Onda 2.
+Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: seguir a nova ordem do `docs/auditoria/backlog-priorizado.md` — começar por `MNT-06`, `MNT-07` e `MNT-05`, então executar `MNT-01` como fatiamento destravador da UI antes de `PERF-01`, `MNT-03`, `SEC-02`, `PERF-02`, `MNT-02` e `VAL-02`. A hipótese validada é que o acoplamento do `view/ui-controller.js` virou o maior multiplicador de risco para performance, segurança de HTML e futura validação.

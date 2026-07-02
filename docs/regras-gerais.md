@@ -50,7 +50,7 @@ Esta é a regra central pedida para este projeto:
 
 - O backlog priorizado está em [`docs/auditoria/backlog-priorizado.md`](./auditoria/backlog-priorizado.md).
 - Ao resolver um item: **marque o checkbox**, use o ID no commit (ex.: `fix(SEC-01): ...`) e atualize a doc afetada.
-- Respeite a ordem das **ondas** (segurança/correção → ferramentas → performance → refatoração): ter lint/testes antes de refatorar reduz risco.
+- Respeite a ordem vigente do backlog reavaliado em 2026-07-02: segurança/correção concluída → ferramentas concluídas → preparação de contratos → fatiamento destravador da UI → performance/segurança da UI → API/validação compartilhada. A premissa atual é que `MNT-01` destrava `PERF-01`, `MNT-03`, `SEC-02` e parte de `PERF-02`/`VAL-02`; não volte à ordem histórica sem nova justificativa arquitetural.
 
 ---
 
