@@ -18,5 +18,6 @@
 9. [Boas práticas e padrões](../regras-negocio/padroes-codigo.md)
 10. [Glossário](../regras-negocio/glossario.md)
 11. [Playbook operacional](../troubleshooting/playbook-operacional.md)
+12. [Reviews arquiteturais](./reviews/AR-002-mnt06-antes-de-mnt01.md)
 
 > Os capítulos refletem o comportamento real do código atual. Itens de arquitetura futura são marcados explicitamente como evolução.
