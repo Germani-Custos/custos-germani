@@ -1,5 +1,63 @@
 // @ts-check
 /* Responsabilidade: cálculos analíticos e lógica de cascata (Origem -> Família -> Agrupamento -> Item). */
+
+/**
+ * Tipos para melhorar checkJs e IntelliSense sem alterar comportamento.
+ * Apenas typedefs JSDoc; não há efeitos em runtime.
+ *
+ * @typedef {Object} MasterItem
+ * @property {string} [codigo_produto]
+ * @property {string} [descricao]
+ * @property {string} [produto]
+ * @property {string} [nome]
+ * @property {string} [codigo]
+ * @property {string} [id]
+ * @property {string} [origem_id]
+ * @property {string} [familia_id]
+ * @property {string} [agrupamento_cod]
+ */
+
+/**
+ * @typedef {Object} Masters
+ * @property {Array<MasterItem>} [hierarquia]
+ * @property {Array<MasterItem>} [dicionario]
+ * @property {Array<MasterItem>} [produtos]
+ * @property {Array<MasterItem>} [familias]
+ * @property {Array<MasterItem>} [agrupamentos]
+ * @property {Array<MasterItem>} [origens]
+ */
+
+/**
+ * @typedef {Object} HistoricoRow
+ * @property {string} codigo_produto
+ * @property {string} [descricao]
+ * @property {number} [custo_total]
+ * @property {number} [custo_variavel]
+ * @property {number} [custo_direto_fixo]
+ * @property {string} [data_referencia]
+ * @property {string} [criado_em]
+ */
+
+/**
+ * @typedef {Object} ReportRow
+ * @property {string} codigo
+ * @property {string} descricao
+ * @property {number|null} ultimoCusto
+ * @property {number|null} penultimoCusto
+ * @property {number|null} diferenca
+ * @property {number|null} variacaoTemporal
+ * @property {string|null} ultimaAtualizacao
+ * @property {string|null} dataCompetencia
+ * @property {number} inicial
+ * @property {number} final
+ * @property {number} variacao
+ * @property {number} scoreInstabilidade
+ * @property {string} classificacaoInstabilidade
+ * @property {boolean} alert
+ * @property {boolean} mudouRegime
+ * @property {string|null} motivoAlerta
+ */
+
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 import { debugLog } from '../src/config/app-config.js';
 
@@ -165,6 +223,12 @@ function getCascadeCacheKey(state, masters) {
   return `${state.origem}|${state.familia}|${state.agrupamento}|${(masters.hierarquia || []).length}`;
 }
 
+/**
+ * Calcula opções de cascata (familias, agrupamentos, produtos) a partir do estado e masters fornecidos.
+ * @param {{origem:string, familia:string, agrupamento:string}} state
+ * @param {Masters} masters
+ * @returns {{familyOptions:Array<{value:string,label:string}>, groupOptions:Array<{value:string,label:string}>, productOptions:Array<{value:string,label:string}>}}
+ */
 export function calculateCascadeOptions(state, masters) {
   const cacheKey = getCascadeCacheKey(state, masters);
   if (_cascadeCache && _cascadeCacheKey === cacheKey) return _cascadeCache;
@@ -243,8 +307,9 @@ export function calculateCascadeOptions(state, masters) {
 /**
  * Agrupa histórico por produto e calcula linhas da fila investigativa.
  * `data_referencia` ordena a competência; `criado_em` identifica última/penúltima importação.
- * @param {Array<Record<string, unknown>>} historico
- * @param {{origens?:Array<Record<string, unknown>>, familias?:Array<Record<string, unknown>>, agrupamentos?:Array<Record<string, unknown>>}} [masters]
+ * @param {Array<HistoricoRow>} historico
+ * @param {Masters} [masters]
+ * @returns {Array<ReportRow>}
  */
 export function buildReportRows(historico, masters = { origens: [], familias: [], agrupamentos: [] }) {
   const grouped = {};
