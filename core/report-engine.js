@@ -10,7 +10,6 @@
  * @property {string} [descricao]
  * @property {string} [produto]
  * @property {string} [nome]
- * @property {string} [produto_descricao]
  * @property {string} [codigo]
  * @property {string} [id]
  * @property {string} [origem_id]
