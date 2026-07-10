@@ -133,10 +133,6 @@ function extractAlertPercentual(input) {
   throw new Error('Payload de alerta crítico inválido: percentual canônico ausente.');
 }
 
-/**
- * Expõe a configuração canônica do limiar de alerta investigativo (LOG-01).
- * @returns {{thresholdPercent:number, comparison:string, basis:string, temporalAxis:string}}
- */
 export function getAlertaCriticoConfig() {
   return ALERTA_CRITICO_CONFIG;
 }
@@ -174,21 +170,10 @@ export function classifyAlert(input) {
   };
 }
 
-/**
- * Atalho booleano para `classifyAlert().isAlert`.
- * @param {number|Record<string, unknown>} input
- * @returns {boolean}
- */
 export function isAlertaCritico(input) {
   return classifyAlert(input).isAlert;
 }
 
-/**
- * Filtra linhas da fila investigativa que atendem ao critério canônico de alerta (>5%).
- * @param {Array<ReportRow>} rows
- * @param {{operation?: string}} [context]
- * @returns {Array<ReportRow>}
- */
 export function filterAlertRows(rows, context = {}) {
   return (rows || []).filter(row => {
     const computed = classifyAlert(row).isAlert;
@@ -389,11 +374,6 @@ export function buildReportRows(historico, masters = { origens: [], familias: []
   });
 }
 
-/**
- * Calcula KPIs agregados da fila investigativa a partir de linhas de relatório.
- * @param {Array<ReportRow>} rows
- * @returns {{totalItens:number, totalAlertas:number, mediaVariacao:number, mudancasRegime:number}}
- */
 export function calculateKpis(rows) {
   const totalItens = rows.length;
   const totalAlertas = filterAlertRows(rows, { operation: 'KPI Alertas (>5%)' }).length;
