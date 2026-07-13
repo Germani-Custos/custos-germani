@@ -69,7 +69,14 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 
 ---
 
-## MNT-05 · 🟡 Baixo · Sem tipos nem contratos de função documentados
+## MNT-05 · 🟡 Baixo · Sem tipos nem contratos de função documentados — ✅ Resolvido
+
+**Resolução:** `src/services/api.js` ganhou `// @ts-check`, entrou no `include` de `jsconfig.json` e passou a importar `Masters`/`HistoricoRow`/`ReportRow` de `core/report-engine.js` via `@typedef {import(...)}`. Funções públicas centrais (`getMasters`, `getHistorico`, `getProductHistory`, `importarHistoricoCustosComLog`) documentadas com esses tipos. `createApiError` ganhou o typedef `ApiError` (Error + `details`). Restaurada a declaração de módulo do CDN do supabase-js em `types/globals.d.ts` (necessária para o typecheck de `api.js`).
+
+Colocar `api.js` sob typecheck expôs e permitiu corrigir 2 bugs reais, sem mudar comportamento esperado:
+1. `enrichRowsWithDicionario` tinha um caminho que retornava o array de linhas puro em vez de `{data, error}` quando nenhuma linha tinha `codigo_produto` normalizável — os dois chamadores (`getLatestImportComparison`, `getTopVariacoesImportacao`) desestruturam `{data, error}`, então nesse caso silenciosamente perdiam as linhas.
+2. `getMasters` retornava `diagnostico_sem_mapa: []` (array) no caminho de erro do histórico, mas a UI (`view/ui-controller.js`) sempre espera o formato `{status, rows, error}` — corrigido para manter o mesmo formato em todos os caminhos.
+
 
 - **Local:** todo o projeto (JS puro, sem JSDoc).
 - **Evidência:** funções como `renderTable(rows, options)` ou `buildReportRows(historico, masters)` não documentam o shape de `rows`/`historico`. O shape real existe e é estável (ver `buildReportRows` em `core/report-engine.js:156-176` e `createInitialState` em `view/ui-state.js`).

@@ -1,8 +1,15 @@
+// @ts-check
 /* Responsabilidade: camada única de acesso ao Supabase (Auth + leitura + escrita). */
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 import { appConfig, debugLog } from '../config/app-config.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
+
+/**
+ * @typedef {import('../../core/report-engine.js').Masters} Masters
+ * @typedef {import('../../core/report-engine.js').HistoricoRow} HistoricoRow
+ * @typedef {import('../../core/report-engine.js').ReportRow} ReportRow
+ */
 
 const TABLES = {
   historico: 'historico_custos',
@@ -76,7 +83,17 @@ function normalizeCascadeFilters(filters = {}) {
   };
 }
 
+/**
+ * @typedef {Error & {details?: Record<string, unknown>}} ApiError
+ */
+
+/**
+ * @param {string} message
+ * @param {Record<string, unknown>} [details]
+ * @returns {ApiError}
+ */
 function createApiError(message, details = {}) {
+  /** @type {ApiError} */
   const error = new Error(message);
   error.name = 'OperationalContractError';
   error.details = details;
@@ -219,7 +236,7 @@ async function enrichRowsWithDicionario(rows = []) {
     .map(item => normalizeCodigoProduto(item?.codigo_produto))
     .filter(Boolean))];
 
-  if (!codigos.length) return rows;
+  if (!codigos.length) return { data: rows, error: null };
 
   const { data: dicionarioRows, error: dicionarioError } = await supabase
     .from(TABLES.dicionario)
@@ -373,6 +390,12 @@ async function garantirProdutosNoDicionarioEmLote(produtos = []) {
 }
 
 export const api = {
+  /**
+   * Carrega as dimensões (masters) usadas pela cascata de filtros e pelo relatório.
+   * Degrada parcialmente por dimensão em caso de erro (ERR-02): historico é
+   * crítico (sem ele não há dados), as demais dimensões voltam vazias se falharem.
+   * @returns {Promise<Masters & {diagnostico_sem_mapa: {status: string, rows: Array<unknown>, error: unknown}, error: unknown}>}
+   */
   async getMasters() {
     // ERR-02: Promise.allSettled permite degradação parcial — dimensões que falharem
     // retornam vazias mas as demais continuam carregando normalmente.
@@ -396,7 +419,7 @@ export const api = {
 
     // Historico é crítico: sem ele não há nada para mostrar
     if (historicoError) {
-      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: [], error: historicoError };
+      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: { status: 'ok', rows: [], error: null }, error: historicoError };
     }
     // Dimensões com erro degradam parcialmente (log + array vazio)
     const error = origensError || familiasError || agrupamentosError || dicionarioError;
@@ -540,6 +563,12 @@ export const api = {
     return supabase.auth.getUser();
   },
 
+  /**
+   * Importa um lote de histórico de custos, registrando log_importacao,
+   * validando linha a linha e persistindo em chunks (IMPORT_CHUNK_SIZE).
+   * @param {Array<Pick<HistoricoRow, 'codigo_produto'|'descricao'|'custo_variavel'|'custo_direto_fixo'|'custo_total'|'data_referencia'>>} payload
+   * @param {{dataReferencia?: string}} [options]
+   */
   async importarHistoricoCustosComLog(payload, options = {}) {
     const totalLinhas = Array.isArray(payload) ? payload.length : 0;
     const inicio = new Date().toISOString();
@@ -719,6 +748,10 @@ export const api = {
     };
   },
 
+  /**
+   * @param {{origem?:string, familia?:string, agrupamento?:string, item?:string, start?:string, end?:string}} filters
+   * @returns {Promise<{data: Array<HistoricoRow>|null, error: unknown}>}
+   */
   async getHistorico(filters) {
     return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), start: normalizeISODate(filters?.start), end: normalizeISODate(filters?.end) });
   },
@@ -793,6 +826,11 @@ export const api = {
       .order('data_referencia', { ascending: true });
   },
 
+  /**
+   * Histórico completo de um produto para o drill-through.
+   * @param {string} codigoProduto
+   * @returns {Promise<{data: Array<HistoricoRow>|null, error: unknown}>}
+   */
   async getProductHistory(codigoProduto) {
     const codigo = normalizeCodigoProduto(codigoProduto);
     if (!codigo) {
