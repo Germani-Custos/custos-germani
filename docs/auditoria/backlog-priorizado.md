@@ -50,7 +50,7 @@ Conclusão: **MNT-01 deve subir**, mas não sozinho. Antes dele ainda vale elimi
 
 Objetivo: reduzir ambiguidade e remover divergências pequenas antes de fatiar módulos grandes.
 
-- [ ] **1. MNT-06** 🟠 P — Unificar os dois caminhos de importação; remover `mapRowsToPayload` órfão. **Motivo da subida:** baixo esforço, reduz divergência de payload e protege o contrato VAL-01 antes de mexer no fluxo de importação. → [`manutenibilidade.md`](./manutenibilidade.md)
+- [x] **1. MNT-06** 🟠 P — Unificar os dois caminhos de importação; remover `mapRowsToPayload` órfão. **Motivo da subida:** baixo esforço, reduz divergência de payload e protege o contrato VAL-01 antes de mexer no fluxo de importação. Resolvido removendo `mapRowsToPayload`/`parseCurrency`/`normalizeReferenceDate` de `core/spreadsheet-engine.js` (o fluxo vivo em `view/ui-controller.js` já cobria normalização de `codigo_produto` e é o único gerador de payload); teste correspondente removido de `tests/spreadsheet-engine.test.js`. → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **2. MNT-07** 🟡 P — Documentar/centralizar limiares e tetos (`.limit(1000)`, limiares de regime). **Motivo da subida:** deixa explícitos limites de negócio/performance que `PERF-01`, `PERF-02` e futuras análises não podem alterar silenciosamente. → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **3. MNT-05** 🟡 M — Completar JSDoc/`@typedef` dos contratos (`Masters`, `HistoricoRow`, `ReportRow`). **Motivo da subida:** aumenta a precisão do typecheck já existente e reduz risco no fatiamento de UI/API. → [`manutenibilidade.md`](./manutenibilidade.md)
 

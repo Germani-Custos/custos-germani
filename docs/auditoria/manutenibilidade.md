@@ -44,7 +44,10 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 
 ---
 
-## MNT-06 · 🟠 Médio · Caminho de importação morto e divergente
+## MNT-06 · 🟠 Médio · Caminho de importação morto e divergente — ✅ Resolvido
+
+**Resolução:** o fluxo vivo (`handleImport`/`buildImportPreview` em `view/ui-controller.js`) já normalizava `codigo_produto` via `normalizeCodigoProduto` (VAL-01) e já era o único caminho executado em produção — o caminho legado nunca foi incorporado a ele, apenas removido por ser órfão. `mapRowsToPayload`, `parseCurrency` e `normalizeReferenceDate` foram removidos de `core/spreadsheet-engine.js`; o teste correspondente em `tests/spreadsheet-engine.test.js` foi removido junto. Único gerador de payload de importação agora: `view/ui-controller.js`. `lint`/`typecheck`/`test` passam sem novos erros.
+
 
 - **Local:** `core/spreadsheet-engine.js:224-311` — `mapRowsToPayload`, e suas dependências exclusivas `normalizeCodigoProduto` (137-147), `parseCurrency` (153-155) e `normalizeReferenceDate` (299-311).
 - **Evidência:** `view/ui-controller.js:3` importa de `spreadsheet-engine` apenas `readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial`. **`mapRowsToPayload` não é importado em lugar nenhum** — a importação ativa monta o payload em `handleImport`/`buildImportPreview`. Ou seja, existem **dois** geradores de payload e o melhor deles (que trata notação científica, ver `VAL-01`) está morto.

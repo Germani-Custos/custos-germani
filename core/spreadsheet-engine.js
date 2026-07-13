@@ -198,10 +198,6 @@ function roundTo4(value) {
   return Math.round((value + Number.EPSILON) * 10000) / 10000;
 }
 
-export function parseCurrency(value) {
-  return parseBrazilianNumber(value);
-}
-
 /**
  * Converte número em formato brasileiro/ERP para número arredondado a 4 casas.
  * @param {unknown} value
@@ -272,102 +268,6 @@ export function scanHeaders(rows) {
     mapping,
     rejectedHeaders: headers.filter(header => !REQUIRED_FIELDS.includes(normalizeHeaderKey(header)))
   };
-}
-
-/**
- * Mapeia linhas já lidas da planilha para o contrato de gravação de historico_custos.
- * @param {Array<Record<string, unknown>>} rows
- * @param {Record<string, string>} mapping
- * @param {string|Date} dataReferencia
- * @returns {Array<{codigo_produto:string, descricao:string, custo_variavel:number, custo_direto_fixo:number, custo_total:number, data_referencia:string}>}
- */
-export function mapRowsToPayload(rows, mapping, dataReferencia) {
-  if (!mapping || typeof mapping !== 'object') {
-    console.error('Importação abortada: objeto de mapeamento inválido.', mapping);
-    return [];
-  }
-
-  const requiredColumns = {
-    codigo_produto: mapping.codigo_produto,
-    descricao: mapping.descricao,
-    custo_variavel: mapping.custo_variavel,
-    custo_direto_fixo: mapping.custo_direto_fixo,
-    custo_total: mapping.custo_total
-  };
-
-  const missingMappings = Object.entries(requiredColumns)
-    .filter(([, columnName]) => !String(columnName || '').trim())
-    .map(([field]) => field);
-
-  if (missingMappings.length > 0) {
-    console.error('Importação abortada: mapeamento incompleto para campos obrigatórios.', {
-      missingMappings,
-      mapping
-    });
-    return [];
-  }
-
-  const dataReferenciaNormalizada = normalizeReferenceDate(dataReferencia);
-  if (!dataReferenciaNormalizada) {
-    console.error('Importação abortada: data_referencia inválida. Use o formato ISO YYYY-MM-DD.', {
-      dataReferencia
-    });
-    return [];
-  }
-
-  return rows
-    .map((row, index) => {
-      const produto = row[mapping.codigo_produto];
-      const descricao = row[mapping.descricao];
-      const custoVariavel = parseCurrency(row[mapping.custo_variavel]);
-      const custoDiretoFixo = parseCurrency(row[mapping.custo_direto_fixo]);
-      const custoTotal = parseCurrency(row[mapping.custo_total]);
-
-      const codigoProdutoNormalizado = normalizeCodigoProduto(produto);
-      const descricaoNormalizada = String(descricao || '').replace(/\s+/g, ' ').trim();
-      const custoTotalInformado = String(row[mapping.custo_total] ?? '').trim().length > 0;
-
-      const registro = {
-        codigo_produto: codigoProdutoNormalizado,
-        descricao: descricaoNormalizada,
-        custo_variavel: custoVariavel,
-        custo_direto_fixo: custoDiretoFixo,
-        custo_total: custoTotal,
-        data_referencia: dataReferenciaNormalizada
-      };
-
-      const camposInvalidos = [];
-      if (!codigoProdutoNormalizado) camposInvalidos.push('codigo_produto');
-      if (!descricaoNormalizada) camposInvalidos.push('descricao');
-      if (!custoTotalInformado) camposInvalidos.push('custo_total');
-      if (Number.isNaN(custoTotal)) camposInvalidos.push('custo_total inválido');
-
-      if (camposInvalidos.length > 0) {
-        console.error(`Linha ${index + 1} ignorada: campos obrigatórios ausentes (${camposInvalidos.join(', ')}).`, {
-          row,
-          mapping,
-          registro
-        });
-        return null;
-      }
-
-      return registro;
-    })
-    .filter(Boolean);
-}
-
-function normalizeReferenceDate(value) {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
-  if (typeof value !== 'string') return null;
-
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString().slice(0, 10);
 }
 
 export function countValidMappedColumns(mapping) {
