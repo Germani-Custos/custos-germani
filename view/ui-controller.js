@@ -11,6 +11,12 @@ import { bindDocumentationView } from './documentation-controller.js';
 const state = createInitialState();
 const dom = getDomRefs();
 
+// MNT-07: limite de linhas mostradas na tabela do modal de preview de
+// importação (confirmImportPreview). É só um teto de exibição — não afeta
+// quais linhas são validadas ou efetivamente importadas (preview.validRows
+// e o payload usam preview.rows inteiro, sem esse corte).
+const IMPORT_PREVIEW_DISPLAY_LIMIT = 20;
+
 // ── Utilitários ──────────────────────────────────────────────────────────────
 
 function normalizeOperationalError(error, operation = 'operação desconhecida') {
@@ -391,7 +397,7 @@ function buildImportPreview(rows, mapping, produtos = []) {
 }
 
 async function confirmImportPreview(preview, totalColunasValidas) {
-  const previewRows = preview.rows.slice(0, 20).map(row => {
+  const previewRows = preview.rows.slice(0, IMPORT_PREVIEW_DISPLAY_LIMIT).map(row => {
     const statusIcon = row.status === 'valid' ? '🟢 válida' : row.status === 'warning' ? '🟡 atenção' : '🔴 erro';
     return `
       <tr>

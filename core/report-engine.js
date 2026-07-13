@@ -62,14 +62,35 @@
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 import { debugLog } from '../src/config/app-config.js';
 
+// MNT-07/LOG-01: regra de negócio para o KPI "Alertas (>5%)" e o filtro rápido
+// correspondente na fila investigativa. thresholdPercent é a variação
+// percentual mínima (em módulo) entre a última e a penúltima importação
+// (`variacaoTemporal`, eixo temporal `criado_em`) para marcar a linha como
+// alerta crítico. Único critério de alerta no sistema (ver classifyAlert);
+// não usa os limiares de regime de instabilidade abaixo.
 const ALERTA_CRITICO_CONFIG = Object.freeze({
   thresholdPercent: 5,
   comparison: 'absolute_greater_or_equal',
   basis: 'variacaoTemporal',
   temporalAxis: 'criado_em'
 });
+// MNT-07: limiares de regime de instabilidade (regra de negócio, não técnica).
+// calcInstabilityScore() é a média da variação percentual absoluta entre
+// custos consecutivos de um mesmo produto. classifyInstability() usa esses
+// dois limiares sobre esse score:
+// - abaixo de LIMIAR_ESTAVEL: produto classificado como ESTÁVEL
+// - entre LIMIAR_ESTAVEL e LIMIAR_OSCILANDO: OSCILANDO
+// - a partir de LIMIAR_OSCILANDO: MUITO INSTÁVEL
+// São independentes do limiar de alerta crítico (ALERTA_CRITICO_CONFIG,
+// 5%, ver LOG-01), que mede variação pontual entre duas importações
+// consecutivas (`criado_em`), não a média histórica do produto.
 const LIMIAR_ESTAVEL = 3;
 const LIMIAR_OSCILANDO = 8;
+// Número mínimo de pontos (importações) de um produto para calcular a
+// *mudança* de regime (comparar 1ª metade do histórico com a 2ª metade via
+// classifyInstability); não afeta o cálculo do score/classificação geral
+// (scoreInstabilidade/classificacaoInstabilidade), que roda com qualquer
+// quantidade de pontos.
 const MIN_PONTOS_REGIME = 4;
 
 /**

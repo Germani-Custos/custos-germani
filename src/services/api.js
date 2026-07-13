@@ -14,7 +14,23 @@ const TABLES = {
 };
 
 const supabase = createClient(appConfig.supabase.url, appConfig.supabase.anonKey);
+
+// MNT-07: tamanho de lote no upsert de historico_custos durante a importação.
+// 400 é um valor operacional (não uma regra de negócio): equilibra número de
+// round-trips ao Postgrest contra o tamanho de payload por requisição. Pode
+// subir com segurança se a importação ficar lenta em bases maiores.
 const IMPORT_CHUNK_SIZE = 400;
+
+// MNT-07: teto de linhas lidas (apenas coluna `criado_em`) para descobrir as
+// duas últimas importações distintas em getLatestImportComparison/getTopVariacoesImportacao.
+// Risco conhecido: se uma única importação gravar mais de IMPORT_COMPARISON_LOOKBACK_LIMIT
+// linhas, ou se o total de historico_custos ultrapassar esse valor com poucas
+// importações recentes, a importação anterior pode ficar fora da janela lida e
+// a comparação silenciosamente não encontrar 2 lotes. Em 2026-07-13 a tabela
+// tinha 601 linhas no total (bem abaixo do teto), então o risco é baixo hoje.
+// Se a base crescer perto deste valor, trocar por uma consulta de
+// `criado_em` distinto no banco (view ou RPC) em vez de só subir o número.
+const IMPORT_COMPARISON_LOOKBACK_LIMIT = 1000;
 
 function resolveMasterId(row) {
   return row?.id ?? row?.codigo ?? row?.cod ?? row?.uuid ?? row?.value ?? null;
@@ -712,7 +728,7 @@ export const api = {
       .from(TABLES.historico)
       .select('criado_em')
       .order('criado_em', { ascending: false })
-      .limit(1000);
+      .limit(IMPORT_COMPARISON_LOOKBACK_LIMIT);
 
     if (importError) return fail('Falha ao listar importações para comparação.', { metodo: 'getLatestImportComparison' }, importError);
 
@@ -816,7 +832,7 @@ export const api = {
       .from(TABLES.historico)
       .select('criado_em')
       .order('criado_em', { ascending: false })
-      .limit(1000);
+      .limit(IMPORT_COMPARISON_LOOKBACK_LIMIT);
 
     if (importError) return fail('Falha ao listar importações para cálculo de variações.', { metodo: 'getTopVariacoesImportacao' }, importError);
 

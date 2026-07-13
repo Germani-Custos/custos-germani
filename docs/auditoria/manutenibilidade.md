@@ -79,7 +79,10 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 
 ---
 
-## MNT-07 · 🟡 Baixo · "Magic numbers" sem origem documentada
+## MNT-07 · 🟡 Baixo · "Magic numbers" sem origem documentada — ✅ Resolvido
+
+**Resolução:** todos os limiares/tetos citados abaixo ganharam comentário de origem/propósito no próprio código e uma entrada em `docs/regras-negocio/glossario.md` ("Limiares e tetos (MNT-07)"). O `.limit(1000)` (agora `IMPORT_COMPARISON_LOOKBACK_LIMIT`) foi mantido no mesmo valor, mas com o risco de truncamento documentado explicitamente — a tabela `historico_custos` tinha 601 linhas em 2026-07-13, então não há risco imediato; se crescer perto do teto, o comentário no código já aponta a solução (consultar `criado_em` distinto no banco em vez de paginar por linha).
+
 
 - **Locais:** `IMPORT_CHUNK_SIZE = 400` (`src/services/api.js:16`); limiares `LIMIAR_ALERTA_VARIACAO_PERCENTUAL=5`, `LIMIAR_ESTAVEL=3`, `LIMIAR_OSCILANDO=8`, `MIN_PONTOS_REGIME=4` (`core/report-engine.js:3-6`); `.slice(0, 20)` no preview (`view/ui-controller.js:247`); `.limit(1000)` nas comparações de importação (`src/services/api.js:646,747`).
 - **Impacto:** os limiares são **regra de negócio** (definem o que é "alerta"/"instável") e estão sem rastreabilidade; o `.limit(1000)` é um teto silencioso que pode truncar a base de comparação em datasets grandes.
