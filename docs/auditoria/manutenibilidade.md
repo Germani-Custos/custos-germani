@@ -18,6 +18,9 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
   - `ui-controller.js` vira o **orquestrador** que importa e liga os bindings no `init`.
   Fazer **um fluxo por commit** (extração mecânica, sem mudar comportamento), validando manualmente entre cada um.
 - **Critério de aceite:** nenhum arquivo de `view/` acima de ~300 linhas; importação, auditoria, drill, export e gráficos funcionam idênticos ao comportamento atual.
+- **Progresso (em andamento):**
+  - [x] **Gráficos** (2026-07-17) — `view/ui-charts.js` (`createChartsController({ dom, state })`) reúne `renderImportComparisonChart`, `renderTopVariationsPanel`, `renderTemporalAnalysis`, `applyReportLayout`, `buildTemporalSeries`, `getTrendStatus`, `getReadableChartOptions` e o tema a11y. `ui-controller.js` só orquestra via `charts.*` em `runReport()`. Extração mecânica, sem mudança de comportamento; instâncias Chart.js seguem em `state.chart`/`state.trendChart` e o contrato temporal (`data_referencia` × `criado_em`) foi preservado. `ui-controller.js` caiu de ~1.333 para ~1.084 linhas.
+  - [ ] Importação · [ ] Filtros/relatório · [ ] Fila/tabela · [ ] Drill-through · [ ] Exportação.
 
 ---
 
