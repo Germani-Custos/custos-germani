@@ -139,7 +139,8 @@ Evitar:
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `view/ui-controller.js` | Eventos de UI, orquestração de fluxos, gráficos |
+| `view/ui-controller.js` | Eventos de UI, orquestração de fluxos |
+| `view/ui-charts.js` | Gráficos investigativos (comparação de importações, TOP variações, análise temporal) e layout condicional do relatório |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção de colunas, normalização numérica |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase (I/O) |
@@ -230,3 +231,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 
 - Atualização 2026-06-29 (CI Onda 2): `eslint` deve permanecer explicitamente em `devDependencies`; `@eslint/js` não fornece o binário do CLI. Validações de tooling devem reproduzir a Actions com ambiente limpo (`rm -rf node_modules && npm ci`) para evitar falso positivo por binários globais no `PATH`.
 - Atualização 2026-07-02 (reavaliação do backlog): `docs/auditoria/backlog-priorizado.md` foi reordenado arquiteturalmente após Onda 2/CI; `MNT-01` passa a ser fatiamento destravador antes de `PERF-01`, `MNT-03`, `SEC-02` e parte de `PERF-02`/`VAL-02`, com preparação prévia por `MNT-06`, `MNT-07` e `MNT-05`.
+
+- Atualização 2026-07-17 (MNT-01 — 1ª fatia: gráficos): fluxo de gráficos extraído de `view/ui-controller.js` para `view/ui-charts.js` (`createChartsController({ dom, state })`), sem alteração de comportamento. `ui-controller.js` segue como orquestrador e apenas chama `charts.renderImportComparisonChart`, `charts.renderTopVariationsPanel`, `charts.renderTemporalAnalysis` e `charts.applyReportLayout` dentro de `runReport()`, sob as mesmas fronteiras ERR-01. Instâncias Chart.js permanecem em `state.chart`/`state.trendChart`; contrato temporal preservado (série agrupa por `data_referencia` e desempata a última importação por `criado_em`). `MNT-01` permanece aberto (fatias restantes: importação, filtros/relatório, fila/tabela, drill-through, exportação). lint/typecheck/test verdes.
