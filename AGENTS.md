@@ -141,6 +141,7 @@ Evitar:
 |---|---|
 | `view/ui-controller.js` | Eventos de UI, orquestração de fluxos |
 | `view/ui-charts.js` | Gráficos investigativos (comparação de importações, TOP variações, análise temporal) e layout condicional do relatório |
+| `view/ui-drill-through.js` | Drill-through: histórico completo de importações de um produto (competência × importação, deltas por registro) |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção de colunas, normalização numérica |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase (I/O) |
@@ -233,3 +234,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 - Atualização 2026-07-02 (reavaliação do backlog): `docs/auditoria/backlog-priorizado.md` foi reordenado arquiteturalmente após Onda 2/CI; `MNT-01` passa a ser fatiamento destravador antes de `PERF-01`, `MNT-03`, `SEC-02` e parte de `PERF-02`/`VAL-02`, com preparação prévia por `MNT-06`, `MNT-07` e `MNT-05`.
 
 - Atualização 2026-07-17 (MNT-01 — 1ª fatia: gráficos): fluxo de gráficos extraído de `view/ui-controller.js` para `view/ui-charts.js` (`createChartsController({ dom, state })`), sem alteração de comportamento. `ui-controller.js` segue como orquestrador e apenas chama `charts.renderImportComparisonChart`, `charts.renderTopVariationsPanel`, `charts.renderTemporalAnalysis` e `charts.applyReportLayout` dentro de `runReport()`, sob as mesmas fronteiras ERR-01. Instâncias Chart.js permanecem em `state.chart`/`state.trendChart`; contrato temporal preservado (série agrupa por `data_referencia` e desempata a última importação por `criado_em`). `MNT-01` permanece aberto (fatias restantes: importação, filtros/relatório, fila/tabela, drill-through, exportação). lint/typecheck/test verdes.
+
+- Atualização 2026-07-17 (MNT-01 — 2ª fatia: drill-through): fluxo de drill-through extraído de `view/ui-controller.js` para `view/ui-drill-through.js` (`createDrillThroughController({ dom })`), seguindo o mesmo padrão de fábrica de `ui-charts.js`. `ui-controller.js` só chama `drillThrough.renderDrillThrough(codigo)` no clique da linha da fila investigativa, sob a fronteira ERR-01 existente. Escolhido por ser folha de acoplamento zero (não chama nenhuma outra função do controller). Contrato temporal preservado: o painel rotula competência (`data_referencia`) e importação (`criado_em`) por registro; regra de alerta segue via `isAlertaCritico`. Convenção arquitetural firmada: todo novo módulo de fluxo da UI expõe `create<Fluxo>Controller(deps)`. `MNT-01` permanece aberto (fatias restantes: importação, filtros/relatório, fila/tabela, exportação). lint/typecheck/test verdes.

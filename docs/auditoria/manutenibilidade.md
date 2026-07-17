@@ -20,7 +20,9 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 - **Critério de aceite:** nenhum arquivo de `view/` acima de ~300 linhas; importação, auditoria, drill, export e gráficos funcionam idênticos ao comportamento atual.
 - **Progresso (em andamento):**
   - [x] **Gráficos** (2026-07-17) — `view/ui-charts.js` (`createChartsController({ dom, state })`) reúne `renderImportComparisonChart`, `renderTopVariationsPanel`, `renderTemporalAnalysis`, `applyReportLayout`, `buildTemporalSeries`, `getTrendStatus`, `getReadableChartOptions` e o tema a11y. `ui-controller.js` só orquestra via `charts.*` em `runReport()`. Extração mecânica, sem mudança de comportamento; instâncias Chart.js seguem em `state.chart`/`state.trendChart` e o contrato temporal (`data_referencia` × `criado_em`) foi preservado. `ui-controller.js` caiu de ~1.333 para ~1.084 linhas.
-  - [ ] Importação · [ ] Filtros/relatório · [ ] Fila/tabela · [ ] Drill-through · [ ] Exportação.
+  - [x] **Drill-through** (2026-07-17) — `view/ui-drill-through.js` (`createDrillThroughController({ dom })`) contém `renderDrillThrough`. Escolhido como 2ª fatia por ser folha de acoplamento zero (não chama nenhuma outra função do controller), maximizando baixo risco e coesão; `ui-controller.js` só chama `drillThrough.renderDrillThrough(codigo)` no clique da linha, sob a fronteira ERR-01. Extração verbatim, sem mudança de comportamento; contrato temporal preservado (rotula competência × importação por registro). `ui-controller.js` caiu de ~1.084 para ~1.020 linhas.
+  - **Convenção firmada:** todo novo módulo de fluxo expõe `create<Fluxo>Controller(deps)` (ex.: `createChartsController`, `createDrillThroughController`), mantendo identidade arquitetural única.
+  - [ ] Importação · [ ] Filtros/relatório · [ ] Fila/tabela · [ ] Exportação.
 
 ---
 
