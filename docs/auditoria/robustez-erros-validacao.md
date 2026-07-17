@@ -26,6 +26,21 @@ Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção
 
 ---
 
+## LOG-02 · 🟠 Médio · Comparação entre importações pode comparar chunks da mesma importação (dívida conhecida)
+
+- **Local:** `src/services/api.js` — `getLatestImportComparison` e `getTopVariacoesImportacao` (identificação das "2 últimas importações" por `criado_em` distinto); interação com o upsert em chunks de `importarHistoricoCustosComLog` (`IMPORT_CHUNK_SIZE = 400`).
+- **Evidência:** ambos os métodos definem "as 2 últimas importações" como os **2 valores distintos de `criado_em` mais recentes** (`[...new Set(rows.map(r => r.criado_em))].slice(0, 2)`). A importação, porém, grava em **chunks de 400 linhas**, e **cada chunk é uma chamada `.upsert()` separada** — logo, uma transação distinta, com `criado_em` (default `now()`) próprio. Uma importação com **mais de 400 linhas** gera **múltiplos `criado_em`** para a mesma competência/lote lógico.
+- **Impacto:** quando um único lote lógico ultrapassa 400 linhas, a "Comparação entre importações" e o "TOP variações" podem comparar **dois chunks da mesma importação** (conjuntos de produtos diferentes, mesmo lote) em vez de duas importações reais — produzindo variação média ~0 e listas de TOP incorretas. A base tinha ~601 linhas em 2026-07-13, então o cenário **já é possível hoje** num reimport completo.
+- **Por que é silencioso:** não há exceção nem `error`; os painéis renderizam normalmente com números plausíveis, apenas **incorretos**. O investigador não tem sinal de que a comparação não é entre importações reais.
+- **Relação com contratos:** toca diretamente a semântica **`criado_em` (evento de importação)** do `AGENTS.md`. A premissa implícita "1 importação = 1 `criado_em`" não é garantida pelo pipeline atual de chunking.
+- **Correção recomendada (a decidir — implica mudança de comportamento/contrato, não fazer sem validação):**
+  - **(a)** gravar um **`criado_em` único por lote** no payload de `importarHistoricoCustosComLog` (todas as linhas do lote compartilham o timestamp capturado no início da importação), tornando "1 importação = 1 `criado_em`". Atenção: em `onConflict` de reimport isso sobrescreveria o `criado_em` de linhas já existentes, alterando a noção de "penúltima importação".
+  - **(b)** agrupar a comparação por **lote/`log_importacao`** (ex.: associar cada linha ao `log_id` da importação) em vez de por `criado_em` distinto, deixando o `criado_em` como está.
+- **Critério de aceite:** importar um lote com mais de `IMPORT_CHUNK_SIZE` linhas e confirmar que a comparação entre importações e o TOP variações tratam esse lote como **uma única** importação (não como dois chunks distintos).
+- **Status 2026-07-17:** registrada como **dívida arquitetural conhecida**, sem alteração de comportamento. Aguarda decisão entre (a) e (b) antes de implementar. Backlog: `docs/auditoria/backlog-priorizado.md` (Onda 6). Achado derivado da revisão de erros silenciosos que corrigiu o delta monetário (`fix: corrige delta monetário inventado...`, 2026-07-17).
+
+---
+
 ## VAL-01 · ✅ Resolvido · Código de produto em notação científica normalizado no fluxo ativo
 
 - **Local original:** fluxo ativo `view/ui-controller.js` (`buildImportPreview`) fazia `String(row[mapping.codigo_produto]).trim()`; a função `normalizeCodigoProduto` existia em `core/spreadsheet-engine.js`, mas não era usada em todos os caminhos ativos.
