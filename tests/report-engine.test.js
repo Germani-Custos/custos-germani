@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { buildReportRows, calculateKpis, classifyAlert, filterAlertRows, fillSelect } from '../core/report-engine.js';
+import { buildReportRows, calculateKpis, classifyAlert, isAlertaCritico, getAlertaCriticoConfig, filterAlertRows, fillSelect } from '../core/report-engine.js';
 
 describe('alertas investigativos (LOG-01)', () => {
   it('usa abs(variacaoTemporal) >= 5 sem arredondamento prévio', () => {
@@ -17,6 +17,22 @@ describe('alertas investigativos (LOG-01)', () => {
 
     expect(filterAlertRows(rows).map(row => row.codigo)).toEqual(['A', 'C']);
     expect(calculateKpis(rows).totalAlertas).toBe(2);
+  });
+
+  it('isAlertaCritico segue o mesmo limiar abs(>=5) para número e objeto', () => {
+    expect(isAlertaCritico(5)).toBe(true);
+    expect(isAlertaCritico(-6)).toBe(true);
+    expect(isAlertaCritico(4.99)).toBe(false);
+    expect(isAlertaCritico({ variacaoTemporal: 8 })).toBe(true);
+    expect(isAlertaCritico({ variacaoTemporal: null })).toBe(false);
+  });
+
+  it('getAlertaCriticoConfig expõe o contrato canônico (5% no eixo criado_em) e é imutável', () => {
+    const config = getAlertaCriticoConfig();
+    expect(config.thresholdPercent).toBe(5);
+    expect(config.basis).toBe('variacaoTemporal');
+    expect(config.temporalAxis).toBe('criado_em');
+    expect(Object.isFrozen(config)).toBe(true);
   });
 });
 
