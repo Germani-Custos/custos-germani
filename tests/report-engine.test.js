@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { buildReportRows, calculateKpis, classifyAlert, filterAlertRows, fillSelect } from '../core/report-engine.js';
+import { buildReportRows, calculateKpis, classifyAlert, isAlertaCritico, getAlertaCriticoConfig, filterAlertRows, fillSelect } from '../core/report-engine.js';
 
 describe('alertas investigativos (LOG-01)', () => {
   it('usa abs(variacaoTemporal) >= 5 sem arredondamento prévio', () => {
@@ -17,6 +17,22 @@ describe('alertas investigativos (LOG-01)', () => {
 
     expect(filterAlertRows(rows).map(row => row.codigo)).toEqual(['A', 'C']);
     expect(calculateKpis(rows).totalAlertas).toBe(2);
+  });
+
+  it('isAlertaCritico segue o mesmo limiar abs(>=5) para número e objeto', () => {
+    expect(isAlertaCritico(5)).toBe(true);
+    expect(isAlertaCritico(-6)).toBe(true);
+    expect(isAlertaCritico(4.99)).toBe(false);
+    expect(isAlertaCritico({ variacaoTemporal: 8 })).toBe(true);
+    expect(isAlertaCritico({ variacaoTemporal: null })).toBe(false);
+  });
+
+  it('getAlertaCriticoConfig expõe o contrato canônico (5% no eixo criado_em) e é imutável', () => {
+    const config = getAlertaCriticoConfig();
+    expect(config.thresholdPercent).toBe(5);
+    expect(config.basis).toBe('variacaoTemporal');
+    expect(config.temporalAxis).toBe('criado_em');
+    expect(Object.isFrozen(config)).toBe(true);
   });
 });
 
@@ -48,6 +64,40 @@ describe('buildReportRows temporalidade', () => {
     expect(row.variacaoTemporal).toBeNull();
     expect(row.penultimoCusto).toBeNull();
     expect(row.alert).toBe(false);
+  });
+});
+
+describe('buildReportRows — mudança de regime e instabilidade', () => {
+  // Contrato de regime/instabilidade (calcInstabilityScore/classifyInstability)
+  // exercitado pela superfície pública buildReportRows, sem exportar internos.
+  const serie = (codigo, custos) => custos.map((custo, i) => {
+    const mes = String(i + 1).padStart(2, '0');
+    return {
+      codigo_produto: codigo,
+      descricao: 'Item',
+      custo_total: custo,
+      data_referencia: `2026-${mes}-01`,
+      criado_em: `2026-${mes}-10T10:00:00Z`
+    };
+  });
+
+  it('sinaliza mudança de regime quando a 2ª metade sai de ESTÁVEL', () => {
+    // 1ª metade estável (~1% ao mês), 2ª metade com saltos grandes.
+    const [row] = buildReportRows(serie('R1', [100, 101, 102, 103, 130, 100]));
+    expect(row.mudouRegime).toBe(true);
+    expect(row.classificacaoInstabilidade).toBe('MUITO INSTÁVEL');
+  });
+
+  it('não sinaliza mudança de regime para produto estável', () => {
+    const [row] = buildReportRows(serie('R2', [100, 101, 102, 103, 104, 105]));
+    expect(row.mudouRegime).toBe(false);
+    expect(row.classificacaoInstabilidade).toBe('ESTÁVEL');
+  });
+
+  it('não sinaliza mudança de regime com menos de 4 pontos, mesmo instável', () => {
+    const [row] = buildReportRows(serie('R3', [100, 150]));
+    expect(row.mudouRegime).toBe(false);
+    expect(row.classificacaoInstabilidade).toBe('MUITO INSTÁVEL');
   });
 });
 
