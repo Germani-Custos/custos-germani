@@ -1,4 +1,6 @@
-/* Responsabilidade: controle de interface, eventos, gráficos e fluxo investigativo. */
+/* Responsabilidade: orquestração da interface — bootstrap, navegação, eventos e
+   coordenação dos fluxos investigativos (delegando gráficos e drill-through a
+   módulos dedicados: ui-charts.js, ui-drill-through.js). */
 import { api } from '../src/services/api.js';
 import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial, normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
 import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico, filterAlertRows } from '../core/report-engine.js';
@@ -8,10 +10,12 @@ import { debugLog } from '../src/config/app-config.js';
 import { debounce, escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
 import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
+import { createDrillThroughController } from './ui-drill-through.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
+const drillThrough = createDrillThroughController({ dom });
 
 // MNT-07: limite de linhas mostradas na tabela do modal de preview de
 // importação (confirmImportPreview). É só um teto de exibição — não afeta
@@ -825,7 +829,7 @@ function renderTable(rows, options = {}) {
     tr.addEventListener('click', async event => {
       if (event.target.closest('.row-details-toggle')) return;
       const codigo = tr.dataset.codigo;
-      await executeOperationalBoundary('drill-through do produto', () => renderDrillThrough(codigo), {
+      await executeOperationalBoundary('drill-through do produto', () => drillThrough.renderDrillThrough(codigo), {
         message: 'Falha ao carregar o histórico completo do produto.'
       });
       await runReport({ silent: true, selectedProduct: codigo });
@@ -891,72 +895,6 @@ function formatDiffCell(diferenca, variacao) {
   const variacaoText = Number.isFinite(variacao) ? ` (${variacao.toFixed(2)}%)` : '';
   return `${diferenca >= 0 ? '+' : '-'}R$ ${formatCurrencyBRL(Math.abs(diferenca))}${variacaoText}`;
 }
-
-// ── Drill-through: histórico completo de importações ─────────────────────────
-
-async function renderDrillThrough(codigoProduto) {
-  const { data: history, error } = await api.getProductHistory(codigoProduto);
-  if (error) {
-    showToast('error', 'Falha ao carregar histórico do produto.');
-    return;
-  }
-  if (!history?.length) {
-    showToast('info', 'Sem histórico para este produto.');
-    return;
-  }
-
-  const descricao = history[history.length - 1]?.descricao || '';
-  dom.drillTitle.textContent = `${escapeHtml(codigoProduto)} — ${escapeHtml(descricao)}`;
-  dom.drillSubtitle.textContent = `${history.length} registro(s) no histórico total · clique em uma linha para ver detalhes`;
-
-  /* eslint-disable no-restricted-syntax -- Drill-through monta tabela HTML controlada com valores formatados/escapados; SEC-02 deve centralizar helper de HTML seguro. */
-  dom.drillBody.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Competência</th>
-          <th>Importado em</th>
-          <th>Custo Variável</th>
-          <th>Custo Direto Fixo</th>
-          <th>Custo Total</th>
-          <th>Δ vs anterior</th>
-          <th>Δ%</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${history.map(row => {
-          const isAlert = isAlertaCritico({ deltaPerc: row.deltaPerc });
-          const deltaText = row.delta !== null
-            ? `${row.delta >= 0 ? '+' : ''}R$ ${formatCurrencyBRL(Math.abs(row.delta))}`
-            : '—';
-          const deltaPercText = row.deltaPerc !== null
-            ? `${row.deltaPerc >= 0 ? '+' : ''}${row.deltaPerc.toFixed(2)}%`
-            : '—';
-          const deltaClass = row.delta === null ? 'delta-neutral'
-            : row.delta > 0 ? 'delta-up'
-            : row.delta < 0 ? 'delta-down'
-            : 'delta-neutral';
-          return `
-            <tr class="${isAlert ? 'row-alert' : ''}">
-              <td><strong>${formatDateBR(row.data_referencia)}</strong></td>
-              <td>${formatDateTimeBR(row.criado_em)}</td>
-              <td>R$ ${formatCurrencyBRL(row.custo_variavel)}</td>
-              <td>R$ ${formatCurrencyBRL(row.custo_direto_fixo)}</td>
-              <td><strong>R$ ${formatCurrencyBRL(row.custo_total)}</strong></td>
-              <td class="${deltaClass}">${deltaText}</td>
-              <td class="${isAlert ? deltaClass : ''}">${deltaPercText}</td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-  /* eslint-enable no-restricted-syntax */
-
-  dom.drillPanel.classList.remove('hidden');
-  dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
 
 function getInvestigationRankScore(row) {
   const prioridade = getOperationalPriority(row);
