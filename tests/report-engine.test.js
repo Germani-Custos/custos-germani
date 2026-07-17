@@ -51,6 +51,40 @@ describe('buildReportRows temporalidade', () => {
   });
 });
 
+describe('buildReportRows — mudança de regime e instabilidade', () => {
+  // Contrato de regime/instabilidade (calcInstabilityScore/classifyInstability)
+  // exercitado pela superfície pública buildReportRows, sem exportar internos.
+  const serie = (codigo, custos) => custos.map((custo, i) => {
+    const mes = String(i + 1).padStart(2, '0');
+    return {
+      codigo_produto: codigo,
+      descricao: 'Item',
+      custo_total: custo,
+      data_referencia: `2026-${mes}-01`,
+      criado_em: `2026-${mes}-10T10:00:00Z`
+    };
+  });
+
+  it('sinaliza mudança de regime quando a 2ª metade sai de ESTÁVEL', () => {
+    // 1ª metade estável (~1% ao mês), 2ª metade com saltos grandes.
+    const [row] = buildReportRows(serie('R1', [100, 101, 102, 103, 130, 100]));
+    expect(row.mudouRegime).toBe(true);
+    expect(row.classificacaoInstabilidade).toBe('MUITO INSTÁVEL');
+  });
+
+  it('não sinaliza mudança de regime para produto estável', () => {
+    const [row] = buildReportRows(serie('R2', [100, 101, 102, 103, 104, 105]));
+    expect(row.mudouRegime).toBe(false);
+    expect(row.classificacaoInstabilidade).toBe('ESTÁVEL');
+  });
+
+  it('não sinaliza mudança de regime com menos de 4 pontos, mesmo instável', () => {
+    const [row] = buildReportRows(serie('R3', [100, 150]));
+    expect(row.mudouRegime).toBe(false);
+    expect(row.classificacaoInstabilidade).toBe('MUITO INSTÁVEL');
+  });
+});
+
 describe('fillSelect', () => {
   beforeEach(() => {
     global.document = {
