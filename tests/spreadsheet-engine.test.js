@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeCodigoProduto, parseBrazilianNumber, formatBrazilianFinancial } from '../core/spreadsheet-engine.js';
+import { normalizeCodigoProduto, parseBrazilianNumber, formatBrazilianFinancial, scanHeaders, countValidMappedColumns } from '../core/spreadsheet-engine.js';
 
 describe('normalizeCodigoProduto (VAL-01)', () => {
   it('preserva zeros à esquerda quando a origem textual já é código de negócio', () => {
@@ -55,5 +55,30 @@ describe('formatBrazilianFinancial', () => {
   it('retorna 0,000 para valores não numéricos', () => {
     expect(formatBrazilianFinancial('abc')).toBe('0,000');
     expect(formatBrazilianFinancial(NaN)).toBe('0,000');
+  });
+});
+
+describe('scanHeaders / countValidMappedColumns — mapeamento de importação', () => {
+  it('mapeia os 5 campos obrigatórios (exato + fuzzy) e ignora coluna extra', () => {
+    const { mapping, rejectedHeaders } = scanHeaders([
+      { 'Código Produto': '1', 'Descrição': 'x', 'Custo Variável': '1', 'Direto Fixo': '1', 'Valor Total': '1', 'Coluna Extra': 'y' }
+    ]);
+
+    expect(mapping.codigo_produto).toBe('Código Produto');
+    expect(mapping.descricao).toBe('Descrição');
+    expect(mapping.custo_variavel).toBe('Custo Variável');
+    expect(mapping.custo_direto_fixo).toBe('Direto Fixo');   // fuzzy (alias "direto fixo")
+    expect(mapping.custo_total).toBe('Valor Total');          // fuzzy (alias "valor total")
+    expect(countValidMappedColumns(mapping)).toBe(5);
+    expect(rejectedHeaders).toContain('Coluna Extra');
+  });
+
+  it('conta apenas os campos reconhecidos quando faltam colunas', () => {
+    const { mapping } = scanHeaders([{ 'Produto': '1', 'Desc': 'x', 'Nada': 'y' }]);
+
+    expect(mapping.codigo_produto).toBe('Produto');
+    expect(mapping.descricao).toBe('Desc');
+    expect(mapping.custo_total).toBeNull();
+    expect(countValidMappedColumns(mapping)).toBe(2);
   });
 });
