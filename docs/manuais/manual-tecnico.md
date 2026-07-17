@@ -71,6 +71,8 @@ Mapa de telas/fluxos: [`docs/ux/frontend.md`](../ux/frontend.md) e [`docs/ux/rot
 
 A UI **sempre rotula** qual eixo está mostrando. Regra detalhada no `AGENTS.md` e em [`docs/arquitetura/banco-de-dados.md`](../arquitetura/banco-de-dados.md).
 
+> **Dívida conhecida (LOG-02):** a premissa "1 importação = 1 `criado_em`" **não** é garantida pelo pipeline atual. O upsert grava em chunks de 400 (`IMPORT_CHUNK_SIZE`) e cada chunk recebe um `criado_em` próprio, então um lote com mais de 400 linhas gera vários `criado_em`. Assim, `getLatestImportComparison`/`getTopVariacoesImportacao` podem comparar dois chunks do mesmo lote em vez de duas importações reais (erro silencioso). Detalhe e opções de correção em [`docs/auditoria/robustez-erros-validacao.md`](../auditoria/robustez-erros-validacao.md) (LOG-02) e no backlog.
+
 ### Regras de acesso a dados (do `AGENTS.md`)
 - **Só** `supabase.from()`. **Sem** RPC, **sem** SQL bruto no frontend.
 - Frontend exibe `descricao`; UUID/`codigo` são chave técnica, nunca semântica de negócio.
