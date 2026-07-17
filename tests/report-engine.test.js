@@ -34,6 +34,21 @@ describe('buildReportRows temporalidade', () => {
     expect(row.variacaoTemporal).toBe(8);
     expect(row.alert).toBe(true);
   });
+
+  it('não inventa delta monetário quando o produto tem uma só importação', () => {
+    const historico = [
+      { codigo_produto: '002', descricao: 'Único', custo_total: 100, data_referencia: '2026-01-01', criado_em: '2026-05-10T10:00:00Z' }
+    ];
+
+    const [row] = buildReportRows(historico);
+
+    // Sem penúltima importação, "Δ vs anterior" e a variação temporal são nulos
+    // (não o custo cheio) — coerentes entre si.
+    expect(row.diferenca).toBeNull();
+    expect(row.variacaoTemporal).toBeNull();
+    expect(row.penultimoCusto).toBeNull();
+    expect(row.alert).toBe(false);
+  });
 });
 
 describe('fillSelect', () => {
