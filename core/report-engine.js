@@ -378,7 +378,11 @@ export function buildReportRows(historico, masters = { origens: [], familias: []
       descricao: last.descricao || '-',
       ultimoCusto: ultimo ? ultimoCusto : null,
       penultimoCusto: penultimo ? penultimoCusto : null,
-      diferenca: ultimo ? diferenca : null,
+      // Sem penúltima importação não há "Δ vs anterior": gate em `penultimo`
+      // (não em `ultimo`), consistente com `variacaoTemporal` acima. Caso
+      // contrário, produto com uma só importação exibiria o custo total inteiro
+      // como se fosse o delta monetário (silencioso na tabela e na exportação).
+      diferenca: penultimo ? diferenca : null,
       variacaoTemporal: ultimo ? variacaoTemporal : null,
       ultimaAtualizacao: ultimo?.criado_em || null,
       dataCompetencia: ultimo?.data_referencia || null,
