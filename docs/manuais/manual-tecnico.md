@@ -31,6 +31,7 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-controller.js       # Bootstrap + orquestração dos fluxos de UI (fatiamento em andamento — ver MNT-01)
   ui-charts.js           # createChartsController(): gráficos (comparação/TOP variações/temporal) + layout — fatiado de ui-controller (MNT-01)
   ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto — fatiado de ui-controller (MNT-01)
+  ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log — fatiado de ui-controller (MNT-01)
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
   ui-utils.js            # escapeHtml, debounce, showToast, formatadores
