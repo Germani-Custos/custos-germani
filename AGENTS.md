@@ -147,7 +147,7 @@ Evitar:
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase (I/O) |
 | `services/api.js` | Shim de compatibilidade de import (re-exporta de src/services/api.js) |
-| `core/heuristic-engine.js` | Módulo de sugestão de categoria (não conectado ao fluxo principal ainda) |
+| `core/heuristic-engine.js` | Somente documentação: guardrail da regra central "categorização vem do dicionario_produtos, nunca de heurística por texto". Não exporta lógica (funções de sugestão foram removidas); serve de aviso no local onde alguém tentaria adicioná-la. Ver MNT-04. |
 
 ---
 

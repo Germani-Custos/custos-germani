@@ -38,6 +38,7 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
   - `src/services/enrichment.js` — `enrichRowsWithDicionario`, `mapHierarchyRows`, cascata em memória.
   - `src/services/api.js` — só os métodos `api.*` orquestrando os acima.
 - **Critério de aceite:** `validation.js` é importável e testável sem rede; `import { api } from '../src/services/api.js'` e o shim `services/api.js` continuam válidos.
+- **Avaliação de risco (rev. arquitetural A-03):** o tamanho (885 linhas) é **cheiro arquitetural, não risco operacional agudo hoje**. A seção mais complexa — importação em lote (`importarHistoricoCustosComLog`: validação de row, upsert em chunks, criação de log, diagnóstico) — está sob `@ts-check` desde o MNT-05, que dá rede de segurança contra regressão de contrato. A dívida de comparação entre importações já está isolada e rastreada em `LOG-02` (chunks de 400 com `criado_em` distinto). Conclusão: **não fatorar no freeze** (mudaria o contrato público `export const api`); manter em MNT-02, sem elevação de severidade. Reavaliar antes de features que ampliem o pipeline de importação.
 
 ---
 
@@ -66,7 +67,7 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 ## MNT-04 · 🟡 Baixo · Código morto / não integrado
 
 - **Locais:**
-  - `core/heuristic-engine.js` — módulo de sugestão de categoria; o próprio `AGENTS.md:147` admite "não conectado ao fluxo principal ainda". `api.suggestCategory` (`src/services/api.js:612-635`) parece existir só para ele.
+  - `core/heuristic-engine.js` — **Decisão (A-01…A-05, revisão arquitetural):** manter como **guardrail somente-documentação**. Após a remoção das funções de sugestão (`suggestCategory`, `splitImportRows`, regras hardcoded) e de `normalizeProductCode` (duplicado), o arquivo não exporta lógica: contém apenas o cabeçalho que documenta a regra central "categorização vem do `dicionario_produtos`, nunca de heurística por texto" e as condições para uma eventual reativação. Esse aviso, no exato local onde alguém tentaria adicionar heurística, tem valor de guardrail maior que o custo de manter o arquivo. Severidade **baixa**; não bloqueia a próxima feature. `AGENTS.md` atualizado para descrever o arquivo com precisão (antes o descrevia como "módulo de sugestão de categoria").
   - `api.getTrendsByProduct` (`src/services/api.js:694-706`) — janela fixa de 6 meses; a análise temporal usa o `data` já carregado em `renderTemporalAnalysis`, não este método. **Verificar** uso real antes de remover.
   - `api.upsertHistoricoCustos` (`src/services/api.js:419-442`) — a importação usa `importarHistoricoCustosComLog`. **Verificar** uso real.
 - **Impacto:** superfície de código maior que a funcional; leitor não sabe o que é caminho real.
@@ -101,3 +102,14 @@ Colocar `api.js` sob typecheck expôs e permitiu corrigir 2 bugs reais, sem muda
 - **Impacto:** os limiares são **regra de negócio** (definem o que é "alerta"/"instável") e estão sem rastreabilidade; o `.limit(1000)` é um teto silencioso que pode truncar a base de comparação em datasets grandes.
 - **Correção recomendada:** comentar a **razão** de cada limiar (de onde veio a regra dos 5%/3/8) e centralizá-los; documentá-los no `docs/regras-negocio/glossario.md`. Reavaliar `.limit(1000)` (paginar ou justificar o teto).
 - **Critério de aceite:** limiares e tetos têm comentário do "porquê" e constam do glossário; o teto de comparação tem justificativa ou paginação.
+
+---
+
+## MNT-08 · 🟠 Médio · Lógica de domínio investigativo em `view/ui-controller.js`
+
+- **Origem:** revisão arquitetural (Prompt 6, questão A-02; herda o D-03 do Prompt 5). Avaliado e **deliberadamente adiado** — não é correção de freeze.
+- **Local:** `getOperationalPriority` e `buildInvestigativeSummary` em `view/ui-controller.js`. São funções puras (sem DOM) de classificação/redação investigativa, mas vivem no orquestrador de bootstrap/renderização. Usadas pela tabela (`renderTable`) **e** pela exportação (`view/ui-export.js`), que as recebe por **injeção** (`createExportController({ ..., getOperationalPriority, buildInvestigativeSummary })`).
+- **Impacto:** é a fonte mais provável de confusão para quem implementar a próxima feature — não fica óbvio onde vive a regra de prioridade. Há também um contrato frágil implícito: `ui-export.js` mapeia os **rótulos com emoji** de `getOperationalPriority` (`'🔴 Crítico'`, `'🟠 Atenção'`, …) para pesos numéricos em `getInvestigationRankScore`; mudar um rótulo quebra a ordenação de exportação silenciosamente.
+- **Por que não corrigir agora (avaliação A-02):** o destino "certo" é genuinamente ambíguo. Estas funções produzem **artefatos de apresentação** (rótulos com emoji, nomes de classe CSS, prosa em pt-BR): movê-las para `core/report-engine.js` reintroduziria exatamente o vazamento que A-01 acabou de remover (DOM/apresentação num módulo de cálculo puro); movê-las para `view/ui-utils.js` não elimina a injeção. Além disso, a injeção foi uma **decisão deliberada** do MNT-01 (documentada no cabeçalho de `ui-export.js`) para manter as funções de exportação puras e testáveis. A mudança altera o **contrato público** de `createExportController` e exige reescrever `tests/ui-export.test.js` (que injeta um stub). Risco médio, fora do escopo de freeze.
+- **Correção recomendada (futuro):** ao abrir a próxima feature investigativa, extrair um módulo de apresentação investigativa dedicado (ex.: `view/investigation-presenter.js`) que exporte `getOperationalPriority`/`buildInvestigativeSummary`; `ui-controller.js` e `ui-export.js` passam a importá-lo direto, removendo a injeção. Substituir o acoplamento por rótulo-emoji por uma chave estável (ex.: `priority.rank`) desacopla a ordenação de exportação do texto de UI.
+- **Critério de aceite:** a regra de prioridade investigativa tem um único lar fora do orquestrador; `ui-export.js` deixa de receber essas funções por injeção; a ordenação de exportação não depende do texto do rótulo.

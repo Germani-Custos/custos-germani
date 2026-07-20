@@ -10,8 +10,8 @@
    - Cascata: prioridade origem → família → agrupamento → item idêntica.
    - Debounce de 2000ms no realtime de filtros idêntico. */
 import { api } from '../src/services/api.js';
-import { calculateCascadeOptions, fillSelect, filterAlertRows } from '../core/report-engine.js';
-import { debounce, escapeHtml } from './ui-utils.js';
+import { calculateCascadeOptions, filterAlertRows } from '../core/report-engine.js';
+import { debounce, escapeHtml, fillSelect } from './ui-utils.js';
 
 // Fonte canônica de "quais linhas" da fila investigativa — compartilhada com ui-export.js.
 export function getRowsMatchingQuickFilter(rows, operation, quickFilter) {

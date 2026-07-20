@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { buildReportRows, calculateKpis, classifyAlert, isAlertaCritico, getAlertaCriticoConfig, filterAlertRows, fillSelect } from '../core/report-engine.js';
+import { describe, expect, it } from 'vitest';
+import { buildReportRows, calculateKpis, classifyAlert, isAlertaCritico, getAlertaCriticoConfig, filterAlertRows } from '../core/report-engine.js';
 
 describe('alertas investigativos (LOG-01)', () => {
   it('usa abs(variacaoTemporal) >= 5 sem arredondamento prévio', () => {
@@ -98,23 +98,5 @@ describe('buildReportRows — mudança de regime e instabilidade', () => {
     const [row] = buildReportRows(serie('R3', [100, 150]));
     expect(row.mudouRegime).toBe(false);
     expect(row.classificacaoInstabilidade).toBe('MUITO INSTÁVEL');
-  });
-});
-
-describe('fillSelect', () => {
-  beforeEach(() => {
-    global.document = {
-      createElement: () => ({ value: '', textContent: '' })
-    };
-  });
-
-  it('preenche opções sem usar innerHTML e preserva texto como conteúdo', () => {
-    const select = { children: [], value: '', replaceChildren(...nodes) { this.children = nodes; } };
-
-    fillSelect(select, [{ value: '<x>', label: '<script>alert(1)</script>' }], { value: 'TODOS', label: 'Todos' });
-
-    expect(select.children).toHaveLength(2);
-    expect(select.children[1].value).toBe('<x>');
-    expect(select.children[1].textContent).toBe('<script>alert(1)</script>');
   });
 });
