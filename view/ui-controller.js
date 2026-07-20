@@ -4,11 +4,11 @@
    ui-charts.js, ui-drill-through.js, ui-filters.js, ui-export.js). */
 import { api } from '../src/services/api.js';
 import { normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
-import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico } from '../core/report-engine.js';
+import { calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
 import { debugLog } from '../src/config/app-config.js';
-import { escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
+import { escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast, fillSelect } from './ui-utils.js';
 import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';

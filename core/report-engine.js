@@ -93,37 +93,10 @@ const LIMIAR_OSCILANDO = 8;
 // quantidade de pontos.
 const MIN_PONTOS_REGIME = 4;
 
-/**
- * Preenche um select usando APIs DOM em vez de innerHTML para reduzir superfície de XSS.
- * @param {HTMLSelectElement} select
- * @param {Array<{value: unknown, label: unknown}>} options
- * @param {{value: unknown, label: unknown}} first
- * @param {unknown} [selectedValue]
- * @returns {void}
- */
-export function fillSelect(select, options, first, selectedValue = null) {
-  const createOption = (value, label) => {
-    const option = document.createElement('option');
-    option.value = String(value ?? '');
-    option.textContent = String(label ?? '');
-    return option;
-  };
-
-  const safeOptions = [createOption(first.value, first.label)];
-  options
-    .filter(opt => !isNullLike(opt?.value) && !isNullLike(opt?.label))
-    .forEach(opt => {
-      safeOptions.push(createOption(opt.value, opt.label));
-    });
-
-  select.replaceChildren(...safeOptions);
-
-  if (selectedValue !== null) {
-    const hasOption = [first.value, ...options.map(opt => opt.value)].includes(String(selectedValue));
-    select.value = hasOption ? String(selectedValue) : String(first.value);
-  }
-}
-
+// Nota (A-01): `fillSelect` foi movido para view/ui-utils.js — manipulava DOM
+// (document.createElement), responsabilidade de apresentação e não de cálculo.
+// O predicado `isNullLike` abaixo permanece aqui porque calculateCascadeOptions
+// o consome; core/ não importa de view/.
 
 function assertValidAlertThreshold() {
   if (!Number.isFinite(ALERTA_CRITICO_CONFIG.thresholdPercent) || ALERTA_CRITICO_CONFIG.thresholdPercent <= 0) {
