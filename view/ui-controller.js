@@ -4,21 +4,23 @@
    ui-drill-through.js). */
 import { api } from '../src/services/api.js';
 import { normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
-import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico, filterAlertRows } from '../core/report-engine.js';
+import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
 import { debugLog } from '../src/config/app-config.js';
-import { debounce, escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
+import { escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
 import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
+import { createFiltersController, getRowsMatchingQuickFilter, compareRowsBySort } from './ui-filters.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
+const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport });
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
 
@@ -61,7 +63,7 @@ async function executeOperationalBoundary(operation, action, options = {}) {
 async function init() {
   bindNavigation();
   importer.bindUpload();
-  bindFilters();
+  filters.bindFilters();
   bindSearch();
   bindDocumentationView(dom);
   dom.logoutBtn?.addEventListener('click', handleLogout);
@@ -190,7 +192,7 @@ async function loadMasters(options = {}) {
   }
 
   fillSelect(dom.selO, state.masters.origens.map(x => ({ value: String(x.id), label: x.descricao })), { value: 'TODAS', label: 'TODAS' }, dom.selO.value || 'TODAS');
-  refreshCascade();
+  filters.refreshCascade();
 }
 
 function updateProductSuggestions() {
@@ -220,7 +222,7 @@ async function fetchMetadata() {
     { value: 'TODOS', label: 'TODOS' },
     dom.selI.value || 'TODOS'
   );
-  refreshCascade();
+  filters.refreshCascade();
 }
 
 // ── Navegação ─────────────────────────────────────────────────────────────────
@@ -276,92 +278,7 @@ function jumpToProduct(codigoProduto) {
   fillSelect(dom.selA, groupOptions, { value: 'TODOS', label: 'TODOS' }, 'TODOS');
   fillSelect(dom.selI, productOptions, { value: 'TODOS', label: 'TODOS' }, codigoProduto);
 
-  autoRefreshReport();
-}
-
-// ── Filtros em cascata ────────────────────────────────────────────────────────
-
-function bindFilters() {
-  dom.selO.addEventListener('change', () => refreshCascade('origem'));
-  dom.selF.addEventListener('change', () => refreshCascade('familia'));
-  dom.selA.addEventListener('change', () => refreshCascade('agrupamento'));
-  dom.selI.addEventListener('change', () => autoRefreshReport());
-  [dom.dtStart, dom.dtEnd].forEach(input => input.addEventListener('change', () => autoRefreshReport()));
-  dom.analyzeBtn.addEventListener('click', () => runReport());
-  dom.exportBtn.addEventListener('click', () => exportReport());
-  dom.drillClose.addEventListener('click', () => dom.drillPanel.classList.add('hidden'));
-  bindInteractiveTableControls();
-
-  if (state.unsubscribeFiltersRealtime) state.unsubscribeFiltersRealtime();
-  state.unsubscribeFiltersRealtime = api.subscribeFiltrosRealtime(
-    debounce(async () => {
-      // Degradação controlada: mantém filtros atuais se o realtime disparar durante instabilidade.
-      await executeOperationalBoundary('atualização realtime de filtros', () => fetchMetadata(), {
-        message: 'Falha ao atualizar filtros em tempo real. Mantendo o contexto atual.'
-      });
-    }, 2000)
-  );
-}
-
-function bindInteractiveTableControls() {
-  dom.kpiCards.forEach(card => {
-    card.addEventListener('click', () => {
-      state.reportView.quickFilter = card.dataset.kpiFilter || 'all';
-      applyTableView();
-    });
-  });
-  document.querySelectorAll('th[data-sort-key]').forEach(th => {
-    th.addEventListener('click', () => {
-      const nextKey = th.dataset.sortKey;
-      if (state.reportView.sortKey === nextKey) {
-        state.reportView.sortDirection = state.reportView.sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.reportView.sortKey = nextKey;
-        state.reportView.sortDirection = 'desc';
-      }
-      applyTableView();
-    });
-  });
-}
-
-function refreshCascade(trigger) {
-  const currentFamily = dom.selF.value || 'TODAS';
-  const currentGroup = dom.selA.value || 'TODOS';
-  const currentItem = dom.selI.value || 'TODOS';
-
-  if (trigger === 'origem') {
-    dom.selF.value = 'TODAS';
-    dom.selA.value = 'TODOS';
-    dom.selI.value = 'TODOS';
-  }
-  if (trigger === 'familia') {
-    dom.selA.value = 'TODOS';
-    dom.selI.value = 'TODOS';
-  }
-  if (trigger === 'agrupamento') {
-    dom.selI.value = 'TODOS';
-  }
-
-  const familyValue = trigger === 'origem' ? 'TODAS' : currentFamily;
-  const { familyOptions } = calculateCascadeOptions({ origem: dom.selO.value, familia: familyValue }, state.masters);
-  fillSelect(dom.selF, familyOptions, { value: 'TODAS', label: 'TODAS' }, familyValue);
-
-  const { groupOptions, productOptions } = calculateCascadeOptions({
-    origem: dom.selO.value,
-    familia: dom.selF.value || 'TODAS',
-    agrupamento: dom.selA.value || 'TODOS'
-  }, state.masters);
-  const groupValue = ['origem', 'familia'].includes(trigger) ? 'TODOS' : currentGroup;
-  const itemValue = ['origem', 'familia', 'agrupamento'].includes(trigger) ? 'TODOS' : currentItem;
-  fillSelect(dom.selA, groupOptions, { value: 'TODOS', label: 'TODOS' }, groupValue);
-  fillSelect(dom.selI, productOptions, { value: 'TODOS', label: 'TODOS' }, itemValue);
-  autoRefreshReport();
-}
-
-function autoRefreshReport() {
-  if (dom.dtStart.value && dom.dtEnd.value) {
-    runReport({ silent: true });
-  }
+  filters.autoRefreshReport();
 }
 
 // ── Relatório principal ───────────────────────────────────────────────────────
@@ -423,7 +340,7 @@ async function runReport(options = {}) {
     );
 
     state.reportRows = rows;
-    applyTableView({ hasSingleItemAnalysis });
+    filters.applyTableView({ hasSingleItemAnalysis });
 
     const hasTrendData = await executeOperationalBoundary(
       'renderizar análise temporal',
@@ -444,86 +361,6 @@ async function runReport(options = {}) {
 }
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
-
-function getRowsMatchingQuickFilter(rows, operation) {
-  if (state.reportView.quickFilter === 'alerts') return filterAlertRows(rows, { operation });
-  if (state.reportView.quickFilter === 'positive') return rows.filter(row => row.variacao > 0);
-  if (state.reportView.quickFilter === 'regime') return rows.filter(row => row.mudouRegime === true);
-  return rows;
-}
-
-function applyTableView(options = {}) {
-  const { hasSingleItemAnalysis = false } = options;
-  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'filtro rápido Alertas (>5%)');
-  const sortedRows = [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-  renderTable(sortedRows, { hasSingleItemAnalysis });
-  renderActiveFilterChips();
-  updateKpiCardState();
-  updateSortHeaderState();
-}
-
-function renderActiveFilterChips() {
-  if (!dom.activeFilterChips) return;
-  const chips = [];
-  const pushChip = (key, label, value) => value && value !== 'TODAS' && value !== 'TODOS' && chips.push({ key, label, value });
-  pushChip('dtStart', 'Início', dom.dtStart.value);
-  pushChip('dtEnd', 'Fim', dom.dtEnd.value);
-  pushChip('origem', 'Origem', dom.selO.options[dom.selO.selectedIndex]?.textContent);
-  pushChip('familia', 'Família', dom.selF.options[dom.selF.selectedIndex]?.textContent);
-  pushChip('agrupamento', 'Agrupamento', dom.selA.options[dom.selA.selectedIndex]?.textContent);
-  pushChip('item', 'Produto', dom.selI.value);
-  if (state.reportView.quickFilter !== 'all') {
-    const quickLabels = { alerts: 'Alertas >5%', positive: 'Variação positiva', regime: 'Mudança de regime' };
-    chips.push({ key: 'quickFilter', label: 'Fila', value: quickLabels[state.reportView.quickFilter] || 'Filtro rápido' });
-  }
-  if (!chips.length) {
-    dom.activeFilterChips.classList.add('hidden');
-    dom.activeFilterChips.innerHTML = '';
-    return;
-  }
-  dom.activeFilterChips.classList.remove('hidden');
-  dom.activeFilterChips.innerHTML = chips.map(chip => `
-    <button type="button" class="filter-chip" data-chip-key="${chip.key}">
-      <span>${escapeHtml(chip.label)}: ${escapeHtml(chip.value)}</span><i class="ri-close-line"></i>
-    </button>
-  `).join('');
-  dom.activeFilterChips.querySelectorAll('.filter-chip').forEach(btn => {
-    btn.addEventListener('click', () => removeFilterChip(btn.dataset.chipKey));
-  });
-}
-
-function removeFilterChip(chipKey) {
-  if (chipKey === 'dtStart') dom.dtStart.value = '';
-  if (chipKey === 'dtEnd') dom.dtEnd.value = '';
-  if (chipKey === 'origem') dom.selO.value = 'TODAS';
-  if (chipKey === 'familia') dom.selF.value = 'TODAS';
-  if (chipKey === 'agrupamento') dom.selA.value = 'TODOS';
-  if (chipKey === 'item') dom.selI.value = 'TODOS';
-  if (chipKey === 'quickFilter') state.reportView.quickFilter = 'all';
-  if (['origem', 'familia', 'agrupamento', 'item'].includes(chipKey)) refreshCascade();
-  runReport({ silent: true });
-}
-
-function compareRowsBySort(a, b, key, direction) {
-  const order = direction === 'asc' ? 1 : -1;
-  const valueA = a?.[key];
-  const valueB = b?.[key];
-  if (key === 'alert' || key === 'mudouRegime') return ((valueA ? 1 : 0) - (valueB ? 1 : 0)) * order;
-  if (typeof valueA === 'number' || typeof valueB === 'number') return ((Number(valueA) || 0) - (Number(valueB) || 0)) * order;
-  return String(valueA || '').localeCompare(String(valueB || ''), 'pt-BR') * order;
-}
-
-function updateKpiCardState() {
-  dom.kpiCards.forEach(card => {
-    card.classList.toggle('active', card.dataset.kpiFilter === state.reportView.quickFilter);
-  });
-}
-
-function updateSortHeaderState() {
-  document.querySelectorAll('th[data-sort-key]').forEach(th => {
-    th.classList.toggle('sort-active', th.dataset.sortKey === state.reportView.sortKey);
-  });
-}
 
 function renderTable(rows, options = {}) {
   const { hasSingleItemAnalysis = false } = options;
@@ -651,7 +488,7 @@ function compareByInvestigativePriority(a, b) {
 }
 
 function getRowsFromCurrentInvestigationState() {
-  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa');
+  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa', state.reportView.quickFilter);
 
   const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
   if (hasManualSort) {
