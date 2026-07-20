@@ -364,8 +364,7 @@ async function runReport(options = {}) {
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
 
-function renderTable(rows, options = {}) {
-  const { hasSingleItemAnalysis = false } = options;
+function renderTable(rows, _options = {}) {
   dom.tableBody.innerHTML = rows.map(row => {
     const prioridade = getOperationalPriority(row);
     const contexto = buildInvestigativeSummary(row);
