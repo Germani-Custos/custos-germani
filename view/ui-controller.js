@@ -1,7 +1,7 @@
 /* Responsabilidade: orquestração da interface — bootstrap, navegação, eventos e
-   coordenação dos fluxos investigativos (delegando importação, gráficos e
-   drill-through a módulos dedicados: ui-import.js, ui-charts.js,
-   ui-drill-through.js). */
+   coordenação dos fluxos investigativos (delegando importação, gráficos,
+   drill-through, filtros e exportação a módulos dedicados: ui-import.js,
+   ui-charts.js, ui-drill-through.js, ui-filters.js, ui-export.js). */
 import { api } from '../src/services/api.js';
 import { normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
 import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico } from '../core/report-engine.js';
@@ -13,14 +13,16 @@ import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
-import { createFiltersController, getRowsMatchingQuickFilter, compareRowsBySort } from './ui-filters.js';
+import { createFiltersController } from './ui-filters.js';
+import { createExportController } from './ui-export.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
-const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport });
+const exporter = createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary });
+const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport: exporter.exportReport });
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
 
@@ -464,129 +466,6 @@ function formatDiffCell(diferenca, variacao) {
   if (diferenca === null || diferenca === undefined) return '-';
   const variacaoText = Number.isFinite(variacao) ? ` (${variacao.toFixed(2)}%)` : '';
   return `${diferenca >= 0 ? '+' : '-'}R$ ${formatCurrencyBRL(Math.abs(diferenca))}${variacaoText}`;
-}
-
-function getInvestigationRankScore(row) {
-  const prioridade = getOperationalPriority(row);
-  const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
-  const regimePeso = row.mudouRegime ? 1 : 0;
-  const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
-  const reincidencia = isAlertaCritico(row) ? 1 : 0;
-  const instabilidade = Number(row.scoreInstabilidade || 0);
-  return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
-}
-
-function compareByInvestigativePriority(a, b) {
-  const ra = getInvestigationRankScore(a);
-  const rb = getInvestigationRankScore(b);
-  if (rb.criticidadePeso !== ra.criticidadePeso) return rb.criticidadePeso - ra.criticidadePeso;
-  if (rb.regimePeso !== ra.regimePeso) return rb.regimePeso - ra.regimePeso;
-  if (rb.magnitude !== ra.magnitude) return rb.magnitude - ra.magnitude;
-  if (rb.reincidencia !== ra.reincidencia) return rb.reincidencia - ra.reincidencia;
-  if (rb.instabilidade !== ra.instabilidade) return rb.instabilidade - ra.instabilidade;
-  return String(a.codigo || '').localeCompare(String(b.codigo || ''), 'pt-BR');
-}
-
-function getRowsFromCurrentInvestigationState() {
-  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa', state.reportView.quickFilter);
-
-  const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
-  if (hasManualSort) {
-    return [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-  }
-
-  return [...filteredRows].sort(compareByInvestigativePriority);
-}
-
-function buildExportFilename() {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(now.getUTCDate()).padStart(2, '0');
-  const periodStart = dom.dtStart.value || 'inicio';
-  const periodEnd = dom.dtEnd.value || 'fim';
-  return `auditoria_criticos_${periodStart}_a_${periodEnd}_${yyyy}${mm}${dd}.xlsx`;
-}
-
-// ── Exportação ────────────────────────────────────────────────────────────────
-
-// SEC-04: sanitiza campos de texto para evitar formula injection no Excel/Sheets.
-// Prefixar com ' previne que valores como =CMD, +CMD sejam interpretados como fórmula.
-function sanitizeCsvFormula(value) {
-  const str = String(value ?? '');
-  if ([' =', '+', '-', '@', '\t', '\r'].some(ch => str.startsWith(ch)) || str.startsWith('=')) {
-    return "'" + str;
-  }
-  return str;
-}
-
-function exportReport() {
-  if (!state.reportRows.length) {
-    showToast('warning', 'Rode a análise antes de exportar.');
-    return;
-  }
-
-  // Fronteira operacional da exportação: mantém a análise atual mesmo se XLSX falhar.
-  executeOperationalBoundary('exportar relatório investigativo', async () => {
-    const investigationRows = getRowsFromCurrentInvestigationState();
-    const filtrosAtivos = [
-      `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
-      `Família: ${dom.selF.options[dom.selF.selectedIndex]?.textContent || 'TODAS'}`,
-      `Agrupamento: ${dom.selA.options[dom.selA.selectedIndex]?.textContent || 'TODOS'}`,
-      `Produto: ${dom.selI.value || 'TODOS'}`,
-      `Fila: ${state.reportView.quickFilter}`
-    ].join(' | ');
-
-    const metadataRows = [
-      { Campo: 'Tipo de relatório', Valor: 'Relatório Investigativo Operacional de Custos' },
-      { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
-      { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
-      { Campo: 'Filtros ativos', Valor: filtrosAtivos },
-      { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
-      { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
-    ];
-
-    const exportData = investigationRows.map((row, idx) => {
-      const prioridade = getOperationalPriority(row);
-      const rank = getInvestigationRankScore(row);
-      return {
-        'Prioridade #': idx + 1,
-        'Produto (código)': sanitizeCsvFormula(row.codigo),
-        'Produto (descrição)': sanitizeCsvFormula(row.descricao),
-        'Criticidade': prioridade.label,
-        'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
-        'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
-        'Variação no período (%)': row.variacao.toFixed(2),
-        'Delta monetário última importação (R$)': row.diferenca ?? '—',
-        'Contexto investigativo': sanitizeCsvFormula(buildInvestigativeSummary(row)),
-        'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
-        'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
-        'Regime': row.classificacaoInstabilidade,
-        'Competência de referência (data_referencia)': row.dataCompetencia || '—',
-        'Importado em (criado_em)': row.ultimaAtualizacao || '—',
-        'Último custo (R$)': row.ultimoCusto ?? '—',
-        'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
-        'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
-      };
-    });
-
-    const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
-    const wsData = XLSX.utils.json_to_sheet(exportData);
-    wsData['!autofilter'] = { ref: wsData['!ref'] };
-    wsData['!cols'] = [
-      { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
-      { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');
-    XLSX.utils.book_append_sheet(wb, wsData, 'Fila Investigativa');
-    const filename = buildExportFilename();
-    XLSX.writeFile(wb, filename);
-    showToast('success', `Relatório investigativo exportado: ${filename}`);
-  }, {
-    message: 'Falha ao exportar o relatório. A análise atual foi preservada.'
-  });
 }
 
 init();
