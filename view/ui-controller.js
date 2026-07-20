@@ -1,24 +1,28 @@
 /* Responsabilidade: orquestração da interface — bootstrap, navegação, eventos e
-   coordenação dos fluxos investigativos (delegando importação, gráficos e
-   drill-through a módulos dedicados: ui-import.js, ui-charts.js,
-   ui-drill-through.js). */
+   coordenação dos fluxos investigativos (delegando importação, gráficos,
+   drill-through, filtros e exportação a módulos dedicados: ui-import.js,
+   ui-charts.js, ui-drill-through.js, ui-filters.js, ui-export.js). */
 import { api } from '../src/services/api.js';
 import { normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
-import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico, filterAlertRows } from '../core/report-engine.js';
+import { fillSelect, calculateCascadeOptions, buildReportRows, calculateKpis, isAlertaCritico } from '../core/report-engine.js';
 import { createInitialState } from './ui-state.js';
 import { getDomRefs } from './ui-dom.js';
 import { debugLog } from '../src/config/app-config.js';
-import { debounce, escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
+import { escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR, showToast } from './ui-utils.js';
 import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
+import { createFiltersController } from './ui-filters.js';
+import { createExportController } from './ui-export.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
+const exporter = createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary });
+const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport: exporter.exportReport });
 
 // ── Utilitários ──────────────────────────────────────────────────────────────
 
@@ -61,7 +65,7 @@ async function executeOperationalBoundary(operation, action, options = {}) {
 async function init() {
   bindNavigation();
   importer.bindUpload();
-  bindFilters();
+  filters.bindFilters();
   bindSearch();
   bindDocumentationView(dom);
   dom.logoutBtn?.addEventListener('click', handleLogout);
@@ -190,7 +194,7 @@ async function loadMasters(options = {}) {
   }
 
   fillSelect(dom.selO, state.masters.origens.map(x => ({ value: String(x.id), label: x.descricao })), { value: 'TODAS', label: 'TODAS' }, dom.selO.value || 'TODAS');
-  refreshCascade();
+  filters.refreshCascade();
 }
 
 function updateProductSuggestions() {
@@ -220,7 +224,7 @@ async function fetchMetadata() {
     { value: 'TODOS', label: 'TODOS' },
     dom.selI.value || 'TODOS'
   );
-  refreshCascade();
+  filters.refreshCascade();
 }
 
 // ── Navegação ─────────────────────────────────────────────────────────────────
@@ -276,92 +280,7 @@ function jumpToProduct(codigoProduto) {
   fillSelect(dom.selA, groupOptions, { value: 'TODOS', label: 'TODOS' }, 'TODOS');
   fillSelect(dom.selI, productOptions, { value: 'TODOS', label: 'TODOS' }, codigoProduto);
 
-  autoRefreshReport();
-}
-
-// ── Filtros em cascata ────────────────────────────────────────────────────────
-
-function bindFilters() {
-  dom.selO.addEventListener('change', () => refreshCascade('origem'));
-  dom.selF.addEventListener('change', () => refreshCascade('familia'));
-  dom.selA.addEventListener('change', () => refreshCascade('agrupamento'));
-  dom.selI.addEventListener('change', () => autoRefreshReport());
-  [dom.dtStart, dom.dtEnd].forEach(input => input.addEventListener('change', () => autoRefreshReport()));
-  dom.analyzeBtn.addEventListener('click', () => runReport());
-  dom.exportBtn.addEventListener('click', () => exportReport());
-  dom.drillClose.addEventListener('click', () => dom.drillPanel.classList.add('hidden'));
-  bindInteractiveTableControls();
-
-  if (state.unsubscribeFiltersRealtime) state.unsubscribeFiltersRealtime();
-  state.unsubscribeFiltersRealtime = api.subscribeFiltrosRealtime(
-    debounce(async () => {
-      // Degradação controlada: mantém filtros atuais se o realtime disparar durante instabilidade.
-      await executeOperationalBoundary('atualização realtime de filtros', () => fetchMetadata(), {
-        message: 'Falha ao atualizar filtros em tempo real. Mantendo o contexto atual.'
-      });
-    }, 2000)
-  );
-}
-
-function bindInteractiveTableControls() {
-  dom.kpiCards.forEach(card => {
-    card.addEventListener('click', () => {
-      state.reportView.quickFilter = card.dataset.kpiFilter || 'all';
-      applyTableView();
-    });
-  });
-  document.querySelectorAll('th[data-sort-key]').forEach(th => {
-    th.addEventListener('click', () => {
-      const nextKey = th.dataset.sortKey;
-      if (state.reportView.sortKey === nextKey) {
-        state.reportView.sortDirection = state.reportView.sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.reportView.sortKey = nextKey;
-        state.reportView.sortDirection = 'desc';
-      }
-      applyTableView();
-    });
-  });
-}
-
-function refreshCascade(trigger) {
-  const currentFamily = dom.selF.value || 'TODAS';
-  const currentGroup = dom.selA.value || 'TODOS';
-  const currentItem = dom.selI.value || 'TODOS';
-
-  if (trigger === 'origem') {
-    dom.selF.value = 'TODAS';
-    dom.selA.value = 'TODOS';
-    dom.selI.value = 'TODOS';
-  }
-  if (trigger === 'familia') {
-    dom.selA.value = 'TODOS';
-    dom.selI.value = 'TODOS';
-  }
-  if (trigger === 'agrupamento') {
-    dom.selI.value = 'TODOS';
-  }
-
-  const familyValue = trigger === 'origem' ? 'TODAS' : currentFamily;
-  const { familyOptions } = calculateCascadeOptions({ origem: dom.selO.value, familia: familyValue }, state.masters);
-  fillSelect(dom.selF, familyOptions, { value: 'TODAS', label: 'TODAS' }, familyValue);
-
-  const { groupOptions, productOptions } = calculateCascadeOptions({
-    origem: dom.selO.value,
-    familia: dom.selF.value || 'TODAS',
-    agrupamento: dom.selA.value || 'TODOS'
-  }, state.masters);
-  const groupValue = ['origem', 'familia'].includes(trigger) ? 'TODOS' : currentGroup;
-  const itemValue = ['origem', 'familia', 'agrupamento'].includes(trigger) ? 'TODOS' : currentItem;
-  fillSelect(dom.selA, groupOptions, { value: 'TODOS', label: 'TODOS' }, groupValue);
-  fillSelect(dom.selI, productOptions, { value: 'TODOS', label: 'TODOS' }, itemValue);
-  autoRefreshReport();
-}
-
-function autoRefreshReport() {
-  if (dom.dtStart.value && dom.dtEnd.value) {
-    runReport({ silent: true });
-  }
+  filters.autoRefreshReport();
 }
 
 // ── Relatório principal ───────────────────────────────────────────────────────
@@ -423,7 +342,7 @@ async function runReport(options = {}) {
     );
 
     state.reportRows = rows;
-    applyTableView({ hasSingleItemAnalysis });
+    filters.applyTableView({ hasSingleItemAnalysis });
 
     const hasTrendData = await executeOperationalBoundary(
       'renderizar análise temporal',
@@ -444,86 +363,6 @@ async function runReport(options = {}) {
 }
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
-
-function getRowsMatchingQuickFilter(rows, operation) {
-  if (state.reportView.quickFilter === 'alerts') return filterAlertRows(rows, { operation });
-  if (state.reportView.quickFilter === 'positive') return rows.filter(row => row.variacao > 0);
-  if (state.reportView.quickFilter === 'regime') return rows.filter(row => row.mudouRegime === true);
-  return rows;
-}
-
-function applyTableView(options = {}) {
-  const { hasSingleItemAnalysis = false } = options;
-  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'filtro rápido Alertas (>5%)');
-  const sortedRows = [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-  renderTable(sortedRows, { hasSingleItemAnalysis });
-  renderActiveFilterChips();
-  updateKpiCardState();
-  updateSortHeaderState();
-}
-
-function renderActiveFilterChips() {
-  if (!dom.activeFilterChips) return;
-  const chips = [];
-  const pushChip = (key, label, value) => value && value !== 'TODAS' && value !== 'TODOS' && chips.push({ key, label, value });
-  pushChip('dtStart', 'Início', dom.dtStart.value);
-  pushChip('dtEnd', 'Fim', dom.dtEnd.value);
-  pushChip('origem', 'Origem', dom.selO.options[dom.selO.selectedIndex]?.textContent);
-  pushChip('familia', 'Família', dom.selF.options[dom.selF.selectedIndex]?.textContent);
-  pushChip('agrupamento', 'Agrupamento', dom.selA.options[dom.selA.selectedIndex]?.textContent);
-  pushChip('item', 'Produto', dom.selI.value);
-  if (state.reportView.quickFilter !== 'all') {
-    const quickLabels = { alerts: 'Alertas >5%', positive: 'Variação positiva', regime: 'Mudança de regime' };
-    chips.push({ key: 'quickFilter', label: 'Fila', value: quickLabels[state.reportView.quickFilter] || 'Filtro rápido' });
-  }
-  if (!chips.length) {
-    dom.activeFilterChips.classList.add('hidden');
-    dom.activeFilterChips.innerHTML = '';
-    return;
-  }
-  dom.activeFilterChips.classList.remove('hidden');
-  dom.activeFilterChips.innerHTML = chips.map(chip => `
-    <button type="button" class="filter-chip" data-chip-key="${chip.key}">
-      <span>${escapeHtml(chip.label)}: ${escapeHtml(chip.value)}</span><i class="ri-close-line"></i>
-    </button>
-  `).join('');
-  dom.activeFilterChips.querySelectorAll('.filter-chip').forEach(btn => {
-    btn.addEventListener('click', () => removeFilterChip(btn.dataset.chipKey));
-  });
-}
-
-function removeFilterChip(chipKey) {
-  if (chipKey === 'dtStart') dom.dtStart.value = '';
-  if (chipKey === 'dtEnd') dom.dtEnd.value = '';
-  if (chipKey === 'origem') dom.selO.value = 'TODAS';
-  if (chipKey === 'familia') dom.selF.value = 'TODAS';
-  if (chipKey === 'agrupamento') dom.selA.value = 'TODOS';
-  if (chipKey === 'item') dom.selI.value = 'TODOS';
-  if (chipKey === 'quickFilter') state.reportView.quickFilter = 'all';
-  if (['origem', 'familia', 'agrupamento', 'item'].includes(chipKey)) refreshCascade();
-  runReport({ silent: true });
-}
-
-function compareRowsBySort(a, b, key, direction) {
-  const order = direction === 'asc' ? 1 : -1;
-  const valueA = a?.[key];
-  const valueB = b?.[key];
-  if (key === 'alert' || key === 'mudouRegime') return ((valueA ? 1 : 0) - (valueB ? 1 : 0)) * order;
-  if (typeof valueA === 'number' || typeof valueB === 'number') return ((Number(valueA) || 0) - (Number(valueB) || 0)) * order;
-  return String(valueA || '').localeCompare(String(valueB || ''), 'pt-BR') * order;
-}
-
-function updateKpiCardState() {
-  dom.kpiCards.forEach(card => {
-    card.classList.toggle('active', card.dataset.kpiFilter === state.reportView.quickFilter);
-  });
-}
-
-function updateSortHeaderState() {
-  document.querySelectorAll('th[data-sort-key]').forEach(th => {
-    th.classList.toggle('sort-active', th.dataset.sortKey === state.reportView.sortKey);
-  });
-}
 
 function renderTable(rows, options = {}) {
   const { hasSingleItemAnalysis = false } = options;
@@ -627,129 +466,6 @@ function formatDiffCell(diferenca, variacao) {
   if (diferenca === null || diferenca === undefined) return '-';
   const variacaoText = Number.isFinite(variacao) ? ` (${variacao.toFixed(2)}%)` : '';
   return `${diferenca >= 0 ? '+' : '-'}R$ ${formatCurrencyBRL(Math.abs(diferenca))}${variacaoText}`;
-}
-
-function getInvestigationRankScore(row) {
-  const prioridade = getOperationalPriority(row);
-  const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
-  const regimePeso = row.mudouRegime ? 1 : 0;
-  const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
-  const reincidencia = isAlertaCritico(row) ? 1 : 0;
-  const instabilidade = Number(row.scoreInstabilidade || 0);
-  return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
-}
-
-function compareByInvestigativePriority(a, b) {
-  const ra = getInvestigationRankScore(a);
-  const rb = getInvestigationRankScore(b);
-  if (rb.criticidadePeso !== ra.criticidadePeso) return rb.criticidadePeso - ra.criticidadePeso;
-  if (rb.regimePeso !== ra.regimePeso) return rb.regimePeso - ra.regimePeso;
-  if (rb.magnitude !== ra.magnitude) return rb.magnitude - ra.magnitude;
-  if (rb.reincidencia !== ra.reincidencia) return rb.reincidencia - ra.reincidencia;
-  if (rb.instabilidade !== ra.instabilidade) return rb.instabilidade - ra.instabilidade;
-  return String(a.codigo || '').localeCompare(String(b.codigo || ''), 'pt-BR');
-}
-
-function getRowsFromCurrentInvestigationState() {
-  const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa');
-
-  const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
-  if (hasManualSort) {
-    return [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-  }
-
-  return [...filteredRows].sort(compareByInvestigativePriority);
-}
-
-function buildExportFilename() {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(now.getUTCDate()).padStart(2, '0');
-  const periodStart = dom.dtStart.value || 'inicio';
-  const periodEnd = dom.dtEnd.value || 'fim';
-  return `auditoria_criticos_${periodStart}_a_${periodEnd}_${yyyy}${mm}${dd}.xlsx`;
-}
-
-// ── Exportação ────────────────────────────────────────────────────────────────
-
-// SEC-04: sanitiza campos de texto para evitar formula injection no Excel/Sheets.
-// Prefixar com ' previne que valores como =CMD, +CMD sejam interpretados como fórmula.
-function sanitizeCsvFormula(value) {
-  const str = String(value ?? '');
-  if ([' =', '+', '-', '@', '\t', '\r'].some(ch => str.startsWith(ch)) || str.startsWith('=')) {
-    return "'" + str;
-  }
-  return str;
-}
-
-function exportReport() {
-  if (!state.reportRows.length) {
-    showToast('warning', 'Rode a análise antes de exportar.');
-    return;
-  }
-
-  // Fronteira operacional da exportação: mantém a análise atual mesmo se XLSX falhar.
-  executeOperationalBoundary('exportar relatório investigativo', async () => {
-    const investigationRows = getRowsFromCurrentInvestigationState();
-    const filtrosAtivos = [
-      `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
-      `Família: ${dom.selF.options[dom.selF.selectedIndex]?.textContent || 'TODAS'}`,
-      `Agrupamento: ${dom.selA.options[dom.selA.selectedIndex]?.textContent || 'TODOS'}`,
-      `Produto: ${dom.selI.value || 'TODOS'}`,
-      `Fila: ${state.reportView.quickFilter}`
-    ].join(' | ');
-
-    const metadataRows = [
-      { Campo: 'Tipo de relatório', Valor: 'Relatório Investigativo Operacional de Custos' },
-      { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
-      { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
-      { Campo: 'Filtros ativos', Valor: filtrosAtivos },
-      { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
-      { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
-    ];
-
-    const exportData = investigationRows.map((row, idx) => {
-      const prioridade = getOperationalPriority(row);
-      const rank = getInvestigationRankScore(row);
-      return {
-        'Prioridade #': idx + 1,
-        'Produto (código)': sanitizeCsvFormula(row.codigo),
-        'Produto (descrição)': sanitizeCsvFormula(row.descricao),
-        'Criticidade': prioridade.label,
-        'Mudança de regime': row.mudouRegime ? 'SIM' : 'NÃO',
-        'Variação da última importação (%)': row.variacaoTemporal !== null ? row.variacaoTemporal.toFixed(2) : '—',
-        'Variação no período (%)': row.variacao.toFixed(2),
-        'Delta monetário última importação (R$)': row.diferenca ?? '—',
-        'Contexto investigativo': sanitizeCsvFormula(buildInvestigativeSummary(row)),
-        'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
-        'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
-        'Regime': row.classificacaoInstabilidade,
-        'Competência de referência (data_referencia)': row.dataCompetencia || '—',
-        'Importado em (criado_em)': row.ultimaAtualizacao || '—',
-        'Último custo (R$)': row.ultimoCusto ?? '—',
-        'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
-        'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
-      };
-    });
-
-    const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
-    const wsData = XLSX.utils.json_to_sheet(exportData);
-    wsData['!autofilter'] = { ref: wsData['!ref'] };
-    wsData['!cols'] = [
-      { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
-      { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');
-    XLSX.utils.book_append_sheet(wb, wsData, 'Fila Investigativa');
-    const filename = buildExportFilename();
-    XLSX.writeFile(wb, filename);
-    showToast('success', `Relatório investigativo exportado: ${filename}`);
-  }, {
-    message: 'Falha ao exportar o relatório. A análise atual foi preservada.'
-  });
 }
 
 init();
