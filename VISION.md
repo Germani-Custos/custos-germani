@@ -173,3 +173,8 @@ A execução do **LOG-01** transforma o alerta investigativo em contrato explíc
 ## Atualização contínua — 25/06/2026 (rede de segurança técnica)
 
 A Onda 2 reforça a visão de motor investigativo ao reduzir risco de regressão antes das próximas refatorações. ESLint, type checking leve, Vitest e CI foram adicionados exclusivamente como ferramentas de desenvolvimento, preservando a arquitetura estática/CDN e evitando dependências de produção. A prioridade permanece velocidade de investigação: a rede de segurança existe para permitir evoluções futuras com menor risco sobre contratos críticos como VAL-01, LOG-01 e a separação temporal `data_referencia` × `criado_em`.
+
+
+## Atualização 2026-07-20 — documentação alinhada aos PRs recentes
+
+A revisão dos PRs #121–#124 reforça a direção de arquitetura modular sem mudar comportamento visível: filtros e exportação foram isolados para reduzir risco de regressão e acelerar futuras melhorias de investigação. O fatiamento MNT-01 ainda não está concluído enquanto a fila/tabela e a lógica de apresentação investigativa permanecerem no orquestrador.

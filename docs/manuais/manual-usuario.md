@@ -158,3 +158,8 @@ No menu **Documentação** você consulta e edita os próprios manuais, sem sair
 ## Atualização 2026-05-28 — mensagens de falha operacional
 
 Quando ocorrer instabilidade de rede, Supabase indisponível ou falha em gráficos/exportação, a tela deve mostrar uma mensagem amigável e preservar os filtros e resultados já carregados sempre que possível. Se o relatório principal não puder ser consultado, corrija a conexão/ambiente e rode a análise novamente; os conceitos temporais exibidos continuam os mesmos: `data_referencia` é competência operacional e `criado_em` é evento de importação.
+
+
+## Atualização 2026-07-20 — sem mudança de uso
+
+A revisão dos PRs recentes apenas alinhou documentação ao estado do sistema. O uso da Auditoria permanece igual: filtros em cascata, KPIs clicáveis, chips removíveis, drill-through e exportação XLSX continuam com o mesmo comportamento visível.

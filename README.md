@@ -185,10 +185,12 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `view/ui-controller.js` | Orquestração principal (bootstrap, fluxo entre módulos, ciclo investigativo) |
+| `view/ui-controller.js` | Orquestração principal (bootstrap, busca direta, relatório e fila/tabela ainda pendentes do MNT-01) |
+| `view/ui-filters.js` | Filtros investigativos: cascata, filtros rápidos dos KPIs, ordenação e chips ativos |
+| `view/ui-export.js` | Exportação XLSX investigativa com contexto, prioridade operacional e sanitização anti-fórmula |
 | `view/ui-state.js` | Estado central da UI (filtros, visão da fila e referências de gráficos) |
 | `view/ui-dom.js` | Mapeamento único de referências do DOM para reduzir acoplamento |
-| `view/ui-utils.js` | Utilitários puros de formatação, debounce, escape e feedback visual |
+| `view/ui-utils.js` | Utilitários puros de formatação, debounce, escape, `fillSelect` seguro por DOM e feedback visual |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção fuzzy de colunas, normalização |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase |
@@ -373,3 +375,8 @@ npm test
 ```
 
 Observação: warnings atuais de `no-unused-vars` são baseline de manutenibilidade já exposto pelo lint e devem ser tratados em itens de refatoração dedicados, sem misturar com a Onda 2.
+
+
+## Atualização documental — 20/07/2026
+
+Revisão dos PRs recentes #121–#124: filtros e exportação já foram extraídos de `view/ui-controller.js` como fatias do MNT-01, e `fillSelect` passou a morar em `view/ui-utils.js`. O backlog permanece aberto para MNT-01 porque a fila/tabela e a apresentação investigativa ainda estão no controller.

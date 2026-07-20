@@ -23,7 +23,9 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
   - [x] **Drill-through** (2026-07-17) — `view/ui-drill-through.js` (`createDrillThroughController({ dom })`) contém `renderDrillThrough`. Escolhido como 2ª fatia por ser folha de acoplamento zero (não chama nenhuma outra função do controller), maximizando baixo risco e coesão; `ui-controller.js` só chama `drillThrough.renderDrillThrough(codigo)` no clique da linha, sob a fronteira ERR-01. Extração verbatim, sem mudança de comportamento; contrato temporal preservado (rotula competência × importação por registro). `ui-controller.js` caiu de ~1.084 para ~1.020 linhas.
   - [x] **Importação** (2026-07-17) — `view/ui-import.js` (`createImportController({ dom, state, executeOperationalBoundary, fetchMetadata })`) reúne `bindUpload`, `handleImport`, `buildImportPreview`, `confirmImportPreview`, `confirmColumnMapping`, `buildMappingSelect`, `getFieldLabel` e a constante `IMPORT_PREVIEW_DISPLAY_LIMIT`. `ui-controller.js` só chama `importer.bindUpload()` no `init()`; a fronteira ERR-01 e `fetchMetadata` são injetadas para preservar comportamento idêntico. Extração verbatim; contratos VAL-01 (`normalizeCodigoProduto`) e temporal (`data_referencia` no payload × `criado_em` atribuído pela API) preservados. Maior fatia até aqui: `ui-controller.js` caiu de ~1.022 para ~754 linhas.
   - **Convenção firmada:** todo novo módulo de fluxo expõe `create<Fluxo>Controller(deps)` (ex.: `createChartsController`, `createDrillThroughController`, `createImportController`), mantendo identidade arquitetural única.
-  - [ ] Filtros/relatório · [ ] Fila/tabela · [ ] Exportação.
+  - [x] **Filtros** (2026-07-20, registro retroativo dos PRs #121/#124) — `view/ui-filters.js` (`createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport })`) concentra cascata Origem → Família → Agrupamento → Item, filtros rápidos dos KPIs, ordenação, chips removíveis e debounce realtime de 2s. `ui-controller.js` injeta `renderTable`/`runReport`/`exportReport` para preservar o ciclo existente. Contratos preservados: auto-refresh após primeiro run, `filterAlertRows()`/LOG-01 nos alertas, sem `null`/`undefined` nos selects via `fillSelect` movido para `view/ui-utils.js`.
+  - [x] **Exportação** (2026-07-20, registro retroativo do PR #121) — `view/ui-export.js` (`createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary })`) concentra XLSX investigativo, nome de arquivo, sanitização anti-fórmula (SEC-04), aba `Contexto` e aba `Fila Investigativa`. Reusa `getRowsMatchingQuickFilter`/`compareRowsBySort` de `ui-filters.js`, preservando a ordenação manual ou automática por criticidade/regime/magnitude/reincidência/instabilidade. Contrato temporal preservado: exporta período de competência (`data_referencia`) e importação (`criado_em`) rotulados.
+  - [ ] **Fila/tabela e presenter investigativo** — ainda ficam em `view/ui-controller.js`: `renderTable`, `getOperationalPriority`, `buildInvestigativeSummary`, `formatCurrencyCell` e `formatDiffCell`. Essa fatia é o fechamento real do MNT-01 e se conecta ao MNT-08 (lar definitivo das regras de apresentação investigativa).
 
 ---
 
@@ -42,11 +44,12 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 
 ---
 
-## MNT-03 · 🟠 Médio · Duplicação de lógica de cascata e de `fillSelect`
+## MNT-03 · 🟠 Médio · Duplicação de lógica de cascata e de `fillSelect` — parcialmente reduzido
 
-- **Local:** filtros em memória duplicados — `applyCascadeFilterInMemory`/`normalizeCascadeFilters` em `src/services/api.js:43-60` versus `calculateCascadeOptions` em `core/report-engine.js:46-114`. Chamadas repetidas de `fillSelect` com a mesma estrutura em `view/ui-controller.js:59,72-89,378-385,449-460`.
+- **Local:** filtros em memória duplicados — `applyCascadeFilterInMemory`/`normalizeCascadeFilters` em `src/services/api.js` versus `calculateCascadeOptions` em `core/report-engine.js`. A duplicação de `fillSelect` foi reduzida pelo PR #124: o helper DOM saiu de `core/report-engine.js` e agora vive em `view/ui-utils.js`, usado por `ui-controller.js` e `ui-filters.js`.
 - **Impacto:** mudança na regra de cascata precisa ser replicada em vários pontos; risco de divergência (já há leve divergência de nomenclatura `item` vs `produto`).
 - **Correção recomendada:** uma única fonte de verdade para "dado o estado de filtros, quais opções/linhas valem". Extrair um helper `populateCascadeSelects(dom, state.masters, trigger)` que encapsule os `fillSelect` repetidos de `refreshCascade`/`fetchMetadata`/`jumpToProduct`.
+- **Progresso:** `fillSelect` já tem lar único na camada `view/`, removendo manipulação de DOM do `core/` e diminuindo superfície XSS. Ainda não há um único módulo de cascata: `refreshCascade`, `jumpToProduct` e `fetchMetadata` continuam coordenando opções em pontos diferentes, e a API ainda tem normalização/filtro em memória próprios.
 - **Critério de aceite:** existe um único módulo de cascata; `refreshCascade`, `jumpToProduct` e `fetchMetadata` chamam o mesmo helper.
 
 ---

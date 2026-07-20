@@ -34,10 +34,10 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log — fatiado de ui-controller (MNT-01)
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
-  ui-utils.js            # escapeHtml, debounce, showToast, formatadores
+  ui-utils.js            # escapeHtml, debounce, fillSelect seguro por DOM, showToast, formatadores
 core/                    # Regra de negócio pura (sem DOM, sem Supabase)
   spreadsheet-engine.js  # Parsing XLSX, fuzzy match de colunas, normalização numérica e normalizeCodigoProduto
-  report-engine.js       # Cascata, variação, score de instabilidade, regime, KPIs, fillSelect
+  report-engine.js       # Cascata, variação, score de instabilidade, regime, KPIs (sem DOM)
   heuristic-engine.js    # Sugestão de categoria (NÃO integrado — ver MNT-04)
 src/
   config/app-config.js   # Resolução/validação de env (VITE_*) com fallback em cascata
@@ -233,3 +233,8 @@ npm test
 ```
 
 O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js` fornece presets/regras, mas não substitui o executável `eslint` usado pelo script `npm run lint`.
+
+
+## Atualização 2026-07-20 — estado do fatiamento MNT-01
+
+Conferência documental dos PRs #121–#124: `view/ui-filters.js` concentra cascata, filtros rápidos, ordenação e chips; `view/ui-export.js` concentra a exportação XLSX investigativa e reusa a seleção/ordenação canônica dos filtros. `view/ui-controller.js` continua como orquestrador e ainda mantém a fila/tabela e as funções de apresentação investigativa; por isso MNT-01 segue aberto. `fillSelect` agora é helper de UI em `view/ui-utils.js`, reduzindo DOM no `core/`, mas MNT-03 só será concluído quando a cascata também tiver uma fonte única.
