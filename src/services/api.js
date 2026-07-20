@@ -687,7 +687,7 @@ export const api = {
     };
   },
 
-  async suggestCategory(product, masters) {
+  async suggestCategory(product, _masters) {
     const codigo = normalizeCodigoProduto(product?.codigo_produto);
     if (!codigo) {
       return { data: { origem_id: null, familia_id: null, agrupamento_cod: null, status: 'PENDENTE' }, error: null };
