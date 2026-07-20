@@ -330,10 +330,10 @@ export function calculateCascadeOptions(state, masters) {
  * Agrupa histórico por produto e calcula linhas da fila investigativa.
  * `data_referencia` ordena a competência; `criado_em` identifica última/penúltima importação.
  * @param {Array<HistoricoRow>} historico
- * @param {Masters} [masters]
+ * @param {Masters} [_masters]
  * @returns {Array<ReportRow>}
  */
-export function buildReportRows(historico, masters = { origens: [], familias: [], agrupamentos: [] }) {
+export function buildReportRows(historico, _masters = { origens: [], familias: [], agrupamentos: [] }) {
   const grouped = {};
   historico.forEach(item => {
     const codigo = normalizeCodigoProduto(item?.codigo_produto);

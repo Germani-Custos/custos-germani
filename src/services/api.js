@@ -310,42 +310,6 @@ async function runDiagnosticoSemAgrupamento() {
   return createDiagnosticoSemAgrupamentoOk(rows);
 }
 
-async function garantirProdutoNoDicionario(produto, descricao) {
-  const codigoProduto = normalizeCodigoProduto(produto);
-  if (!codigoProduto) return { ok: false, reason: 'codigo_vazio' };
-
-  const { data, error } = await supabase
-    .from(TABLES.dicionario)
-    .select('codigo_produto')
-    .eq('codigo_produto', codigoProduto)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Erro ao buscar produto no dicionário:', { codigo_produto: codigoProduto, error });
-    return { ok: false, reason: 'erro_busca', error };
-  }
-
-  if (data) return { ok: true, created: false };
-
-  const { error: insertError } = await supabase
-    .from(TABLES.dicionario)
-    .insert({
-      codigo_produto: codigoProduto,
-      descricao: String(descricao || '').trim() || null,
-      origem_id: null,
-      familia_id: null,
-      agrupamento_cod: null
-    });
-
-  if (insertError) {
-    console.error('Erro ao criar produto no dicionário:', { codigo_produto: codigoProduto, error: insertError });
-    return { ok: false, reason: 'erro_insert', error: insertError };
-  }
-
-  debugLog('Produto criado no dicionário:', codigoProduto);
-  return { ok: true, created: true };
-}
-
 async function garantirProdutosNoDicionarioEmLote(produtos = []) {
   const unicos = new Map();
   (produtos || []).forEach(item => {
@@ -723,7 +687,7 @@ export const api = {
     };
   },
 
-  async suggestCategory(product, masters) {
+  async suggestCategory(product, _masters) {
     const codigo = normalizeCodigoProduto(product?.codigo_produto);
     if (!codigo) {
       return { data: { origem_id: null, familia_id: null, agrupamento_cod: null, status: 'PENDENTE' }, error: null };

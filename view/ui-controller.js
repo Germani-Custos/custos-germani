@@ -364,8 +364,7 @@ async function runReport(options = {}) {
 
 // ── Tabela analítica ──────────────────────────────────────────────────────────
 
-function renderTable(rows, options = {}) {
-  const { hasSingleItemAnalysis = false } = options;
+function renderTable(rows, _options = {}) {
   dom.tableBody.innerHTML = rows.map(row => {
     const prioridade = getOperationalPriority(row);
     const contexto = buildInvestigativeSummary(row);
@@ -449,12 +448,6 @@ function buildInvestigativeSummary(row) {
   if (Math.abs(Number(row.variacao || 0)) >= 10) return `Variação expressiva de ${row.variacao.toFixed(2)}% no recorte analisado.`;
   if (isAlertaCritico(row)) return 'Nova variação relevante na última importação (reincidência).';
   return 'Comportamento sem ruptura relevante; manter monitoramento contínuo.';
-}
-
-function getInstabilityClass(classificacao) {
-  if (classificacao === 'ESTÁVEL') return 'stable';
-  if (classificacao === 'OSCILANDO') return 'oscillating';
-  return 'unstable';
 }
 
 function formatCurrencyCell(value) {
