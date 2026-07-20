@@ -450,12 +450,6 @@ function buildInvestigativeSummary(row) {
   return 'Comportamento sem ruptura relevante; manter monitoramento contínuo.';
 }
 
-function getInstabilityClass(classificacao) {
-  if (classificacao === 'ESTÁVEL') return 'stable';
-  if (classificacao === 'OSCILANDO') return 'oscillating';
-  return 'unstable';
-}
-
 function formatCurrencyCell(value) {
   if (value === null || value === undefined) return '-';
   return `R$ ${formatCurrencyBRL(value)}`;
