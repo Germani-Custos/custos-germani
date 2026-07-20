@@ -178,3 +178,10 @@ Objetivo: antecipar investigação humana.
 - [x] CFG-05 — GitHub Actions criado para lint/typecheck/test em PRs, sem deploy.
 
 Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: seguir a nova ordem do `docs/auditoria/backlog-priorizado.md` — começar por `MNT-06`, `MNT-07` e `MNT-05`, então executar `MNT-01` como fatiamento destravador da UI antes de `PERF-01`, `MNT-03`, `SEC-02`, `PERF-02`, `MNT-02` e `VAL-02`. A hipótese validada é que o acoplamento do `view/ui-controller.js` virou o maior multiplicador de risco para performance, segurança de HTML e futura validação.
+
+
+## Atualização contínua — 20/07/2026 (conferência de backlog)
+
+- Registrado retroativamente o avanço do **MNT-01** nos PRs #121–#124: filtros/cascata, filtros rápidos, ordenação, chips e exportação XLSX foram movidos para módulos dedicados.
+- **MNT-01 permanece em andamento**, não concluído: a fila/tabela e a apresentação investigativa (`renderTable`, prioridade operacional e resumo por linha) ainda ficam em `view/ui-controller.js`.
+- **MNT-03 permanece aberto**, mas parcialmente reduzido: `fillSelect` saiu do `core/` e foi centralizado em `view/ui-utils.js`; ainda falta unificar a cascata em um helper/módulo único.

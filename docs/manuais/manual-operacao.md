@@ -147,3 +147,8 @@ Se a abertura do app, a análise, o drill-through ou a exportação falhar, a UI
 ## CI e validação de Pull Request — 25/06/2026
 
 O repositório agora possui GitHub Actions para validação de qualidade em Pull Requests. O workflow executa lint, typecheck leve e testes automatizados, mas não realiza deploy nem altera o fluxo da Vercel. A publicação continua dependente da configuração existente de deploy estático e da geração de `runtime-config.js` com variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+
+
+## Atualização 2026-07-20 — conferência de PRs recentes
+
+Sem mudança operacional para o usuário final nesta revisão: apenas documentação do estado real dos PRs #121–#124. A operação deve considerar que filtros, chips, ordenação e exportação seguem com o mesmo comportamento, agora em módulos dedicados. A pendência operacional relevante continua sendo performance da fila/tabela em bases grandes (`PERF-01`), dependente do fechamento do MNT-01.

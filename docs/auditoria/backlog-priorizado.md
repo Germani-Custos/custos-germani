@@ -58,14 +58,14 @@ Objetivo: reduzir ambiguidade e remover divergências pequenas antes de fatiar m
 
 Objetivo: decompor `view/ui-controller.js` por fluxo, preservando comportamento e preparando mudanças de performance/segurança sem refactor transversal. Deve ser feito em commits pequenos por fluxo, mantendo `init()`, `runReport()` e handlers críticos sob as fronteiras ERR-01.
 
-- [ ] **4. MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (bootstrap/navegação, importação, filtros/relatório, fila investigativa, drill-through, exportação/gráficos). **Motivo da subida:** maior destravador arquitetural atual; reduz acoplamento antes de `PERF-01`, `PERF-02`, `MNT-03` e `SEC-02`. → [`manutenibilidade.md`](./manutenibilidade.md)
+- [ ] **4. MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (bootstrap/navegação, importação, filtros/relatório, fila investigativa, drill-through, exportação/gráficos). **Motivo da subida:** maior destravador arquitetural atual; reduz acoplamento antes de `PERF-01`, `PERF-02`, `MNT-03` e `SEC-02`. **Progresso registrado em 2026-07-20 após revisão dos PRs #121–#124:** gráficos, drill-through, importação, filtros e exportação já estão extraídos em módulos dedicados; o item permanece aberto porque fila/tabela e presenter investigativo ainda estão no controller. → [`manutenibilidade.md`](./manutenibilidade.md)
 
 ## Onda 5 — Performance e segurança da fila investigativa/UI
 
 Objetivo: melhorar velocidade investigativa percebida e reduzir superfície de XSS com a UI já fatiada.
 
 - [ ] **5. PERF-01** 🟠 M — Virtualizar/limitar tabela investigativa + delegação de eventos. **Dependência real:** fica mais seguro após o fatiamento da fila/tabela em `MNT-01`. → [`performance-otimizacao.md`](./performance-otimizacao.md)
-- [ ] **6. MNT-03** 🟠 M — Centralizar cascata e `fillSelect`. **Dependência real:** deve vir após separar fluxos de filtros/relatório em `MNT-01`; preserva o contrato de cascata e reduz duplicação. → [`manutenibilidade.md`](./manutenibilidade.md)
+- [ ] **6. MNT-03** 🟠 M — Centralizar cascata e `fillSelect`. **Dependência real:** deve vir após separar fluxos de filtros/relatório em `MNT-01`; preserva o contrato de cascata e reduz duplicação. **Progresso parcial registrado em 2026-07-20:** `fillSelect` foi movido para `view/ui-utils.js` no PR #124, mas a cascata ainda não tem helper/módulo único; portanto não marcar como concluído. → [`manutenibilidade.md`](./manutenibilidade.md)
 - [ ] **7. SEC-02** 🟡 M — Helper de "HTML seguro" + endurecimento da regra de lint. **Dependência real:** `CFG-01` já existe; após `MNT-01`, aplicar o helper por componente/fluxo fica revisável. → [`seguranca.md`](./seguranca.md)
 - [ ] **8. PERF-02** 🟠 M — Cachear `masters` com invalidação por realtime/import (parar de recarregar a cada troca de view). **Dependência real:** parcialmente desbloqueado por `MNT-01`; também exige preservar degradação parcial de `ERR-02` e diagnóstico de órfãos. → [`performance-otimizacao.md`](./performance-otimizacao.md)
 - [x] **PERF-03** 🟡 P — Memoizar `calculateCascadeOptions`. → [`performance-otimizacao.md`](./performance-otimizacao.md)
