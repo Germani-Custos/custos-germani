@@ -221,7 +221,12 @@ function getCascadeCacheKey(state, masters) {
 /**
  * Calcula opções de cascata (familias, agrupamentos, produtos) a partir do estado e masters fornecidos.
  * @param {{origem:string, familia:string, agrupamento:string}} state
- * @param {Masters} masters
+ * @param {Masters} masters Superfície consumida (A-05): `hierarquia` (ou
+ *   `dicionario` como fallback quando `hierarquia` vazia) para o mapa
+ *   origem→família→agrupamento→produto; `familias` e `agrupamentos` para
+ *   resolver rótulos por `id`; `produtos` para a lista de itens. Não usa
+ *   `origens`. Renomear/remover qualquer um destes campos deve ser refletido no
+ *   typedef `Masters` — o `@ts-check` sinaliza divergência nos chamadores.
  * @returns {{familyOptions:Array<{value:string,label:string}>, groupOptions:Array<{value:string,label:string}>, productOptions:Array<{value:string,label:string}>}}
  */
 export function calculateCascadeOptions(state, masters) {
