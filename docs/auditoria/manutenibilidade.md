@@ -66,7 +66,7 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
 ## MNT-04 · 🟡 Baixo · Código morto / não integrado
 
 - **Locais:**
-  - `core/heuristic-engine.js` — módulo de sugestão de categoria; o próprio `AGENTS.md:147` admite "não conectado ao fluxo principal ainda". `api.suggestCategory` (`src/services/api.js:612-635`) parece existir só para ele.
+  - `core/heuristic-engine.js` — **Decisão (A-01…A-05, revisão arquitetural):** manter como **guardrail somente-documentação**. Após a remoção das funções de sugestão (`suggestCategory`, `splitImportRows`, regras hardcoded) e de `normalizeProductCode` (duplicado), o arquivo não exporta lógica: contém apenas o cabeçalho que documenta a regra central "categorização vem do `dicionario_produtos`, nunca de heurística por texto" e as condições para uma eventual reativação. Esse aviso, no exato local onde alguém tentaria adicionar heurística, tem valor de guardrail maior que o custo de manter o arquivo. Severidade **baixa**; não bloqueia a próxima feature. `AGENTS.md` atualizado para descrever o arquivo com precisão (antes o descrevia como "módulo de sugestão de categoria").
   - `api.getTrendsByProduct` (`src/services/api.js:694-706`) — janela fixa de 6 meses; a análise temporal usa o `data` já carregado em `renderTemporalAnalysis`, não este método. **Verificar** uso real antes de remover.
   - `api.upsertHistoricoCustos` (`src/services/api.js:419-442`) — a importação usa `importarHistoricoCustosComLog`. **Verificar** uso real.
 - **Impacto:** superfície de código maior que a funcional; leitor não sabe o que é caminho real.
