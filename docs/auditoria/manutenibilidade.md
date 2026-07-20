@@ -38,6 +38,7 @@ Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo d
   - `src/services/enrichment.js` — `enrichRowsWithDicionario`, `mapHierarchyRows`, cascata em memória.
   - `src/services/api.js` — só os métodos `api.*` orquestrando os acima.
 - **Critério de aceite:** `validation.js` é importável e testável sem rede; `import { api } from '../src/services/api.js'` e o shim `services/api.js` continuam válidos.
+- **Avaliação de risco (rev. arquitetural A-03):** o tamanho (885 linhas) é **cheiro arquitetural, não risco operacional agudo hoje**. A seção mais complexa — importação em lote (`importarHistoricoCustosComLog`: validação de row, upsert em chunks, criação de log, diagnóstico) — está sob `@ts-check` desde o MNT-05, que dá rede de segurança contra regressão de contrato. A dívida de comparação entre importações já está isolada e rastreada em `LOG-02` (chunks de 400 com `criado_em` distinto). Conclusão: **não fatorar no freeze** (mudaria o contrato público `export const api`); manter em MNT-02, sem elevação de severidade. Reavaliar antes de features que ampliem o pipeline de importação.
 
 ---
 
