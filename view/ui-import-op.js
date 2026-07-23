@@ -15,6 +15,13 @@ import { escapeHtml, showToast } from './ui-utils.js';
 
 const PREVIEW_ROW_LIMIT = 5;
 
+// Validação de extensão case-insensitive: aceita .csv e .CSV (o export real do
+// ERP costuma vir em maiúsculas). Arquivos sem extensão .csv são recusados com
+// mensagem clara antes de qualquer leitura.
+function isCsvFile(file) {
+  return /\.csv$/i.test(String(file?.name || ''));
+}
+
 function lerArquivoLatin1(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -62,6 +69,11 @@ function buildPreviewHtml(rows, errors) {
  */
 export function createImportOpController({ dom, executeOperationalBoundary }) {
   async function handleFile(file) {
+    if (!isCsvFile(file)) {
+      showToast('warning', 'Selecione um arquivo CSV de apontamentos (extensão .csv).');
+      return;
+    }
+
     const text = await lerArquivoLatin1(file);
     const { rows, errors } = parseMCAP105(text);
 
@@ -72,7 +84,7 @@ export function createImportOpController({ dom, executeOperationalBoundary }) {
 
     const result = await Swal.fire({
       icon: 'question',
-      title: 'Preview — Importação de OP (MCAP105)',
+      title: 'Preview — Importação de Apontamentos de OP',
       width: 900,
       html: buildPreviewHtml(rows, errors),
       showCancelButton: true,

@@ -231,4 +231,36 @@ describe('parseMCAP105 — parser do relatório de OP (MCAP105)', () => {
     expect(parseMCAP105('')).toEqual({ rows: [], errors: [] });
     expect(parseMCAP105(undefined)).toEqual({ rows: [], errors: [] });
   });
+
+  // Dialeto real do export do ERP: arquivo delimitado por `;`, cada registro é
+  // um único campo entre aspas com aspas internas escapadas (`""`).
+  const quoteRecord = (linha) => `"${linha.replace(/"/g, '""')}";`;
+
+  it('desembrulha registro entre aspas terminado em ";" e parseia igual à linha crua', () => {
+    const { rows, errors } = parseMCAP105(quoteRecord(LINHA_OP738));
+    expect(errors).toHaveLength(0);
+    expect(rows).toHaveLength(1);
+    // Resultado idêntico ao da mesma linha no formato "cru".
+    expect(rows[0]).toEqual(parseMCAP105(LINHA_OP738).rows[0]);
+  });
+
+  it('parseia um arquivo inteiro no dialeto ";" com cabeçalhos terminados em ";"', () => {
+    const conteudo = [
+      `${TITULO};`,
+      `${HEADER_1};`,
+      `${HEADER_2};`,
+      quoteRecord(LINHA_OP738),
+      quoteRecord(LINHA_OP752),
+      `${HEADER_1};`,
+      `${HEADER_2};`,
+      quoteRecord(LINHA_OP757_ZEROS),
+      quoteRecord(LINHA_OP732),
+      quoteRecord(LINHA_OP736),
+      ''
+    ].join('\r\n');
+    const { rows, errors } = parseMCAP105(conteudo);
+    expect(rows).toHaveLength(5);
+    expect(errors).toHaveLength(0);
+    expect(rows.map(row => row.op)).toEqual([738, 752, 757, 732, 736]);
+  });
 });

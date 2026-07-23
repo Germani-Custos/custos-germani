@@ -367,6 +367,28 @@ function parseMcap105Int(value) {
 }
 
 /**
+ * Normaliza uma linha do relatório antes do parse de campos.
+ *
+ * Alguns exports do ERP entregam o arquivo como CSV delimitado por `;` em que
+ * cada registro é um único campo — e, quando o registro contém vírgulas, o
+ * campo inteiro vem entre aspas com as aspas internas escapadas como `""`
+ * (ex.: `"425,738,...,""1.197,01"",...";`). Outros exports entregam a linha
+ * "crua", começando direto no dígito. Esta função reduz os dois formatos ao
+ * mesmo: remove o `;` terminador e, se a linha for um único campo entre aspas,
+ * desembrulha (tira as aspas externas e converte `""` → `"`), devolvendo o
+ * conteúdo separável por vírgula que o restante do parser já entende.
+ * @param {string} line
+ * @returns {string}
+ */
+function unwrapMcap105Record(line) {
+  let normalized = String(line ?? '').replace(/;+\s*$/, '');
+  if (normalized.length >= 2 && normalized[0] === '"' && normalized[normalized.length - 1] === '"') {
+    normalized = normalized.slice(1, -1).replace(/""/g, '"');
+  }
+  return normalized;
+}
+
+/**
  * Uma linha é dado real quando, após remover o `\r`, não está vazia e começa
  * com dígito. Cabeçalhos repetidos, título e linhas em branco começam com
  * letra ou espaço e são descartados.
@@ -414,7 +436,8 @@ export function parseMCAP105(text) {
 
   const lines = String(text ?? '').replace(/\r/g, '').split('\n');
 
-  lines.forEach((line, index) => {
+  lines.forEach((rawLine, index) => {
+    const line = unwrapMcap105Record(rawLine);
     if (!isMcap105DataLine(line)) return;
 
     const linha = index + 1;
