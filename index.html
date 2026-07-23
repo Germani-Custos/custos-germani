@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Germani Alimentos | Sistema de Auditoria</title>
+  <title>Germani Alimentos | Custos Germani</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
   <link rel="stylesheet" href="assets/style.css" />
@@ -132,7 +132,11 @@
         </button>
         <button class="nav-item" data-view-trigger="report">
           <i class="ri-bar-chart-box-line"></i>
-          <span>Auditoria</span>
+          <span>Custos</span>
+        </button>
+        <button class="nav-item" data-view-trigger="op">
+          <i class="ri-flow-chart"></i>
+          <span>OP</span>
         </button>
         <button class="nav-item" data-view-trigger="documentation">
           <i class="ri-book-open-line"></i>
@@ -278,6 +282,20 @@
             </div>
             <p id="trendFallback" class="help-text hidden">Histórico insuficiente para análise temporal</p>
             <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: OP ===== -->
+      <section id="view-op" class="view hidden">
+        <div class="panel">
+          <h2>Auditoria de OP</h2>
+          <p>Importe o relatório MCAP105 para visualizar o acompanhamento de tempo por Ordem de Produção.</p>
+
+          <div class="drop-zone" id="dropZoneOp" role="button" tabindex="0" aria-label="Área de upload OP">
+            <i class="ri-file-upload-line"></i>
+            <p>Arraste o arquivo CSV do MCAP105 aqui ou <strong>clique para selecionar</strong></p>
+            <input type="file" id="importOpInput" accept=".csv" style="display:none">
           </div>
         </div>
       </section>
