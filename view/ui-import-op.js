@@ -84,7 +84,7 @@ export function createImportOpController({ dom, executeOperationalBoundary }) {
 
     const result = await Swal.fire({
       icon: 'question',
-      title: 'Preview — Importação de OP (MCAP105)',
+      title: 'Preview — Importação de Apontamentos de OP',
       width: 900,
       html: buildPreviewHtml(rows, errors),
       showCancelButton: true,

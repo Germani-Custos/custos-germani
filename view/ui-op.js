@@ -130,7 +130,7 @@ export function createOpController({ dom, executeOperationalBoundary }) {
       allRows = data || [];
       fillEstagioSelect();
       refreshCascade();
-    }, { message: 'Falha ao carregar dados de OP. Reabra a aba ou importe o MCAP105.' });
+    }, { message: 'Falha ao carregar dados de OP. Reabra a aba ou importe o relatório de apontamentos de OP.' });
   }
 
   // Filtros da consulta: só inclui um nível quando ele não está em TODAS/TODOS.
