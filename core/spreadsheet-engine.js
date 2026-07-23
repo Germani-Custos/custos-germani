@@ -273,3 +273,180 @@ export function scanHeaders(rows) {
 export function countValidMappedColumns(mapping) {
   return REQUIRED_FIELDS.filter(key => Boolean(mapping[key])).length;
 }
+
+/* ---------------------------------------------------------------------------
+ * Auditoria de OP — parser do relatório MCAP105 ("Acompanhamento de Tempo por OP")
+ *
+ * Ordem das 16 colunas de uma linha de dados, corrigida contra os dados reais:
+ * nas colunas de tempo e produtividade o relatório traz PREVISTO antes de REAL.
+ * A tabela posicional da spec original invertia esses pares; a ordem abaixo foi
+ * validada pelo % Tempo, que só reconcilia como
+ * (kg_hora_real - kg_hora_previsto) / kg_hora_previsto (ver PR da Fase 1).
+ * ------------------------------------------------------------------------- */
+const MCAP105_COLUMNS = Object.freeze([
+  'origem',            // 0
+  'op',                // 1
+  'cod_produto',       // 2
+  'descricao',         // 3
+  'cod_estagio',       // 4
+  'estagio',           // 5
+  'qtd_prevista',      // 6
+  'qtd_produzida',     // 7
+  'unidade',           // 8
+  'tempo_previsto',    // 9  — previsto, não real
+  'tempo_real',        // 10 — real, não previsto
+  'kg_hora_previsto',  // 11 — previsto, não real
+  'kg_hora_real',      // 12 — real, não previsto
+  'perc_tempo',        // 13
+  'tempo_parada',      // 14
+  'qtd_apontamentos'   // 15
+]);
+
+const MCAP105_TEXT_FIELDS = new Set(['cod_produto', 'descricao', 'estagio', 'unidade']);
+const MCAP105_INT_FIELDS = new Set(['origem', 'op', 'cod_estagio', 'qtd_apontamentos']);
+
+/**
+ * Divide uma linha CSV respeitando aspas duplas (campos entre aspas podem
+ * conter a vírgula decimal do formato brasileiro). Aspas duplas escapadas
+ * ("") viram uma aspa literal.
+ * @param {string} line
+ * @returns {string[]}
+ */
+function splitCsvLine(line) {
+  const fields = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') { current += '"'; i += 1; }
+        else inQuotes = false;
+      } else {
+        current += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      fields.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
+/**
+ * Converte um número no formato fixo do MCAP105: ponto sempre é separador de
+ * milhar e vírgula sempre é separador decimal. Diferente de
+ * `parseBrazilianNumber` (que só remove pontos quando há vírgula), aqui
+ * "2.800" (sem vírgula) é 2800, não 2,8. Valor inválido/vazio → 0.
+ * @param {unknown} value
+ * @returns {number}
+ */
+function parseMcap105Number(value) {
+  const str = String(value ?? '').trim();
+  if (!str) return 0;
+  const normalized = str.replace(/\./g, '').replace(',', '.');
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : 0;
+}
+
+/**
+ * Parseia um inteiro estrito (apenas dígitos, com sinal opcional), ignorando
+ * espaços de preenchimento do relatório. Retorna null se não for inteiro.
+ * @param {unknown} value
+ * @returns {number|null}
+ */
+function parseMcap105Int(value) {
+  const str = String(value ?? '').trim();
+  if (!/^-?\d+$/.test(str)) return null;
+  return parseInt(str, 10);
+}
+
+/**
+ * Uma linha é dado real quando, após remover o `\r`, não está vazia e começa
+ * com dígito. Cabeçalhos repetidos, título e linhas em branco começam com
+ * letra ou espaço e são descartados.
+ * @param {string} line
+ * @returns {boolean}
+ */
+function isMcap105DataLine(line) {
+  if (!line.trim()) return false;
+  const first = line[0];
+  return first >= '0' && first <= '9';
+}
+
+/**
+ * @typedef {Object} Mcap105Row
+ * @property {number|null} origem
+ * @property {number|null} op
+ * @property {string} cod_produto
+ * @property {string} descricao
+ * @property {number|null} cod_estagio
+ * @property {string} estagio
+ * @property {string} unidade
+ * @property {number} qtd_prevista
+ * @property {number} qtd_produzida
+ * @property {number|null} qtd_apontamentos
+ * @property {number} tempo_previsto
+ * @property {number} tempo_real
+ * @property {number} tempo_parada
+ * @property {number} kg_hora_previsto
+ * @property {number} kg_hora_real
+ * @property {number} perc_tempo
+ */
+
+/**
+ * Parseia o conteúdo bruto do relatório MCAP105 (CSV latin-1 já lido como
+ * string). Função pura: não toca no DOM nem na API e nunca lança exceção —
+ * linhas inválidas vão para `errors[]`.
+ * @param {string} text - Conteúdo do arquivo lido com FileReader (ISO-8859-1)
+ * @returns {{ rows: Mcap105Row[], errors: { linha: number, mensagem: string }[] }}
+ */
+export function parseMCAP105(text) {
+  /** @type {Mcap105Row[]} */
+  const rows = [];
+  /** @type {{ linha: number, mensagem: string }[]} */
+  const errors = [];
+
+  const lines = String(text ?? '').replace(/\r/g, '').split('\n');
+
+  lines.forEach((line, index) => {
+    if (!isMcap105DataLine(line)) return;
+
+    const linha = index + 1;
+    const fields = splitCsvLine(line);
+
+    const origem = parseMcap105Int(fields[0]);
+    if (origem === null) {
+      errors.push({ linha, mensagem: 'origem inválida (esperado inteiro)' });
+      return;
+    }
+
+    const codProduto = String(fields[2] ?? '').trim();
+    if (!codProduto) {
+      errors.push({ linha, mensagem: 'cod_produto vazio' });
+      return;
+    }
+
+    /** @type {Record<string, unknown>} */
+    const row = {};
+    MCAP105_COLUMNS.forEach((field, pos) => {
+      const raw = fields[pos];
+      if (MCAP105_TEXT_FIELDS.has(field)) {
+        row[field] = String(raw ?? '').trim();
+      } else if (MCAP105_INT_FIELDS.has(field)) {
+        row[field] = parseMcap105Int(raw);
+      } else {
+        row[field] = parseMcap105Number(raw);
+      }
+    });
+
+    rows.push(/** @type {Mcap105Row} */ (row));
+  });
+
+  return { rows, errors };
+}
