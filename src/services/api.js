@@ -17,7 +17,9 @@ const TABLES = {
   dicionario: 'dicionario_produtos',
   origem: 'categorias_origem',
   familia: 'categorias_familia',
-  agrupamento: 'categorias_agrupamento'
+  agrupamento: 'categorias_agrupamento',
+  apontamentosOp: 'apontamentos_op',
+  logImportacaoOp: 'log_importacao_op'
 };
 
 const supabase = createClient(appConfig.supabase.url, appConfig.supabase.anonKey);
@@ -881,5 +883,128 @@ export const api = {
         aumentos: variacoes.filter(item => item.variacao_percentual > 0).slice(0, 5),
         reducoes: [...variacoes].reverse().filter(item => item.variacao_percentual < 0).slice(0, 5)
       });
+  },
+
+  /**
+   * Importa um lote de apontamentos de OP (relatório MCAP105), registrando o
+   * ciclo de vida em log_importacao_op (processando → concluido).
+   *
+   * Diferente do histórico de custos (upsert por codigo_produto,data_referencia),
+   * aqui usamos INSERT simples: o mesmo produto pode ter várias OPs na mesma
+   * competência, então não há chave de conflito natural. Reimportar o mesmo
+   * arquivo duplica os registros — comportamento aceito e documentado.
+   *
+   * @param {{ rows?: Array<Record<string, unknown>>, dataReferencia?: string, arquivoNome?: string }} params
+   * @returns {Promise<{data: {inseridos: number, erros: Array<Record<string, unknown>>, logId: number|null}|null, error: unknown}>}
+   */
+  async importarApontamentosOp({ rows, dataReferencia, arquivoNome } = {}) {
+    const dataReferenciaISO = normalizeISODate(dataReferencia);
+    if (!dataReferenciaISO) {
+      return fail('data_referencia é obrigatória para importar apontamentos de OP.', { metodo: 'importarApontamentosOp' });
+    }
+
+    const lista = Array.isArray(rows) ? rows : [];
+    const totalLinhas = lista.length;
+
+    const { data: createdLog, error: createLogError } = await supabase
+      .from(TABLES.logImportacaoOp)
+      .insert({
+        data_referencia: dataReferenciaISO,
+        total_linhas: totalLinhas,
+        arquivo_nome: arquivoNome ?? null,
+        status: 'processando',
+        linhas_importadas: 0,
+        linhas_erro: 0
+      })
+      .select('id')
+      .single();
+
+    if (createLogError) {
+      return fail('Falha ao registrar log de importação de apontamentos de OP.', { metodo: 'importarApontamentosOp' }, createLogError);
+    }
+
+    const logId = createdLog?.id ?? null;
+
+    const registros = lista.map(row => ({
+      data_referencia: dataReferenciaISO,
+      log_importacao_op_id: logId,
+      origem: row?.origem ?? null,
+      op: row?.op ?? null,
+      cod_produto: row?.cod_produto ?? null,
+      descricao: row?.descricao ?? null,
+      cod_estagio: row?.cod_estagio ?? null,
+      estagio: row?.estagio ?? null,
+      unidade: row?.unidade ?? null,
+      qtd_prevista: row?.qtd_prevista ?? null,
+      qtd_produzida: row?.qtd_produzida ?? null,
+      qtd_apontamentos: row?.qtd_apontamentos ?? null,
+      tempo_real: row?.tempo_real ?? null,
+      tempo_previsto: row?.tempo_previsto ?? null,
+      tempo_parada: row?.tempo_parada ?? null,
+      kg_hora_real: row?.kg_hora_real ?? null,
+      kg_hora_previsto: row?.kg_hora_previsto ?? null,
+      perc_tempo: row?.perc_tempo ?? null
+    }));
+
+    let inseridos = 0;
+    const erros = [];
+
+    for (let i = 0; i < registros.length; i += IMPORT_CHUNK_SIZE) {
+      const chunk = registros.slice(i, i + IMPORT_CHUNK_SIZE);
+      const { error } = await supabase.from(TABLES.apontamentosOp).insert(chunk);
+      if (error) {
+        erros.push({ chunk: Math.floor(i / IMPORT_CHUNK_SIZE), tamanho: chunk.length, mensagem: error.message });
+        console.error('Falha Supabase ao inserir apontamentos de OP em chunk:', {
+          message: error.message, details: error.details, hint: error.hint, code: error.code, chunkSize: chunk.length
+        });
+      } else {
+        inseridos += chunk.length;
+      }
+    }
+
+    const linhasErro = totalLinhas - inseridos;
+
+    if (logId) {
+      const { error: updateLogError } = await supabase
+        .from(TABLES.logImportacaoOp)
+        .update({
+          status: 'concluido',
+          linhas_importadas: inseridos,
+          linhas_erro: linhasErro,
+          finalizado_em: new Date().toISOString()
+        })
+        .eq('id', logId);
+      if (updateLogError) {
+        debugLog('Falha controlada ao fechar log de importação de OP', { message: updateLogError.message || String(updateLogError) });
+      }
+    }
+
+    return ok({ inseridos, erros, logId });
+  },
+
+  /**
+   * Consulta apontamentos de OP com filtros opcionais. Ordena por competência
+   * (mais recente primeiro), estágio, origem e OP.
+   * @param {{ dataReferencia?: string, estagio?: string, origem?: number|string, op?: number|string, codProduto?: string }} [filters]
+   * @returns {Promise<{data: Array<Record<string, unknown>>|null, error: unknown}>}
+   */
+  async getApontamentosOp(filters = {}) {
+    let query = supabase.from(TABLES.apontamentosOp).select('*');
+
+    const dataReferenciaISO = normalizeISODate(filters?.dataReferencia);
+    if (dataReferenciaISO) query = query.eq('data_referencia', dataReferenciaISO);
+    if (filters?.estagio) query = query.eq('estagio', filters.estagio);
+    if (filters?.origem !== undefined && filters?.origem !== null && filters?.origem !== '') query = query.eq('origem', filters.origem);
+    if (filters?.op !== undefined && filters?.op !== null && filters?.op !== '') query = query.eq('op', filters.op);
+    if (filters?.codProduto) query = query.eq('cod_produto', filters.codProduto);
+
+    const { data, error } = await query
+      .order('data_referencia', { ascending: false })
+      .order('estagio', { ascending: true })
+      .order('origem', { ascending: true })
+      .order('op', { ascending: true });
+
+    if (error) return fail('Falha ao consultar apontamentos de OP.', { metodo: 'getApontamentosOp' }, error);
+    return ok(data || []);
   }
 };
