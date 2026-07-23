@@ -13,6 +13,7 @@ import { bindDocumentationView } from './documentation-controller.js';
 import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
+import { createImportOpController } from './ui-import-op.js';
 import { createFiltersController } from './ui-filters.js';
 import { createExportController } from './ui-export.js';
 
@@ -21,6 +22,7 @@ const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
+const importerOp = createImportOpController({ dom, executeOperationalBoundary });
 const exporter = createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary });
 const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport: exporter.exportReport });
 
@@ -65,6 +67,7 @@ async function executeOperationalBoundary(operation, action, options = {}) {
 async function init() {
   bindNavigation();
   importer.bindUpload();
+  importerOp.bindUpload();
   filters.bindFilters();
   bindSearch();
   bindDocumentationView(dom);
