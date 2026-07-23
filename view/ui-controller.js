@@ -14,6 +14,7 @@ import { createChartsController } from './ui-charts.js';
 import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
 import { createImportOpController } from './ui-import-op.js';
+import { createOpController } from './ui-op.js';
 import { createFiltersController } from './ui-filters.js';
 import { createExportController } from './ui-export.js';
 
@@ -23,6 +24,7 @@ const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
 const importerOp = createImportOpController({ dom, executeOperationalBoundary });
+const opController = createOpController({ dom, executeOperationalBoundary });
 const exporter = createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary });
 const filters = createFiltersController({ dom, state, executeOperationalBoundary, fetchMetadata, renderTable, runReport, exportReport: exporter.exportReport });
 
@@ -78,6 +80,8 @@ async function init() {
     await requireLogin();
     await loadMasters({ force: true });
     await fetchMetadata();
+    // OP carrega seus apontamentos do banco — só após o login garantir sessão.
+    await opController.bindOp();
   }, {
     message: 'Falha ao iniciar dados operacionais. Verifique a conexão e tente recarregar a página.',
     fallback: null
