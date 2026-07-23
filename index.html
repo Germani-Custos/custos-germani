@@ -288,15 +288,71 @@
 
       <!-- ===== VIEW: OP ===== -->
       <section id="view-op" class="view hidden">
-        <div class="panel">
+        <header class="view-header">
           <h2>Auditoria de OP</h2>
-          <p>Importe o relatório MCAP105 para visualizar o acompanhamento de tempo por Ordem de Produção.</p>
+          <p>Importe o relatório MCAP105 e navegue pelos filtros em cascata: Estágio → Origem → OP → Produto.</p>
+        </header>
 
+        <!-- Importação (modo importação) -->
+        <div class="panel">
+          <h3>Importar Relatório MCAP105</h3>
           <div class="drop-zone" id="dropZoneOp" role="button" tabindex="0" aria-label="Área de upload OP">
             <i class="ri-file-upload-line"></i>
             <p>Arraste o arquivo CSV do MCAP105 aqui ou <strong>clique para selecionar</strong></p>
             <input type="file" id="importOpInput" accept=".csv" style="display:none">
           </div>
+        </div>
+
+        <!-- Filtros em cascata (modo visualização) -->
+        <div class="panel">
+          <div class="filters-grid">
+            <div class="field"><label for="sel-op-estagio">Estágio</label><select id="sel-op-estagio"><option value="TODOS">TODOS</option></select></div>
+            <div class="field"><label for="sel-op-origem">Origem</label><select id="sel-op-origem"><option value="TODAS">TODAS</option></select></div>
+            <div class="field"><label for="sel-op-op">OP</label><select id="sel-op-op"><option value="TODAS">TODAS</option></select></div>
+            <div class="field"><label for="sel-op-produto">Produto</label><select id="sel-op-produto"><option value="TODOS">TODOS</option></select></div>
+            <div class="field"><label for="dt-op-start">De (competência)</label><input type="month" id="dt-op-start" /></div>
+            <div class="field"><label for="dt-op-end">Até (competência)</label><input type="month" id="dt-op-end" /></div>
+          </div>
+          <div class="actions-row">
+            <button id="analisar-op-btn" class="btn-primary"><i class="ri-search-line"></i> Analisar</button>
+          </div>
+        </div>
+
+        <!-- Painel de linha do tempo (drill por produto) -->
+        <div id="op-drill-panel" class="panel drill-panel hidden">
+          <div class="drill-header">
+            <div>
+              <h3 id="op-drill-title">Linha do Tempo do Produto</h3>
+            </div>
+          </div>
+          <div id="op-drill-body" class="drill-body"></div>
+        </div>
+
+        <!-- Tabela de apontamentos -->
+        <div class="panel table-panel">
+          <table>
+            <thead>
+              <tr>
+                <th>Competência</th>
+                <th>Estágio</th>
+                <th>Origem</th>
+                <th>OP</th>
+                <th>Produto</th>
+                <th>Descrição</th>
+                <th>Qtd Prev.</th>
+                <th>Qtd Prod.</th>
+                <th>U.M.</th>
+                <th>Tempo Prev.</th>
+                <th>Tempo Real</th>
+                <th>KG/Hora Prev.</th>
+                <th>KG/Hora Real</th>
+                <th>% Tempo</th>
+                <th>Parada</th>
+                <th>Apontamentos</th>
+              </tr>
+            </thead>
+            <tbody id="op-table-body"></tbody>
+          </table>
         </div>
       </section>
 
