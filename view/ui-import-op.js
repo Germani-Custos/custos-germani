@@ -58,13 +58,9 @@ function buildPreviewHtml(rows, errors) {
 /**
  * Cria o controlador de importação de apontamentos de OP.
  * @param {{ dom?: Record<string, any>, executeOperationalBoundary: Function }} params
- * @returns {{ bind: Function }}
+ * @returns {{ bindUpload: Function }}
  */
 export function createImportOpController({ dom, executeOperationalBoundary }) {
-  function resolveInput() {
-    return dom?.importOpInput || document.getElementById('import-op-input');
-  }
-
   async function handleFile(file) {
     const text = await lerArquivoLatin1(file);
     const { rows, errors } = parseMCAP105(text);
@@ -114,20 +110,39 @@ export function createImportOpController({ dom, executeOperationalBoundary }) {
     showToast(houveFalha ? 'warning' : 'success', `${inseridos} apontamento(s) de OP importado(s).`);
   }
 
-  function bind() {
-    const input = resolveInput();
+  const MENSAGEM_ERRO = 'Falha ao importar o relatório de OP. Confira o arquivo e tente novamente.';
+
+  function bindUpload() {
+    const input = dom?.importOpInput;
+    const dropZone = dom?.dropZoneOp;
     if (!input) return;
 
     input.addEventListener('change', async () => {
       const file = input.files?.[0];
       if (!file) return;
-      await executeOperationalBoundary('importação de apontamentos de OP', () => handleFile(file), {
-        message: 'Falha ao importar o relatório de OP. Confira o arquivo e tente novamente.'
-      });
+      await executeOperationalBoundary('importação de apontamentos de OP', () => handleFile(file), { message: MENSAGEM_ERRO });
       // Libera o mesmo arquivo para nova seleção (dispara change de novo).
       input.value = '';
     });
+
+    if (!dropZone) return;
+
+    dropZone.addEventListener('click', () => input.click());
+    dropZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+    });
+    ['dragenter', 'dragover'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', async (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      await executeOperationalBoundary('importação de apontamentos de OP (arrastar)', () => handleFile(file), { message: MENSAGEM_ERRO });
+    });
   }
 
-  return { bind };
+  return { bindUpload };
 }
