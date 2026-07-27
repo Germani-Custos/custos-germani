@@ -133,6 +133,23 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.opTableBody.innerHTML).toContain('-20.00%');
   });
 
+
+
+  it('aplica recorte de competência em memória no relatório de OP', async () => {
+    const { dom, controller } = setup();
+    await controller.bindOp();
+    api.getApontamentosOp.mockResolvedValue({ data: APONTAMENTOS, error: null });
+
+    dom.dtOpStart.value = '2026-02';
+    dom.dtOpEnd.value = '2026-02';
+    await controller.runOpReport();
+
+    expect(dom.opTableBody.innerHTML).toContain('101');
+    expect(dom.opTableBody.innerHTML).toContain('fev. de 2026');
+    expect(dom.opTableBody.innerHTML).not.toContain('jan. de 2026');
+    expect(dom.opTableBody.innerHTML).not.toContain('200</td>');
+  });
+
   it('clicar numa linha abre a linha do tempo com os dados daquele produto', async () => {
     const { dom, controller } = setup();
     await controller.bindOp();

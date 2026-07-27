@@ -28,10 +28,11 @@ runtime-config.js        # Gerado no build (window.__ENV__). NÃO editar à mão
 vercel.json              # buildCommand + outputDirectory "."
 assets/style.css         # Estilos globais
 view/                    # Camada de UI (orquestração, DOM, estado, utils)
-  ui-controller.js       # Bootstrap + orquestração dos fluxos de UI (fatiamento em andamento — ver MNT-01)
-  ui-charts.js           # createChartsController(): gráficos (comparação/TOP variações/temporal) + layout — fatiado de ui-controller (MNT-01)
-  ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto — fatiado de ui-controller (MNT-01)
-  ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log — fatiado de ui-controller (MNT-01)
+  ui-controller.js       # Bootstrap + orquestração dos fluxos de UI (MNT-01 concluído)
+  ui-charts.js           # createChartsController(): gráficos (comparação/TOP variações/temporal) + layout
+  ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto
+  ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log
+  ui-table.js            # createTableController(): fila investigativa, detalhes e presenter operacional
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
   ui-utils.js            # escapeHtml, debounce, fillSelect seguro por DOM, showToast, formatadores
@@ -235,6 +236,6 @@ npm test
 O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js` fornece presets/regras, mas não substitui o executável `eslint` usado pelo script `npm run lint`.
 
 
-## Atualização 2026-07-20 — estado do fatiamento MNT-01
+## Atualização 2026-07-27 — fechamento do fatiamento MNT-01
 
-Conferência documental dos PRs #121–#124: `view/ui-filters.js` concentra cascata, filtros rápidos, ordenação e chips; `view/ui-export.js` concentra a exportação XLSX investigativa e reusa a seleção/ordenação canônica dos filtros. `view/ui-controller.js` continua como orquestrador e ainda mantém a fila/tabela e as funções de apresentação investigativa; por isso MNT-01 segue aberto. `fillSelect` agora é helper de UI em `view/ui-utils.js`, reduzindo DOM no `core/`, mas MNT-03 só será concluído quando a cascata também tiver uma fonte única.
+`view/ui-table.js` passou a concentrar a fila investigativa da aba Custos, os detalhes por linha e o presenter operacional (`getOperationalPriority`/`buildInvestigativeSummary`). `view/ui-controller.js` permanece como orquestrador dos fluxos (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`) e só injeta dependências necessárias para preservar as fronteiras ERR-01 e o re-run silencioso após drill-through. Não houve mudança funcional ou temporal; os rótulos de competência (`data_referencia`) e importação (`criado_em`) continuam na tabela.

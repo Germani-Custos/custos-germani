@@ -185,7 +185,8 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `view/ui-controller.js` | Orquestração principal (bootstrap, busca direta, relatório e fila/tabela ainda pendentes do MNT-01) |
+| `view/ui-controller.js` | Orquestração principal (bootstrap, navegação, busca direta e execução do relatório; fluxos delegados a módulos dedicados) |
+| `view/ui-table.js` | Fila investigativa da aba Custos: renderização da tabela, detalhes por linha e presenter operacional compartilhado com exportação |
 | `view/ui-filters.js` | Filtros investigativos: cascata, filtros rápidos dos KPIs, ordenação e chips ativos |
 | `view/ui-export.js` | Exportação XLSX investigativa com contexto, prioridade operacional e sanitização anti-fórmula |
 | `view/ui-state.js` | Estado central da UI (filtros, visão da fila e referências de gráficos) |
@@ -379,4 +380,4 @@ Observação: warnings atuais de `no-unused-vars` são baseline de manutenibilid
 
 ## Atualização documental — 20/07/2026
 
-Revisão dos PRs recentes #121–#124: filtros e exportação já foram extraídos de `view/ui-controller.js` como fatias do MNT-01, e `fillSelect` passou a morar em `view/ui-utils.js`. O backlog permanece aberto para MNT-01 porque a fila/tabela e a apresentação investigativa ainda estão no controller.
+Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela e do presenter investigativo para `view/ui-table.js`. `view/ui-controller.js` permanece como orquestrador dos fluxos já modularizados (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`), sem alteração funcional.

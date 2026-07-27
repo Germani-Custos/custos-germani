@@ -58,7 +58,7 @@ Objetivo: reduzir ambiguidade e remover divergências pequenas antes de fatiar m
 
 Objetivo: decompor `view/ui-controller.js` por fluxo, preservando comportamento e preparando mudanças de performance/segurança sem refactor transversal. Deve ser feito em commits pequenos por fluxo, mantendo `init()`, `runReport()` e handlers críticos sob as fronteiras ERR-01.
 
-- [ ] **4. MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (bootstrap/navegação, importação, filtros/relatório, fila investigativa, drill-through, exportação/gráficos). **Motivo da subida:** maior destravador arquitetural atual; reduz acoplamento antes de `PERF-01`, `PERF-02`, `MNT-03` e `SEC-02`. **Progresso registrado em 2026-07-20 após revisão dos PRs #121–#124:** gráficos, drill-through, importação, filtros e exportação já estão extraídos em módulos dedicados; o item permanece aberto porque fila/tabela e presenter investigativo ainda estão no controller. → [`manutenibilidade.md`](./manutenibilidade.md)
+- [x] **4. MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (bootstrap/navegação, importação, filtros/relatório, fila investigativa, drill-through, exportação/gráficos). **Resolvido no Engineering Freeze v1.0:** `view/ui-table.js` concentra fila/tabela e presenter investigativo, completando o fatiamento iniciado por gráficos, drill-through, importação, filtros e exportação. `ui-controller.js` fica como orquestrador, sem mudança funcional. → [`manutenibilidade.md`](./manutenibilidade.md)
 
 ## Onda 5 — Performance e segurança da fila investigativa/UI
 
