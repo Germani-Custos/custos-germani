@@ -177,4 +177,4 @@ A Onda 2 reforça a visão de motor investigativo ao reduzir risco de regressão
 
 ## Atualização 2026-07-20 — documentação alinhada aos PRs recentes
 
-A revisão dos PRs #121–#124 reforça a direção de arquitetura modular sem mudar comportamento visível: filtros e exportação foram isolados para reduzir risco de regressão e acelerar futuras melhorias de investigação. O fatiamento MNT-01 ainda não está concluído enquanto a fila/tabela e a lógica de apresentação investigativa permanecerem no orquestrador.
+Engineering Freeze v1.0 conclui o fatiamento MNT-01 sem mudar comportamento visível: a fila/tabela e a apresentação investigativa foram isoladas em `view/ui-table.js`, preservando a direção de arquitetura modular e reduzindo risco de regressão para futuras melhorias de investigação.

@@ -139,7 +139,8 @@ Evitar:
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `view/ui-controller.js` | Eventos de UI, orquestração de fluxos |
+| `view/ui-controller.js` | Eventos de UI, bootstrap e orquestração de fluxos |
+| `view/ui-table.js` | Fila investigativa da aba Custos, detalhes por linha e presenter operacional compartilhado com exportação |
 | `view/ui-charts.js` | Gráficos investigativos (comparação de importações, TOP variações, análise temporal) e layout condicional do relatório |
 | `view/ui-drill-through.js` | Drill-through: histórico completo de importações de um produto (competência × importação, deltas por registro) |
 | `view/ui-import.js` | Fluxo de importação: upload, mapeamento de colunas, preview validado linha a linha e gravação via API com log |
@@ -246,3 +247,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 
 
 - Atualização 2026-07-20 (registro retroativo de PRs recentes): revisão documental dos PRs #121–#124 sem alteração de código. Registrado que o MNT-01 avançou com filtros (`view/ui-filters.js`) e exportação (`view/ui-export.js`), mas permanece aberto porque a fila/tabela e o presenter investigativo (`renderTable`, `getOperationalPriority`, `buildInvestigativeSummary`) ainda ficam em `view/ui-controller.js`. Registrado também que o PR #124 reduziu parcialmente o MNT-03 ao mover `fillSelect` para `view/ui-utils.js`, sem concluir a centralização completa da cascata.
+
+- Atualização 2026-07-27 (Engineering Freeze v1.0 — MNT-01 encerrado): fila/tabela e presenter investigativo extraídos de `view/ui-controller.js` para `view/ui-table.js` (`createTableController({ dom, executeOperationalBoundary, renderDrillThrough, rerunReportForProduct })`). `ui-controller.js` fica predominantemente como orquestrador, preservando comportamento, fronteiras ERR-01 e semântica temporal (`data_referencia` na competência exibida; `criado_em` na importação exibida). `MNT-01` pode ser considerado encerrado.

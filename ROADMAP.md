@@ -182,6 +182,5 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 
 ## Atualização contínua — 20/07/2026 (conferência de backlog)
 
-- Registrado retroativamente o avanço do **MNT-01** nos PRs #121–#124: filtros/cascata, filtros rápidos, ordenação, chips e exportação XLSX foram movidos para módulos dedicados.
-- **MNT-01 permanece em andamento**, não concluído: a fila/tabela e a apresentação investigativa (`renderTable`, prioridade operacional e resumo por linha) ainda ficam em `view/ui-controller.js`.
+- **MNT-01 concluído no Engineering Freeze v1.0**: a fila/tabela e a apresentação investigativa (`renderTable`, prioridade operacional e resumo por linha) foram movidas para `view/ui-table.js`, mantendo `ui-controller.js` como orquestrador e preservando comportamento.
 - **MNT-03 permanece aberto**, mas parcialmente reduzido: `fillSelect` saiu do `core/` e foi centralizado em `view/ui-utils.js`; ainda falta unificar a cascata em um helper/módulo único.
