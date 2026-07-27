@@ -8,6 +8,12 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ---
 
+## Estabilizações operacionais concluídas
+
+- [x] **MNT-OP-01** 🟠 P — Diagnosticar e corrigir a persistência da Auditoria de OP. **Causa raiz confirmada:** 119 de 296 valores de OP do CSV real usam ponto de milhar (por exemplo, `2.081`); o conversor inteiro estrito devolvia `null` e a constraint `op NOT NULL` rejeitava o chunk. **Correção:** normalização exclusiva do campo `op` antes do parse inteiro + diagnóstico completo de erro por chunk em `src/services/api.js`, sem migrar o schema. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
+
+---
+
 ## Reavaliação arquitetural — 2026-07-02
 
 ### Decisão principal

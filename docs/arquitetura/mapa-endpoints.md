@@ -9,3 +9,5 @@ Principais recursos acessados:
 - `dicionario_produtos`
 - `historico_custos`
 - `log_importacao`
+- `apontamentos_op`
+- `log_importacao_op`

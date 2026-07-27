@@ -177,6 +177,14 @@ describe('parseMCAP105 — parser do relatório de OP (MCAP105)', () => {
     expect(rows[0].perc_tempo).toBe(-59.57);
   });
 
+  it('remove o separador de milhar somente do campo OP antes de convertê-lo em inteiro', () => {
+    const linhaComOpMilhar = '200,      2.081,MB001,MISTURA BISCOITO MARIA,  12,BISCOITO, 34.532, 29.876,KG,"1.188,22","  1.232,00"," 1.508,61","  1.455,00","      -3,55","      0,00",    57';
+    const { rows, errors } = parseMCAP105(linhaComOpMilhar);
+
+    expect(errors).toHaveLength(0);
+    expect(rows[0]).toMatchObject({ origem: 200, op: 2081, cod_produto: 'MB001' });
+  });
+
   it('aceita linha com campos zerados ("0,00" → 0)', () => {
     const { rows, errors } = parseMCAP105(LINHA_OP757_ZEROS);
     expect(errors).toHaveLength(0);

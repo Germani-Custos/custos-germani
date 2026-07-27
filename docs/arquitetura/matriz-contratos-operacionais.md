@@ -22,6 +22,8 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getProductHistory(codigoProduto)` | Drill-through completo com delta e delta% | Sim | ✅ (fail-fast adicionado p/ código vazio) |
 | UI → API | `api.getLatestImportComparison(filters)` | Comparar últimas 2 importações (`criado_em`) respeitando filtros cascata | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
+| UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
+| UI → API | `api.getApontamentosOp(filters)` | Consultar Auditoria de OP por competência, estágio, origem, OP e produto | Sim | ✅ |
 
 ## 2) Matriz API → Banco
 
@@ -32,6 +34,8 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | API → DB | `log_importacao`: `status,total_linhas,linhas_importadas,linhas_erro,iniciado_em,finalizado_em,data_referencia` | Rastrear execução de import | Sim | ✅ |
 | API → DB | `upsert` em `historico_custos` com `onConflict(codigo_produto,data_referencia)` | Deduplicação por competência | Sim | ✅ |
 | API → DB | Consultas por importação com `ORDER BY criado_em` explícito | Temporalidade de import garantida | Sim | ✅ |
+| API → DB | `apontamentos_op`: `origem,op,cod_produto,descricao,cod_estagio,estagio,unidade,...` | Eventos operacionais; `op` é inteiro obrigatório, `data_referencia` é competência e `criado_em` é importação | Sim | ✅ (MNT-OP-01) |
+| API → DB | `log_importacao_op` | Rastrear total, linhas importadas/em erro e fechamento do lote de OP | Sim | ✅ |
 
 ## 3) Matriz report-engine → API/dados
 
@@ -49,6 +53,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | importação | chunking (400) no upsert | Escala operacional | Sim | ✅ |
 | importação | tolerância a colunas extras (normalização) | Não quebrar lote por excesso de coluna | Sim | ✅ |
 | importação | produtos sem dicionário → criação/órfão visível | Sem silenciamento; criação usa o mesmo código normalizado do histórico | Sim | ✅ |
+| importação OP | erro de `.insert()` por chunk | Log obrigatório de chunk, primeiro registro e resposta Supabase; violação `NOT NULL` identifica registros/campo | Sim | ✅ (MNT-OP-01) |
 
 ### Normalização de código de produto (`VAL-01`)
 

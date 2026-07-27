@@ -103,6 +103,9 @@ O relatório atual pode ser exportado como `.xlsx` com todos os campos analític
 ### Alerta de produtos sem categoria
 Banner visível na tela de importação quando há produtos sem categorização completa no dicionário. Quando o diagnóstico de órfãos está indisponível, o sistema deve avisar explicitamente que não foi possível validar produtos sem agrupamento, diferenciando falha operacional de ausência real de órfãos.
 
+### Auditoria de apontamentos de OP
+A aba OP recebe o relatório de apontamentos de chão de fábrica como dado operacional complementar. O número de OP é obrigatório no dado persistido; quando o relatório o apresenta com ponto de milhar, o parser o normaliza para inteiro antes da gravação. A competência (`data_referencia`) e o instante de importação (`criado_em`) continuam rastreáveis no lote.
+
 ---
 
 ## O que o Sistema NÃO deve virar
@@ -178,3 +181,7 @@ A Onda 2 reforça a visão de motor investigativo ao reduzir risco de regressão
 ## Atualização 2026-07-20 — documentação alinhada aos PRs recentes
 
 Engineering Freeze v1.0 conclui o fatiamento MNT-01 sem mudar comportamento visível: a fila/tabela e a apresentação investigativa foram isoladas em `view/ui-table.js`, preservando a direção de arquitetura modular e reduzindo risco de regressão para futuras melhorias de investigação.
+
+## Atualização 2026-07-27 — integridade da Auditoria de OP
+
+O produto passa a interpretar corretamente OPs numéricas formatadas com separador de milhar pela origem. A robustez da persistência evita que uma formatação válida do relatório descarte um lote inteiro e torna a investigação de falhas de banco rápida, com diagnóstico completo do Supabase.

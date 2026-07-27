@@ -34,6 +34,13 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
 4. Revisar preview linha a linha (🟢 válida / 🟡 atenção / 🔴 erro)
 5. Confirmar importação — somente linhas sem erro são gravadas
 
+### Auditoria de OP
+
+1. Na aba **OP**, importar o CSV do relatório de apontamentos e informar sua competência (`data_referencia`).
+2. O preview é apenas conferência do arquivo; a gravação usa `apontamentos_op` e registra o lote em `log_importacao_op`.
+3. O relatório pode formatar a OP com ponto de milhar (por exemplo, `2.081`). O parser remove esse separador exclusivamente nesse campo e grava o inteiro `2081`, preservando a obrigatoriedade de `op` no banco.
+4. Se o Supabase rejeitar um chunk, o console registra chunk, quantidade, primeiro registro, resposta completa (`code`, `message`, `details`, `hint`) e os registros vinculados a uma constraint `NOT NULL`.
+
 ### Auditoria
 
 1. **Busca direta** (novo): digitar código ou descrição — acesso imediato sem navegar pela hierarquia
@@ -192,6 +199,8 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 | `view/ui-state.js` | Estado central da UI (filtros, visão da fila e referências de gráficos) |
 | `view/ui-dom.js` | Mapeamento único de referências do DOM para reduzir acoplamento |
 | `view/ui-utils.js` | Utilitários puros de formatação, debounce, escape, `fillSelect` seguro por DOM e feedback visual |
+| `view/ui-import-op.js` | Upload e preview do CSV de apontamentos de OP |
+| `view/ui-op.js` | Consulta local e filtros em cascata da Auditoria de OP |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção fuzzy de colunas, normalização |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase |
@@ -381,3 +390,9 @@ Observação: warnings atuais de `no-unused-vars` são baseline de manutenibilid
 ## Atualização documental — 20/07/2026
 
 Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela e do presenter investigativo para `view/ui-table.js`. `view/ui-controller.js` permanece como orquestrador dos fluxos já modularizados (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`), sem alteração funcional.
+
+## Atualização 2026-07-27 — MNT-OP-01
+
+- Corrigida a persistência da Auditoria de OP sem alterar layout, filtros, regras investigativas ou schema.
+- Causa raiz: o CSV real formata algumas OPs com ponto de milhar; o conversor inteiro estrito devolvia `null` para valores como `2.081`, e o PostgreSQL rejeitava o chunk por `op NOT NULL`. O parser agora normaliza apenas o campo `op` antes da conversão (`2.081` → `2081`).
+- O diagnóstico de falha de chunk agora exibe a resposta completa do Supabase e aponta os registros/campos afetados por uma violação `NOT NULL`.

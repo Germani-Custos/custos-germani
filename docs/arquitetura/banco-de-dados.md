@@ -41,6 +41,13 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 ### `log_importacao`
 - rastreabilidade de execução de import (`status`, volumes, `iniciado_em`, `finalizado_em`, `data_referencia`)
 
+### `apontamentos_op` e `log_importacao_op`
+- `apontamentos_op` guarda cada evento do relatório de apontamentos de OP, associado opcionalmente a `log_importacao_op`.
+- `data_referencia` DATE NOT NULL é a competência do relatório; `criado_em` TIMESTAMPTZ NOT NULL DEFAULT now() é o momento de persistência.
+- `origem`, `cod_produto`, `descricao`, `cod_estagio`, `estagio` e `unidade` são obrigatórios.
+- `op` INTEGER NOT NULL é o número de OP. O parser do MCAP105 remove o ponto usado como separador de milhar antes da conversão (por exemplo, `2.081` → `2081`).
+- Migrações: `2026-07-23_create_apontamentos_op.sql` e `2026-07-23_log_importacao_op_status.sql`.
+
 ## Estratégia para órfãos de agrupamento
 
 - Produto sem `agrupamento_cod` recebe fallback explícito `SEM_AGRUPAMENTO`.

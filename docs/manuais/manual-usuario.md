@@ -8,12 +8,14 @@ Guia de uso para quem **opera** o sistema no dia a dia (analistas, controladoria
 
 ## 1. Visão geral da tela
 
-A aplicação tem um **menu à esquerda** com duas áreas:
+A aplicação tem um **menu à esquerda** com quatro áreas principais:
 
 | Menu | Para quê |
 |---|---|
 | **Importação** | Carregar a planilha de custos do mês (competência). |
-| **Auditoria** | Investigar variações, anomalias e histórico de cada produto. |
+| **Custos** | Investigar variações, anomalias e histórico de cada produto. |
+| **OP** | Importar e consultar apontamentos operacionais por estágio, origem, OP e produto. |
+| **Documentação** | Consultar os manuais, regras e registros de auditoria técnica. |
 
 No alto à esquerda aparece o usuário (atualmente **"acesso público"**).
 
@@ -56,6 +58,14 @@ Exemplo: em 25/05 você importa a planilha de **março/2026**. A competência é
 Se entrarem produtos novos **sem Origem/Família/Agrupamento**, aparece um aviso amarelo na Importação. Esses produtos existem, mas **não aparecem direito nos filtros** até serem categorizados. Avise quem cuida do cadastro (ver [Manual de Operação](./manual-operacao.md)). Se o aviso disser **“Não foi possível validar produtos sem agrupamento.”**, trate como diagnóstico indisponível: não significa que não existem órfãos, significa que o sistema não conseguiu validar a categoria.
 
 > **Reimportar o mesmo mês é seguro:** o sistema atualiza o registro daquele produto/competência em vez de duplicar.
+
+### Importar apontamentos de OP
+
+1. Clique em **OP** e envie o arquivo `.csv` do relatório de apontamentos.
+2. Confira a amostra e informe a competência do relatório.
+3. Confirme a importação. O aviso final informa a quantidade de apontamentos gravados.
+
+O relatório pode exibir a OP com ponto de milhar, como `2.081`; a importação a grava como o inteiro `2081`. A competência é `data_referencia`; o momento em que o arquivo entrou é `criado_em`.
 
 ---
 

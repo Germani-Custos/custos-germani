@@ -184,6 +184,68 @@ function validateHistoricoRow(row = {}) {
   return { valido: erros.length === 0, erros };
 }
 
+/**
+ * Quando o PostgreSQL informa uma violação NOT NULL, relaciona a coluna aos
+ * registros do chunk que carregavam `null` ou `undefined` naquele campo.
+ * O diagnóstico não altera o payload nem tenta reenviar o lote.
+ *
+ * @param {Record<string, unknown>[] } chunk
+ * @param {number} offset Índice inicial do chunk na importação (base zero).
+ * @param {{ message?: string, details?: string }|null} error
+ * @returns {Array<{registro: number, campo: string, motivo: string}>}
+ */
+function findOpChunkValidationErrors(chunk, offset, error) {
+  const errorText = [error?.message, error?.details].filter(Boolean).join(' ');
+  const notNullColumn = /null value in column "([^"]+)"/i.exec(errorText)?.[1];
+  if (!notNullColumn) return [];
+
+  return chunk.flatMap((registro, index) => {
+    if (registro?.[notNullColumn] !== null && registro?.[notNullColumn] !== undefined) return [];
+    return [{
+      registro: offset + index + 1,
+      campo: notNullColumn,
+      motivo: `valor nulo viola a constraint NOT NULL de ${notNullColumn}`
+    }];
+  });
+}
+
+/**
+ * Registra um diagnóstico expandível para falhas de persistência da Auditoria
+ * de OP. O primeiro payload é intencional: ele permite comparar rapidamente o
+ * contrato enviado com o schema sem registrar o arquivo completo.
+ *
+ * @param {{ chunkAtual: number, chunk: Record<string, unknown>[], error: any, validationErrors: Array<{registro: number, campo: string, motivo: string}> }} params
+ */
+function logOpImportFailure({ chunkAtual, chunk, error, validationErrors }) {
+  const respostaSupabase = {
+    code: error?.code ?? null,
+    message: error?.message ?? null,
+    details: error?.details ?? null,
+    hint: error?.hint ?? null
+  };
+
+  console.error(
+    [
+      '========== IMPORTAÇÃO OP ==========',
+      `Chunk atual: ${chunkAtual}`,
+      `Quantidade de registros: ${chunk.length}`,
+      'Primeiro registro enviado: ver objeto de diagnóstico.',
+      'Resposta completa do Supabase: ver objeto de diagnóstico.',
+      `code: ${respostaSupabase.code ?? '-'}`,
+      `message: ${respostaSupabase.message ?? '-'}`,
+      `details: ${respostaSupabase.details ?? '-'}`,
+      `hint: ${respostaSupabase.hint ?? '-'}`
+    ].join('\n'),
+    {
+      primeiroRegistroEnviado: chunk[0] ?? null,
+      respostaCompletaSupabase: error ?? null,
+      ...respostaSupabase,
+      errosValidacaoPorRegistro: validationErrors
+    },
+    '=================================='
+  );
+}
+
 function mapHierarchyRows(dicionario = []) {
   return (dicionario || [])
     .filter(item => !isNullLike(item?.codigo_produto))
@@ -953,10 +1015,18 @@ export const api = {
       const chunk = registros.slice(i, i + IMPORT_CHUNK_SIZE);
       const { error } = await supabase.from(TABLES.apontamentosOp).insert(chunk);
       if (error) {
-        erros.push({ chunk: Math.floor(i / IMPORT_CHUNK_SIZE), tamanho: chunk.length, mensagem: error.message });
-        console.error('Falha Supabase ao inserir apontamentos de OP em chunk:', {
-          message: error.message, details: error.details, hint: error.hint, code: error.code, chunkSize: chunk.length
+        const chunkAtual = Math.floor(i / IMPORT_CHUNK_SIZE) + 1;
+        const validationErrors = findOpChunkValidationErrors(chunk, i, error);
+        erros.push({
+          chunk: chunkAtual,
+          tamanho: chunk.length,
+          mensagem: error.message,
+          code: error.code ?? null,
+          details: error.details ?? null,
+          hint: error.hint ?? null,
+          errosValidacaoPorRegistro: validationErrors
         });
+        logOpImportFailure({ chunkAtual, chunk, error, validationErrors });
       } else {
         inseridos += chunk.length;
       }

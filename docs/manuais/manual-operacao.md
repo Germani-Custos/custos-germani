@@ -53,9 +53,14 @@ Aplicados **manualmente** no Supabase (SQL Editor). Ordem cronológica importa:
 | `ajustar_precisao_historico_custos.sql` | Ajuste de precisão NUMERIC dos custos. |
 | `2026-05-11_indices_performance_operacional.sql` | Índices críticos de performance (consultas por produto/competência/importação). |
 | `2026-05-25_saneamento_operacional_schema.sql` | Saneamento: constraint `unique_produto_data`, índices investigativos, fallback `SEM_AGRUPAMENTO`, view de órfãos. |
+| `2026-07-23_create_apontamentos_op.sql` e `2026-07-23_log_importacao_op_status.sql` | Tabelas e ciclo de log da Auditoria de OP. |
 | `inserir_custo.sql`, `variacao_percentual_produto.sql` | Utilitários de consulta/inserção. |
 
 > Ao criar novas migrações, siga o padrão de nomeação `AAAA-MM-DD_descricao.sql` e registre em [`docs/arquitetura/migracoes.md`](../arquitetura/migracoes.md) e no log do `AGENTS.md`.
+
+### Diagnóstico de falha no upload de OP
+
+Se a importação de OP falhar, abra o console do navegador e procure `========== IMPORTAÇÃO OP ==========`. O registro contém o chunk, a quantidade, o primeiro payload e a resposta completa do Supabase. Para uma violação `NOT NULL`, ele também lista o número do registro e a coluna. Para CSVs MCAP105 com OP como `2.081`, confirme que a versão implantada contém a normalização de milhar do parser; não altere o schema para contornar esse formato.
 
 ### Índices e performance
 Os índices de `2026-05-11` sustentam o drill-through e as comparações de importação. **Não remover** sem entender o impacto nas consultas de `src/services/api.js`.

@@ -20,6 +20,7 @@ Objetivo: garantir robustez operacional total na importação e análise básica
 - Filtros em cascata (Origem → Família → Agrupamento → Produto)
 - Ordenação interativa por coluna
 - KPIs de itens analisados e alertas
+- Auditoria de OP: importação de CSV com rastreabilidade por competência e lote, incluindo normalização de OP com separador de milhar
 
 ---
 
@@ -184,3 +185,8 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 
 - **MNT-01 concluído no Engineering Freeze v1.0**: a fila/tabela e a apresentação investigativa (`renderTable`, prioridade operacional e resumo por linha) foram movidas para `view/ui-table.js`, mantendo `ui-controller.js` como orquestrador e preservando comportamento.
 - **MNT-03 permanece aberto**, mas parcialmente reduzido: `fillSelect` saiu do `core/` e foi centralizado em `view/ui-utils.js`; ainda falta unificar a cascata em um helper/módulo único.
+
+## Atualização 2026-07-27 — estabilização da persistência de OP
+
+- [x] **MNT-OP-01** — corrigido o parsing de `op` no MCAP105: 119 dos 296 valores do CSV de validação têm ponto de milhar (por exemplo, `2.081`) e eram convertidos indevidamente para `null`. O parser agora produz inteiros, mantendo `op` obrigatório no schema e preservando `data_referencia` como competência e `criado_em` como evento de importação.
+- Incluído diagnóstico completo de erro por chunk para acelerar investigações futuras, sem alterar schema, tela ou filtros.

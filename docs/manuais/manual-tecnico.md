@@ -32,6 +32,8 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-charts.js           # createChartsController(): gráficos (comparação/TOP variações/temporal) + layout
   ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto
   ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log
+  ui-import-op.js        # createImportOpController(): upload CSV latin-1, preview e gravação de apontamentos de OP
+  ui-op.js               # createOpController(): filtros e tabela da Auditoria de OP
   ui-table.js            # createTableController(): fila investigativa, detalhes e presenter operacional
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
@@ -62,6 +64,7 @@ Mapa de telas/fluxos: [`docs/ux/frontend.md`](../ux/frontend.md) e [`docs/ux/rot
 - **FATO:** `historico_custos` — série temporal de custos. Chave de negócio: `codigo_produto` + `data_referencia` (constraint `unique_produto_data`). Colunas: `custo_variavel`, `custo_direto_fixo`, `custo_total` (NUMERIC 18,4), `data_referencia` (DATE), `criado_em` (TIMESTAMPTZ).
 - **DIMENSÕES:** `dicionario_produtos` (produto → `origem_id`/`familia_id`/`agrupamento_cod`), `categorias_origem`, `categorias_familia`, `categorias_agrupamento`.
 - **AUDITORIA:** `log_importacao` (status, totais, timestamps, competência).
+- **APONTAMENTOS DE OP:** `apontamentos_op` (linhas do relatório MCAP105) e `log_importacao_op` (ciclo do lote). `op` é `INTEGER NOT NULL`; o parser normaliza somente o ponto de milhar da OP no relatório (por exemplo, `2.081` → `2081`) antes da persistência.
 
 ### Semântica temporal (crítico)
 
@@ -95,12 +98,18 @@ Fachada `api` com os métodos consumidos pela UI. Todos retornam o padrão `{ da
 | `getLatestImportComparison(filters)` | Comparação entre as 2 últimas importações (por `criado_em`). |
 | `getTopVariacoesImportacao(filters)` | TOP aumentos/reduções entre as 2 últimas importações. |
 | `importarHistoricoCustosComLog(payload, {dataReferencia})` | Importação resiliente: normaliza `codigo_produto` com `normalizeCodigoProduto`, valida linha-a-linha, garante produtos no dicionário, upsert em chunks de 400, grava `log_importacao`. |
+| `importarApontamentosOp({rows, dataReferencia, arquivoNome})` | Insere apontamentos de OP em chunks e registra `log_importacao_op`. Recebe `op` já normalizada pelo parser como inteiro. Em erro, registra resposta completa do Supabase e isola registros ligados a uma violação `NOT NULL`. |
+| `getApontamentosOp(filters)` | Consulta apontamentos de OP por competência, estágio, origem, OP e produto, com ordenação explícita. |
 | `subscribeFiltrosRealtime(cb)` | Assina mudanças em `historico_custos`/`dicionario_produtos`. |
 | `signIn/signOut/getCurrentUser` | Supabase Auth (hoje não usados no bootstrap — ver `SEC-03`). |
 
 Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operacionais.md`](../arquitetura/matriz-contratos-operacionais.md) · camada de serviço: [`docs/arquitetura/services-frontend.md`](../arquitetura/services-frontend.md) · endpoints: [`docs/arquitetura/mapa-endpoints.md`](../arquitetura/mapa-endpoints.md).
 
 > ⚠️ O método `importarHistoricoCustosComLog` segue grande e há caminho legado de payload — ver `MNT-06` antes de refatorar. O item `VAL-01` foi resolvido centralizando `codigo_produto` em `normalizeCodigoProduto()` no preview, payload, API, relatório e drill-through.
+
+### Diagnóstico de persistência da Auditoria de OP (MNT-OP-01)
+
+O schema declara `apontamentos_op.op` como `NOT NULL`. No CSV real, algumas OPs usam ponto de milhar e o conversor inteiro estrito as recebia como `null`. O parser corrige exclusivamente esse campo antes da conversão, sem migration e sem alteração de semântica temporal. Quando uma chamada `.insert()` falhar, `logOpImportFailure()` registra o número do chunk, sua quantidade, primeiro registro, resposta completa do Supabase (`code`, `message`, `details`, `hint`) e, quando o PostgreSQL identificar uma coluna `NOT NULL`, os registros e o campo envolvidos.
 
 
 ### Contrato de alerta investigativo (LOG-01)

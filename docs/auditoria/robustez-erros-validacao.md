@@ -4,6 +4,16 @@ Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção
 
 ---
 
+## MNT-OP-01 · ✅ Resolvido em 2026-07-27 · Chunk de OP rejeitado por formato de milhar
+
+- **Local:** `core/spreadsheet-engine.js` (`parseMCAP105`) e `src/services/api.js` (`importarApontamentosOp`).
+- **Evidência:** o CSV real `MCAP105.CSV` contém 296 linhas; 119 valores de OP chegam com ponto de milhar, como `2.081`, `2.104` e `2.133`. O conversor inteiro, corretamente estrito para valores não normalizados, retornava `null` nesses casos. O schema declara `op INTEGER NOT NULL`, por isso o PostgreSQL recusava o chunk inteiro com HTTP 400.
+- **Causa raiz:** o campo `op` não passava pela mesma remoção do separador de milhar já usada pelos números brasileiros do relatório. Não havia ausência legítima de OP nem divergência de schema.
+- **Correção aplicada:** exclusivamente no ramo do campo `op`, o parser remove pontos antes da conversão inteira (`2.081` → `2081`). O schema e o contrato API→banco permanecem inalterados; a API continua usando somente `supabase.from()`. Em falha, `logOpImportFailure()` registra chunk, quantidade, primeiro registro, resposta completa (`code`, `message`, `details`, `hint`) e os registros/campo afetados quando o Supabase reporta `NOT NULL`.
+- **Critério de aceite:** o parser gera 296 registros sem erro e todos têm `op` inteiro; a importação persiste o mesmo total sem erro de chunk. `data_referencia` segue competência; `criado_em` segue evento de importação.
+
+---
+
 ## ERR-01 · 🔴 Alto · `async/await` sem `try/catch` no caminho principal
 
 - **Local:** `view/ui-controller.js` — `init()` (`16-24`), e os `await` encadeados de `runReport()` (`508`, `515`, `524`).

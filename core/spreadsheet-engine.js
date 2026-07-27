@@ -462,7 +462,11 @@ export function parseMCAP105(text) {
       if (MCAP105_TEXT_FIELDS.has(field)) {
         row[field] = String(raw ?? '').trim();
       } else if (MCAP105_INT_FIELDS.has(field)) {
-        row[field] = parseMcap105Int(raw);
+        // A coluna OP do relatório pode vir com ponto de milhar (ex.: 2.081).
+        // É inteira, portanto remove-se apenas esse separador antes do parse.
+        row[field] = field === 'op'
+          ? parseMcap105Int(String(raw ?? '').replace(/\./g, ''))
+          : parseMcap105Int(raw);
       } else {
         row[field] = parseMcap105Number(raw);
       }
