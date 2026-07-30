@@ -200,8 +200,9 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 | `view/ui-dom.js` | Mapeamento único de referências do DOM para reduzir acoplamento |
 | `view/ui-utils.js` | Utilitários puros de formatação, debounce, escape, `fillSelect` seguro por DOM e feedback visual |
 | `view/ui-import-op.js` | Upload e preview do CSV de apontamentos de OP |
-| `view/ui-op.js` | Consulta local e filtros em cascata da Auditoria de OP |
+| `view/ui-op.js` | Fila por motivo, filtros e dossiê da Auditoria de OP |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção fuzzy de colunas, normalização |
+| `core/op-investigation-engine.js` | Motor puro da Auditoria de OP: indicadores calculados, conferência do ERP, motivo e provável causa |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase |
 | `services/api.js` | Shim de compatibilidade (re-exporta de src/services) |
@@ -396,3 +397,10 @@ Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela 
 - Corrigida a persistência da Auditoria de OP sem alterar layout, filtros, regras investigativas ou schema.
 - Causa raiz: o CSV real formata algumas OPs com ponto de milhar; o conversor inteiro estrito devolvia `null` para valores como `2.081`, e o PostgreSQL rejeitava o chunk por `op NOT NULL`. O parser agora normaliza apenas o campo `op` antes da conversão (`2.081` → `2081`).
 - O diagnóstico de falha de chunk agora exibe a resposta completa do Supabase e aponta os registros/campos afetados por uma violação `NOT NULL`.
+
+## Atualização 2026-07-30 — MNT-OP-02: motor investigativo da Auditoria de OP
+
+- A aba OP deixou de reproduzir somente a tabela do ERP e passou a ordenar a fila por **Motivo da investigação**: gargalo de produtividade, paradas operacionais, baixa produção, sinal misto, sem base comparativa ou alta eficiência.
+- Os fatos do ERP continuam imutáveis no dossiê (`Tempo Previsto/Real`, `KG/Hora Previsto/Real`, `% Tempo (ERP)`, quantidades e parada). O Kustos calcula separadamente **Desvio de Tempo**, **Desvio de Produtividade**, **Atendimento da Produção** e **Índice de Paradas**.
+- Nenhum indicador isolado define criticidade: parada só é hipótese principal quando acompanha atraso e produtividade normal/baixa; produtividade baixa com tempo alto e parada não material aponta gargalo de processo. `% Tempo (ERP)` é conferência contra o desvio de produtividade, nunca dupla penalidade.
+- O dossiê explicita competência (`data_referencia`) e o evento de importação (`criado_em`) sem misturá-los.

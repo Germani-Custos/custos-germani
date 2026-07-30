@@ -23,7 +23,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getLatestImportComparison(filters)` | Comparar últimas 2 importações (`criado_em`) respeitando filtros cascata | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
-| UI → API | `api.getApontamentosOp(filters)` | Consultar Auditoria de OP por competência, estágio, origem, OP e produto | Sim | ✅ |
+| UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
 
 ## 2) Matriz API → Banco
 
@@ -44,6 +44,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | report-engine | `origem_id/familia_id/agrupamento_cod` em memória | Filtro cascata correto | Sim | ✅ |
 | report-engine | `criado_em` para `ultimaAtualizacao` | Distinção competência x importação | Sim | ✅ |
 | report-engine | `data_referencia` para série temporal | Semântica temporal correta | Sim | ✅ |
+| op-investigation-engine | `analyzeOpInvestigation(row)` | Derivar indicadores e motivo/provável causa sem alterar fatos do ERP | Sim | ✅ (MNT-OP-02) |
 
 ## 4) Matriz Importação → Banco
 
@@ -130,3 +131,11 @@ Formato mínimo esperado em todos os métodos API:
 - Órfãos de agrupamento tratados com fallback explícito `SEM_AGRUPAMENTO` (sem mascaramento).
 - Índices críticos de investigação e drill-through reforçados.
 - View `vw_produtos_orfaos_agrupamento` adicionada para auditoria contínua.
+
+## 7) Contrato investigativo da Auditoria de OP (MNT-OP-02)
+
+- **ERP:** `apontamentos_op` é a fonte imutável de quantidades, tempos, produtividade, parada e `% Tempo`; não há migration nem escrita de indicadores calculados.
+- **Kustos:** `core/op-investigation-engine.js` calcula `atendimentoProducaoPct`, `desvioTempoPct`, `desvioProdutividadePct` e `indiceParadasPct`; `view/ui-op.js` consome somente esse contrato para fila, filtro e dossiê.
+- **Regra central:** nenhum indicador isolado decide o motivo. Parada só é causa provável se vier com tempo alto e produtividade normal/baixa; tempo alto + produtividade baixa sem parada material é gargalo de produtividade.
+- **Conferência:** `% Tempo (ERP)` é comparado ao desvio de produtividade com tolerância de 0,2 p.p., sem adicionar uma segunda penalidade. Divergência pede conferência do apontamento na origem.
+- **Temporalidade:** `data_referencia` continua sendo competência do recorte e `criado_em` é mostrado no dossiê como evento de importação; ambos ficam fora das fórmulas de execução da OP.

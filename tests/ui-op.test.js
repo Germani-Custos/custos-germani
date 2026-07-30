@@ -39,12 +39,12 @@ function fakeClassList() {
 function fakeTableBody() {
   return {
     innerHTML: '',
-    _click: null,
-    addEventListener(ev, fn) { if (ev === 'click') this._click = fn; },
-    // Simula clique numa linha com o data-cod-produto informado.
-    emitRowClick(codProduto) {
-      const tr = { dataset: { codProduto } };
-      this._click?.({ target: { closest: sel => sel.includes('data-cod-produto') ? tr : null } });
+    onclick: null,
+    addEventListener() {},
+    // Simula clique no dossiê da linha da fila investigativa.
+    emitDossierClick(index) {
+      const tr = { dataset: { opIndex: String(index) } };
+      this.onclick?.({ target: { closest: sel => sel.includes('data-op-index') ? tr : null } });
     }
   };
 }
@@ -55,6 +55,7 @@ function setup() {
     selOpOrigem: fakeSelect('TODAS'),
     selOpOp: fakeSelect('TODAS'),
     selOpProduto: fakeSelect('TODOS'),
+    selOpMotivo: fakeSelect('TODOS'),
     dtOpStart: { value: '' },
     dtOpEnd: { value: '' },
     analisarOpBtn: { addEventListener() {} },
@@ -113,24 +114,26 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(api.getApontamentosOp).toHaveBeenCalledWith({ estagio: 'EXTRUSAO', origem: '10' });
   });
 
-  it('linha da tabela com % Tempo > 0 recebe classe de alerta (vermelho)', async () => {
+  it('prioriza gargalo quando tempo sobe e produtividade cai, independentemente do % Tempo do ERP', async () => {
     const { dom, controller } = setup();
     api.getApontamentosOp.mockResolvedValue({ data: [APONTAMENTOS[0]], error: null });
     await controller.bindOp();
     await controller.runOpReport();
 
-    expect(dom.opTableBody.innerHTML).toContain('delta-up');
-    expect(dom.opTableBody.innerHTML).toContain('20.00%');
+    expect(dom.opTableBody.innerHTML).toContain('op-reason-gargalo');
+    expect(dom.opTableBody.innerHTML).toContain('🟥 Gargalo de produtividade');
+    expect(dom.opTableBody.innerHTML).toContain('+20,0%');
   });
 
-  it('linha da tabela com % Tempo < 0 recebe classe positiva (verde)', async () => {
+  it('reconhece alta eficiência quando produção, tempo e produtividade melhoram juntos', async () => {
     const { dom, controller } = setup();
     api.getApontamentosOp.mockResolvedValue({ data: [APONTAMENTOS[1]], error: null });
     await controller.bindOp();
     await controller.runOpReport();
 
-    expect(dom.opTableBody.innerHTML).toContain('delta-down');
-    expect(dom.opTableBody.innerHTML).toContain('-20.00%');
+    expect(dom.opTableBody.innerHTML).toContain('op-reason-alta-eficiencia');
+    expect(dom.opTableBody.innerHTML).toContain('🟩 Alta eficiência');
+    expect(dom.opTableBody.innerHTML).toContain('+20,0%');
   });
 
 
@@ -150,19 +153,21 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.opTableBody.innerHTML).not.toContain('200</td>');
   });
 
-  it('clicar numa linha abre a linha do tempo com os dados daquele produto', async () => {
+  it('clicar numa linha abre o dossiê, separando fatos do ERP da interpretação do Kustos', async () => {
     const { dom, controller } = setup();
     await controller.bindOp();
     await controller.runOpReport();
 
-    dom.opTableBody.emitRowClick('001');
+    dom.opTableBody.emitDossierClick(0);
 
-    // Painel revelado e título com o produto clicado.
+    // Painel revelado e título com a OP clicada.
     expect(dom.opDrillPanel.classList.contains('hidden')).toBe(false);
     expect(dom.opDrillTitle.textContent).toContain('001');
+    expect(dom.opDrillTitle.textContent).toContain('100');
     expect(dom.opDrillTitle.textContent).toContain('Produto A');
-    // Ambas as competências do produto 001 aparecem (linha do tempo completa):
-    // as OPs 100 (jan) e 101 (fev) são independentes de locale.
+    expect(dom.opDrillBody.innerHTML).toContain('Dados do ERP (imutáveis)');
+    expect(dom.opDrillBody.innerHTML).toContain('Indicadores calculados pelo Kustos');
+    // Ambas as competências do produto 001 permanecem no histórico contextual.
     expect(dom.opDrillBody.innerHTML).toContain('100');
     expect(dom.opDrillBody.innerHTML).toContain('101');
     expect(dom.opDrillPanel.scrollIntoView).toHaveBeenCalled();

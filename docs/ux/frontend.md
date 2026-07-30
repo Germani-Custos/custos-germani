@@ -18,6 +18,13 @@
 - Processamento local da série temporal a partir do dataset já retornado por `api.getHistorico`.
 - Fallback visual para histórico insuficiente (<2 pontos).
 
+## Auditoria de OP investigativa (MNT-OP-02)
+
+- A fila da aba OP mostra motivo da investigação, provável causa e quatro indicadores do Kustos: atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas.
+- O filtro “Motivo da investigação” e os KPIs filtram por chave estável de motivo, não por texto ou indicador bruto.
+- O dossiê da OP separa visualmente **Dados do ERP (imutáveis)** de **Indicadores calculados pelo Kustos**; inclui competência (`data_referencia`) e importação (`criado_em`) em rótulos distintos.
+- A parada não recebe cor de alerta isolada. A cor pertence ao motivo composto, evitando concluir problema sem contexto de tempo, produtividade e produção.
+
 
 ## Atualização estrutural (2026-05-14)
 

@@ -1,28 +1,13 @@
-/* Responsabilidade: visualização da Auditoria de OP — filtros em cascata
-   (estágio → origem → OP → produto), tabela de apontamentos do MCAP105 e linha
-   do tempo por produto. Espelha o padrão investigativo da aba Custos
-   (ui-filters.js + ui-drill-through.js): cascata que restringe cada nível ao
-   anterior, "TODAS/TODOS" como opção padrão e reset em cadeia dos níveis
-   inferiores.
-
-   Estratégia de dados: todos os apontamentos são carregados uma única vez no
-   bindOp() (api.getApontamentosOp({})) e guardados em memória local ao
-   controller. As opções de cada select e a linha do tempo por produto são
-   derivadas desse array — evitando uma chamada de API por mudança de select. O
-   volume de OP é mensal e pequeno o suficiente para caber em memória.
-
-   Recorte de competência (De/Até): os inputs são `type="month"` e representam
-   uma FAIXA de competências. Como api.getApontamentosOp só filtra por igualdade
-   de data (`data_referencia`), o recorte é aplicado em memória sobre o resultado
-   da consulta — a competência importada é sempre o 1º dia do mês
-   (`YYYY-MM-01`), então a comparação lexicográfica de datas ISO cobre a faixa. */
+/* Responsabilidade: fila e dossiê investigativos da Auditoria de OP.
+   Os fatos do MCAP105 permanecem imutáveis; o motor puro só adiciona
+   indicadores calculados e motivo/provável causa para acelerar a triagem. */
 import { api } from '../src/services/api.js';
-import { escapeHtml, fillSelect, formatDateBR } from './ui-utils.js';
+import { buildOpInvestigationQueue, getOpInvestigationReasonOptions } from '../core/op-investigation-engine.js';
+import { escapeHtml, fillSelect, formatDateBR, formatDateTimeBR } from './ui-utils.js';
 
 const TODOS = 'TODOS';
 const TODAS = 'TODAS';
 
-// Ordena valores de select: numérico quando ambos são números, senão pt-BR.
 function compareCascadeValues(a, b) {
   const numA = Number(a);
   const numB = Number(b);
@@ -30,7 +15,6 @@ function compareCascadeValues(a, b) {
   return String(a).localeCompare(String(b), 'pt-BR');
 }
 
-// Exibe números "crus" (sem formatação monetária); '-' para vazio/nulo.
 function formatNum(value) {
   if (value === null || value === undefined || value === '') return '-';
   const num = Number(value);
@@ -38,33 +22,40 @@ function formatNum(value) {
   return num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 }
 
-// % Tempo: 2 casas + '%'. Tempo acima do previsto (>0) é ruim neste contexto.
-function formatPercTempo(value) {
+function formatPercent(value, { signed = false } = {}) {
   const num = Number(value);
   if (!Number.isFinite(num)) return '-';
-  return `${num.toFixed(2)}%`;
+  return `${signed && num > 0 ? '+' : ''}${num.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 }
 
-// Cores reaproveitam as classes de delta da aba Custos: vermelho (delta-up)
-// para > 0 (ruim), verde (delta-down) para < 0 (bom), cinza para = 0/indefinido.
-function percTempoClass(value) {
+function metricClass(value, positiveIsBad) {
   const num = Number(value);
   if (!Number.isFinite(num) || num === 0) return 'delta-neutral';
-  return num > 0 ? 'delta-up' : 'delta-down';
+  const adverse = positiveIsBad ? num > 0 : num < 0;
+  return adverse ? 'delta-up' : 'delta-down';
+}
+
+function reasonFilterValue(reason) {
+  return reason === TODOS ? TODOS : String(reason || TODOS);
+}
+
+function getErpConferenceText(conferencia) {
+  if (conferencia?.status === 'confirmado') return 'Confere com o desvio de produtividade calculado.';
+  if (conferencia?.status === 'divergente') return 'Diverge do desvio de produtividade; conferir apontamento do ERP.';
+  return 'Sem base suficiente para conferência.';
 }
 
 /**
- * Responsabilidade: visualização da Auditoria de OP — filtros em cascata
- * (estágio → origem → OP → produto), tabela de apontamentos e linha do tempo.
+ * Visualização da Auditoria de OP: filtros em cascata, fila por motivo de
+ * investigação e dossiê que separa explicitamente fatos ERP de cálculos do
+ * Kustos.
  * @param {{ dom: Record<string, any>, executeOperationalBoundary: Function }} params
- * @returns {{ bindOp: Function, runOpReport: Function }}
+ * @returns {{ bindOp: Function, runOpReport: Function, reloadData: Function }}
  */
 export function createOpController({ dom, executeOperationalBoundary }) {
-  // Fonte única em memória: todos os apontamentos (sem filtro) para derivar a
-  // cascata e a linha do tempo por produto.
   let allRows = [];
+  let hasRunReport = false;
 
-  // Valores distintos e não-vazios de um campo, preservando o tipo original.
   function distinct(rows, key) {
     const seen = new Set();
     const out = [];
@@ -95,9 +86,16 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     );
   }
 
-  // Recalcula origem → OP → produto a partir das seleções superiores atuais,
-  // resetando em cadeia os níveis abaixo do que mudou (mesmo contrato da aba
-  // Custos). `changed` indefinido apenas repovoa sem resetar (carga inicial).
+  function fillMotivoSelect() {
+    if (!dom.selOpMotivo) return;
+    fillSelect(
+      dom.selOpMotivo,
+      getOpInvestigationReasonOptions().map(reason => ({ value: reason.key, label: reason.label })),
+      { value: TODOS, label: 'TODOS OS MOTIVOS' },
+      reasonFilterValue(dom.selOpMotivo.value)
+    );
+  }
+
   function refreshCascade(changed) {
     if (changed === 'estagio') { dom.selOpOrigem.value = TODAS; dom.selOpOp.value = TODAS; dom.selOpProduto.value = TODOS; }
     if (changed === 'origem') { dom.selOpOp.value = TODAS; dom.selOpProduto.value = TODOS; }
@@ -130,10 +128,10 @@ export function createOpController({ dom, executeOperationalBoundary }) {
       allRows = data || [];
       fillEstagioSelect();
       refreshCascade();
+      fillMotivoSelect();
     }, { message: 'Falha ao carregar dados de OP. Reabra a aba ou importe o relatório de apontamentos de OP.' });
   }
 
-  // Filtros da consulta: só inclui um nível quando ele não está em TODAS/TODOS.
   function buildQueryFilters() {
     const filters = {};
     if (dom.selOpEstagio.value !== TODOS) filters.estagio = dom.selOpEstagio.value;
@@ -143,7 +141,6 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     return filters;
   }
 
-  // Recorte de competência aplicado em memória (ver comentário de cabeçalho).
   function applyCompetenciaRange(rows) {
     const start = dom.dtOpStart?.value ? `${dom.dtOpStart.value}-01` : null;
     const end = dom.dtOpEnd?.value ? `${dom.dtOpEnd.value}-01` : null;
@@ -156,76 +153,126 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     });
   }
 
+  function getSelectedReason() {
+    return dom.selOpMotivo?.value || TODOS;
+  }
+
+  function applyReasonFilter(rows) {
+    const reason = getSelectedReason();
+    if (reason === TODOS) return rows;
+    return rows.filter(row => row.classificacaoInvestigativa?.key === reason);
+  }
+
+  function renderKpis(rows) {
+    if (dom.opKpiTotal) dom.opKpiTotal.textContent = String(rows.length);
+    if (dom.opKpiGargalos) dom.opKpiGargalos.textContent = String(rows.filter(row => row.classificacaoInvestigativa?.key === 'gargalo_produtividade').length);
+    if (dom.opKpiParadas) dom.opKpiParadas.textContent = String(rows.filter(row => row.classificacaoInvestigativa?.key === 'paradas_operacionais').length);
+    if (dom.opKpiAltaEficiencia) dom.opKpiAltaEficiencia.textContent = String(rows.filter(row => row.classificacaoInvestigativa?.key === 'alta_eficiencia').length);
+
+    dom.opKpiCards?.forEach(card => {
+      const reason = card.dataset.opReason || TODOS;
+      card.classList.toggle('active', reason === getSelectedReason());
+    });
+  }
+
   function renderTable(rows) {
     if (!rows.length) {
-      dom.opTableBody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:16px;">Nenhum apontamento para os filtros selecionados.</td></tr>';
+      dom.opTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:16px;">Nenhum apontamento para os filtros e motivo selecionados.</td></tr>';
       return;
     }
 
-    /* eslint-disable no-restricted-syntax -- Tabela HTML controlada com todos os valores escapados/formatados; mesmo padrão documentado de ui-drill-through.js (SEC-02). */
-    dom.opTableBody.innerHTML = `${rows.map(row => `
-      <tr class="op-row" data-cod-produto="${escapeHtml(row.cod_produto)}">
-        <td>${formatDateBR(row.data_referencia)}</td>
-        <td>${escapeHtml(row.estagio)}</td>
-        <td>${escapeHtml(row.origem)}</td>
-        <td>${escapeHtml(row.op)}</td>
-        <td><strong>${escapeHtml(row.cod_produto)}</strong></td>
-        <td style="text-align:left;">${escapeHtml(row.descricao)}</td>
-        <td>${formatNum(row.qtd_prevista)}</td>
-        <td>${formatNum(row.qtd_produzida)}</td>
-        <td>${escapeHtml(row.unidade)}</td>
-        <td>${formatNum(row.tempo_previsto)}</td>
-        <td>${formatNum(row.tempo_real)}</td>
-        <td>${formatNum(row.kg_hora_previsto)}</td>
-        <td>${formatNum(row.kg_hora_real)}</td>
-        <td class="${percTempoClass(row.perc_tempo)}">${formatPercTempo(row.perc_tempo)}</td>
-        <td>${formatNum(row.tempo_parada)}</td>
-        <td>${formatNum(row.qtd_apontamentos)}</td>
-      </tr>
-    `).join('')}`;
-    /* eslint-enable no-restricted-syntax */
+    dom.opTableBody.innerHTML = rows.map((row, index) => {
+      const indicadores = row.indicadoresKustos;
+      const classificacao = row.classificacaoInvestigativa;
+      return `
+        <tr class="op-investigation-row op-reason-${escapeHtml(classificacao.tone)}" data-op-index="${index}">
+          <td><strong>${formatDateBR(row.data_referencia)}</strong><small>OP ${escapeHtml(row.op)}</small></td>
+          <td><span class="badge op-reason ${escapeHtml(classificacao.tone)}">${escapeHtml(classificacao.motivo)}</span></td>
+          <td class="op-cause-cell">${escapeHtml(classificacao.causaProvavel)}</td>
+          <td><div class="product-main"><strong>${escapeHtml(row.cod_produto)}</strong><small>${escapeHtml(row.descricao)}</small><small>${escapeHtml(row.estagio)} · Origem ${escapeHtml(row.origem)}</small></div></td>
+          <td>${formatPercent(indicadores.atendimentoProducaoPct)}</td>
+          <td class="${metricClass(indicadores.desvioTempoPct, true)}">${formatPercent(indicadores.desvioTempoPct, { signed: true })}</td>
+          <td class="${metricClass(indicadores.desvioProdutividadePct, false)}">${formatPercent(indicadores.desvioProdutividadePct, { signed: true })}</td>
+          <td>${formatPercent(indicadores.indiceParadasPct)}</td>
+          <td><button type="button" class="btn-outline btn-sm op-dossier-toggle" data-op-index="${index}">Ver dossiê</button></td>
+        </tr>
+      `;
+    }).join('');
+    dom.opTableBody.onclick = event => {
+      const trigger = event.target?.closest?.('[data-op-index]');
+      if (!trigger) return;
+      const row = rows[Number(trigger.dataset.opIndex)];
+      if (row) renderOpDossier(row);
+    };
   }
 
-  // Linha do tempo: todas as competências do mesmo produto, em ordem crescente.
-  function renderTimeline(codProduto) {
-    const entries = allRows
+  function renderProductTimeline(codProduto) {
+    return allRows
       .filter(row => String(row.cod_produto) === String(codProduto))
       .slice()
-      .sort((a, b) => String(a.data_referencia || '').localeCompare(String(b.data_referencia || '')));
+      .sort((a, b) => String(a.data_referencia || '').localeCompare(String(b.data_referencia || '')))
+      .map(row => buildOpInvestigationQueue([row])[0]);
+  }
 
-    if (!entries.length) return;
+  function renderOpDossier(row) {
+    const indicadores = row.indicadoresKustos;
+    const classificacao = row.classificacaoInvestigativa;
+    const conferencia = row.conferenciaErp;
+    const history = renderProductTimeline(row.cod_produto);
 
-    const descricao = entries[entries.length - 1]?.descricao || '';
-    dom.opDrillTitle.textContent = descricao ? `${codProduto} — ${descricao}` : String(codProduto);
-
-    /* eslint-disable no-restricted-syntax -- Tabela HTML controlada com valores escapados/formatados; mesmo padrão de ui-drill-through.js (SEC-02). */
+    dom.opDrillTitle.textContent = `Dossiê da OP ${row.op} — ${row.cod_produto}${row.descricao ? ` · ${row.descricao}` : ''}`;
+    /* eslint-disable no-restricted-syntax -- valores do ERP escapados; indicadores e chaves vêm do motor local (SEC-02). */
     dom.opDrillBody.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Competência</th>
-            <th>OP</th>
-            <th>Tempo Prev.</th>
-            <th>Tempo Real</th>
-            <th>KG/Hora Prev.</th>
-            <th>KG/Hora Real</th>
-            <th>% Tempo</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${entries.map(row => `
+      <section class="op-dossier-section op-dossier-kustos">
+        <h4>Interpretação produzida pelo Kustos</h4>
+        <div class="op-dossier-highlight">
+          <span class="badge op-reason ${escapeHtml(classificacao.tone)}">${escapeHtml(classificacao.motivo)}</span>
+          <p>${escapeHtml(classificacao.resumo)}</p>
+          <p><strong>Provável causa:</strong> ${escapeHtml(classificacao.causaProvavel)}</p>
+        </div>
+      </section>
+      <section class="op-dossier-section">
+        <h4>Indicadores calculados pelo Kustos</h4>
+        <div class="details-grid">
+          <span><strong>Atendimento da produção:</strong> ${formatPercent(indicadores.atendimentoProducaoPct)}</span>
+          <span><strong>Desvio de tempo:</strong> <span class="${metricClass(indicadores.desvioTempoPct, true)}">${formatPercent(indicadores.desvioTempoPct, { signed: true })}</span></span>
+          <span><strong>Desvio de produtividade:</strong> <span class="${metricClass(indicadores.desvioProdutividadePct, false)}">${formatPercent(indicadores.desvioProdutividadePct, { signed: true })}</span></span>
+          <span><strong>Índice de paradas:</strong> ${formatPercent(indicadores.indiceParadasPct)}</span>
+        </div>
+      </section>
+      <section class="op-dossier-section">
+        <h4>Dados do ERP (imutáveis)</h4>
+        <div class="details-grid">
+          <span><strong>Qtd. prevista:</strong> ${formatNum(row.qtd_prevista)} ${escapeHtml(row.unidade)}</span>
+          <span><strong>Qtd. produzida:</strong> ${formatNum(row.qtd_produzida)} ${escapeHtml(row.unidade)}</span>
+          <span><strong>Tempo previsto:</strong> ${formatNum(row.tempo_previsto)}</span>
+          <span><strong>Tempo real:</strong> ${formatNum(row.tempo_real)}</span>
+          <span><strong>KG/Hora previsto:</strong> ${formatNum(row.kg_hora_previsto)}</span>
+          <span><strong>KG/Hora real:</strong> ${formatNum(row.kg_hora_real)}</span>
+          <span><strong>% Tempo (ERP):</strong> ${formatPercent(conferencia.percentTempoErp, { signed: true })}</span>
+          <span><strong>Tempo de parada:</strong> ${formatNum(row.tempo_parada)}</span>
+          <span><strong>Apontamentos:</strong> ${formatNum(row.qtd_apontamentos)}</span>
+          <span><strong>Competência (data_referencia):</strong> ${formatDateBR(row.data_referencia)}</span>
+          <span><strong>Importado em (criado_em):</strong> ${formatDateTimeBR(row.criado_em)}</span>
+        </div>
+        <p class="help-text op-erp-conference"><strong>Conferência % Tempo ERP:</strong> ${escapeHtml(getErpConferenceText(conferencia))}</p>
+      </section>
+      <section class="op-dossier-section">
+        <h4>Histórico investigativo do produto</h4>
+        <table>
+          <thead><tr><th>Competência</th><th>OP</th><th>Motivo</th><th>Atendimento</th><th>Desvio tempo</th><th>Desvio produtividade</th></tr></thead>
+          <tbody>${history.map(item => `
             <tr>
-              <td><strong>${formatDateBR(row.data_referencia)}</strong></td>
-              <td>${escapeHtml(row.op)}</td>
-              <td>${formatNum(row.tempo_previsto)}</td>
-              <td>${formatNum(row.tempo_real)}</td>
-              <td>${formatNum(row.kg_hora_previsto)}</td>
-              <td>${formatNum(row.kg_hora_real)}</td>
-              <td class="${percTempoClass(row.perc_tempo)}">${formatPercTempo(row.perc_tempo)}</td>
+              <td>${formatDateBR(item.data_referencia)}</td>
+              <td>${escapeHtml(item.op)}</td>
+              <td>${escapeHtml(item.classificacaoInvestigativa.motivo)}</td>
+              <td>${formatPercent(item.indicadoresKustos.atendimentoProducaoPct)}</td>
+              <td class="${metricClass(item.indicadoresKustos.desvioTempoPct, true)}">${formatPercent(item.indicadoresKustos.desvioTempoPct, { signed: true })}</td>
+              <td class="${metricClass(item.indicadoresKustos.desvioProdutividadePct, false)}">${formatPercent(item.indicadoresKustos.desvioProdutividadePct, { signed: true })}</td>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          `).join('')}</tbody>
+        </table>
+      </section>
     `;
     /* eslint-enable no-restricted-syntax */
 
@@ -237,29 +284,37 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     await executeOperationalBoundary('consultar apontamentos de OP', async () => {
       const { data, error } = await api.getApontamentosOp(buildQueryFilters());
       if (error) throw new Error(error.message || 'Falha ao consultar apontamentos de OP.');
-      renderTable(applyCompetenciaRange(data || []));
+      const queue = buildOpInvestigationQueue(applyCompetenciaRange(data || []));
+      renderKpis(queue);
+      renderTable(applyReasonFilter(queue));
+      hasRunReport = true;
     }, { message: 'Falha ao consultar apontamentos de OP. O contexto atual foi preservado.' });
   }
 
+  function rerunAfterFilterChange(changed) {
+    refreshCascade(changed);
+    if (hasRunReport) runOpReport();
+  }
+
   function bindOp() {
-    // Sem os elementos da aba OP no DOM, bind() é no-op — a aba Custos permanece
-    // intacta (mesmo contrato defensivo de ui-import-op.js).
     if (!dom.selOpEstagio) return undefined;
 
-    dom.selOpEstagio.addEventListener('change', () => refreshCascade('estagio'));
-    dom.selOpOrigem.addEventListener('change', () => refreshCascade('origem'));
-    dom.selOpOp.addEventListener('change', () => refreshCascade('op'));
+    dom.selOpEstagio.addEventListener('change', () => rerunAfterFilterChange('estagio'));
+    dom.selOpOrigem.addEventListener('change', () => rerunAfterFilterChange('origem'));
+    dom.selOpOp.addEventListener('change', () => rerunAfterFilterChange('op'));
+    dom.selOpProduto.addEventListener('change', () => { if (hasRunReport) runOpReport(); });
+    if (typeof dom.dtOpStart?.addEventListener === 'function') dom.dtOpStart.addEventListener('change', () => { if (hasRunReport) runOpReport(); });
+    if (typeof dom.dtOpEnd?.addEventListener === 'function') dom.dtOpEnd.addEventListener('change', () => { if (hasRunReport) runOpReport(); });
+    dom.selOpMotivo?.addEventListener('change', () => { if (hasRunReport) runOpReport(); });
     dom.analisarOpBtn?.addEventListener('click', () => runOpReport());
-
-    // Delegação de clique: abre a linha do tempo do produto da linha clicada.
-    dom.opTableBody?.addEventListener('click', event => {
-      const tr = event.target?.closest?.('tr[data-cod-produto]');
-      if (!tr) return;
-      renderTimeline(tr.dataset.codProduto);
-    });
+    dom.opKpiCards?.forEach(card => card.addEventListener('click', () => {
+      if (!dom.selOpMotivo) return;
+      dom.selOpMotivo.value = card.dataset.opReason || TODOS;
+      runOpReport();
+    }));
 
     return reloadData();
   }
 
-  return { bindOp, runOpReport };
+  return { bindOp, runOpReport, reloadData };
 }

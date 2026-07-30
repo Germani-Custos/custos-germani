@@ -11,6 +11,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 ## Estabilizações operacionais concluídas
 
 - [x] **MNT-OP-01** 🟠 P — Diagnosticar e corrigir a persistência da Auditoria de OP. **Causa raiz confirmada:** 119 de 296 valores de OP do CSV real usam ponto de milhar (por exemplo, `2.081`); o conversor inteiro estrito devolvia `null` e a constraint `op NOT NULL` rejeitava o chunk. **Correção:** normalização exclusiva do campo `op` antes do parse inteiro + diagnóstico completo de erro por chunk em `src/services/api.js`, sem migrar o schema. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
+- [x] **MNT-OP-02** 🟠 M — Construir o motor investigativo da Auditoria de OP. **Resolução (2026-07-30):** `core/op-investigation-engine.js` adiciona indicadores calculados e classifica por motivo/provável causa, sem alterar fatos do ERP ou schema. A fila/dossiê de `view/ui-op.js` separam “Dados do ERP (imutáveis)” de “Indicadores calculados pelo Kustos”; `% Tempo (ERP)` é conferência, não penalidade duplicada. Critério atendido: parada isolada não define investigação; combinações de tempo, produtividade, produção e parada definem o motivo.
 
 ---
 

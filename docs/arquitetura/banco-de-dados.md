@@ -47,6 +47,7 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `origem`, `cod_produto`, `descricao`, `cod_estagio`, `estagio` e `unidade` são obrigatórios.
 - `op` INTEGER NOT NULL é o número de OP. O parser do MCAP105 remove o ponto usado como separador de milhar antes da conversão (por exemplo, `2.081` → `2081`).
 - Migrações: `2026-07-23_create_apontamentos_op.sql` e `2026-07-23_log_importacao_op_status.sql`.
+- MNT-OP-02 não cria colunas: os indicadores e a classificação investigativa são derivados localmente de cada fato pelo `core/op-investigation-engine.js`. Isso preserva o relatório ERP como evidência imutável.
 
 ## Estratégia para órfãos de agrupamento
 

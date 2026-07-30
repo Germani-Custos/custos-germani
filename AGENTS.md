@@ -144,7 +144,10 @@ Evitar:
 | `view/ui-charts.js` | Gráficos investigativos (comparação de importações, TOP variações, análise temporal) e layout condicional do relatório |
 | `view/ui-drill-through.js` | Drill-through: histórico completo de importações de um produto (competência × importação, deltas por registro) |
 | `view/ui-import.js` | Fluxo de importação: upload, mapeamento de colunas, preview validado linha a linha e gravação via API com log |
+| `view/ui-import-op.js` | Upload, preview e persistência do CSV de apontamentos da Auditoria de OP |
+| `view/ui-op.js` | Fila investigativa e dossiê da Auditoria de OP: filtros, motivo e provável causa |
 | `core/spreadsheet-engine.js` | Parsing de planilhas, detecção de colunas, normalização numérica |
+| `core/op-investigation-engine.js` | Indicadores e interpretação investigativa de OP; preserva fatos do ERP e não acessa UI/API |
 | `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
 | `src/services/api.js` | Camada única de acesso Supabase (I/O) |
 | `services/api.js` | Shim de compatibilidade de import (re-exporta de src/services/api.js) |
@@ -251,3 +254,5 @@ Documentação desatualizada é tratada como defeito. Detalhes do processo: `doc
 - Atualização 2026-07-27 (Engineering Freeze v1.0 — MNT-01 encerrado): fila/tabela e presenter investigativo extraídos de `view/ui-controller.js` para `view/ui-table.js` (`createTableController({ dom, executeOperationalBoundary, renderDrillThrough, rerunReportForProduct })`). `ui-controller.js` fica predominantemente como orquestrador, preservando comportamento, fronteiras ERR-01 e semântica temporal (`data_referencia` na competência exibida; `criado_em` na importação exibida). `MNT-01` pode ser considerado encerrado.
 
 - Atualização 2026-07-27 (MNT-OP-01 — persistência da Auditoria de OP): o CSV MCAP105 real formata números de OP com ponto de milhar (por exemplo, `2.081`). O parser deve remover esse separador exclusivamente ao converter o campo `op` para inteiro, preservando `apontamentos_op.op` como `INTEGER NOT NULL`; não criar ou aplicar migração de schema. `importarApontamentosOp` deve registrar falhas de chunk sob o cabeçalho `IMPORTAÇÃO OP` com chunk, quantidade, primeiro registro, resposta completa do Supabase (`code`, `message`, `details`, `hint`) e registros/campo quando a resposta indicar violação `NOT NULL`. `data_referencia` permanece competência e `criado_em` evento de importação.
+
+- Atualização 2026-07-30 (MNT-OP-02 — motor investigativo da Auditoria de OP): os campos importados do MCAP105 são fatos imutáveis do ERP; `core/op-investigation-engine.js` é a fonte única de indicadores calculados pelo Kustos (`desvioTempoPct`, `desvioProdutividadePct`, `atendimentoProducaoPct`, `indiceParadasPct`), conferência do `% Tempo (ERP)` e classificação por motivo/provável causa. Nenhum indicador isolado define a fila: parada só é causa principal com atraso e produtividade normal/baixa; tempo alto + produtividade baixa sem parada material indica gargalo. Não duplicar o `% Tempo (ERP)` como sinal de criticidade. A UI deve separar “Dados do ERP (imutáveis)” de “Indicadores calculados pelo Kustos”, rotulando `data_referencia` como competência e `criado_em` como importação.

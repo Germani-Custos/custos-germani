@@ -190,3 +190,9 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 
 - [x] **MNT-OP-01** — corrigido o parsing de `op` no MCAP105: 119 dos 296 valores do CSV de validação têm ponto de milhar (por exemplo, `2.081`) e eram convertidos indevidamente para `null`. O parser agora produz inteiros, mantendo `op` obrigatório no schema e preservando `data_referencia` como competência e `criado_em` como evento de importação.
 - Incluído diagnóstico completo de erro por chunk para acelerar investigações futuras, sem alterar schema, tela ou filtros.
+
+## Atualização 2026-07-30 — Motor Investigativo da Auditoria de OP
+
+- [x] **MNT-OP-02** — implementado motor local de investigação para apontamentos de OP, sem alterar schema nem os fatos importados do ERP. A fila prioriza motivo e provável causa, com dossiê que separa dados ERP de indicadores calculados pelo Kustos.
+- Criados indicadores de atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas. `% Tempo (ERP)` é mantido como conferência do desvio de produtividade; não é usado como segunda regra de criticidade.
+- Refinada a UX da OP com KPIs por motivo, filtro de motivo e atualização automática do relatório depois da primeira análise ao alterar filtros. `data_referencia` permanece o recorte de competência; `criado_em` é exibido apenas como evento de importação no dossiê.

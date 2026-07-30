@@ -290,7 +290,7 @@
       <section id="view-op" class="view hidden">
         <header class="view-header">
           <h2>Auditoria de OP</h2>
-          <p>Importe o relatório de apontamentos de OP e navegue pelos filtros em cascata: Estágio → Origem → OP → Produto.</p>
+          <p>O ERP fornece os fatos; o Kustos transforma a execução em motivo de investigação, provável causa e dossiê auditável.</p>
         </header>
 
         <!-- Importação (modo importação) -->
@@ -310,12 +310,21 @@
             <div class="field"><label for="sel-op-origem">Origem</label><select id="sel-op-origem"><option value="TODAS">TODAS</option></select></div>
             <div class="field"><label for="sel-op-op">OP</label><select id="sel-op-op"><option value="TODAS">TODAS</option></select></div>
             <div class="field"><label for="sel-op-produto">Produto</label><select id="sel-op-produto"><option value="TODOS">TODOS</option></select></div>
+            <div class="field"><label for="sel-op-motivo">Motivo da investigação</label><select id="sel-op-motivo"><option value="TODOS">TODOS OS MOTIVOS</option></select></div>
             <div class="field"><label for="dt-op-start">De (competência)</label><input type="month" id="dt-op-start" /></div>
             <div class="field"><label for="dt-op-end">Até (competência)</label><input type="month" id="dt-op-end" /></div>
           </div>
           <div class="actions-row">
             <button id="analisar-op-btn" class="btn-primary"><i class="ri-search-line"></i> Analisar</button>
           </div>
+        </div>
+
+        <!-- Fila investigativa: cartões filtram por motivo, não por indicador isolado. -->
+        <div class="kpis op-kpis" aria-label="Resumo investigativo de OP">
+          <button type="button" class="panel kpi clickable op-kpi" data-op-reason="TODOS"><span>OPs no recorte</span><strong id="op-kpi-total">-</strong></button>
+          <button type="button" class="panel kpi clickable op-kpi" data-op-reason="gargalo_produtividade"><span>Gargalos de produtividade</span><strong id="op-kpi-gargalos">-</strong></button>
+          <button type="button" class="panel kpi clickable op-kpi" data-op-reason="paradas_operacionais"><span>Paradas operacionais</span><strong id="op-kpi-paradas">-</strong></button>
+          <button type="button" class="panel kpi clickable op-kpi" data-op-reason="alta_eficiencia"><span>Alta eficiência</span><strong id="op-kpi-alta-eficiencia">-</strong></button>
         </div>
 
         <!-- Painel de linha do tempo (drill por produto) -->
@@ -328,27 +337,20 @@
           <div id="op-drill-body" class="drill-body"></div>
         </div>
 
-        <!-- Tabela de apontamentos -->
+        <!-- Fila de investigação: os dados brutos do ERP aparecem no dossiê. -->
         <div class="panel table-panel">
           <table>
             <thead>
               <tr>
                 <th>Competência</th>
-                <th>Estágio</th>
-                <th>Origem</th>
-                <th>OP</th>
-                <th>Produto</th>
-                <th>Descrição</th>
-                <th>Qtd Prev.</th>
-                <th>Qtd Prod.</th>
-                <th>U.M.</th>
-                <th>Tempo Prev.</th>
-                <th>Tempo Real</th>
-                <th>KG/Hora Prev.</th>
-                <th>KG/Hora Real</th>
-                <th>% Tempo</th>
-                <th>Parada</th>
-                <th>Apontamentos</th>
+                <th>Motivo da investigação</th>
+                <th>Provável causa</th>
+                <th>OP / Produto</th>
+                <th>Atendimento</th>
+                <th>Desvio de tempo</th>
+                <th>Desvio de produtividade</th>
+                <th>Índice de paradas</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="op-table-body"></tbody>

@@ -106,6 +106,8 @@ Banner visível na tela de importação quando há produtos sem categorização 
 ### Auditoria de apontamentos de OP
 A aba OP recebe o relatório de apontamentos de chão de fábrica como dado operacional complementar. O número de OP é obrigatório no dado persistido; quando o relatório o apresenta com ponto de milhar, o parser o normaliza para inteiro antes da gravação. A competência (`data_referencia`) e o instante de importação (`criado_em`) continuam rastreáveis no lote.
 
+O ERP fornece fatos imutáveis; o Kustos produz a interpretação investigativa. Cada OP recebe indicadores calculados de atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas, então é apresentada por **motivo da investigação** e provável causa — nunca por uma parada ou percentual isolado. O `% Tempo (ERP)` permanece visível como conferência do fato de origem, sem substituir a métrica consistente calculada pelo motor.
+
 ---
 
 ## O que o Sistema NÃO deve virar
@@ -185,3 +187,7 @@ Engineering Freeze v1.0 conclui o fatiamento MNT-01 sem mudar comportamento vis�
 ## Atualização 2026-07-27 — integridade da Auditoria de OP
 
 O produto passa a interpretar corretamente OPs numéricas formatadas com separador de milhar pela origem. A robustez da persistência evita que uma formatação válida do relatório descarte um lote inteiro e torna a investigação de falhas de banco rápida, com diagnóstico completo do Supabase.
+
+## Atualização 2026-07-30 — princípio investigativo da OP
+
+**Nenhum indicador isolado define criticidade.** Tempo alto, parada alta ou baixa produção só se tornam investigáveis pelo contexto dos demais fatos. A experiência da OP deixa de responder “qual número variou?” e passa a responder “qual o motivo de investigar esta execução?”.

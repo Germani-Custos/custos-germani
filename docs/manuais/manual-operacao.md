@@ -62,6 +62,10 @@ Aplicados **manualmente** no Supabase (SQL Editor). Ordem cronológica importa:
 
 Se a importação de OP falhar, abra o console do navegador e procure `========== IMPORTAÇÃO OP ==========`. O registro contém o chunk, a quantidade, o primeiro payload e a resposta completa do Supabase. Para uma violação `NOT NULL`, ele também lista o número do registro e a coluna. Para CSVs MCAP105 com OP como `2.081`, confirme que a versão implantada contém a normalização de milhar do parser; não altere o schema para contornar esse formato.
 
+### Conferência operacional da fila de OP
+
+Após importar, abra a aba **OP** e valide a fila por motivo. Não trate `Tempo de Parada` ou `% Tempo (ERP)` isoladamente como incidente. Abra o **dossiê** da OP para conferir os fatos imutáveis do ERP contra os indicadores calculados pelo Kustos. Quando o motivo for gargalo de produtividade, a parada baixa/não material não explica tempo alto e KG/Hora baixo; quando for paradas operacionais, valide motivo, frequência e duração no chão de fábrica. A competência é `data_referencia`; `criado_em` mostra somente quando o lote entrou no sistema.
+
 ### Índices e performance
 Os índices de `2026-05-11` sustentam o drill-through e as comparações de importação. **Não remover** sem entender o impacto nas consultas de `src/services/api.js`.
 
@@ -130,6 +134,7 @@ Playbook detalhado: [`docs/troubleshooting/playbook-operacional.md`](../troubles
 
 - **Após cada importação:** confira `log_importacao` (linhas_erro próximo de zero) e o banner de órfãos.
 - **Mensal:** revise a fila de críticos na Auditoria; investigue mudanças de regime.
+- **Após importação de OP:** revise Gargalos de produtividade e Paradas operacionais; Alta eficiência é referência a validar, não incidente automático.
 - **Dependências de CDN:** hoje sem versão fixada (`SEC-05`) — uma quebra externa pode derrubar parsing/gráficos. Se algo parar "do nada" sem deploy recente, suspeite de atualização de CDN.
 
 ---
@@ -157,3 +162,7 @@ O repositório agora possui GitHub Actions para validação de qualidade em Pull
 ## Atualização 2026-07-20 — conferência de PRs recentes
 
 Sem mudança operacional para o usuário final nesta revisão: apenas documentação do estado real dos PRs #121–#124. A operação deve considerar que filtros, chips, ordenação e exportação seguem com o mesmo comportamento, agora em módulos dedicados. A pendência operacional relevante continua sendo performance da fila/tabela em bases grandes (`PERF-01`), dependente do fechamento do MNT-01.
+
+## Atualização 2026-07-30 — triagem de OP por motivo
+
+O procedimento de OP passa a iniciar pela explicação do Kustos e não por uma coluna isolada do ERP. Em caso de divergência entre `% Tempo (ERP)` e o desvio de produtividade calculado, conferir o apontamento na origem; o Kustos mantém ambos para auditoria.

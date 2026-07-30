@@ -33,13 +33,14 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto
   ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log
   ui-import-op.js        # createImportOpController(): upload CSV latin-1, preview e gravação de apontamentos de OP
-  ui-op.js               # createOpController(): filtros e tabela da Auditoria de OP
+  ui-op.js               # createOpController(): filtros, fila por motivo e dossiê da Auditoria de OP
   ui-table.js            # createTableController(): fila investigativa, detalhes e presenter operacional
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
   ui-utils.js            # escapeHtml, debounce, fillSelect seguro por DOM, showToast, formatadores
 core/                    # Regra de negócio pura (sem DOM, sem Supabase)
   spreadsheet-engine.js  # Parsing XLSX, fuzzy match de colunas, normalização numérica e normalizeCodigoProduto
+  op-investigation-engine.js # Motor puro de indicadores e classificação investigativa por OP
   report-engine.js       # Cascata, variação, score de instabilidade, regime, KPIs (sem DOM)
   heuristic-engine.js    # Sugestão de categoria (NÃO integrado — ver MNT-04)
 src/
@@ -110,6 +111,16 @@ Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operac
 ### Diagnóstico de persistência da Auditoria de OP (MNT-OP-01)
 
 O schema declara `apontamentos_op.op` como `NOT NULL`. No CSV real, algumas OPs usam ponto de milhar e o conversor inteiro estrito as recebia como `null`. O parser corrige exclusivamente esse campo antes da conversão, sem migration e sem alteração de semântica temporal. Quando uma chamada `.insert()` falhar, `logOpImportFailure()` registra o número do chunk, sua quantidade, primeiro registro, resposta completa do Supabase (`code`, `message`, `details`, `hint`) e, quando o PostgreSQL identificar uma coluna `NOT NULL`, os registros e o campo envolvidos.
+
+### Motor investigativo da Auditoria de OP (MNT-OP-02)
+
+`core/op-investigation-engine.js` é puro e não altera `apontamentos_op`: recebe uma linha do MCAP105 e acrescenta `indicadoresKustos`, `conferenciaErp` e `classificacaoInvestigativa`. A fonte de verdade é `analyzeOpInvestigation()`; `buildOpInvestigationQueue()` aplica a ordenação por motivo e magnitude.
+
+- **Fatos ERP:** `qtd_*`, `tempo_*`, `kg_hora_*`, `tempo_parada`, `% Tempo` e metadados continuam inalterados.
+- **Indicadores Kustos:** `atendimentoProducaoPct = produzido / previsto`, `desvioTempoPct = (real - previsto) / previsto`, `desvioProdutividadePct = (kg/h real - previsto) / previsto` e `indiceParadasPct = parada / tempo_real`.
+- **% Tempo ERP:** apenas conferência contra `desvioProdutividadePct`, tolerância de 0,2 p.p.; nunca entra como segundo peso de criticidade.
+- **Classificação:** usa combinação de sinais: gargalo de produtividade, paradas operacionais, baixa produção, alta eficiência, sinal misto ou sem base comparativa. Não expor “status crítico” genérico; a UI apresenta motivo e provável causa.
+- Planejado/previsão igual a zero ou ausente gera `sem_base_comparativa`; o motor não inventa eficiência. `data_referencia` filtra competência; `criado_em` é exibido no dossiê como evento de importação e não participa das fórmulas de execução.
 
 
 ### Contrato de alerta investigativo (LOG-01)
@@ -248,3 +259,7 @@ O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js
 ## Atualização 2026-07-27 — fechamento do fatiamento MNT-01
 
 `view/ui-table.js` passou a concentrar a fila investigativa da aba Custos, os detalhes por linha e o presenter operacional (`getOperationalPriority`/`buildInvestigativeSummary`). `view/ui-controller.js` permanece como orquestrador dos fluxos (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`) e só injeta dependências necessárias para preservar as fronteiras ERR-01 e o re-run silencioso após drill-through. Não houve mudança funcional ou temporal; os rótulos de competência (`data_referencia`) e importação (`criado_em`) continuam na tabela.
+
+## Atualização 2026-07-30 — contrato OP: ERP x Kustos
+
+O contrato da OP separa fatos de interpretação. Qualquer regra futura deve ampliar `core/op-investigation-engine.js`, com regressão para a combinação de sinais correspondente; não colocar fórmula ou classificação inline em `ui-op.js`.

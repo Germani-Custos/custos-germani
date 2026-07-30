@@ -15,3 +15,12 @@
 - **Tamanho de lote de importação** — `IMPORT_CHUNK_SIZE` (400) em `src/services/api.js`: valor operacional (não regra de negócio) para o upsert em `historico_custos` em lotes.
 - **Teto de comparação entre importações** — `IMPORT_COMPARISON_LOOKBACK_LIMIT` (1000) em `src/services/api.js`: quantidade de linhas (só `criado_em`) lidas para achar as 2 últimas importações distintas. Risco conhecido de truncamento se a tabela crescer muito com poucas importações recentes; ver comentário no código.
 - **Limite de exibição do preview de importação** — `IMPORT_PREVIEW_DISPLAY_LIMIT` (20) em `view/ui-controller.js`: só limita quantas linhas aparecem na tabela do modal de preview; não afeta o que é validado/importado.
+
+## Motor investigativo de OP (MNT-OP-02)
+
+- **Atendimento da produção** — `qtd_produzida / qtd_prevista * 100`. Abaixo de 95% é déficit relevante para a classificação; é fato calculado pelo Kustos, não alteração no valor do ERP.
+- **Desvio de tempo** — `(tempo_real - tempo_previsto) / tempo_previsto * 100`. Positivo significa execução mais lenta; negativo, mais rápida. A classificação considera tempo alto a partir de +20%.
+- **Desvio de produtividade** — `(kg_hora_real - kg_hora_previsto) / kg_hora_previsto * 100`. Negativo significa produtividade abaixo do plano; a classificação considera sinal relevante a partir de -10%.
+- **Índice de paradas** — `tempo_parada / tempo_real * 100`. A partir de 20% é parada material, mas nunca basta isoladamente para definir a fila.
+- **% Tempo (ERP)** — fato de origem preservado e usado só como conferência do desvio de produtividade com tolerância de 0,2 ponto percentual. Não é duplicado no score/motivo.
+- **Sem base comparativa** — algum previsto necessário é zero, ausente ou inválido. O motor não conclui eficiência sem denominador válido.

@@ -67,6 +67,21 @@ Se entrarem produtos novos **sem Origem/Família/Agrupamento**, aparece um aviso
 
 O relatório pode exibir a OP com ponto de milhar, como `2.081`; a importação a grava como o inteiro `2081`. A competência é `data_referencia`; o momento em que o arquivo entrou é `criado_em`.
 
+### Investigar uma OP
+
+Depois de importar, escolha os filtros de Estágio, Origem, OP, Produto, competência ou **Motivo da investigação**. Após a primeira análise, qualquer alteração de filtro atualiza a fila automaticamente.
+
+A fila não rotula uma OP apenas como “crítica”: ela explica **por que investigar**.
+
+| Motivo | Como ler |
+|---|---|
+| 🟥 Gargalo de produtividade | Tempo acima e KG/Hora abaixo do plano, sem parada proporcional que explique o resultado. Investigue processo, padrão, matéria-prima ou apontamento. |
+| 🟦 Paradas operacionais | Parada relevante acompanhada de atraso e produtividade normal ou menor. Valide motivo, frequência e duração das interrupções. |
+| 🟨 Baixa produção | Volume abaixo do plano, mas tempo e produtividade sem desvio relevante. Verifique programação, disponibilidade, material ou encerramento da OP. |
+| 🟩 Alta eficiência | Produção atingida, tempo menor e produtividade maior. É referência positiva; valide padrão/capacidade antes de replicar. |
+
+Clique em **Ver dossiê**. A parte “Dados do ERP (imutáveis)” mostra os valores recebidos; “Indicadores calculados pelo Kustos” mostra a interpretação. `% Tempo (ERP)` continua disponível apenas para conferência, nunca como sentença isolada. A competência (`data_referencia`) e a importação (`criado_em`) aparecem explicitamente no dossiê.
+
 ---
 
 ## 4. Investigar custos (tela de Auditoria)
@@ -173,3 +188,7 @@ Quando ocorrer instabilidade de rede, Supabase indisponível ou falha em gráfic
 ## Atualização 2026-07-20 — sem mudança de uso
 
 A revisão dos PRs recentes apenas alinhou documentação ao estado do sistema. O uso da Auditoria permanece igual: filtros em cascata, KPIs clicáveis, chips removíveis, drill-through e exportação XLSX continuam com o mesmo comportamento visível.
+
+## Atualização 2026-07-30 — Auditoria de OP investigativa
+
+A aba OP agora organiza os apontamentos por motivo e provável causa, em vez de reproduzir a tabela do ERP. Parada alta sozinha não é problema: o Kustos só a interpreta juntamente com tempo, produtividade e atendimento da produção.
