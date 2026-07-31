@@ -272,6 +272,10 @@ tr[data-codigo]:hover td { background: rgba(255,255,255,0.04); }
 .details-row td { background: rgba(15,23,42,0.55); white-space: normal; }
 .details-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 8px 16px; font-size: 13px; color: #cbd5e1; }
 #view-op .table-panel table { min-width: 1160px; }
+#view-op .table-panel {
+  max-height: 70vh;
+  overflow-y: auto;
+}
 .op-investigation-row { cursor: pointer; }
 .op-investigation-row td { vertical-align: top; }
 .op-investigation-row td:first-child small { display: block; margin-top: 4px; color: var(--muted); }
