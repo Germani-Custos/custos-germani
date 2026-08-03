@@ -196,3 +196,9 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 - [x] **MNT-OP-02** — implementado motor local de investigação para apontamentos de OP, sem alterar schema nem os fatos importados do ERP. A fila prioriza motivo e provável causa, com dossiê que separa dados ERP de indicadores calculados pelo Kustos.
 - Criados indicadores de atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas. `% Tempo (ERP)` é mantido como conferência do desvio de produtividade; não é usado como segunda regra de criticidade.
 - Refinada a UX da OP com KPIs por motivo, filtro de motivo e atualização automática do relatório depois da primeira análise ao alterar filtros. `data_referencia` permanece o recorte de competência; `criado_em` é exibido apenas como evento de importação no dossiê.
+
+## Atualização 2026-08-03 — decisão investigativa da Auditoria de OP
+
+- [x] **MNT-OP-03** — a interpretação de OP agora entrega uma decisão explícita (`mereceInvestigacao`), prioridade e evidências combinadas no motor puro. A fila e o dossiê mostram a resposta operacional sem alterar schema ou fatos do ERP.
+- Cobertos os cenários de desperdício com entrega, excelente execução, baixa produção, tempo justificado por volume, parada sem impacto e parada com perda de produtividade/atraso/déficit de produção (prioridade máxima).
+- A semântica temporal não mudou: `data_referencia` filtra competência; `criado_em` informa o evento de importação e não participa das fórmulas.

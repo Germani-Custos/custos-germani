@@ -112,14 +112,16 @@ Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operac
 
 O schema declara `apontamentos_op.op` como `NOT NULL`. No CSV real, algumas OPs usam ponto de milhar e o conversor inteiro estrito as recebia como `null`. O parser corrige exclusivamente esse campo antes da conversão, sem migration e sem alteração de semântica temporal. Quando uma chamada `.insert()` falhar, `logOpImportFailure()` registra o número do chunk, sua quantidade, primeiro registro, resposta completa do Supabase (`code`, `message`, `details`, `hint`) e, quando o PostgreSQL identificar uma coluna `NOT NULL`, os registros e o campo envolvidos.
 
-### Motor investigativo da Auditoria de OP (MNT-OP-02)
+### Motor investigativo da Auditoria de OP (MNT-OP-02 / MNT-OP-03)
 
-`core/op-investigation-engine.js` é puro e não altera `apontamentos_op`: recebe uma linha do MCAP105 e acrescenta `indicadoresKustos`, `conferenciaErp` e `classificacaoInvestigativa`. A fonte de verdade é `analyzeOpInvestigation()`; `buildOpInvestigationQueue()` aplica a ordenação por motivo e magnitude.
+`core/op-investigation-engine.js` é puro e não altera `apontamentos_op`: recebe uma linha do MCAP105 e acrescenta `indicadoresKustos`, `conferenciaErp` e `classificacaoInvestigativa`. A fonte de verdade é `analyzeOpInvestigation()`; `buildOpInvestigationQueue()` ordena por decisão, motivo e magnitude.
 
 - **Fatos ERP:** `qtd_*`, `tempo_*`, `kg_hora_*`, `tempo_parada`, `% Tempo` e metadados continuam inalterados.
 - **Indicadores Kustos:** `atendimentoProducaoPct = produzido / previsto`, `desvioTempoPct = (real - previsto) / previsto`, `desvioProdutividadePct = (kg/h real - previsto) / previsto` e `indiceParadasPct = parada / tempo_real`.
 - **% Tempo ERP:** apenas conferência contra `desvioProdutividadePct`, tolerância de 0,2 p.p.; nunca entra como segundo peso de criticidade.
-- **Classificação:** usa combinação de sinais: gargalo de produtividade, paradas operacionais, baixa produção, alta eficiência, sinal misto ou sem base comparativa. Não expor “status crítico” genérico; a UI apresenta motivo e provável causa.
+- **Classificação:** usa combinação de sinais: gargalo de produtividade, desperdício operacional, paradas operacionais, baixa produção, tempo justificado pelo volume, parada sem impacto, alta eficiência, sinal misto ou sem base comparativa. Não expor “status crítico” genérico; a UI apresenta motivo e provável causa.
+- **Decisão (MNT-OP-03):** `classificacaoInvestigativa` inclui `mereceInvestigacao`, `decisao` (`maxima`, `alta`, `monitorar`, `registrar`, `nenhuma` ou `sem_base`) e `evidencias`. A UI apenas apresenta este contrato; não recalcula prioridade ou sinais inline.
+- **Guardrails das combinações:** produção entregue + tempo alto + KG/Hora baixo + parada material = desperdício (alta); os mesmos sinais com déficit de produção = paradas com impacto (máxima). Tempo alto não alerta se KG/Hora estiver praticamente estável e a produção explicar o tempo adicional. Parada material sem efeito em produção, tempo e KG/Hora fica registrada sem prioridade.
 - Planejado/previsão igual a zero ou ausente gera `sem_base_comparativa`; o motor não inventa eficiência. `data_referencia` filtra competência; `criado_em` é exibido no dossiê como evento de importação e não participa das fórmulas de execução.
 
 

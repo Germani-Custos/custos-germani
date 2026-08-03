@@ -1,6 +1,6 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
-Atualizado em: **2026-05-28**.
+Atualizado em: **2026-08-03**.
 
 ## Objetivo
 
@@ -44,7 +44,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | report-engine | `origem_id/familia_id/agrupamento_cod` em memória | Filtro cascata correto | Sim | ✅ |
 | report-engine | `criado_em` para `ultimaAtualizacao` | Distinção competência x importação | Sim | ✅ |
 | report-engine | `data_referencia` para série temporal | Semântica temporal correta | Sim | ✅ |
-| op-investigation-engine | `analyzeOpInvestigation(row)` | Derivar indicadores e motivo/provável causa sem alterar fatos do ERP | Sim | ✅ (MNT-OP-02) |
+| op-investigation-engine | `analyzeOpInvestigation(row)` | Derivar indicadores, decisão, motivo, provável causa e evidências sem alterar fatos do ERP | Sim | ✅ (MNT-OP-02 / MNT-OP-03) |
 
 ## 4) Matriz Importação → Banco
 
@@ -132,10 +132,10 @@ Formato mínimo esperado em todos os métodos API:
 - Índices críticos de investigação e drill-through reforçados.
 - View `vw_produtos_orfaos_agrupamento` adicionada para auditoria contínua.
 
-## 7) Contrato investigativo da Auditoria de OP (MNT-OP-02)
+## 7) Contrato investigativo da Auditoria de OP (MNT-OP-02 / MNT-OP-03)
 
 - **ERP:** `apontamentos_op` é a fonte imutável de quantidades, tempos, produtividade, parada e `% Tempo`; não há migration nem escrita de indicadores calculados.
-- **Kustos:** `core/op-investigation-engine.js` calcula `atendimentoProducaoPct`, `desvioTempoPct`, `desvioProdutividadePct` e `indiceParadasPct`; `view/ui-op.js` consome somente esse contrato para fila, filtro e dossiê.
-- **Regra central:** nenhum indicador isolado decide o motivo. Parada só é causa provável se vier com tempo alto e produtividade normal/baixa; tempo alto + produtividade baixa sem parada material é gargalo de produtividade.
+- **Kustos:** `core/op-investigation-engine.js` calcula `atendimentoProducaoPct`, `desvioTempoPct`, `desvioProdutividadePct` e `indiceParadasPct`; acrescenta `mereceInvestigacao`, `decisao` e `evidencias`; `view/ui-op.js` consome somente esse contrato para fila, filtro e dossiê.
+- **Regra central:** nenhum indicador isolado decide o motivo ou a prioridade. Produção entregue + tempo alto + KG/Hora baixo + parada material indica desperdício; com déficit de produção, indica paradas com impacto e prioridade máxima. Tempo alto com KG/Hora praticamente estável só não alerta se a produção adicional explicar o tempo; parada material sem impacto em produção, tempo e produtividade é registro sem prioridade.
 - **Conferência:** `% Tempo (ERP)` é comparado ao desvio de produtividade com tolerância de 0,2 p.p., sem adicionar uma segunda penalidade. Divergência pede conferência do apontamento na origem.
 - **Temporalidade:** `data_referencia` continua sendo competência do recorte e `criado_em` é mostrado no dossiê como evento de importação; ambos ficam fora das fórmulas de execução da OP.

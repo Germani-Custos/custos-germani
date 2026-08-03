@@ -64,7 +64,7 @@ Se a importação de OP falhar, abra o console do navegador e procure `=========
 
 ### Conferência operacional da fila de OP
 
-Após importar, abra a aba **OP** e valide a fila por motivo. Não trate `Tempo de Parada` ou `% Tempo (ERP)` isoladamente como incidente. Abra o **dossiê** da OP para conferir os fatos imutáveis do ERP contra os indicadores calculados pelo Kustos. Quando o motivo for gargalo de produtividade, a parada baixa/não material não explica tempo alto e KG/Hora baixo; quando for paradas operacionais, valide motivo, frequência e duração no chão de fábrica. A competência é `data_referencia`; `criado_em` mostra somente quando o lote entrou no sistema.
+Após importar, abra a aba **OP** e valide a fila pela coluna **Decisão** e pelo motivo. Não trate `Tempo de Parada` ou `% Tempo (ERP)` isoladamente como incidente. Abra o **dossiê** para conferir os fatos imutáveis do ERP contra os indicadores calculados pelo Kustos e as evidências combinadas. Quando o motivo for gargalo de produtividade, a parada baixa/não material não explica tempo alto e KG/Hora baixo; quando houver paradas com impacto, confirme conjuntamente atraso, queda/não melhoria de KG/Hora e déficit de produção antes de agir. Parada sem efeito nesses três resultados deve permanecer registrada, sem prioridade. A competência é `data_referencia`; `criado_em` mostra somente quando o lote entrou no sistema.
 
 ### Índices e performance
 Os índices de `2026-05-11` sustentam o drill-through e as comparações de importação. **Não remover** sem entender o impacto nas consultas de `src/services/api.js`.
@@ -166,3 +166,7 @@ Sem mudança operacional para o usuário final nesta revisão: apenas documenta�
 ## Atualização 2026-07-30 — triagem de OP por motivo
 
 O procedimento de OP passa a iniciar pela explicação do Kustos e não por uma coluna isolada do ERP. Em caso de divergência entre `% Tempo (ERP)` e o desvio de produtividade calculado, conferir o apontamento na origem; o Kustos mantém ambos para auditoria.
+
+## Atualização 2026-08-03 — decisão e escalonamento de OP
+
+Use a prioridade máxima para interromper a fila e investigar paradas com impacto em produção, tempo e KG/Hora. Prioridade alta cobre desperdício com entrega ou baixa produção sem redução de tempo. Registre, sem escalar, parada sem impacto; não abra incidente por tempo maior quando a produção maior explicar o consumo e a produtividade estiver estável. Essas decisões não mudam o uso de `data_referencia` (competência) ou `criado_em` (entrada do lote).

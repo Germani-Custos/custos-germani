@@ -115,4 +115,122 @@ describe('motor investigativo de OP', () => {
 
     expect(queue.map(item => item.op)).toEqual([752, 738]);
   });
+
+  it('prioriza desperdício quando o volume é entregue com tempo alto, produtividade baixa e paradas materiais', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 1000,
+      tempo_previsto: 100,
+      tempo_real: 150,
+      kg_hora_previsto: 10,
+      kg_hora_real: 6.67,
+      tempo_parada: 45
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'desperdicio_operacional',
+      mereceInvestigacao: true,
+      decisao: { key: 'alta' }
+    });
+    expect(result.classificacaoInvestigativa.evidencias).toHaveLength(4);
+  });
+
+  it('dispensa investigação quando produção, tempo e produtividade melhoram juntos', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 1000,
+      tempo_previsto: 100,
+      tempo_real: 80,
+      kg_hora_previsto: 10,
+      kg_hora_real: 12.5,
+      tempo_parada: 4
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'alta_eficiencia',
+      mereceInvestigacao: false,
+      decisao: { key: 'nenhuma' }
+    });
+  });
+
+  it('investiga baixa produção quando o volume cai sem redução correspondente de tempo', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 800,
+      tempo_previsto: 100,
+      tempo_real: 100,
+      kg_hora_previsto: 10,
+      kg_hora_real: 8,
+      tempo_parada: 0
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'baixa_producao',
+      mereceInvestigacao: true,
+      decisao: { key: 'alta' }
+    });
+  });
+
+  it('não gera alerta falso quando o aumento de tempo é compensado pelo aumento de produção', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 1500,
+      tempo_previsto: 100,
+      tempo_real: 150,
+      kg_hora_previsto: 10,
+      kg_hora_real: 10,
+      tempo_parada: 5
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'tempo_justificado_volume',
+      mereceInvestigacao: false,
+      decisao: { key: 'nenhuma' }
+    });
+  });
+
+  it('registra parada material sem priorizar quando ela não afeta entrega, tempo ou produtividade', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 1000,
+      tempo_previsto: 100,
+      tempo_real: 100,
+      kg_hora_previsto: 10,
+      kg_hora_real: 10,
+      tempo_parada: 30
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'parada_sem_impacto',
+      mereceInvestigacao: false,
+      decisao: { key: 'registrar' }
+    });
+  });
+
+  it('dá prioridade máxima quando a parada vem com perda de produtividade, atraso e déficit de produção', () => {
+    const result = analyzeOpInvestigation({
+      qtd_prevista: 1000,
+      qtd_produzida: 800,
+      tempo_previsto: 100,
+      tempo_real: 160,
+      kg_hora_previsto: 10,
+      kg_hora_real: 5,
+      tempo_parada: 48
+    });
+
+    expect(result.classificacaoInvestigativa).toMatchObject({
+      key: 'paradas_operacionais',
+      mereceInvestigacao: true,
+      decisao: { key: 'maxima' }
+    });
+  });
+
+  it('ordena prioridade máxima antes de desperdício de prioridade alta', () => {
+    const queue = buildOpInvestigationQueue([
+      { op: 1, qtd_prevista: 1000, qtd_produzida: 1000, tempo_previsto: 100, tempo_real: 150, kg_hora_previsto: 10, kg_hora_real: 6.67, tempo_parada: 45 },
+      { op: 2, qtd_prevista: 1000, qtd_produzida: 800, tempo_previsto: 100, tempo_real: 160, kg_hora_previsto: 10, kg_hora_real: 5, tempo_parada: 48 }
+    ]);
+
+    expect(queue.map(item => item.op)).toEqual([2, 1]);
+  });
 });

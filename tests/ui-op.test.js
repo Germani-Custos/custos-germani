@@ -167,6 +167,8 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.opDrillTitle.textContent).toContain('Produto A');
     expect(dom.opDrillBody.innerHTML).toContain('Dados do ERP (imutáveis)');
     expect(dom.opDrillBody.innerHTML).toContain('Indicadores calculados pelo Kustos');
+    expect(dom.opDrillBody.innerHTML).toContain('Merece investigação?');
+    expect(dom.opDrillBody.innerHTML).toContain('Evidências combinadas');
     // Ambas as competências do produto 001 permanecem no histórico contextual.
     expect(dom.opDrillBody.innerHTML).toContain('100');
     expect(dom.opDrillBody.innerHTML).toContain('101');

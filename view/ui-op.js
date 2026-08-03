@@ -177,16 +177,18 @@ export function createOpController({ dom, executeOperationalBoundary }) {
 
   function renderTable(rows) {
     if (!rows.length) {
-      dom.opTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:16px;">Nenhum apontamento para os filtros e motivo selecionados.</td></tr>';
+      dom.opTableBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:16px;">Nenhum apontamento para os filtros e motivo selecionados.</td></tr>';
       return;
     }
 
     dom.opTableBody.innerHTML = rows.map((row, index) => {
       const indicadores = row.indicadoresKustos;
       const classificacao = row.classificacaoInvestigativa;
+      const decisao = classificacao.decisao;
       return `
         <tr class="op-investigation-row op-reason-${escapeHtml(classificacao.tone)}" data-op-index="${index}">
           <td><strong>${formatDateBR(row.data_referencia)}</strong><small>OP ${escapeHtml(row.op)}</small></td>
+          <td class="op-decision-cell"><span class="badge op-decision ${escapeHtml(decisao.tone)}">${escapeHtml(decisao.label)}</span><small>${escapeHtml(decisao.acao)}</small></td>
           <td><span class="badge op-reason ${escapeHtml(classificacao.tone)}">${escapeHtml(classificacao.motivo)}</span></td>
           <td class="op-cause-cell">${escapeHtml(classificacao.causaProvavel)}</td>
           <td><div class="product-main"><strong>${escapeHtml(row.cod_produto)}</strong><small>${escapeHtml(row.descricao)}</small><small>${escapeHtml(row.estagio)} · Origem ${escapeHtml(row.origem)}</small></div></td>
@@ -218,6 +220,7 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     const indicadores = row.indicadoresKustos;
     const classificacao = row.classificacaoInvestigativa;
     const conferencia = row.conferenciaErp;
+    const decisao = classificacao.decisao;
     const history = renderProductTimeline(row.cod_produto);
 
     dom.opDrillTitle.textContent = `Dossiê da OP ${row.op} — ${row.cod_produto}${row.descricao ? ` · ${row.descricao}` : ''}`;
@@ -227,8 +230,11 @@ export function createOpController({ dom, executeOperationalBoundary }) {
         <h4>Interpretação produzida pelo Kustos</h4>
         <div class="op-dossier-highlight">
           <span class="badge op-reason ${escapeHtml(classificacao.tone)}">${escapeHtml(classificacao.motivo)}</span>
+          <span class="badge op-decision ${escapeHtml(decisao.tone)}">${escapeHtml(decisao.label)}</span>
+          <p><strong>Merece investigação?</strong> ${classificacao.mereceInvestigacao ? 'Sim.' : 'Não.'} ${escapeHtml(decisao.acao)}</p>
           <p>${escapeHtml(classificacao.resumo)}</p>
           <p><strong>Provável causa:</strong> ${escapeHtml(classificacao.causaProvavel)}</p>
+          <div><strong>Evidências combinadas:</strong><ul class="op-evidence-list">${classificacao.evidencias.map(evidencia => `<li>${escapeHtml(evidencia)}</li>`).join('')}</ul></div>
         </div>
       </section>
       <section class="op-dossier-section">

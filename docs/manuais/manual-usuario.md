@@ -71,16 +71,19 @@ O relatório pode exibir a OP com ponto de milhar, como `2.081`; a importação 
 
 Depois de importar, escolha os filtros de Estágio, Origem, OP, Produto, competência ou **Motivo da investigação**. Após a primeira análise, qualquer alteração de filtro atualiza a fila automaticamente.
 
-A fila não rotula uma OP apenas como “crítica”: ela explica **por que investigar**.
+A fila não rotula uma OP apenas como “crítica”: ela responde **se merece investigação**, com prioridade, motivo, provável causa e evidências combinadas.
 
 | Motivo | Como ler |
 |---|---|
-| 🟥 Gargalo de produtividade | Tempo acima e KG/Hora abaixo do plano, sem parada proporcional que explique o resultado. Investigue processo, padrão, matéria-prima ou apontamento. |
-| 🟦 Paradas operacionais | Parada relevante acompanhada de atraso e produtividade normal ou menor. Valide motivo, frequência e duração das interrupções. |
-| 🟨 Baixa produção | Volume abaixo do plano, mas tempo e produtividade sem desvio relevante. Verifique programação, disponibilidade, material ou encerramento da OP. |
-| 🟩 Alta eficiência | Produção atingida, tempo menor e produtividade maior. É referência positiva; valide padrão/capacidade antes de replicar. |
+| 🟥 Gargalo de produtividade | Tempo acima e KG/Hora abaixo do plano, sem parada material que explique o resultado. Investigue processo, padrão, matéria-prima ou apontamento. |
+| 🟧 Desperdício operacional | O volume foi entregue, porém tempo subiu, KG/Hora caiu e as paradas foram materiais. A prioridade é alta porque houve perda de produtividade mesmo com a entrega. |
+| 🟦 Paradas operacionais | Parada material com atraso, queda/não melhoria de KG/Hora e produção abaixo do plano. É prioridade máxima: valide motivo, frequência e duração das interrupções. |
+| 🟨 Baixa produção | Volume abaixo do plano sem redução correspondente de tempo. Investigue perdas, disponibilidade, programação, material ou encerramento da OP. |
+| 🟢 Tempo justificado pelo volume | Tempo maior, KG/Hora praticamente estável e aumento de produção compatível. Não é alerta: o volume explica o tempo adicional. |
+| 🔵 Parada sem impacto relevante | Parada material registrada, mas entrega, tempo e KG/Hora permaneceram normais. Registrar, sem priorizar investigação. |
+| 🟩 Alta eficiência | Produção atingida, tempo menor e produtividade maior. É referência positiva; não requer investigação. |
 
-Clique em **Ver dossiê**. A parte “Dados do ERP (imutáveis)” mostra os valores recebidos; “Indicadores calculados pelo Kustos” mostra a interpretação. `% Tempo (ERP)` continua disponível apenas para conferência, nunca como sentença isolada. A competência (`data_referencia`) e a importação (`criado_em`) aparecem explicitamente no dossiê.
+Clique em **Ver dossiê**. O topo responde “Merece investigação?” e lista as evidências combinadas; a parte “Dados do ERP (imutáveis)” mostra os valores recebidos; “Indicadores calculados pelo Kustos” mostra a interpretação. `% Tempo (ERP)` continua disponível apenas para conferência, nunca como sentença isolada. A competência (`data_referencia`) e a importação (`criado_em`) aparecem explicitamente no dossiê.
 
 ---
 
@@ -192,3 +195,7 @@ A revisão dos PRs recentes apenas alinhou documentação ao estado do sistema. 
 ## Atualização 2026-07-30 — Auditoria de OP investigativa
 
 A aba OP agora organiza os apontamentos por motivo e provável causa, em vez de reproduzir a tabela do ERP. Parada alta sozinha não é problema: o Kustos só a interpreta juntamente com tempo, produtividade e atendimento da produção.
+
+## Atualização 2026-08-03 — decisão de investigação da OP
+
+A tabela ganhou a coluna **Decisão**. Ela informa se a OP merece investigação e a prioridade; ao abrir o dossiê, as evidências mostram o cruzamento de produção, tempo, KG/Hora e paradas que levou à conclusão. Competência (`data_referencia`) e importação (`criado_em`) seguem apenas como rastreabilidade do apontamento.

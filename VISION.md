@@ -191,3 +191,7 @@ O produto passa a interpretar corretamente OPs numéricas formatadas com separad
 ## Atualização 2026-07-30 — princípio investigativo da OP
 
 **Nenhum indicador isolado define criticidade.** Tempo alto, parada alta ou baixa produção só se tornam investigáveis pelo contexto dos demais fatos. A experiência da OP deixa de responder “qual número variou?” e passa a responder “qual o motivo de investigar esta execução?”.
+
+## Atualização 2026-08-03 — decisão operacional explicável
+
+A Auditoria de OP agora responde também **“esta operação merece investigação?”**. A resposta vem acompanhada de prioridade, motivo, provável causa e evidências combinadas, sem transformar um número isolado em incidente. Assim, tempo maior com produtividade preservada e aumento correspondente de produção é execução justificada; parada alta sem efeito em entrega, tempo ou produtividade é registro; já parada, atraso, queda de KG/Hora e déficit de produção juntos recebem prioridade máxima.

@@ -404,3 +404,10 @@ Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela 
 - Os fatos do ERP continuam imutáveis no dossiê (`Tempo Previsto/Real`, `KG/Hora Previsto/Real`, `% Tempo (ERP)`, quantidades e parada). O Kustos calcula separadamente **Desvio de Tempo**, **Desvio de Produtividade**, **Atendimento da Produção** e **Índice de Paradas**.
 - Nenhum indicador isolado define criticidade: parada só é hipótese principal quando acompanha atraso e produtividade normal/baixa; produtividade baixa com tempo alto e parada não material aponta gargalo de processo. `% Tempo (ERP)` é conferência contra o desvio de produtividade, nunca dupla penalidade.
 - O dossiê explicita competência (`data_referencia`) e o evento de importação (`criado_em`) sem misturá-los.
+
+## Atualização 2026-08-03 — MNT-OP-03: decisão investigativa combinada
+
+- A fila de OP passou a responder explicitamente se a execução **merece investigação**, com prioridade máxima, alta, monitoramento, registro ou nenhuma investigação necessária.
+- A decisão é derivada no motor puro pela leitura conjunta de produção, tempo, KG/Hora e paradas; o dossiê mostra as **evidências combinadas** que sustentam a conclusão.
+- Entrega com tempo alto, KG/Hora baixo e parada material sinaliza desperdício operacional; a mesma combinação com déficit de produção vira prioridade máxima por paradas com impacto. Em contrapartida, tempo maior explicado por volume maior não alerta, e parada sem efeito em entrega/tempo/produtividade é apenas registrada.
+- Não há mudança de schema nem dos fatos do ERP. `data_referencia` permanece a competência do recorte e `criado_em` apenas registra quando o apontamento entrou no sistema.
