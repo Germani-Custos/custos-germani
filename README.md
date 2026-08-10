@@ -6,6 +6,10 @@ Sistema operacional de auditoria analítica de custos. Não é um dashboard gen�
 
 ---
 
+## Atualizacao 2026-08-10 — contexto investigativo dinamico da OP
+
+O contexto da Auditoria de OP deixou de depender do cache da abertura da tela: apos importar, a fonte local e recarregada; a fila e o dossie sao recalculados pelo recorte selecionado, sem janela fixa de meses. `data_referencia` define a competencia; `criado_em` continua como rastreabilidade da entrada.
+
 ## Documentos estratégicos
 
 - `VISION.md`: identidade do produto, princípios e direção estratégica

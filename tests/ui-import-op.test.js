@@ -22,13 +22,13 @@ function fakeEl(extra = {}) {
   };
 }
 
-function setup(file) {
+function setup(file, onImported = vi.fn()) {
   const input = fakeEl({ files: [file], value: '', click: vi.fn() });
   const dom = { importOpInput: input, dropZoneOp: fakeEl() };
   const executeOperationalBoundary = async (_op, action) => action();
-  const { bindUpload } = createImportOpController({ dom, executeOperationalBoundary });
+  const { bindUpload } = createImportOpController({ dom, executeOperationalBoundary, onImported });
   bindUpload();
-  return { input };
+  return { input, onImported };
 }
 
 describe('createImportOpController — validação de extensão (case-insensitive)', () => {
@@ -58,7 +58,7 @@ describe('createImportOpController — validação de extensão (case-insensitiv
     api.importarApontamentosOp.mockResolvedValue({ data: { inseridos: 1, erros: [], logId: 10 }, error: null });
     global.Swal.fire.mockResolvedValue({ isConfirmed: true, value: '2026-07-01' });
 
-    const { input } = setup({ name: 'MCAP105.CSV' });
+    const { input, onImported } = setup({ name: 'MCAP105.CSV' });
     await input.emit('change');
 
     expect(api.importarApontamentosOp).toHaveBeenCalledWith({
@@ -67,6 +67,7 @@ describe('createImportOpController — validação de extensão (case-insensitiv
       arquivoNome: 'MCAP105.CSV'
     });
     expect(global.Swal.fire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'success' }));
+    expect(onImported).toHaveBeenCalledOnce();
   });
 
   it('aceita extensão em maiúsculas (.CSV) e segue para o parse', async () => {

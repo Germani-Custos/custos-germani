@@ -54,6 +54,7 @@ function getErpConferenceText(conferencia) {
  */
 export function createOpController({ dom, executeOperationalBoundary }) {
   let allRows = [];
+  let contextRows = [];
   let hasRunReport = false;
 
   function distinct(rows, key) {
@@ -129,6 +130,7 @@ export function createOpController({ dom, executeOperationalBoundary }) {
       fillEstagioSelect();
       refreshCascade();
       fillMotivoSelect();
+      if (hasRunReport) renderCurrentReport();
     }, { message: 'Falha ao carregar dados de OP. Reabra a aba ou importe o relatório de apontamentos de OP.' });
   }
 
@@ -139,6 +141,17 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     if (dom.selOpOp.value !== TODAS) filters.op = dom.selOpOp.value;
     if (dom.selOpProduto.value !== TODOS) filters.codProduto = dom.selOpProduto.value;
     return filters;
+  }
+
+  function applyQueryFilters(rows) {
+    const filters = buildQueryFilters();
+    return rows.filter(row => {
+      if (filters.estagio && String(row?.estagio) !== String(filters.estagio)) return false;
+      if (filters.origem !== undefined && String(row?.origem) !== String(filters.origem)) return false;
+      if (filters.op !== undefined && String(row?.op) !== String(filters.op)) return false;
+      if (filters.codProduto && String(row?.cod_produto) !== String(filters.codProduto)) return false;
+      return true;
+    });
   }
 
   function applyCompetenciaRange(rows) {
@@ -209,7 +222,7 @@ export function createOpController({ dom, executeOperationalBoundary }) {
   }
 
   function renderProductTimeline(codProduto) {
-    return allRows
+    return contextRows
       .filter(row => String(row.cod_produto) === String(codProduto))
       .slice()
       .sort((a, b) => String(a.data_referencia || '').localeCompare(String(b.data_referencia || '')))
@@ -286,13 +299,16 @@ export function createOpController({ dom, executeOperationalBoundary }) {
     dom.opDrillPanel.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
   }
 
+  function renderCurrentReport() {
+    const queue = buildOpInvestigationQueue(applyCompetenciaRange(applyQueryFilters(allRows)));
+    contextRows = queue;
+    renderKpis(queue);
+    renderTable(applyReasonFilter(queue));
+  }
+
   async function runOpReport() {
-    await executeOperationalBoundary('consultar apontamentos de OP', async () => {
-      const { data, error } = await api.getApontamentosOp(buildQueryFilters());
-      if (error) throw new Error(error.message || 'Falha ao consultar apontamentos de OP.');
-      const queue = buildOpInvestigationQueue(applyCompetenciaRange(data || []));
-      renderKpis(queue);
-      renderTable(applyReasonFilter(queue));
+    await executeOperationalBoundary('atualizar contexto investigativo de OP', async () => {
+      renderCurrentReport();
       hasRunReport = true;
     }, { message: 'Falha ao consultar apontamentos de OP. O contexto atual foi preservado.' });
   }

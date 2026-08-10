@@ -102,7 +102,7 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.selOpProduto.value).toBe('TODOS');
   });
 
-  it('runOpReport() chama api.getApontamentosOp com os filtros selecionados', async () => {
+  it('runOpReport() recalcula em memória com os filtros selecionados', async () => {
     const { dom, controller } = setup();
     await controller.bindOp();
     api.getApontamentosOp.mockClear();
@@ -111,7 +111,9 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     dom.selOpOrigem.value = '10';
     await controller.runOpReport();
 
-    expect(api.getApontamentosOp).toHaveBeenCalledWith({ estagio: 'EXTRUSAO', origem: '10' });
+    expect(api.getApontamentosOp).not.toHaveBeenCalled();
+    expect(dom.opTableBody.innerHTML).toContain('100');
+    expect(dom.opTableBody.innerHTML).not.toContain('200</td>');
   });
 
   it('prioriza gargalo quando tempo sobe e produtividade cai, independentemente do % Tempo do ERP', async () => {
@@ -151,6 +153,26 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.opTableBody.innerHTML).toContain('fev. de 2026');
     expect(dom.opTableBody.innerHTML).not.toContain('jan. de 2026');
     expect(dom.opTableBody.innerHTML).not.toContain('200</td>');
+  });
+
+  it('recalcula o contexto com dados novos e mantém o dossiê dentro do recorte atual', async () => {
+    const { dom, controller } = setup();
+    await controller.bindOp();
+    const novosDados = [...APONTAMENTOS, {
+      ...APONTAMENTOS[0], data_referencia: '2026-03-01', op: 102, criado_em: '2026-08-10T12:00:00Z'
+    }];
+    api.getApontamentosOp.mockResolvedValue({ data: novosDados, error: null });
+    await controller.reloadData();
+
+    dom.dtOpStart.value = '2026-03';
+    dom.dtOpEnd.value = '2026-03';
+    await controller.runOpReport();
+    dom.opTableBody.emitDossierClick(0);
+
+    expect(dom.opTableBody.innerHTML).toContain('102');
+    expect(dom.opDrillBody.innerHTML).toContain('102');
+    expect(dom.opDrillBody.innerHTML).not.toContain('<td>100</td>');
+    expect(dom.opDrillBody.innerHTML).not.toContain('<td>101</td>');
   });
 
   it('clicar numa linha abre o dossiê, separando fatos do ERP da interpretação do Kustos', async () => {

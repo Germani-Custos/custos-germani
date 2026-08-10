@@ -16,6 +16,8 @@ O sistema É:
 
 ---
 
+- Atualizacao 2026-08-10 (MNT-OP-04): `view/ui-op.js` usa uma carga local unica de `apontamentos_op`; filtros e periodo devem recalcular fila e dossie nela, e `view/ui-import-op.js` deve solicitar recarga apos importacao bem-sucedida. Nao usar periodo fixo nem consulta nova por mudanca pequena. `data_referencia` e competencia; `criado_em` e evento de importacao.
+
 # PRINCÍPIO MAIS IMPORTANTE
 
 ## Velocidade de investigação acima de tudo.

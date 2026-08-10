@@ -64,10 +64,10 @@ function buildPreviewHtml(rows, errors) {
 
 /**
  * Cria o controlador de importação de apontamentos de OP.
- * @param {{ dom?: Record<string, any>, executeOperationalBoundary: Function }} params
+ * @param {{ dom?: Record<string, any>, executeOperationalBoundary: Function, onImported?: Function }} params
  * @returns {{ bindUpload: Function }}
  */
-export function createImportOpController({ dom, executeOperationalBoundary }) {
+export function createImportOpController({ dom, executeOperationalBoundary, onImported = async () => {} }) {
   async function handleFile(file) {
     if (!isCsvFile(file)) {
       showToast('warning', 'Selecione um arquivo CSV de apontamentos (extensão .csv).');
@@ -119,6 +119,7 @@ export function createImportOpController({ dom, executeOperationalBoundary }) {
 
     const inseridos = data?.inseridos ?? 0;
     const houveFalha = (data?.erros?.length ?? 0) > 0;
+    await onImported();
     showToast(houveFalha ? 'warning' : 'success', `${inseridos} apontamento(s) de OP importado(s).`);
   }
 

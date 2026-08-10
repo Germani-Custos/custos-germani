@@ -4,6 +4,10 @@
 
 ---
 
+## Atualizacao 2026-08-10 — MNT-OP-04
+
+- [x] Contexto investigativo dinamico: a importacao renova a carga local e fila/dossie sao derivados dos filtros e da competencia atual, sem periodo fixo. `data_referencia` e recorte; `criado_em` e rastreabilidade.
+
 ## FASE 1 — CONSOLIDAÇÃO OPERACIONAL
 
 **Status: CONCLUÍDA**

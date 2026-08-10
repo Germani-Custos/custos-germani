@@ -8,6 +8,10 @@ O investigador deve encontrar o problema em segundos, não em minutos.
 
 ---
 
+## Atualizacao 2026-08-10 — contexto OP atual
+
+O cockpit acompanha a base disponivel e o recorte investigativo escolhido. Apos importacao, a carga local e atualizada; filtros e competencia recalculam contexto sem consultas repetidas. Competencia usa `data_referencia`; `criado_em` registra somente a entrada do apontamento.
+
 ## Identidade do Produto
 
 O Kustos Germani é um **motor de investigação operacional de custos**, não um dashboard.

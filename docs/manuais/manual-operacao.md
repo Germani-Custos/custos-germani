@@ -4,6 +4,10 @@ Procedimentos para **manter o sistema rodando** em produção: rotina mensal, ca
 
 ---
 
+## Atualizacao 2026-08-10 — conferencia apos importacao de OP
+
+Depois de importar MCAP105, confira a fila sem recarregar a pagina: o contexto e atualizado automaticamente. Os filtros De/Ate recortam a competencia (`data_referencia`), nunca a data de entrada (`criado_em`).
+
 ## 1. Rotina mensal de importação
 
 1. Obtenha a planilha de custos do ERP no formato `.xlsx`, referente a **uma competência** (mês).

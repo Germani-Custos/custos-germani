@@ -24,8 +24,8 @@ const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
-const importerOp = createImportOpController({ dom, executeOperationalBoundary });
 const opController = createOpController({ dom, executeOperationalBoundary });
+const importerOp = createImportOpController({ dom, executeOperationalBoundary, onImported: () => opController.reloadData() });
 const table = createTableController({
   dom,
   executeOperationalBoundary,

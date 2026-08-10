@@ -8,6 +8,10 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ---
 
+## Entrega 2026-08-10 — MNT-OP-04
+
+- [x] Contexto investigativo dinamico. Causa raiz: `allRows` era carregado somente na abertura e a importacao nao o renovava; o dossie tambem ignorava o recorte de competencia. Correcao: renovar a carga apos importar e derivar fila/dossie pelos filtros e por `data_referencia`, sem schema, RPC ou regra nova. `criado_em` permanece rastreabilidade. Regressao cobre dados novos e mudanca de competencia.
+
 ## Estabilizações operacionais concluídas
 
 - [x] **MNT-OP-01** 🟠 P — Diagnosticar e corrigir a persistência da Auditoria de OP. **Causa raiz confirmada:** 119 de 296 valores de OP do CSV real usam ponto de milhar (por exemplo, `2.081`); o conversor inteiro estrito devolvia `null` e a constraint `op NOT NULL` rejeitava o chunk. **Correção:** normalização exclusiva do campo `op` antes do parse inteiro + diagnóstico completo de erro por chunk em `src/services/api.js`, sem migrar o schema. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)

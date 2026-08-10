@@ -6,6 +6,10 @@ Guia de uso para quem **opera** o sistema no dia a dia (analistas, controladoria
 
 ---
 
+## Atualizacao 2026-08-10 — contexto de OP
+
+Apos importar apontamentos de OP, a fila e o dossie incorporam os dados novos automaticamente. Mudar filtros ou competencia atualiza o contexto ao recorte escolhido; competencia e `data_referencia`, enquanto `criado_em` aparece apenas como data de importacao.
+
 ## 1. Visão geral da tela
 
 A aplicação tem um **menu à esquerda** com quatro áreas principais:

@@ -6,6 +6,10 @@ Guia para **desenvolvedores e agentes de IA** que vão evoluir o sistema. Antes 
 
 ---
 
+## Atualizacao 2026-08-10 — ciclo do contexto de OP
+
+`createOpController` carrega `apontamentos_op` e deriva fila e historico pelos filtros e por `data_referencia`; `createImportOpController` recebe um callback que renova essa carga depois de importar. Nao ha periodo fixo ou nova consulta por filtro. `criado_em` permanece apenas evento de entrada.
+
 ## 1. Stack
 
 | Camada | Tecnologia | Observação |
