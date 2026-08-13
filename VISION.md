@@ -199,3 +199,6 @@ O produto passa a interpretar corretamente OPs numéricas formatadas com separad
 ## Atualização 2026-08-03 — decisão operacional explicável
 
 A Auditoria de OP agora responde também **“esta operação merece investigação?”**. A resposta vem acompanhada de prioridade, motivo, provável causa e evidências combinadas, sem transformar um número isolado em incidente. Assim, tempo maior com produtividade preservada e aumento correspondente de produção é execução justificada; parada alta sem efeito em entrega, tempo ou produtividade é registro; já parada, atraso, queda de KG/Hora e déficit de produção juntos recebem prioridade máxima.
+## Atualização 2026-08-13 — base mestre operacional
+
+Cadastro é apoio à investigação, não ERP administrativo: resolve produtos de Custos e OP na mesma dimensão mestre e preserva fatos ERP como evidência histórica.

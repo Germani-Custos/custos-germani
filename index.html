@@ -138,6 +138,10 @@
           <i class="ri-flow-chart"></i>
           <span>OP</span>
         </button>
+        <button class="nav-item" data-view-trigger="products">
+          <i class="ri-archive-line"></i>
+          <span>Cadastro</span>
+        </button>
         <button class="nav-item" data-view-trigger="documentation">
           <i class="ri-book-open-line"></i>
           <span>Documentação</span>
@@ -357,6 +361,21 @@
             <tbody id="op-table-body"></tbody>
           </table>
         </div>
+      </section>
+
+      <!-- ===== VIEW: CADASTRO MESTRE ===== -->
+      <section id="view-products" class="view hidden">
+        <header class="view-header"><h2>Cadastro</h2><p>Base mestre de produtos: fonte única de Origem, Família e Agrupamento investigativo para Custos e OP. Os fatos já importados não são alterados.</p></header>
+        <div class="panel"><div class="filters-grid">
+          <div class="field"><label for="master-search">Código ou descrição</label><input id="master-search" type="search" placeholder="Pesquisar produto" /></div>
+          <div class="field"><label for="master-origem-filter">Origem</label><select id="master-origem-filter"><option value="TODOS">Todas as origens</option></select></div>
+          <div class="field"><label for="master-familia-filter">Família</label><select id="master-familia-filter"><option value="TODOS">Todas as famílias</option></select></div>
+        </div><div class="actions-row"><span class="help-text"><strong id="master-missing-count">0</strong> código(s) importado(s) ausente(s) do cadastro mestre.</span><input id="master-import-input" class="hidden" type="file" accept=".xlsm,.XLSM" /><button id="master-import-btn" class="btn-outline">Importar XLSM mestre</button><button id="master-new-btn" class="btn-primary">Cadastrar produto</button></div></div>
+        <form id="master-form" class="panel hidden"><div class="filters-grid">
+          <div class="field"><label for="master-code">Código</label><input id="master-code" required /></div><div class="field"><label for="master-description">Descrição</label><input id="master-description" required /></div>
+          <div class="field"><label for="master-origem">Origem</label><select id="master-origem"></select></div><div class="field"><label for="master-familia">Família</label><select id="master-familia"></select></div><div class="field"><label for="master-agrupamento">Agrupamento investigativo</label><select id="master-agrupamento"></select></div>
+        </div><div class="actions-row"><button type="button" id="master-cancel-btn" class="btn-outline">Cancelar</button><button class="btn-primary">Salvar classificação</button></div></form>
+        <div class="panel table-panel"><table><thead><tr><th>Código</th><th>Descrição</th><th>Origem</th><th>Família</th><th>Agrupamento</th><th>Status</th><th>Ação</th></tr></thead><tbody id="master-table-body"></tbody></table></div>
       </section>
 
       <!-- ===== VIEW: DOCUMENTAÇÃO ===== -->

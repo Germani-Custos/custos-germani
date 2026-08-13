@@ -115,3 +115,6 @@ Objetivo: consolidar contratos de serviço e validação depois que o fluxo de i
 3. **Preservar a rede de segurança da Onda 2**: rodar lint/typecheck/test antes de concluir qualquer item aberto.
 4. **Não alterar comportamento funcional quando o item for estrutural**: refatorações devem manter UX, semântica temporal, cascata, exportação e contratos UI→API existentes.
 5. **Ao concluir**: marcar o checkbox aqui, atualizar manuais/`docs` afetados e registrar no log do `AGENTS.md`.
+## Concluído
+
+- [x] **CAD-01** — Cadastro mestre em `dicionario_produtos`: XLSM incremental, agrupamento investigativo manual e resolução compartilhada por Custos/OP sem segunda fonte de verdade.

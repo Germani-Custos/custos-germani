@@ -204,7 +204,7 @@ export function createOpController({ dom, executeOperationalBoundary }) {
           <td class="op-decision-cell"><span class="badge op-decision ${escapeHtml(decisao.tone)}">${escapeHtml(decisao.label)}</span><small>${escapeHtml(decisao.acao)}</small></td>
           <td><span class="badge op-reason ${escapeHtml(classificacao.tone)}">${escapeHtml(classificacao.motivo)}</span></td>
           <td class="op-cause-cell">${escapeHtml(classificacao.causaProvavel)}</td>
-          <td><div class="product-main"><strong>${escapeHtml(row.cod_produto)}</strong><small>${escapeHtml(row.descricao)}</small><small>${escapeHtml(row.estagio)} · Origem ${escapeHtml(row.origem)}</small></div></td>
+          <td><div class="product-main"><strong>${escapeHtml(row.cod_produto)}</strong><small>${escapeHtml(row.descricao)}</small><small>${escapeHtml(row.estagio)} · Cadastro mestre: ${escapeHtml(row.classificacaoMestre?.origem || 'Sem classificação')} / ${escapeHtml(row.classificacaoMestre?.familia || '-')}</small></div></td>
           <td>${formatPercent(indicadores.atendimentoProducaoPct)}</td>
           <td class="${metricClass(indicadores.desvioTempoPct, true)}">${formatPercent(indicadores.desvioTempoPct, { signed: true })}</td>
           <td class="${metricClass(indicadores.desvioProdutividadePct, false)}">${formatPercent(indicadores.desvioProdutividadePct, { signed: true })}</td>
@@ -260,6 +260,11 @@ export function createOpController({ dom, executeOperationalBoundary }) {
         </div>
       </section>
       <section class="op-dossier-section">
+        <h4>Classificação atual do cadastro mestre</h4>
+        <div class="details-grid"><span><strong>Status:</strong> ${escapeHtml(row.classificacaoMestre?.status === 'classificado' ? 'Classificado' : row.classificacaoMestre?.status === 'ausente' ? 'Produto sem classificação' : 'Classificação incompleta')}</span><span><strong>Origem:</strong> ${escapeHtml(row.classificacaoMestre?.origem || '-')}</span><span><strong>Família:</strong> ${escapeHtml(row.classificacaoMestre?.familia || '-')}</span></div>
+        ${row.classificacaoMestre?.status === 'ausente' ? `<button type="button" class="btn-outline btn-sm" data-register-product="${escapeHtml(row.cod_produto)}" data-register-description="${escapeHtml(row.descricao || '')}">Cadastrar produto</button>` : ''}
+      </section>
+      <section class="op-dossier-section">
         <h4>Dados do ERP (imutáveis)</h4>
         <div class="details-grid">
           <span><strong>Qtd. prevista:</strong> ${formatNum(row.qtd_prevista)} ${escapeHtml(row.unidade)}</span>
@@ -293,6 +298,11 @@ export function createOpController({ dom, executeOperationalBoundary }) {
         </table>
       </section>
     `;
+    dom.opDrillBody.onclick = event => {
+      const trigger = event.target?.closest?.('[data-register-product]');
+      if (!trigger) return;
+      document.dispatchEvent(new window.CustomEvent('kustos:register-product', { detail: { codigo: trigger.dataset.registerProduct, descricao: trigger.dataset.registerDescription } }));
+    };
     /* eslint-enable no-restricted-syntax */
 
     dom.opDrillPanel.classList.remove('hidden');

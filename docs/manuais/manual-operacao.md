@@ -174,3 +174,6 @@ O procedimento de OP passa a iniciar pela explicação do Kustos e não por uma 
 ## Atualização 2026-08-03 — decisão e escalonamento de OP
 
 Use a prioridade máxima para interromper a fila e investigar paradas com impacto em produção, tempo e KG/Hora. Prioridade alta cobre desperdício com entrega ou baixa produção sem redução de tempo. Registre, sem escalar, parada sem impacto; não abra incidente por tempo maior quando a produção maior explicar o consumo e a produtividade estiver estável. Essas decisões não mudam o uso de `data_referencia` (competência) ou `criado_em` (entrada do lote).
+## Atualização 2026-08-13 — operar o Cadastro
+
+Antes de importar o XLSM, confirme que Origem e Família existentes no arquivo estão cadastradas no ambiente. Pendências de produto inválido ou categoria desconhecida não substituem valores atuais. O Cadastro representa classificação atual e não altera fatos de Custos ou OP.

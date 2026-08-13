@@ -24,6 +24,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
+| UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` como fonte única de Origem/Família | Sim | ✅ (TAREFA-3) |
 
 ## 2) Matriz API → Banco
 

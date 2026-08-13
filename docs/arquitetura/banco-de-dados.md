@@ -23,6 +23,10 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `familia_id` UUID
 - `agrupamento_cod` TEXT FK → `categorias_agrupamento.codigo`
 
+É o **cadastro mestre ativo** e a única fonte de Origem/Família para Custos e OP. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
+
+> `sql/dicionario_master_produtos.sql` é um artefato legado de carga e cria uma tabela paralela que não é consumida pela aplicação. Não deve ser aplicada como nova fonte de verdade.
+
 ### `categorias_origem`
 - `id` UUID (chave técnica)
 - `codigo` TEXT (chave de negócio)

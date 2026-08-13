@@ -415,3 +415,6 @@ Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela 
 - A decisão é derivada no motor puro pela leitura conjunta de produção, tempo, KG/Hora e paradas; o dossiê mostra as **evidências combinadas** que sustentam a conclusão.
 - Entrega com tempo alto, KG/Hora baixo e parada material sinaliza desperdício operacional; a mesma combinação com déficit de produção vira prioridade máxima por paradas com impacto. Em contrapartida, tempo maior explicado por volume maior não alerta, e parada sem efeito em entrega/tempo/produtividade é apenas registrada.
 - Não há mudança de schema nem dos fatos do ERP. `data_referencia` permanece a competência do recorte e `criado_em` apenas registra quando o apontamento entrou no sistema.
+## Atualização 2026-08-13 — Cadastro mestre de produtos
+
+A aba **Cadastro** mantém `dicionario_produtos` como fonte única de produtos para Custos e OP. Importa o XLSM incrementalmente: valores ERP preenchidos atualizam Produto/Descrição/Origem/Família; campos vazios e produtos ausentes do arquivo são preservados; fatos continuam imutáveis.

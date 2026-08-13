@@ -73,6 +73,7 @@ function buildImportPreview(rows, mapping, produtos = []) {
 }
 
 async function confirmImportPreview(preview, totalColunasValidas) {
+  const produtosSemCadastro = preview.rows.filter(row => row.issues.some(issue => issue.text === 'Produto não encontrado no cadastro')).length;
   const previewRows = preview.rows.slice(0, IMPORT_PREVIEW_DISPLAY_LIMIT).map(row => {
     const statusIcon = row.status === 'valid' ? '🟢 válida' : row.status === 'warning' ? '🟡 atenção' : '🔴 erro';
     return `
@@ -101,6 +102,7 @@ async function confirmImportPreview(preview, totalColunasValidas) {
         </table>
       </div>
       <p style="margin-top:10px;">Somente linhas sem erro serão gravadas.</p>
+      ${produtosSemCadastro ? `<p style="margin-top:6px; color:#b45309;"><b>${produtosSemCadastro}</b> produto(s) sem cadastro: após importar, use <b>Cadastro → Cadastrar produto</b> para resolvê-los sem inventar classificação.</p>` : ''}
     `,
     showCancelButton: true,
     confirmButtonText: `Confirmar importação (${preview.validRows.length} linhas)`,

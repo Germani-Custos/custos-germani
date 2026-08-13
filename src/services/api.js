@@ -4,6 +4,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 import { appConfig, debugLog } from '../config/app-config.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
+import { buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
 
 /**
  * @typedef {import('../../core/report-engine.js').Masters} Masters
@@ -514,6 +515,57 @@ export const api = {
       diagnostico_sem_mapa: await runDiagnosticoSemAgrupamento(),
       error: null
     };
+  },
+
+  /** Cadastro mestre: a mesma dimensão consultada por Custos e OP. */
+  async getProductMaster() {
+    const [produtosResult, origensResult, familiasResult, agrupamentosResult, historicoResult, opResult] = await Promise.all([
+      supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod').order('codigo_produto'),
+      supabase.from(TABLES.origem).select('id, descricao').order('descricao'),
+      supabase.from(TABLES.familia).select('id, descricao').order('descricao'),
+      supabase.from(TABLES.agrupamento).select('*').order('descricao'),
+      supabase.from(TABLES.historico).select('codigo_produto'),
+      supabase.from(TABLES.apontamentosOp).select('cod_produto')
+    ]);
+    const error = produtosResult.error || origensResult.error || familiasResult.error || agrupamentosResult.error || historicoResult.error || opResult.error;
+    if (error) return fail('Falha ao carregar o cadastro mestre de produtos.', { metodo: 'getProductMaster' }, error);
+    const produtos = (produtosResult.data || []).map(item => ({ ...item, codigo_produto: normalizeCodigoProduto(item.codigo_produto) })).filter(item => item.codigo_produto);
+    const index = createProductMasterIndex(produtos);
+    const codigosImportados = [...(historicoResult.data || []), ...(opResult.data || [])]
+      .map(item => normalizeCodigoProduto(item.codigo_produto ?? item.cod_produto)).filter(Boolean);
+    const ausentes = [...new Set(codigosImportados)].filter(codigo => !index.has(codigo)).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    const agrupamentos = normalizeMasterRows((agrupamentosResult.data || []).map(row => ({ ...row, id: row?.codigo ?? resolveMasterId(row) })));
+    return ok({ produtos, origens: normalizeMasterRows(origensResult.data || []), familias: normalizeMasterRows(familiasResult.data || []), agrupamentos, ausentes });
+  },
+
+  async upsertProductMaster(payload = {}) {
+    const codigo = normalizeCodigoProduto(payload.codigo_produto);
+    if (!codigo) return fail('Código do produto é obrigatório.', { metodo: 'upsertProductMaster' });
+    const { data: current, error: currentError } = await supabase.from(TABLES.dicionario)
+      .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod').eq('codigo_produto', codigo).maybeSingle();
+    if (currentError) return fail('Falha ao consultar o cadastro mestre do produto.', { metodo: 'upsertProductMaster' }, currentError);
+    const next = buildProductMasterPayload({ ...current, ...payload, codigo_produto: codigo });
+    const { error } = await supabase.from(TABLES.dicionario).upsert(next, { onConflict: 'codigo_produto' });
+    if (error) return fail('Falha ao atualizar o cadastro mestre do produto.', { metodo: 'upsertProductMaster' }, error);
+    return ok({ codigo_produto: codigo });
+  },
+
+  /** Importa o XLSM oficial de forma incremental; campos ERP vazios não apagam o cadastro. */
+  async importProductMasterXlsm(rows = []) {
+    const [produtosResult, origensResult, familiasResult] = await Promise.all([
+      supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod'),
+      supabase.from(TABLES.origem).select('id, codigo, descricao'),
+      supabase.from(TABLES.familia).select('id, codigo, descricao')
+    ]);
+    const error = produtosResult.error || origensResult.error || familiasResult.error;
+    if (error) return fail('Falha ao preparar a importação do mestre de produtos.', { metodo: 'importProductMasterXlsm' }, error);
+    const reconciliation = reconcileProductMasterImport(rows, { produtos: produtosResult.data || [], origens: origensResult.data || [], familias: familiasResult.data || [] });
+    if (!reconciliation.rows.length) return ok({ importados: 0, ...reconciliation });
+    const { error: upsertError } = await supabase.from(TABLES.dicionario).upsert(
+      reconciliation.rows.map(buildProductMasterPayload), { onConflict: 'codigo_produto' }
+    );
+    if (upsertError) return fail('Falha ao gravar o mestre de produtos.', { metodo: 'importProductMasterXlsm' }, upsertError);
+    return ok({ importados: reconciliation.rows.length, ...reconciliation });
   },
 
   subscribeFiltrosRealtime(onChange) {
@@ -1075,6 +1127,22 @@ export const api = {
       .order('op', { ascending: true });
 
     if (error) return fail('Falha ao consultar apontamentos de OP.', { metodo: 'getApontamentosOp' }, error);
-    return ok(data || []);
+    const rows = data || [];
+    const codigos = [...new Set(rows.map(row => normalizeCodigoProduto(row.cod_produto)).filter(Boolean))];
+    if (!codigos.length) return ok(rows);
+    const [produtosResult, origensResult, familiasResult] = await Promise.all([
+      supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id').in('codigo_produto', codigos),
+      supabase.from(TABLES.origem).select('id, descricao'),
+      supabase.from(TABLES.familia).select('id, descricao')
+    ]);
+    const masterError = produtosResult.error || origensResult.error || familiasResult.error;
+    if (masterError) return fail('Falha ao enriquecer OP com o cadastro mestre.', { metodo: 'getApontamentosOp', tabela: TABLES.dicionario }, masterError);
+    const productIndex = createProductMasterIndex(produtosResult.data || []);
+    const origins = new Map((origensResult.data || []).map(row => [String(row.id), row.descricao]));
+    const families = new Map((familiasResult.data || []).map(row => [String(row.id), row.descricao]));
+    return ok(rows.map(row => {
+      const resolved = resolveProductClassification(row, productIndex);
+      return { ...row, classificacaoMestre: { status: resolved.status, origem: resolved.produto ? origins.get(String(resolved.produto.origem_id)) || null : null, familia: resolved.produto ? families.get(String(resolved.produto.familia_id)) || null : null } };
+    }));
   }
 };

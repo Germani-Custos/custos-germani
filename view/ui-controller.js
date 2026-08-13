@@ -18,6 +18,7 @@ import { createOpController } from './ui-op.js';
 import { createFiltersController } from './ui-filters.js';
 import { createExportController } from './ui-export.js';
 import { createTableController } from './ui-table.js';
+import { createProductMasterController } from './ui-product-master.js';
 
 const state = createInitialState();
 const dom = getDomRefs();
@@ -25,6 +26,7 @@ const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
 const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
 const opController = createOpController({ dom, executeOperationalBoundary });
+const productMaster = createProductMasterController({ dom, executeOperationalBoundary, onChanged: async () => { await loadMasters({ force: true }); await opController.reloadData(); } });
 const importerOp = createImportOpController({ dom, executeOperationalBoundary, onImported: () => opController.reloadData() });
 const table = createTableController({
   dom,
@@ -91,6 +93,12 @@ async function init() {
   bindNavigation();
   importer.bindUpload();
   importerOp.bindUpload();
+  productMaster.bind();
+  document.addEventListener('kustos:register-product', event => {
+    const detail = event.detail || {};
+    dom.navItems.find(item => item.dataset.viewTrigger === 'products')?.click();
+    productMaster.openEditor(detail.codigo || '', detail.descricao || '');
+  });
   filters.bindFilters();
   bindSearch();
   bindDocumentationView(dom);

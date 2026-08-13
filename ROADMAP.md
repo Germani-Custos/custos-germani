@@ -206,3 +206,8 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 - [x] **MNT-OP-03** — a interpretação de OP agora entrega uma decisão explícita (`mereceInvestigacao`), prioridade e evidências combinadas no motor puro. A fila e o dossiê mostram a resposta operacional sem alterar schema ou fatos do ERP.
 - Cobertos os cenários de desperdício com entrega, excelente execução, baixa produção, tempo justificado por volume, parada sem impacto e parada com perda de produtividade/atraso/déficit de produção (prioridade máxima).
 - A semântica temporal não mudou: `data_referencia` filtra competência; `criado_em` informa o evento de importação e não participa das fórmulas.
+## Atualização 2026-08-13 — Cadastro mestre de produtos
+
+- [x] Aba Cadastro sobre `dicionario_produtos`, sem fonte paralela.
+- [x] Importação incremental do XLSM e agrupamento investigativo manual.
+- [x] Resolução compartilhada por Custos e Auditoria de OP.

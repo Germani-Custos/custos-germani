@@ -4,7 +4,7 @@
 **Origem → Família → Agrupamento → Produto**
 
 ## Fonte da hierarquia
-- `dicionario_produtos` fornece `origem_id`, `familia_id`, `agrupamento_cod` por produto.
+- `dicionario_produtos` é o cadastro mestre ativo e fornece `origem_id`, `familia_id`, `agrupamento_cod` por produto para Custos e OP.
 - `categorias_origem` e `categorias_familia` enriquecem com descrição.
 
 ## Fonte de custos

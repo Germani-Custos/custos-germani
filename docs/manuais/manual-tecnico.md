@@ -269,3 +269,6 @@ O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js
 ## Atualização 2026-07-30 — contrato OP: ERP x Kustos
 
 O contrato da OP separa fatos de interpretação. Qualquer regra futura deve ampliar `core/op-investigation-engine.js`, com regressão para a combinação de sinais correspondente; não colocar fórmula ou classificação inline em `ui-op.js`.
+## Atualização 2026-08-13 — Cadastro mestre
+
+`dicionario_produtos` é a dimensão mestre ativa. `core/product-master-engine.js` reconcilia XLSM por `normalizeCodigoProduto()`: ERP não vazio atualiza descrição/origem/família, vazio preserva dados e `agrupamento_cod` permanece manual. A OP é enriquecida em leitura, sem regravar fatos.

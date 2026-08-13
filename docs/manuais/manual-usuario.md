@@ -203,3 +203,6 @@ A aba OP agora organiza os apontamentos por motivo e provável causa, em vez de 
 ## Atualização 2026-08-03 — decisão de investigação da OP
 
 A tabela ganhou a coluna **Decisão**. Ela informa se a OP merece investigação e a prioridade; ao abrir o dossiê, as evidências mostram o cruzamento de produção, tempo, KG/Hora e paradas que levou à conclusão. Competência (`data_referencia`) e importação (`criado_em`) seguem apenas como rastreabilidade do apontamento.
+## Atualização 2026-08-13 — Cadastro
+
+Use **Cadastro** para pesquisar, editar ou cadastrar produtos e preencher o Agrupamento investigativo. O XLSM mestre atualiza apenas dados preenchidos; células vazias e produtos fora do arquivo não apagam o cadastro. Para **Produto sem classificação**, escolha **Cadastrar produto** e não invente Origem ou Família.
