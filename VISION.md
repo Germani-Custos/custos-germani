@@ -103,7 +103,7 @@ Disponível como KPI clicável e como coluna na tabela.
 - `MUITO INSTÁVEL`: score ≥ 8%
 
 ### Export para Excel
-O relatório atual pode ser exportado como `.xlsx` com todos os campos analíticos, incluindo classificação de regime.
+O relatório atual pode ser exportado como `.xlsx` com os campos analíticos que o investigador selecionar, incluindo classificação de regime. A seleção começa completa e preserva a ordem investigativa das colunas.
 
 ### Alerta de produtos sem categoria
 Banner visível na tela de importação quando há produtos sem categorização completa no dicionário. Quando o diagnóstico de órfãos está indisponível, o sistema deve avisar explicitamente que não foi possível validar produtos sem agrupamento, diferenciando falha operacional de ausência real de órfãos.

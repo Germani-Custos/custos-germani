@@ -144,7 +144,7 @@ Você pode **ordenar** clicando no cabeçalho de uma coluna.
 
 ## 6. Exportar para Excel
 
-Na Auditoria, clique em **"Exportar"** (rode a análise antes). Gera um `.xlsx` com **duas abas**:
+Na Auditoria, clique em **"Exportar"** (rode a análise antes). No popup, todos os campos começam marcados: desmarque os que não deseja levar e confirme; cancelar não gera arquivo. A ordem das colunas segue a lista do popup. O arquivo gera duas abas:
 - **Contexto** — período, filtros aplicados, ordenação e total de itens.
 - **Fila Investigativa** — a lista priorizada com criticidade, regime, variações, contexto e custos.
 

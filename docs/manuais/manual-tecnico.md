@@ -39,6 +39,7 @@ view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-import-op.js        # createImportOpController(): upload CSV latin-1, preview e gravação de apontamentos de OP
   ui-op.js               # createOpController(): filtros, fila por motivo e dossiê da Auditoria de OP
   ui-table.js            # createTableController(): fila investigativa, detalhes e presenter operacional
+  ui-export.js           # createExportController(): seleção de colunas, XLSX e sanitização anti-fórmula
   ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
   ui-state.js            # createInitialState(): estado central
   ui-utils.js            # escapeHtml, debounce, fillSelect seguro por DOM, showToast, formatadores

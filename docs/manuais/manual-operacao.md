@@ -154,6 +154,10 @@ Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** dev
 2. Para fragilidades/itens em aberto, veja [`docs/auditoria/`](../auditoria/README.md).
 3. **Atualize esta documentação** ao descobrir um procedimento novo — ver [Regras Gerais](../regras-gerais.md). Documentação desatualizada é incidente operacional.
 
+## Atualização 2026-08-24 — exportação XLSX por campos
+
+O popup de exportação parte com todos os campos da Fila Investigativa selecionados. O operador pode desmarcar colunas; a planilha usa somente essa seleção, conserva a ordem exibida e não consulta o Supabase. Cancelar encerra o fluxo sem gerar arquivo.
+
 ## Atualização 2026-08-24 — recorte do drill-through de Custos
 
 Ao validar um produto no drill-through, o painel consulta exclusivamente as competências selecionadas no relatório. Em um recorte de Junho e Agosto, a comparação é feita entre esses dois registros; Julho não entra como mês intermediário. A competência continua sendo `data_referencia` e a data de importação continua sendo `criado_em`.

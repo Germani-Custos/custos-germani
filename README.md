@@ -56,7 +56,7 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
    - **Alertas (>5%)**: variações absolutas ≥ 5% entre as duas últimas importações (`criado_em`), usando a mesma regra do filtro rápido/exportação
    - **Mudanças de Regime**: produtos que eram ESTÁVEL e ficaram instáveis
    - **Média de variação**: variações positivas
-6. Exportar relatório operacional para Excel (XLSX com abas `Contexto` e `Fila Investigativa`)
+6. Exportar relatório operacional para Excel: selecionar os campos desejados e gerar XLSX com abas `Contexto` e `Fila Investigativa`
 
 ---
 
@@ -162,6 +162,7 @@ A exportação foi desenhada para preservar contexto operacional e acelerar hand
 - Gera duas abas: **`Contexto`** (filtros/período/metadata da execução) e **`Fila Investigativa`** (itens priorizados para ação).
 - Sem ordenação manual ativa, aplica ordenação automática por prioridade investigativa: **criticidade → mudança de regime → magnitude → reincidência → instabilidade**.
 - Cada linha exportada inclui **contexto pré-interpretado** para reduzir leitura manual posterior.
+- Antes de gerar o arquivo, o investigador pode selecionar quais colunas da fila levar; todas começam marcadas e a ordem original é preservada.
 - O nome do arquivo inclui o **período analisado** para rastreabilidade.
 
 ### TOP VARIAÇÕES

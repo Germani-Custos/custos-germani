@@ -80,7 +80,7 @@ Temporalidade: a seleção do relatório continua por `data_referencia`; o alert
 
 | Camada | Método/Campo | Esperado | Existe? | Status |
 |---|---|---|---|---|
-| exportação | abas `Contexto` + `Fila Investigativa` | Handoff operacional | Sim | ✅ |
+| exportação | abas `Contexto` + `Fila Investigativa` | Handoff operacional; popup seleciona colunas da fila a partir do estado já carregado, sem nova consulta | Sim | ✅ |
 | exportação | ordenação automática por criticidade (quando sem ordenação manual) | Priorização investigativa | Sim | ✅ |
 | exportação | metadados de período e temporalidade (`data_referencia` x `criado_em`) | Rastreabilidade | Sim | ✅ |
 

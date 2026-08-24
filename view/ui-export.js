@@ -15,6 +15,59 @@ import { isAlertaCritico } from '../core/report-engine.js';
 import { formatCurrencyBRL, showToast } from './ui-utils.js';
 import { getRowsMatchingQuickFilter, compareRowsBySort } from './ui-filters.js';
 
+const EXPORT_COLUMNS = Object.freeze([
+  { key: 'Prioridade #', label: 'Prioridade', width: 10 },
+  { key: 'Produto (código)', label: 'Produto', width: 20 },
+  { key: 'Produto (descrição)', label: 'Descrição', width: 40 },
+  { key: 'Criticidade', label: 'Criticidade', width: 14 },
+  { key: 'Mudança de regime', label: 'Mudança de regime', width: 18 },
+  { key: 'Variação da última importação (%)', label: 'Delta em % (última importação)', width: 16 },
+  { key: 'Variação no período (%)', label: 'Variação no período (%)', width: 14 },
+  { key: 'Delta monetário última importação (R$)', label: 'Delta em R$ (última importação)', width: 16 },
+  { key: 'Contexto investigativo', label: 'Contexto investigativo', width: 50 },
+  { key: 'Reincidência de alerta', label: 'Reincidência de alerta', width: 16 },
+  { key: 'Score de instabilidade (%)', label: 'Score de instabilidade (%)', width: 16 },
+  { key: 'Regime', label: 'Regime', width: 16 },
+  { key: 'Competência de referência (data_referencia)', label: 'Competência de referência', width: 16 },
+  { key: 'Importado em (criado_em)', label: 'Importado em', width: 22 },
+  { key: 'Último custo (R$)', label: 'Custo atual', width: 16 },
+  { key: 'Penúltimo custo (R$)', label: 'Custo anterior', width: 16 },
+  { key: 'Histórico resumido', label: 'Histórico resumido', width: 36 }
+]);
+
+export function selectExportColumns(row, selectedKeys) {
+  const selected = new Set(selectedKeys);
+  return Object.fromEntries(EXPORT_COLUMNS
+    .filter(column => selected.has(column.key))
+    .map(column => [column.key, row[column.key]]));
+}
+
+export async function chooseExportColumns() {
+  const optionsHtml = EXPORT_COLUMNS.map(column => `
+    <label style="display:block;text-align:left;margin:6px 0;cursor:pointer;">
+      <input type="checkbox" value="${column.key}" checked> ${column.label}
+    </label>
+  `).join('');
+
+  const result = await Swal.fire({
+    title: 'Selecionar campos para exportação',
+    html: `<div id="export-column-picker" style="max-height:360px;overflow-y:auto;padding:0 4px;">${optionsHtml}</div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Exportar XLSX',
+    cancelButtonText: 'Cancelar',
+    preConfirm: () => {
+      const selected = Array.from(Swal.getPopup().querySelectorAll('input[type="checkbox"]:checked')).map(input => input.value);
+      if (!selected.length) {
+        Swal.showValidationMessage('Selecione pelo menos um campo para exportar.');
+        return false;
+      }
+      return selected;
+    }
+  });
+
+  return result.isConfirmed ? result.value : null;
+}
+
 // getOperationalPriority permanece em ui-controller.js (também usado pela tabela)
 // e é recebido por injeção; aqui entra como parâmetro para manter estas funções
 // puras e testáveis isoladamente.
@@ -77,14 +130,17 @@ export function createExportController({ dom, state, executeOperationalBoundary,
     return [...filteredRows].sort((a, b) => compareByInvestigativePriority(a, b, getOperationalPriority));
   }
 
-  function exportReport() {
+  async function exportReport() {
     if (!state.reportRows.length) {
       showToast('warning', 'Rode a análise antes de exportar.');
       return;
     }
 
+    const selectedColumns = await chooseExportColumns();
+    if (!selectedColumns) return;
+
     // Fronteira operacional da exportação: mantém a análise atual mesmo se XLSX falhar.
-    executeOperationalBoundary('exportar relatório investigativo', async () => {
+    await executeOperationalBoundary('exportar relatório investigativo', async () => {
       const investigationRows = getRowsFromCurrentInvestigationState();
       const filtrosAtivos = [
         `Origem: ${dom.selO.options[dom.selO.selectedIndex]?.textContent || 'TODAS'}`,
@@ -106,7 +162,7 @@ export function createExportController({ dom, state, executeOperationalBoundary,
       const exportData = investigationRows.map((row, idx) => {
         const prioridade = getOperationalPriority(row);
         const rank = getInvestigationRankScore(row, getOperationalPriority);
-        return {
+        const completeRow = {
           'Prioridade #': idx + 1,
           'Produto (código)': sanitizeCsvFormula(row.codigo),
           'Produto (descrição)': sanitizeCsvFormula(row.descricao),
@@ -125,15 +181,13 @@ export function createExportController({ dom, state, executeOperationalBoundary,
           'Penúltimo custo (R$)': row.penultimoCusto ?? '—',
           'Histórico resumido': `Inicial R$ ${formatCurrencyBRL(row.inicial)} -> Final R$ ${formatCurrencyBRL(row.final)}`
         };
+        return selectExportColumns(completeRow, selectedColumns);
       });
 
       const wsMeta = XLSX.utils.json_to_sheet(metadataRows);
       const wsData = XLSX.utils.json_to_sheet(exportData);
       wsData['!autofilter'] = { ref: wsData['!ref'] };
-      wsData['!cols'] = [
-        { wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
-        { wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 36 }
-      ];
+      wsData['!cols'] = EXPORT_COLUMNS.filter(column => selectedColumns.includes(column.key)).map(column => ({ wch: column.width }));
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, wsMeta, 'Contexto');

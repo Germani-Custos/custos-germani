@@ -7,7 +7,9 @@ vi.mock('../src/services/api.js', () => ({ api: {} }));
 import {
   sanitizeCsvFormula,
   buildExportFilename,
-  compareByInvestigativePriority
+  compareByInvestigativePriority,
+  selectExportColumns,
+  createExportController
 } from '../view/ui-export.js';
 
 // ── SEC-04: sanitizeCsvFormula (mitigação de formula injection) ────────────────
@@ -103,5 +105,80 @@ describe('compareByInvestigativePriority — ordem de prioridade investigativa',
     const b = row({ codigo: 'A002' });
     expect(compareByInvestigativePriority(a, b, priorityByLabel)).toBeLessThan(0);
     expect(compareByInvestigativePriority(b, a, priorityByLabel)).toBeGreaterThan(0);
+  });
+});
+
+describe('exportação com seleção de campos', () => {
+  const exportRow = () => ({
+    codigo: 'P001', descricao: 'Produto teste', mudouRegime: false,
+    variacaoTemporal: 5, variacao: 8, diferenca: 12.5,
+    scoreInstabilidade: 2, classificacaoInstabilidade: 'ESTÁVEL',
+    dataCompetencia: '2026-08-01', ultimaAtualizacao: '2026-08-10T10:00:00Z',
+    ultimoCusto: 112.5, penultimoCusto: 100, inicial: 100, final: 108
+  });
+
+  function setupExport() {
+    const dom = {
+      dtStart: { value: '2026-06-01' }, dtEnd: { value: '2026-08-01' },
+      selO: { options: [{ textContent: 'TODAS' }], selectedIndex: 0 },
+      selF: { options: [{ textContent: 'TODAS' }], selectedIndex: 0 },
+      selA: { options: [{ textContent: 'TODOS' }], selectedIndex: 0 },
+      selI: { value: 'TODOS' }
+    };
+    const state = { reportRows: [exportRow()], reportView: { quickFilter: 'all', sortKey: null, sortDirection: 'desc' } };
+    const executeOperationalBoundary = vi.fn(async (_operation, action) => action());
+    const controller = createExportController({
+      dom, state, executeOperationalBoundary,
+      getOperationalPriority: () => ({ label: '🟢 Estável' }),
+      buildInvestigativeSummary: () => 'Resumo'
+    });
+    return { controller, executeOperationalBoundary };
+  }
+
+  beforeEach(() => {
+    global.XLSX = {
+      utils: {
+        json_to_sheet: vi.fn(() => ({ '!ref': 'A1' })),
+        book_new: vi.fn(() => ({})),
+        book_append_sheet: vi.fn()
+      },
+      writeFile: vi.fn()
+    };
+    global.Swal = { fire: vi.fn(), getPopup: vi.fn(), showValidationMessage: vi.fn() };
+  });
+
+  afterEach(() => { delete global.XLSX; delete global.Swal; });
+
+  it('mantém a ordem definida pela exportação, mesmo que a seleção venha em outra ordem', () => {
+    const selected = selectExportColumns(
+      { 'Produto (código)': 'P001', 'Último custo (R$)': 112.5, 'Criticidade': '🟢 Estável' },
+      ['Último custo (R$)', 'Produto (código)', 'Criticidade']
+    );
+    expect(Object.keys(selected)).toEqual(['Produto (código)', 'Criticidade', 'Último custo (R$)']);
+  });
+
+  it('abre a seleção com todos os campos marcados e não gera arquivo ao cancelar', async () => {
+    global.Swal.fire.mockResolvedValue({ isConfirmed: false });
+    const { controller, executeOperationalBoundary } = setupExport();
+
+    await controller.exportReport();
+
+    expect(global.Swal.fire.mock.calls[0][0].html).toContain('checked');
+    expect(executeOperationalBoundary).not.toHaveBeenCalled();
+    expect(global.XLSX.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('gera a fila apenas com os campos escolhidos, usando o estado atual', async () => {
+    global.Swal.fire.mockResolvedValue({
+      isConfirmed: true,
+      value: ['Produto (código)', 'Delta monetário última importação (R$)', 'Último custo (R$)']
+    });
+    const { controller } = setupExport();
+
+    await controller.exportReport();
+
+    const exportedRows = global.XLSX.utils.json_to_sheet.mock.calls[1][0];
+    expect(Object.keys(exportedRows[0])).toEqual(['Produto (código)', 'Delta monetário última importação (R$)', 'Último custo (R$)']);
+    expect(exportedRows[0]).toMatchObject({ 'Produto (código)': 'P001', 'Delta monetário última importação (R$)': 12.5, 'Último custo (R$)': 112.5 });
   });
 });

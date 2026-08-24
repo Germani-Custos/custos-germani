@@ -43,7 +43,7 @@ Objetivo: transformar o sistema de dashboard em motor de investigação.
 - Badge de tendência (🟢 Estável / 🔺 Alta / 🔻 Queda)
 - Tooltip com variação vs. ponto anterior no gráfico
 - Auto-refresh ao alterar filtros (elimina necessidade de clicar "Analisar")
-- Exportação do relatório para Excel (.xlsx)
+- Exportação do relatório para Excel (.xlsx) com seleção de colunas da fila investigativa
 
 ### Entregues na revisão arquitetural (mai/2026)
 
