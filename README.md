@@ -50,7 +50,7 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
 1. **Busca direta** (novo): digitar código ou descrição — acesso imediato sem navegar pela hierarquia
 2. Ou usar filtros em cascata: Origem → Família → Agrupamento → Item
 3. Definir período (dtInício + dtFim) — relatório atualiza automaticamente
-4. Clicar em qualquer linha da tabela → abre **drill-through** com histórico completo de importações
+4. Clicar em qualquer linha da tabela → abre **drill-through** apenas nas competências escolhidas no recorte, inclusive quando não consecutivas
 5. Usar KPIs clicáveis para filtrar rapidamente:
    - **Itens analisados**: todos
    - **Alertas (>5%)**: variações absolutas ≥ 5% entre as duas últimas importações (`criado_em`), usando a mesma regra do filtro rápido/exportação

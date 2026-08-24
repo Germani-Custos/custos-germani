@@ -99,7 +99,7 @@ Fachada `api` com os métodos consumidos pela UI. Todos retornam o padrão `{ da
 |---|---|
 | `getMasters()` | Carrega dimensões + produtos com custo + diagnóstico de órfãos (`diagnostico_sem_mapa.status`: `ok` ou `indisponivel`). |
 | `getHistorico(filters)` | Histórico por período + cascata (enriquece dimensão antes de filtrar). |
-| `getProductHistory(codigo)` | Drill-through: histórico completo do produto com Δ/Δ%. |
+| `getProductHistory(codigo, competencias)` | Drill-through: consulta exatamente as competências selecionadas e calcula Δ/Δ% apenas entre elas. |
 | `getLatestImportComparison(filters)` | Comparação entre as 2 últimas importações (por `criado_em`). |
 | `getTopVariacoesImportacao(filters)` | TOP aumentos/reduções entre as 2 últimas importações. |
 | `importarHistoricoCustosComLog(payload, {dataReferencia})` | Importação resiliente: normaliza `codigo_produto` com `normalizeCodigoProduto`, valida linha-a-linha, garante produtos no dicionário, upsert em chunks de 400, grava `log_importacao`. |

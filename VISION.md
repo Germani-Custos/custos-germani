@@ -82,6 +82,7 @@ Clicar em qualquer produto na tabela abre o histórico completo de importações
 - Competência (data_referencia): período de vigência do custo
 - Importado em (criado_em): quando o dado entrou no sistema
 - Delta monetário e percentual vs. registro anterior
+- O painel respeita exatamente as competências escolhidas no recorte; não introduz meses intermediários.
 - Destaque visual para variações absolutas ≥ 5% pela regra canônica de alerta
 
 ### Fila investigativa com baixa carga cognitiva

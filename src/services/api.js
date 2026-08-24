@@ -907,20 +907,27 @@ export const api = {
   },
 
   /**
-   * Histórico completo de um produto para o drill-through.
+   * Histórico de um produto para o drill-through, limitado às competências
+   * explicitamente selecionadas quando elas forem informadas.
    * @param {string} codigoProduto
+   * @param {string[]} [competencias]
    * @returns {Promise<{data: Array<HistoricoRow>|null, error: unknown}>}
    */
-  async getProductHistory(codigoProduto) {
+  async getProductHistory(codigoProduto, competencias = []) {
     const codigo = normalizeCodigoProduto(codigoProduto);
     if (!codigo) {
       return { data: null, error: createApiError('codigoProduto é obrigatório para drill-through.', { metodo: 'getProductHistory' }) };
     }
 
-    const { data, error } = await supabase
+    const competenciasSelecionadas = [...new Set((competencias || []).map(normalizeISODate).filter(Boolean))];
+    let query = supabase
       .from(TABLES.historico)
       .select('codigo_produto, descricao, custo_total, custo_variavel, custo_direto_fixo, data_referencia, criado_em')
-      .eq('codigo_produto', codigo)
+      .eq('codigo_produto', codigo);
+
+    if (competenciasSelecionadas.length) query = query.in('data_referencia', competenciasSelecionadas);
+
+    const { data, error } = await query
       .order('data_referencia', { ascending: true })
       .order('criado_em', { ascending: true });
 

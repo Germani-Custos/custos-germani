@@ -48,7 +48,7 @@ Objetivo: transformar o sistema de dashboard em motor de investigação.
 ### Entregues na revisão arquitetural (mai/2026)
 
 - **Busca direta por produto**: bypass completo da hierarquia, 1 interação para chegar à análise
-- **Drill-through de eventos**: histórico completo de importações por produto com `data_referencia` (competência) e `criado_em` (importação) claramente separados, e delta monetário/percentual por registro
+- **Drill-through de eventos**: histórico das competências selecionadas por produto com `data_referencia` (competência) e `criado_em` (importação) claramente separados, e delta monetário/percentual por registro
 - **Detecção de mudança de regime**: 4º KPI — identifica produtos que eram ESTÁVEL e ficaram instáveis no período
 - **Coluna "Regime"** na tabela analítica com badge visual
 - **Coluna "Competência"** separando claramente data de vigência do custo vs. data de importação

@@ -134,7 +134,7 @@ As linhas vêm **ordenadas por prioridade** (o mais crítico primeiro). Colunas:
 Você pode **ordenar** clicando no cabeçalho de uma coluna.
 
 ### Drill-through (histórico completo do produto)
-**Clique em qualquer linha** para abrir o **histórico de importações** daquele produto: cada competência, quando foi importada, os custos (variável, fixo, total) e a **variação (Δ e Δ%)** em relação ao registro anterior. Variações ≥ 5% ficam destacadas.
+**Clique em qualquer linha** para abrir o **histórico de importações** daquele produto: somente as competências escolhidas no recorte, quando foram importadas, os custos (variável, fixo, total) e a **variação (Δ e Δ%)** em relação ao registro anterior. Por exemplo, ao escolher Junho e Agosto, o painel compara esses dois meses sem incluir Julho. Variações ≥ 5% ficam destacadas.
 
 ### Gráficos
 - **Comparação entre as 2 últimas importações** (barras): custo médio de cada uma e a variação.

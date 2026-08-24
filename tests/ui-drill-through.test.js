@@ -39,11 +39,12 @@ describe('createDrillThroughController — renderDrillThrough', () => {
 
     const dom = fakeDom();
     const { renderDrillThrough } = createDrillThroughController({ dom });
-    await renderDrillThrough('001');
+    await renderDrillThrough('001', ['2026-01-01', '2026-02-01']);
 
     expect(dom.drillTitle.textContent).toContain('001');
     expect(dom.drillTitle.textContent).toContain('Item A');
     expect(dom.drillSubtitle.textContent).toContain('2 registro');
+    expect(api.getProductHistory).toHaveBeenCalledWith('001', ['2026-01-01', '2026-02-01']);
     // A linha de +10% é alerta crítico (isAlertaCritico via deltaPerc); a de delta null não.
     expect(dom.drillBody.innerHTML).toContain('row-alert');
     expect(dom.drillBody.innerHTML).toContain('+10.00%');
@@ -63,6 +64,20 @@ describe('createDrillThroughController — renderDrillThrough', () => {
     expect(dom.drillBody.innerHTML).toBe('');
     expect(dom.drillPanel.classList.removed).not.toContain('hidden');
     expect(global.Swal.fire).toHaveBeenCalled(); // showToast('info', ...)
+  });
+
+  it('recarrega o produto aberto ao mudar as competências do recorte', async () => {
+    api.getProductHistory.mockResolvedValue({
+      data: [{ data_referencia: '2026-06-01', criado_em: '2026-06-10T10:00:00Z', custo_variavel: 1, custo_direto_fixo: 2, custo_total: 3, delta: null, deltaPerc: null, descricao: 'Item A' }],
+      error: null
+    });
+
+    const dom = fakeDom();
+    const { renderDrillThrough, refreshActive } = createDrillThroughController({ dom });
+    await renderDrillThrough('001', ['2026-06-01', '2026-08-01']);
+    await refreshActive(['2026-07-01', '2026-08-01']);
+
+    expect(api.getProductHistory).toHaveBeenLastCalledWith('001', ['2026-07-01', '2026-08-01']);
   });
 
   it('avisa e não abre o painel quando a API falha', async () => {

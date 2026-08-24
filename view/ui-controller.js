@@ -31,7 +31,7 @@ const importerOp = createImportOpController({ dom, executeOperationalBoundary, o
 const table = createTableController({
   dom,
   executeOperationalBoundary,
-  renderDrillThrough: codigo => drillThrough.renderDrillThrough(codigo),
+  renderDrillThrough: codigo => drillThrough.renderDrillThrough(codigo, [dom.dtStart.value, dom.dtEnd.value]),
   rerunReportForProduct: codigo => runReport({ silent: true, selectedProduct: codigo })
 });
 const exporter = createExportController({
@@ -379,6 +379,10 @@ async function runReport(options = {}) {
 
     state.reportRows = rows;
     filters.applyTableView({ hasSingleItemAnalysis });
+
+    // Se o drill-through permanecer aberto, o recorte temporal recém-alterado
+    // deve atualizar o painel sem esperar outro clique na fila.
+    if (!selectedProduct) await drillThrough.refreshActive([start, end]);
 
     const hasTrendData = await executeOperationalBoundary(
       'renderizar análise temporal',

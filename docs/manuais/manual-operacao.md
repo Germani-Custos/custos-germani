@@ -154,6 +154,10 @@ Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** dev
 2. Para fragilidades/itens em aberto, veja [`docs/auditoria/`](../auditoria/README.md).
 3. **Atualize esta documentação** ao descobrir um procedimento novo — ver [Regras Gerais](../regras-gerais.md). Documentação desatualizada é incidente operacional.
 
+## Atualização 2026-08-24 — recorte do drill-through de Custos
+
+Ao validar um produto no drill-through, o painel consulta exclusivamente as competências selecionadas no relatório. Em um recorte de Junho e Agosto, a comparação é feita entre esses dois registros; Julho não entra como mês intermediário. A competência continua sendo `data_referencia` e a data de importação continua sendo `criado_em`.
+
 ## Atualização 2026-05-28 — diagnóstico operacional de falhas da UI
 
 Se a abertura do app, a análise, o drill-through ou a exportação falhar, a UI deve exibir mensagem operacional e manter o contexto possível da investigação. Para diagnóstico controlado, ative temporariamente `VITE_ENABLE_VERBOSE_LOGS=true`, reproduza a operação e use o `timestamp`/`operation` do log estruturado; desative a flag após a análise para manter o console limpo em produção.

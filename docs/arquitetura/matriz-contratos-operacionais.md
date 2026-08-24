@@ -19,7 +19,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getMasters()` | Retornar `{origens,familias,agrupamentos,produtos,dicionario,hierarquia,diagnostico_sem_mapa,error}` | Sim | ✅ |
 | UI → API | `api.importarHistoricoCustosComLog(payload,{dataReferencia})` | Import resiliente + `log_importacao` + erros linha a linha + `codigo_produto` normalizado por `normalizeCodigoProduto()` | Sim | ✅ |
 | UI → API | `api.getHistorico(filters)` | Retornar histórico com `data_referencia` + `criado_em` + dimensões para cascata | Sim | ✅ |
-| UI → API | `api.getProductHistory(codigoProduto)` | Drill-through completo com delta e delta% | Sim | ✅ (fail-fast adicionado p/ código vazio) |
+| UI → API | `api.getProductHistory(codigoProduto, competencias)` | Drill-through nas competências explicitamente selecionadas, com delta e delta% apenas entre elas | Sim | ✅ (fail-fast para código vazio; sem meses intermediários) |
 | UI → API | `api.getLatestImportComparison(filters)` | Comparar últimas 2 importações (`criado_em`) respeitando filtros cascata | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |

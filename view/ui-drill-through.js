@@ -10,12 +10,14 @@ import { escapeHtml, formatCurrencyBRL, formatDateBR, formatDateTimeBR, showToas
 
 /**
  * Cria o controlador de drill-through ligado ao `dom` compartilhado.
- * Expõe `renderDrillThrough(codigoProduto)` para abrir o histórico completo
- * de eventos de custo do produto no painel dedicado.
+ * Expõe `renderDrillThrough(codigoProduto, competencias)` para abrir os eventos
+ * de custo do produto nas competências ativas no painel dedicado.
  */
 export function createDrillThroughController({ dom }) {
-  async function renderDrillThrough(codigoProduto) {
-    const { data: history, error } = await api.getProductHistory(codigoProduto);
+  let activeCodigoProduto = null;
+
+  async function renderDrillThrough(codigoProduto, competencias = []) {
+    const { data: history, error } = await api.getProductHistory(codigoProduto, competencias);
     if (error) {
       showToast('error', 'Falha ao carregar histórico do produto.');
       return;
@@ -26,8 +28,9 @@ export function createDrillThroughController({ dom }) {
     }
 
     const descricao = history[history.length - 1]?.descricao || '';
+    activeCodigoProduto = codigoProduto;
     dom.drillTitle.textContent = `${escapeHtml(codigoProduto)} — ${escapeHtml(descricao)}`;
-    dom.drillSubtitle.textContent = `${history.length} registro(s) no histórico total · clique em uma linha para ver detalhes`;
+    dom.drillSubtitle.textContent = `${history.length} registro(s) no recorte selecionado · clique em uma linha para ver detalhes`;
 
     /* eslint-disable no-restricted-syntax -- Drill-through monta tabela HTML controlada com valores formatados/escapados; SEC-02 deve centralizar helper de HTML seguro. */
     dom.drillBody.innerHTML = `
@@ -77,5 +80,10 @@ export function createDrillThroughController({ dom }) {
     dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  return { renderDrillThrough };
+  async function refreshActive(competencias) {
+    if (!activeCodigoProduto) return;
+    await renderDrillThrough(activeCodigoProduto, competencias);
+  }
+
+  return { renderDrillThrough, refreshActive };
 }
