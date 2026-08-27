@@ -31,7 +31,7 @@ const importerOp = createImportOpController({ dom, executeOperationalBoundary, o
 const table = createTableController({
   dom,
   executeOperationalBoundary,
-  renderDrillThrough: codigo => drillThrough.renderDrillThrough(codigo, [dom.dtStart.value, dom.dtEnd.value]),
+  renderDrillThrough: codigo => drillThrough.renderDrillThrough(codigo, getTemporalFilters(dom.dtStart.value, dom.dtEnd.value)),
   rerunReportForProduct: codigo => runReport({ silent: true, selectedProduct: codigo })
 });
 const exporter = createExportController({
@@ -321,6 +321,16 @@ function jumpToProduct(codigoProduto) {
 
 // ── Relatório principal ───────────────────────────────────────────────────────
 
+function getTemporalFilters(start, end) {
+  const mode = dom.temporalMode?.value === 'comparison' ? 'comparison' : 'interval';
+  return {
+    mode,
+    start,
+    end,
+    competencias: mode === 'comparison' ? [start, end] : []
+  };
+}
+
 async function runReport(options = {}) {
   const { silent = false, selectedProduct = null } = options;
   const start = dom.dtStart.value;
@@ -329,12 +339,16 @@ async function runReport(options = {}) {
     if (!silent) showToast('warning', 'Informe período inicial e final.');
     return;
   }
+  const temporalFilters = getTemporalFilters(start, end);
+  if (temporalFilters.mode === 'comparison' && start === end) {
+    if (!silent) showToast('warning', 'Na comparação, escolha duas competências distintas.');
+    return;
+  }
 
   // Fronteira operacional do relatório: falhas críticas não devem quebrar a tela.
   await executeOperationalBoundary('executar relatório investigativo', async () => {
     const { data, error } = await api.getHistorico({
-      start,
-      end,
+      ...temporalFilters,
       origem: dom.selO.value,
       familia: dom.selF.value,
       agrupamento: dom.selA.value,
@@ -357,7 +371,7 @@ async function runReport(options = {}) {
     dom.kpiMedia.textContent = `${kpis.mediaVariacao.toFixed(2).replace('.', ',')}%`;
 
     const chartFilters = {
-      start, end,
+      ...temporalFilters,
       origem: dom.selO.value,
       familia: dom.selF.value,
       agrupamento: dom.selA.value,
@@ -382,7 +396,7 @@ async function runReport(options = {}) {
 
     // Se o drill-through permanecer aberto, o recorte temporal recém-alterado
     // deve atualizar o painel sem esperar outro clique na fila.
-    if (!selectedProduct) await drillThrough.refreshActive([start, end]);
+    if (!selectedProduct) await drillThrough.refreshActive(temporalFilters);
 
     const hasTrendData = await executeOperationalBoundary(
       'renderizar análise temporal',

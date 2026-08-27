@@ -83,6 +83,10 @@ Clicar em qualquer produto na tabela abre o histórico completo de importações
 - Importado em (criado_em): quando o dado entrou no sistema
 - Delta monetário e percentual vs. registro anterior
 - O painel respeita exatamente as competências escolhidas no recorte; não introduz meses intermediários.
+
+### Seleção temporal investigativa
+
+O investigador escolhe entre **Intervalo**, para analisar todas as competências entre início e fim, e **Comparação**, para isolar exatamente duas competências não consecutivas. Fila, indicadores e drill-through compartilham o mesmo conjunto de `data_referencia`; `criado_em` permanece a rastreabilidade da importação.
 - Destaque visual para variações absolutas ≥ 5% pela regra canônica de alerta
 
 ### Fila investigativa com baixa carga cognitiva

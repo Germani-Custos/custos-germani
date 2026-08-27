@@ -10,14 +10,14 @@ import { escapeHtml, formatCurrencyBRL, formatDateBR, formatDateTimeBR, showToas
 
 /**
  * Cria o controlador de drill-through ligado ao `dom` compartilhado.
- * Expõe `renderDrillThrough(codigoProduto, competencias)` para abrir os eventos
- * de custo do produto nas competências ativas no painel dedicado.
+ * Expõe `renderDrillThrough(codigoProduto, temporalFilters)` para abrir os eventos
+ * de custo do produto no mesmo recorte temporal ativo no relatório.
  */
 export function createDrillThroughController({ dom }) {
   let activeCodigoProduto = null;
 
-  async function renderDrillThrough(codigoProduto, competencias = []) {
-    const { data: history, error } = await api.getProductHistory(codigoProduto, competencias);
+  async function renderDrillThrough(codigoProduto, temporalFilters = {}) {
+    const { data: history, error } = await api.getProductHistory(codigoProduto, temporalFilters);
     if (error) {
       showToast('error', 'Falha ao carregar histórico do produto.');
       return;
@@ -80,9 +80,9 @@ export function createDrillThroughController({ dom }) {
     dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  async function refreshActive(competencias) {
+  async function refreshActive(temporalFilters) {
     if (!activeCodigoProduto) return;
-    await renderDrillThrough(activeCodigoProduto, competencias);
+    await renderDrillThrough(activeCodigoProduto, temporalFilters);
   }
 
   return { renderDrillThrough, refreshActive };

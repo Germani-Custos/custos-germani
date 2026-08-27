@@ -185,6 +185,29 @@ function validateHistoricoRow(row = {}) {
   return { valido: erros.length === 0, erros };
 }
 
+function normalizeTemporalFilters(filters = {}) {
+  const competencias = [...new Set((filters?.competencias || []).map(normalizeISODate).filter(Boolean))];
+  return {
+    start: normalizeISODate(filters?.start),
+    end: normalizeISODate(filters?.end),
+    competencias
+  };
+}
+
+function applyTemporalFilterInMemory(rows, filters = {}) {
+  const { start, end, competencias } = normalizeTemporalFilters(filters);
+  if (competencias.length) {
+    const selected = new Set(competencias);
+    return (rows || []).filter(row => selected.has(normalizeISODate(row?.data_referencia)));
+  }
+  return (rows || []).filter(row => {
+    const competencia = String(row?.data_referencia || '');
+    if (start && competencia < start) return false;
+    if (end && competencia > end) return false;
+    return true;
+  });
+}
+
 /**
  * Quando o PostgreSQL informa uma violação NOT NULL, relaciona a coluna aos
  * registros do chunk que carregavam `null` ou `undefined` naquele campo.
@@ -260,11 +283,20 @@ function mapHierarchyRows(dicionario = []) {
 }
 
 async function getHistoricoWithClientFallback(filters) {
-  const { data: historicoBase, error: historicoError } = await supabase
+  const temporalFilters = normalizeTemporalFilters(filters);
+  let query = supabase
     .from(TABLES.historico)
-    .select('*')
-    .gte('data_referencia', filters.start)
-    .lte('data_referencia', filters.end)
+    .select('*');
+
+  if (temporalFilters.competencias.length) {
+    query = query.in('data_referencia', temporalFilters.competencias);
+  } else {
+    query = query
+      .gte('data_referencia', temporalFilters.start)
+      .lte('data_referencia', temporalFilters.end);
+  }
+
+  const { data: historicoBase, error: historicoError } = await query
     .order('data_referencia', { ascending: true });
 
   if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
@@ -829,11 +861,11 @@ export const api = {
   },
 
   /**
-   * @param {{origem?:string, familia?:string, agrupamento?:string, item?:string, start?:string, end?:string}} filters
+   * @param {{origem?:string, familia?:string, agrupamento?:string, item?:string, start?:string, end?:string, competencias?:string[]}} filters
    * @returns {Promise<{data: Array<HistoricoRow>|null, error: unknown}>}
    */
   async getHistorico(filters) {
-    return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), start: normalizeISODate(filters?.start), end: normalizeISODate(filters?.end) });
+    return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), ...normalizeTemporalFilters(filters) });
   },
 
   async getLatestImportComparison(filters = {}) {
@@ -862,11 +894,10 @@ export const api = {
     const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
     if (enrichError) return fail('Falha ao enriquecer comparação de importações com dimensão.', { metodo: 'getLatestImportComparison' }, enrichError);
 
-    const filteredRows = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
-      if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
-      if (filters.end && String(item?.data_referencia || '') > String(filters.end)) return false;
-      return true;
-    }), normalizeCascadeFilters(filters));
+    const filteredRows = applyCascadeFilterInMemory(
+      applyTemporalFilterInMemory(rowsEnriched, filters),
+      normalizeCascadeFilters(filters)
+    );
 
     const statsByImport = [latestImport, previousImport].map(importDate => {
       const importData = filteredRows.filter(row => row.criado_em === importDate);
@@ -907,25 +938,30 @@ export const api = {
   },
 
   /**
-   * Histórico de um produto para o drill-through, limitado às competências
-   * explicitamente selecionadas quando elas forem informadas.
+   * Histórico de um produto para o drill-through, limitado ao recorte temporal
+   * ativo: intervalo ou competências explicitamente selecionadas.
    * @param {string} codigoProduto
-   * @param {string[]} [competencias]
+   * @param {{start?:string, end?:string, competencias?:string[]}|string[]} [temporalFilters]
    * @returns {Promise<{data: Array<HistoricoRow>|null, error: unknown}>}
    */
-  async getProductHistory(codigoProduto, competencias = []) {
+  async getProductHistory(codigoProduto, temporalFilters = {}) {
     const codigo = normalizeCodigoProduto(codigoProduto);
     if (!codigo) {
       return { data: null, error: createApiError('codigoProduto é obrigatório para drill-through.', { metodo: 'getProductHistory' }) };
     }
 
-    const competenciasSelecionadas = [...new Set((competencias || []).map(normalizeISODate).filter(Boolean))];
+    const filters = Array.isArray(temporalFilters) ? { competencias: temporalFilters } : temporalFilters;
+    const temporal = normalizeTemporalFilters(filters);
     let query = supabase
       .from(TABLES.historico)
       .select('codigo_produto, descricao, custo_total, custo_variavel, custo_direto_fixo, data_referencia, criado_em')
       .eq('codigo_produto', codigo);
 
-    if (competenciasSelecionadas.length) query = query.in('data_referencia', competenciasSelecionadas);
+    if (temporal.competencias.length) {
+      query = query.in('data_referencia', temporal.competencias);
+    } else if (temporal.start && temporal.end) {
+      query = query.gte('data_referencia', temporal.start).lte('data_referencia', temporal.end);
+    }
 
     const { data, error } = await query
       .order('data_referencia', { ascending: true })
@@ -975,11 +1011,10 @@ export const api = {
     const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
     if (enrichError) return fail('Falha ao enriquecer variações com dimensão de produtos.', { metodo: 'getTopVariacoesImportacao' }, enrichError);
 
-    const rowsFiltered = applyCascadeFilterInMemory((rowsEnriched || []).filter(item => {
-      if (filters.start && String(item?.data_referencia || '') < String(filters.start)) return false;
-      if (filters.end && String(item?.data_referencia || '') > String(filters.end)) return false;
-      return true;
-    }), normalizeCascadeFilters(filters));
+    const rowsFiltered = applyCascadeFilterInMemory(
+      applyTemporalFilterInMemory(rowsEnriched, filters),
+      normalizeCascadeFilters(filters)
+    );
 
     const byProduct = new Map();
     rowsFiltered.forEach(row => {

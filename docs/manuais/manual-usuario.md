@@ -101,7 +101,7 @@ Há **dois caminhos** para chegar a um produto. Use o que for mais rápido.
 3. Escolha o produto. O sistema já abre a análise dele.
 
 ### Caminho B — Filtros em cascata (quando você está explorando)
-1. Defina o **período**: campos **Início** e **Fim** (por competência).
+1. Defina o modo temporal e as competências: **Intervalo** inclui todos os meses entre **Início** e **Fim**; **Comparação** considera somente as duas competências informadas. Por exemplo, Junho + Agosto em Comparação não inclui Julho.
 2. Refine com os filtros, nesta ordem: **Origem → Família → Agrupamento → Item/Produto**. Cada filtro mostra só o que existe dentro do anterior.
 3. O relatório **atualiza sozinho** assim que há período + filtro. Se precisar, clique em **"Analisar"**.
 

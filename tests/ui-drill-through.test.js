@@ -39,12 +39,13 @@ describe('createDrillThroughController — renderDrillThrough', () => {
 
     const dom = fakeDom();
     const { renderDrillThrough } = createDrillThroughController({ dom });
-    await renderDrillThrough('001', ['2026-01-01', '2026-02-01']);
+    const temporalFilters = { mode: 'comparison', start: '2026-01-01', end: '2026-02-01', competencias: ['2026-01-01', '2026-02-01'] };
+    await renderDrillThrough('001', temporalFilters);
 
     expect(dom.drillTitle.textContent).toContain('001');
     expect(dom.drillTitle.textContent).toContain('Item A');
     expect(dom.drillSubtitle.textContent).toContain('2 registro');
-    expect(api.getProductHistory).toHaveBeenCalledWith('001', ['2026-01-01', '2026-02-01']);
+    expect(api.getProductHistory).toHaveBeenCalledWith('001', temporalFilters);
     // A linha de +10% é alerta crítico (isAlertaCritico via deltaPerc); a de delta null não.
     expect(dom.drillBody.innerHTML).toContain('row-alert');
     expect(dom.drillBody.innerHTML).toContain('+10.00%');
@@ -74,10 +75,11 @@ describe('createDrillThroughController — renderDrillThrough', () => {
 
     const dom = fakeDom();
     const { renderDrillThrough, refreshActive } = createDrillThroughController({ dom });
-    await renderDrillThrough('001', ['2026-06-01', '2026-08-01']);
-    await refreshActive(['2026-07-01', '2026-08-01']);
+    await renderDrillThrough('001', { mode: 'comparison', start: '2026-06-01', end: '2026-08-01', competencias: ['2026-06-01', '2026-08-01'] });
+    const nextTemporalFilters = { mode: 'comparison', start: '2026-07-01', end: '2026-08-01', competencias: ['2026-07-01', '2026-08-01'] };
+    await refreshActive(nextTemporalFilters);
 
-    expect(api.getProductHistory).toHaveBeenLastCalledWith('001', ['2026-07-01', '2026-08-01']);
+    expect(api.getProductHistory).toHaveBeenLastCalledWith('001', nextTemporalFilters);
   });
 
   it('avisa e não abre o painel quando a API falha', async () => {

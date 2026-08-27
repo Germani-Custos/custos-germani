@@ -45,7 +45,7 @@ export function createFiltersController({ dom, state, executeOperationalBoundary
     dom.selF.addEventListener('change', () => refreshCascade('familia'));
     dom.selA.addEventListener('change', () => refreshCascade('agrupamento'));
     dom.selI.addEventListener('change', () => autoRefreshReport());
-    [dom.dtStart, dom.dtEnd].forEach(input => input.addEventListener('change', () => autoRefreshReport()));
+    [dom.temporalMode, dom.dtStart, dom.dtEnd].filter(Boolean).forEach(input => input.addEventListener('change', () => autoRefreshReport()));
     dom.analyzeBtn.addEventListener('click', () => runReport());
     dom.exportBtn.addEventListener('click', () => exportReport());
     dom.drillClose.addEventListener('click', () => dom.drillPanel.classList.add('hidden'));

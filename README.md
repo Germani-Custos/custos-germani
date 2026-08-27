@@ -49,7 +49,7 @@ O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico tempo
 
 1. **Busca direta** (novo): digitar código ou descrição — acesso imediato sem navegar pela hierarquia
 2. Ou usar filtros em cascata: Origem → Família → Agrupamento → Item
-3. Definir período (dtInício + dtFim) — relatório atualiza automaticamente
+3. Escolher o modo temporal: **Intervalo** inclui todas as competências entre início e fim; **Comparação** usa exatamente as duas competências informadas — relatório atualiza automaticamente
 4. Clicar em qualquer linha da tabela → abre **drill-through** apenas nas competências escolhidas no recorte, inclusive quando não consecutivas
 5. Usar KPIs clicáveis para filtrar rapidamente:
    - **Itens analisados**: todos
@@ -153,6 +153,8 @@ Semântica investigativa do gráfico temporal:
 - Quando não há produto selecionado: plota média agregada por competência com base no snapshot mais recente de cada produto
 
 Isso evita inflação por soma indevida de múltiplas importações da mesma competência.
+
+O gráfico, a fila e os KPIs usam o mesmo recorte: em **Intervalo**, todos os meses entre as datas; em **Comparação**, somente as duas competências selecionadas.
 
 
 ### Exportação Investigativa (XLSX)

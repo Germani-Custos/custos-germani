@@ -154,6 +154,10 @@ Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** dev
 2. Para fragilidades/itens em aberto, veja [`docs/auditoria/`](../auditoria/README.md).
 3. **Atualize esta documentação** ao descobrir um procedimento novo — ver [Regras Gerais](../regras-gerais.md). Documentação desatualizada é incidente operacional.
 
+## Atualização 2026-08-27 — modos temporais de Custos
+
+Use **Intervalo** para conferir todas as competências entre as datas e **Comparação** para confrontar somente duas competências. A fila, os KPIs, os gráficos temporais e o drill-through devem receber o mesmo recorte de `data_referencia`; `criado_em` continua somente como data do evento de importação.
+
 ## Atualização 2026-08-24 — exportação XLSX por campos
 
 O popup de exportação parte com todos os campos da Fila Investigativa selecionados. O operador pode desmarcar colunas; a planilha usa somente essa seleção, conserva a ordem exibida e não consulta o Supabase. Cancelar encerra o fluxo sem gerar arquivo.

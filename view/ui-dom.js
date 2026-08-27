@@ -21,7 +21,7 @@ export function getDomRefs() {
     opDrillPanel: document.getElementById('op-drill-panel'), opDrillTitle: document.getElementById('op-drill-title'), opDrillBody: document.getElementById('op-drill-body'),
     orphansBanner: document.getElementById('orphansBanner'), orphansCount: document.getElementById('orphansCount'), orphansMessage: document.getElementById('orphansMessage'),
     searchProduct: document.getElementById('searchProduct'), productSuggestions: document.getElementById('productSuggestions'),
-    dtStart: document.getElementById('dtStart'), dtEnd: document.getElementById('dtEnd'), selO: document.getElementById('selO'), selF: document.getElementById('selF'), selA: document.getElementById('selA'), selI: document.getElementById('selI'),
+    temporalMode: document.getElementById('temporalMode'), dtStart: document.getElementById('dtStart'), dtEnd: document.getElementById('dtEnd'), selO: document.getElementById('selO'), selF: document.getElementById('selF'), selA: document.getElementById('selA'), selI: document.getElementById('selI'),
     analyzeBtn: document.getElementById('analyzeBtn'), exportBtn: document.getElementById('exportBtn'), activeFilterChips: document.getElementById('activeFilterChips'),
     reportContent: document.getElementById('reportContent'), tablePanel: document.getElementById('tablePanel'), tableBody: document.getElementById('tableBody'),
     kpiItens: document.getElementById('kpiItens'), kpiAlertas: document.getElementById('kpiAlertas'), kpiRegime: document.getElementById('kpiRegime'), kpiMedia: document.getElementById('kpiMedia'),
