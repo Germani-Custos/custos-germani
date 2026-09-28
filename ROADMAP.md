@@ -212,3 +212,8 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 - [x] Aba Cadastro sobre `dicionario_produtos`, sem fonte paralela.
 - [x] Importação incremental do XLSM e agrupamento investigativo manual.
 - [x] Resolução compartilhada por Custos e Auditoria de OP.
+
+## Atualização 2026-09-28 — PERF-01 concluído
+
+- [x] Fila investigativa limitada à janela TOP-200 já priorizada, com aviso de total e refinamento de filtros.
+- [x] Drill-through e detalhes preservados por delegação de um único evento no `tbody`, sem listeners por linha.

@@ -273,3 +273,7 @@ O contrato da OP separa fatos de interpretação. Qualquer regra futura deve amp
 ## Atualização 2026-08-13 — Cadastro mestre
 
 `dicionario_produtos` é a dimensão mestre ativa. `core/product-master-engine.js` reconcilia XLSM por `normalizeCodigoProduto()`: ERP não vazio atualiza descrição/origem/família, vazio preserva dados e `agrupamento_cod` permanece manual. A OP é enriquecida em leitura, sem regravar fatos.
+
+## Atualização 2026-09-28 — PERF-01 na tabela de Custos
+
+`view/ui-table.js` define `MAX_VISIBLE_INVESTIGATION_ROWS = 200` e faz `slice(0, 200)` sobre as linhas já ordenadas recebidas da fila; não deve recalcular prioridade localmente. O controlador registra um único `click` no `tbody` e resolve, por delegação, a alternância de detalhes e o drill-through. A mudança não toca API, estado, KPIs, exportação nem `data_referencia`/`criado_em`.

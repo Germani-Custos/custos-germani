@@ -421,3 +421,7 @@ Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela 
 ## Atualização 2026-08-13 — Cadastro mestre de produtos
 
 A aba **Cadastro** mantém `dicionario_produtos` como fonte única de produtos para Custos e OP. Importa o XLSM incrementalmente: valores ERP preenchidos atualizam Produto/Descrição/Origem/Família; campos vazios e produtos ausentes do arquivo são preservados; fatos continuam imutáveis.
+
+## Atualização 2026-09-28 — fila investigativa responsiva
+
+A Auditoria de Custos exibe no máximo os **200 itens mais prioritários** da fila já ordenada e informa o total quando houver mais resultados. Refinar o recorte coloca outros itens na janela sem mudar prioridade, KPIs, drill-through, exportação ou semântica temporal. Os cliques de detalhe e drill-through usam um único listener delegado no corpo da tabela.

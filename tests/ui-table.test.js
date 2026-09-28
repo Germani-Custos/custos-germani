@@ -1,27 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTableController, getOperationalPriority, buildInvestigativeSummary } from '../view/ui-table.js';
+import { MAX_VISIBLE_INVESTIGATION_ROWS, createTableController, getOperationalPriority, buildInvestigativeSummary } from '../view/ui-table.js';
 
 function makeTableBody() {
   const listeners = [];
   return {
     innerHTML: '',
     rows: [],
-    querySelectorAll(selector) {
-      if (selector === 'tr[data-row-type="main"]') {
-        return [{
-          dataset: { codigo: '1001' },
-          addEventListener: (_event, handler) => listeners.push({ type: 'row', handler })
-        }];
-      }
-      if (selector === '.row-details-toggle') {
-        return [{
-          dataset: { codigo: '1001' },
-          textContent: 'Detalhes',
-          addEventListener: (_event, handler) => listeners.push({ type: 'details', handler })
-        }];
-      }
-      return [];
-    },
+    addEventListener: (type, handler) => listeners.push({ type, handler }),
     querySelector(selector) {
       if (selector !== 'tr[data-details-for="1001"]') return null;
       return {
@@ -68,7 +53,7 @@ describe('ui-table — presenter investigativo', () => {
 });
 
 describe('createTableController — renderTable', () => {
-  it('renderiza competência/importação e preserva eventos de drill-through', async () => {
+  it('renderiza competência/importação e preserva ações por delegação', async () => {
     const tableBody = makeTableBody();
     const executeOperationalBoundary = vi.fn(async (_operation, action) => action());
     const renderDrillThrough = vi.fn();
@@ -87,9 +72,15 @@ describe('createTableController — renderTable', () => {
     expect(tableBody.innerHTML).toContain('Importado em (criado_em):');
     expect(tableBody.innerHTML).toContain('Competência (data_referencia):');
     expect(tableBody.innerHTML).toContain('row-alert');
+    expect(tableBody.listeners).toHaveLength(1);
+    expect(tableBody.listeners[0].type).toBe('click');
 
-    const rowListener = tableBody.listeners.find(listener => listener.type === 'row');
-    await rowListener.handler({ target: { closest: () => null } });
+    const tableListener = tableBody.listeners[0];
+    await tableListener.handler({
+      target: {
+        closest: selector => selector === 'tr[data-row-type="main"]' ? { dataset: { codigo: '1001' } } : null
+      }
+    });
 
     expect(executeOperationalBoundary).toHaveBeenCalledWith(
       'drill-through do produto',
@@ -98,5 +89,47 @@ describe('createTableController — renderTable', () => {
     );
     expect(renderDrillThrough).toHaveBeenCalledWith('1001');
     expect(rerunReportForProduct).toHaveBeenCalledWith('1001');
+  });
+
+  it('renderiza somente a janela priorizada e não registra listeners por linha', () => {
+    const tableBody = makeTableBody();
+    const rows = Array.from({ length: 5000 }, (_, index) => ({
+      ...baseRow,
+      codigo: String(index + 1),
+      descricao: `Produto ${index + 1}`
+    }));
+    const table = createTableController({
+      dom: { tableBody },
+      executeOperationalBoundary: vi.fn(),
+      renderDrillThrough: vi.fn(),
+      rerunReportForProduct: vi.fn()
+    });
+
+    table.renderTable(rows);
+
+    expect(tableBody.innerHTML).toContain(`Mostrando os ${MAX_VISIBLE_INVESTIGATION_ROWS} itens mais prioritários de 5000`);
+    expect(tableBody.innerHTML.match(/data-row-type="main"/g)).toHaveLength(MAX_VISIBLE_INVESTIGATION_ROWS);
+    expect(tableBody.innerHTML).toContain('Produto 1');
+    expect(tableBody.innerHTML).toContain(`Produto ${MAX_VISIBLE_INVESTIGATION_ROWS}`);
+    expect(tableBody.innerHTML).not.toContain(`Produto ${MAX_VISIBLE_INVESTIGATION_ROWS + 1}`);
+    expect(tableBody.listeners).toHaveLength(1);
+  });
+
+  it('mantém detalhes na janela usando o mesmo listener delegado', async () => {
+    const tableBody = makeTableBody();
+    const table = createTableController({
+      dom: { tableBody },
+      executeOperationalBoundary: vi.fn(),
+      renderDrillThrough: vi.fn(),
+      rerunReportForProduct: vi.fn()
+    });
+    table.renderTable([baseRow]);
+    const detailsButton = { dataset: { codigo: '1001' }, textContent: 'Detalhes' };
+
+    await tableBody.listeners[0].handler({
+      target: { closest: selector => selector === '.row-details-toggle' ? detailsButton : null }
+    });
+
+    expect(detailsButton.textContent).toBe('Ocultar');
   });
 });

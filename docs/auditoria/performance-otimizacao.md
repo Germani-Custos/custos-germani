@@ -4,13 +4,11 @@ Ver legenda e formato em [`README.md`](./README.md). Foco do usuário: **otimiza
 
 ---
 
-## PERF-01 · 🟠 Médio · Tabela sem virtualização nem paginação
+## PERF-01 · ✅ Resolvido · Janela TOP-200 e delegação de eventos na fila
 
-- **Local:** `view/ui-controller.js:614-645` (`renderTable` reescreve `dom.tableBody.innerHTML` com **todas** as linhas + uma `<tr>` de detalhes por linha).
-- **Evidência:** para N produtos, gera ~2N `<tr>` e adiciona 2 listeners por linha principal (`647-664`). Não há limite.
-- **Impacto:** com milhares de produtos no período, o `innerHTML` gigante e os milhares de listeners travam a aba — exatamente o cenário de produção (base ERP). Contradiz "resposta em segundos".
-- **Correção recomendada:** acima de um limiar (ex.: 500 linhas), paginar ou virtualizar (renderizar só a janela visível). Como a tabela já opera como **fila investigativa priorizada** (`getRowsFromCurrentInvestigationState`), uma abordagem barata é **limitar à fila TOP-N** (ex.: 200 mais críticos) com um rótulo "mostrando 200 de N — refine os filtros", preservando o princípio investigativo. Usar **delegação de eventos** (um listener no `tbody`) em vez de um por linha.
-- **Critério de aceite:** com ~5.000 linhas no resultado, a Auditoria renderiza e responde a cliques em < 1s; memória/ível estável; nenhum listener por linha.
+- **Local:** `view/ui-table.js` (`MAX_VISIBLE_INVESTIGATION_ROWS = 200` e `createTableController`).
+- **Resolução (2026-09-28):** a tabela recebe as linhas já ordenadas pela fila investigativa e renderiza somente as primeiras 200, sem recalcular prioridade. Quando há mais resultados, informa “Mostrando os 200 itens mais prioritários de N” e orienta refinar os filtros. Cada item continua com a linha de detalhe, mas há somente um listener de clique delegado no `tbody` para drill-through e alternância de detalhes.
+- **Critério atendido:** 5.000 itens geram no máximo 200 linhas principais (e seus detalhes), não milhares de listeners; ao entrar na janela após refinar o recorte, cada item mantém as mesmas ações da fila.
 
 ---
 

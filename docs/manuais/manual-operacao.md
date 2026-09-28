@@ -189,3 +189,7 @@ Use a prioridade máxima para interromper a fila e investigar paradas com impact
 ## Atualização 2026-08-13 — operar o Cadastro
 
 Antes de importar o XLSM, confirme que Origem e Família existentes no arquivo estão cadastradas no ambiente. Pendências de produto inválido ou categoria desconhecida não substituem valores atuais. O Cadastro representa classificação atual e não altera fatos de Custos ou OP.
+
+## Atualização 2026-09-28 — fila extensa de Custos
+
+Se a Auditoria indicar que há itens além dos 200 exibidos, use os filtros ou o recorte de competência para trazer o produto à janela investigativa. O aviso não indica perda de dados: exportação e KPIs continuam usando o relatório completo, enquanto a tabela preserva apenas a leitura operacional dos itens mais prioritários.

@@ -4,6 +4,10 @@
 import { isAlertaCritico } from '../core/report-engine.js';
 import { escapeHtml, formatCurrencyBRL, formatDateTimeBR, formatDateBR } from './ui-utils.js';
 
+// PERF-01: a fila já chega ordenada pelo estado investigativo. Renderizar só a
+// primeira janela preserva essa prioridade e evita crescer o DOM com a base ERP.
+export const MAX_VISIBLE_INVESTIGATION_ROWS = 200;
+
 function formatCurrencyCell(value) {
   if (value === null || value === undefined) return '-';
   return `R$ ${formatCurrencyBRL(value)}`;
@@ -50,8 +54,35 @@ export function buildInvestigativeSummary(row) {
  * @param {{ dom: Record<string, any>, executeOperationalBoundary: Function, renderDrillThrough: Function, rerunReportForProduct: Function }} params
  */
 export function createTableController({ dom, executeOperationalBoundary, renderDrillThrough, rerunReportForProduct }) {
+  async function handleTableClick(event) {
+    const detailsButton = event.target?.closest?.('.row-details-toggle');
+    if (detailsButton) {
+      const detailsRow = dom.tableBody.querySelector(`tr[data-details-for="${detailsButton.dataset.codigo}"]`);
+      if (!detailsRow) return;
+      detailsRow.classList.toggle('hidden');
+      detailsButton.textContent = detailsRow.classList.contains('hidden') ? 'Detalhes' : 'Ocultar';
+      return;
+    }
+
+    const row = event.target?.closest?.('tr[data-row-type="main"]');
+    if (!row) return;
+    const codigo = row.dataset.codigo;
+    await executeOperationalBoundary('drill-through do produto', () => renderDrillThrough(codigo), {
+      message: 'Falha ao carregar o histórico completo do produto.'
+    });
+    await rerunReportForProduct(codigo);
+  }
+
+  // PERF-01: um único listener delegado, independente da quantidade de linhas.
+  dom.tableBody.addEventListener('click', handleTableClick);
+
   function renderTable(rows, _options = {}) {
-    dom.tableBody.innerHTML = rows.map(row => {
+    const visibleRows = rows.slice(0, MAX_VISIBLE_INVESTIGATION_ROWS);
+    const limitNotice = rows.length > visibleRows.length
+      ? `<tr class="table-limit-notice"><td colspan="6">Mostrando os ${MAX_VISIBLE_INVESTIGATION_ROWS} itens mais prioritários de ${rows.length}. Refine os filtros para investigar outros itens.</td></tr>`
+      : '';
+
+    dom.tableBody.innerHTML = limitNotice + visibleRows.map(row => {
       const prioridade = getOperationalPriority(row);
       const contexto = buildInvestigativeSummary(row);
       return `
@@ -81,27 +112,6 @@ export function createTableController({ dom, executeOperationalBoundary, renderD
         </tr>
       `;
     }).join('');
-
-    dom.tableBody.querySelectorAll('tr[data-row-type="main"]').forEach(tr => {
-      tr.addEventListener('click', async event => {
-        if (event.target.closest('.row-details-toggle')) return;
-        const codigo = tr.dataset.codigo;
-        await executeOperationalBoundary('drill-through do produto', () => renderDrillThrough(codigo), {
-          message: 'Falha ao carregar o histórico completo do produto.'
-        });
-        await rerunReportForProduct(codigo);
-      });
-    });
-
-    dom.tableBody.querySelectorAll('.row-details-toggle').forEach(btn => {
-      btn.addEventListener('click', event => {
-        event.stopPropagation();
-        const detailsRow = dom.tableBody.querySelector(`tr[data-details-for="${btn.dataset.codigo}"]`);
-        if (!detailsRow) return;
-        detailsRow.classList.toggle('hidden');
-        btn.textContent = detailsRow.classList.contains('hidden') ? 'Detalhes' : 'Ocultar';
-      });
-    });
   }
 
   return { renderTable, getOperationalPriority, buildInvestigativeSummary };
