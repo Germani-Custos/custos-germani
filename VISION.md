@@ -211,3 +211,7 @@ Cadastro é apoio à investigação, não ERP administrativo: resolve produtos d
 ## Atualização 2026-09-28 — velocidade da fila investigativa
 
 Para manter a investigação responsiva em bases ERP grandes, a fila mostra a janela dos 200 itens já mais prioritários e orienta o refinamento do recorte quando houver excedente. A priorização recebida, os indicadores e o contrato temporal permanecem inalterados; a interação por linha usa delegação de eventos, sem custo proporcional à quantidade de itens.
+
+## Atualização 2026-10-01 — proveniência do Cadastro Mestre
+
+O Cadastro Mestre ERP passa a ter base auditável de proveniência por lote, sem antecipar a reconciliação da dimensão operacional nem inventar classificações. A investigação atual permanece apoiada em `dicionario_produtos`.

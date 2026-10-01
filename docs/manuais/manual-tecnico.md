@@ -277,3 +277,7 @@ O contrato da OP separa fatos de interpretação. Qualquer regra futura deve amp
 ## Atualização 2026-09-28 — PERF-01 na tabela de Custos
 
 `view/ui-table.js` define `MAX_VISIBLE_INVESTIGATION_ROWS = 200` e faz `slice(0, 200)` sobre as linhas já ordenadas recebidas da fila; não deve recalcular prioridade localmente. O controlador registra um único `click` no `tbody` e resolve, por delegação, a alternância de detalhes e o drill-through. A mudança não toca API, estado, KPIs, exportação nem `data_referencia`/`criado_em`.
+
+## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
+
+`dicionario_master_produtos` preserva os dados básicos ERP e agora pode apontar opcionalmente para `log_importacao_cadastro_mestre` por `ultima_importacao_cadastro_mestre_id`. O log guarda a evidência de arquivo/lote e resultado da futura carga; RLS está ativo e não existe policy de escrita ou importer nesta fase. O runtime, `dicionario_produtos`, fatos e classificações continuam inalterados.

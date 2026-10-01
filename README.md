@@ -425,3 +425,7 @@ A aba **Cadastro** mantém `dicionario_produtos` como fonte única de produtos p
 ## Atualização 2026-09-28 — fila investigativa responsiva
 
 A Auditoria de Custos exibe no máximo os **200 itens mais prioritários** da fila já ordenada e informa o total quando houver mais resultados. Refinar o recorte coloca outros itens na janela sem mudar prioridade, KPIs, drill-through, exportação ou semântica temporal. Os cliques de detalhe e drill-through usam um único listener delegado no corpo da tabela.
+
+## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
+
+`dicionario_master_produtos` recebeu somente a estrutura de proveniência para futuras cargas ERP em XLSM, XLSX ou XLS. O runtime continua consumindo `dicionario_produtos`; não houve importação, reconciliação, classificação de família nem alteração de fatos.

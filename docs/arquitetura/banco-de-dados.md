@@ -23,9 +23,19 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `familia_id` UUID
 - `agrupamento_cod` TEXT FK → `categorias_agrupamento.codigo`
 
-É o **cadastro mestre ativo** e a única fonte de Origem/Família para Custos e OP. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
+É a dimensão operacional atualmente consumida por Custos e OP e a única fonte de Origem/Família desses fluxos. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
 
-> `sql/dicionario_master_produtos.sql` é um artefato legado de carga e cria uma tabela paralela que não é consumida pela aplicação. Não deve ser aplicada como nova fonte de verdade.
+### `dicionario_master_produtos` (CADASTRO MESTRE ERP)
+- `codigo_produto` TEXT PK
+- `descricao`, `familia_cod`, `origem_cod` TEXT (dados básicos do ERP)
+- `ultima_importacao_cadastro_mestre_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
+
+É a fonte oficial planejada para os dados básicos do ERP. Na Fase 2A, recebeu apenas rastreabilidade de proveniência; `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
+
+### `log_importacao_cadastro_mestre`
+- registra arquivo/lote, tipo de arquivo (`XLSM`, `XLSX`, `XLS`), hash ou identificador, execução, contagens, resultado, erros e metadados de origem;
+- RLS ativo, sem policy de escrita antes da implementação aprovada do importer;
+- não contém importações nesta etapa estrutural.
 
 ### `categorias_origem`
 - `id` UUID (chave técnica)
