@@ -281,3 +281,7 @@ O contrato da OP separa fatos de interpretação. Qualquer regra futura deve amp
 ## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
 
 `dicionario_master_produtos` preserva os dados básicos ERP e agora pode apontar opcionalmente para `log_importacao_cadastro_mestre` por `ultima_importacao_cadastro_mestre_id`. O log guarda a evidência de arquivo/lote e resultado da futura carga; RLS está ativo e não existe policy de escrita ou importer nesta fase. O runtime, `dicionario_produtos`, fatos e classificações continuam inalterados.
+
+## Atualização 2026-10-05 — Fase 2C.2: agrupamento ERP
+
+O Master recebeu `agrupamento_erp_valor` (valor bruto, sem normalização) e `agrupamento_erp_importacao_id` (lote de origem). A dimensão operacional recebeu `agrupamento_override_manual_cod`, com FK para `categorias_agrupamento.id`, e `agrupamento_classificacao_origem`, restrita a `MASTER`, `MANUAL` ou `LEGADO_NAO_RASTREAVEL`. Nenhuma linha existente foi preenchida; `agrupamento_cod` permanece a classificação efetiva do runtime e não existe ponte ERP → Kustos nesta etapa.

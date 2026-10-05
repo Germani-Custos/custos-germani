@@ -222,3 +222,8 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 
 - [x] Criado o log auditável de importação do Cadastro Mestre e a referência opcional de proveniência por produto.
 - [ ] Reconciliar `dicionario_master_produtos` com `dicionario_produtos` somente após decisão de negócio para os códigos de família ERP sem correspondência determinística.
+
+## Atualização 2026-10-05 — Fase 2C.2: agrupamento ERP e proveniência
+
+- [x] Estrutura aditiva para guardar agrupamento ERP bruto, lote de origem, override manual e origem de classificação.
+- [ ] Definir uma ponte empresarial explícita antes de qualquer conversão de agrupamento ERP para categoria Kustos.

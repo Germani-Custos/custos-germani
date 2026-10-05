@@ -215,3 +215,7 @@ Para manter a investigação responsiva em bases ERP grandes, a fila mostra a ja
 ## Atualização 2026-10-01 — proveniência do Cadastro Mestre
 
 O Cadastro Mestre ERP passa a ter base auditável de proveniência por lote, sem antecipar a reconciliação da dimensão operacional nem inventar classificações. A investigação atual permanece apoiada em `dicionario_produtos`.
+
+## Atualização 2026-10-05 — agrupamento ERP sem inferência
+
+O valor de agrupamento recebido do ERP será preservado como proveniência cadastral, separado da classificação efetiva do Kustos e de eventual override manual. Sem ponte empresarial aprovada, nenhum valor ERP é convertido em agrupamento investigativo.

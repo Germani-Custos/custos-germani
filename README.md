@@ -429,3 +429,7 @@ A Auditoria de Custos exibe no máximo os **200 itens mais prioritários** da fi
 ## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
 
 `dicionario_master_produtos` recebeu somente a estrutura de proveniência para futuras cargas ERP em XLSM, XLSX ou XLS. O runtime continua consumindo `dicionario_produtos`; não houve importação, reconciliação, classificação de família nem alteração de fatos.
+
+## Atualização 2026-10-05 — Fase 2C.2: proveniência de agrupamento
+
+O Master passou a poder preservar o valor bruto de agrupamento recebido do ERP e seu lote, sem convertê-lo para uma categoria Kustos. A dimensão operacional agora comporta override manual e origem de classificação, ambos inicialmente nulos; a ponte ERP → Kustos continua inexistente e não houve alteração de agrupamentos, fatos ou runtime.

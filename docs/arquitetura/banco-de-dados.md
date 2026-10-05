@@ -21,7 +21,9 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `descricao` TEXT
 - `origem_id` UUID
 - `familia_id` UUID
-- `agrupamento_cod` TEXT FK → `categorias_agrupamento.codigo`
+- `agrupamento_cod` TEXT FK → `categorias_agrupamento.id` (classificação efetiva Kustos)
+- `agrupamento_override_manual_cod` TEXT NULL FK → `categorias_agrupamento.id`
+- `agrupamento_classificacao_origem` TEXT NULL (`MASTER`, `MANUAL`, `LEGADO_NAO_RASTREAVEL`)
 
 É a dimensão operacional atualmente consumida por Custos e OP e a única fonte de Origem/Família desses fluxos. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
 
@@ -29,8 +31,10 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `codigo_produto` TEXT PK
 - `descricao`, `familia_cod`, `origem_cod` TEXT (dados básicos do ERP)
 - `ultima_importacao_cadastro_mestre_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
+- `agrupamento_erp_valor` TEXT NULL (valor bruto recebido do ERP)
+- `agrupamento_erp_importacao_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 
-É a fonte oficial planejada para os dados básicos do ERP. Na Fase 2A, recebeu apenas rastreabilidade de proveniência; `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
+É a fonte oficial planejada para os dados básicos do ERP. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
 
 ### `log_importacao_cadastro_mestre`
 - registra arquivo/lote, tipo de arquivo (`XLSM`, `XLSX`, `XLS`), hash ou identificador, execução, contagens, resultado, erros e metadados de origem;
@@ -48,7 +52,7 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `descricao` TEXT
 
 ### `categorias_agrupamento`
-- `codigo` TEXT (chave de negócio)
+- `id` TEXT (chave de negócio e destino das FKs de agrupamento)
 - `descricao` TEXT
 - Registro operacional obrigatório: `SEM_AGRUPAMENTO`
 
