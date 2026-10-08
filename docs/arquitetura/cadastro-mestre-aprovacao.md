@@ -1,5 +1,9 @@
 # Cadastro Mestre — manifesto e revisão local (Fase 3.3)
 
+## Continuidade — CAD-XLS-01 (08/10/2026)
+
+O seletor do Cadastro prepara manifesto/revisão com este pipeline para XLSM/XLSX/XLS. A UI apresenta atual/ERP/proposto, preservações e decisões individuais/globais pelos helpers existentes. JSON contém manifesto, revisão e conjunto aprovado; `execucao_permitida:false` permanece. Sem executor ou repetição da carga pontual. Referências abaixo à revisão isolada/ausência de integração descrevem a entrega histórica. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Continuidade autorizada — Fase 3.4
 
 Em 08/10/2026, um pedido humano separado autorizou as 423 propostas após revalidação integral. A execução pontual concluiu o lote 1, com 103 novos e 312 existentes atualizados (320 patches). O manifesto/evidência originais não foram editados. O núcleo/relatório de revisão continuam sem executor; somente a migration pontual realizou a carga no Master/log, sem escrita operacional ou alteração de RLS. [Registro completo da Fase 3.4](cadastro-mestre-execucao-fase3-4.md). As referências a 'sem execução' abaixo descrevem a entrega histórica da Fase 3.3, não anulam o lote posterior.

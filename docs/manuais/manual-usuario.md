@@ -1,5 +1,16 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro — Preview de XLS, XLSX e XLSM (08/10/2026, CAD-XLS-01)
+
+1. Clique **Preview mestre (XLSM / XLSX / XLS)** e escolha o arquivo ERP original. XLS é lido no navegador, sem conversão.
+2. Confira linhas lidas/após filtros/excluídas, produtos válidos/existentes/novos, alterações e preservações. Expanda os detalhes para comparar atual, ERP e proposto.
+3. Escolha **Aprovado**, **Rejeitado** ou **Pendente** por proposta ou use as ações globais. Descrição e agrupamento de um existente são independentes; novo produto tem uma proposta indivisível somente para o Master ERP. Bloqueios não podem ser aprovados.
+4. **Baixar revisão (sem gravar)** salva JSON com manifesto, decisões e propostas aprovadas. **Fechar** descarta a revisão local. A tela não possui executor nem grava esse lote.
+
+Filtros permanecem P/C (D excluído), Descr. (Origem) contendo Produzido/Revenda e descrição sem inativo/EXLUIR. Vazios e ausentes preservam o Master. **Agrup. Prod.** é ERP, separado da classificação investigativa. Tabela/edição manual continuam na classificação usada por Custos/OP.
+
+Esta integração substitui a chamada direta do seletor ao legado; referências abaixo às Fases 3.1/3.3 descrevem o estado histórico anterior. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Cadastro — rolagem e remoção de agrupamento (08/10/2026, CAD-UX-01)
 
 A lista de produtos fica em uma área com altura limitada à janela. Role as linhas dentro dela; a barra horizontal permanece no rodapé da área, acessível sem ir até o último produto. O cabeçalho acompanha a navegação vertical, inclusive em janela estreita.

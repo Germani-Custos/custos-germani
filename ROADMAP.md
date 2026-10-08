@@ -1,5 +1,13 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-08 — CAD-XLS-01 concluído
+
+- [x] Seletor XLSM/XLSX/XLS conectado ao adapter/motores existentes de Preview e aprovação, com contagens, preservações, decisões locais e download JSON.
+- [x] Regressões de XLS binário BIFF, equivalência entre formatos e UI sem escrita.
+- [ ] Executor genérico e persistência de novas revisões continuam fora desta entrega. A carga pontual da Fase 3.4 não foi repetida.
+
+[Contrato atual da tela](docs/ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Atualização 2026-10-08 — CAD-UX-01 concluído
 
 - [x] Barra horizontal acessível durante a navegação vertical da tabela do Cadastro, usando um único contêiner com cabeçalho sticky.

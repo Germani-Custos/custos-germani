@@ -2,6 +2,12 @@
 
 Atualizado em: **2026-10-08**.
 
+## Contrato atual — CAD-XLS-01 / seletor do Cadastro
+
+`createProductMasterController.bind()` → `createCadastroMestrePreviewController.bind()` → arquivo XLSM/XLSX/XLS → `api.getCadastroMestrePreviewContext()` (SELECT integral de Master ERP/categorias) → `prepararAprovacaoArquivoCadastroMestre` → modal de Preview/aprovação local. Decisões usam `decidirOperacoesCadastroMestre`; download usa `obterOperacoesAprovadasCadastroMestre`, mantendo `execucao_permitida:false`, sem escrita. Falha de SELECT bloqueia Preview.
+
+Esta integração sucede as entregas 3.1/3.3 descritas abaixo. O seletor deixa de chamar `importProductMasterXlsm`; API/reconciliação legadas permanecem intactas. `getProductMaster`/`upsertProductMaster` continuam na tabela/edição manual operacional, fora do Preview ERP. Sem executor, schema, migration ou mudança temporal. [Contrato da tela](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Contrato adicional — Cadastro Mestre / Fase 3.1
 
 `api.getCadastroMestrePreviewContext()` → SELECT paginado de `dicionario_master_produtos` (código, descrição, origem/família ERP e agrupamento ERP bruto), `categorias_origem` e `categorias_familia` (códigos exatos). Retorno `{data,error}`, sem fallback para contexto vazio em falha. Não há chamada nova UI→API nesta fase.
@@ -39,6 +45,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
 | UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` como fonte única de Origem/Família | Sim | ✅ (TAREFA-3) |
+| UI → API | `api.getCadastroMestrePreviewContext()` | SELECT integral/paginado do Master ERP/categorias para XLSM/XLSX/XLS, sem escrita ou fallback vazio | Sim | ✅ (CAD-XLS-01) |
 
 ## 2) Matriz API → Banco
 

@@ -1,5 +1,13 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-XLS-01 — conferência dos formatos ERP (08/10/2026)
+
+Na aba Cadastro, testar XLS, XLSX e XLSM por **Preview mestre (XLSM / XLSX / XLS)**. Conferir contagens e detalhes: P/C e Produzido/Revenda elegíveis, D/inativo/EXLUIR excluídos, vazios/ausentes preservados e Agrup. Prod. como ERP bruto. Decisões individuais/globais e download trabalham localmente; fechar não grava nem baixa arquivo.
+
+O seletor consulta o Master completo via SELECT e não executa o legado. Falha de leitura impede Preview, sem simular Master vazio. Não usar JSON como autorização automática nem repetir a migration da Fase 3.4. Sem log, proveniência ou mudanças RLS/schema; `data_referencia` continua competência e `criado_em` importação nos fatos.
+
+Validação local usa XLS BIFF sintético e API em memória, sem carga real. Um XLS original do ERP não foi fornecido nesta tarefa; a prova de leitura usa binário XLS gerado. [Contrato e limites](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## CAD-UX-01 — conferência do Cadastro (08/10/2026)
 
 Após deploy, conferir a rolagem horizontal no meio de uma lista longa e em janela estreita, mantendo o cabeçalho fixo. Em produto de teste autorizado, selecionar **Sem agrupamento**, salvar e reabrir: a dimensão operacional deve conter `agrupamento_cod = NULL`, e tabela/editor mostrar **Sem agrupamento**. Reatribuir agrupamento e testar cancelar sem gravar. Vazio no ERP continua preservando o cadastro; não usar importação para remover classificação nem repetir a carga da Fase 3.4. [Validação local e passos completos](../ux/cadastro-mestre.md).

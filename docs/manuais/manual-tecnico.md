@@ -1,5 +1,13 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-XLS-01 — Preview na tela (08/10/2026)
+
+`view/ui-product-master.js` delega o seletor a `createCadastroMestrePreviewController({dom,executeOperationalBoundary})` em `view/ui-cadastro-mestre-preview.js`. Fluxo: arquivo → `api.getCadastroMestrePreviewContext()` (SELECT paginado do Master ERP/categorias) → `prepararAprovacaoArquivoCadastroMestre(arquivo,contexto,globalThis.XLSX)` → manifesto/revisão pendente → modal → helpers canônicos de decisão → download JSON opcional. A fonte do Preview é `dicionario_master_produtos`, nunca `getProductMaster()`.
+
+O `xlsx.full` 0.20.3 existente lê BIFF/XLS e XLSX/XLSM via `arrayBuffer`, sem conversão, parser ou dependência nova. Adapter/motores permanecem intactos. A UI escapa valores ERP, impede seleção concorrente e usa a fronteira ERR-01 para falhas. O seletor não chama mais `importProductMasterXlsm`; o método legado na API permanece inalterado. Tabela/edição manual continuam na dimensão operacional. Sem executor, escrita de log/proveniência, schema, migration ou política. Aprovação/download mantêm `execucao_permitida:false`; `data_referencia` (competência) e `criado_em` (importação) dos fatos permanecem intactos.
+
+Regressões: `tests/cadastro-mestre-formatos.test.js`, `tests/ui-cadastro-mestre-preview.test.js` e fixture sintética em `tests/fixtures/cadastro-mestre-arquivo.js`. Bytes BIFF reais, filtros, códigos/acentos/zeros, vazios/ausentes, equivalência, seletor, aprovação/bloqueios, cancelamento, falhas, concorrência e escape; API/rede mockadas, nenhuma carga real. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Fase 3.4 — carga pontual autorizada (08/10/2026)
 
 Migration 20261008184501, lote 1 concluído: Master 5.706, 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP). A gravação foi precedida por manifesto/contexto/arquivo integralmente idênticos e usa guardas contra repetição/concorrência, EXCEPT integral e log com imagens anteriores. Proveniência vincula somente 415 escritas e 342 agrupamentos recebidos. Sem schema/RLS, importer/UI, ponte ou escrita operacional. [Contrato e testes](../arquitetura/cadastro-mestre-execucao-fase3-4.md). `data_referencia` continua competência e `criado_em` evento de importação nos fatos, que não foram alterados.

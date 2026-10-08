@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-08 — arquivo ERP direto no Preview
+
+O Cadastro aceita XLS, XLSX e XLSM diretamente no navegador para revisar o Master ERP. O formato não muda os filtros ou a preservação. Aprovar prepara decisões locais antes de eventual execução futura; o Preview não altera a classificação usada por Custos/OP.
+
 ## Atualização 2026-10-08 — CAD-UX-01
 
 O Cadastro permite navegar por listas extensas mantendo acesso à rolagem horizontal e ao cabeçalho. A intenção manual **Sem agrupamento** remove a classificação investigativa; células ERP vazias continuam preservando dados. A melhoria acelera a revisão sem mudar a arquitetura do Master ou a importação.

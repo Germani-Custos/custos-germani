@@ -316,6 +316,13 @@ tr[data-codigo]:hover td { background: rgba(255,255,255,0.04); }
 }
 
 /* Documentação (consulta + edição) */
+/* Preview ERP em modal claro: controles legíveis e contagens acessíveis em janela estreita. */
+.master-preview { overflow-wrap: anywhere; }
+.master-preview th, .master-preview td { white-space: normal; }
+.master-preview .btn-outline, .master-preview select { color: #334155; background: #f8fafc; border: 1px solid #94a3b8; }
+.master-preview .btn-outline:hover { background: #e2e8f0; }
+.master-preview-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 10px 0; }
+
 .doc-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .doc-toolbar .actions-row { margin-top: 0; }
 .doc-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

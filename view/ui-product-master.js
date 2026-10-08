@@ -1,4 +1,4 @@
-import { readWorkbook } from '../core/spreadsheet-engine.js';
+import { createCadastroMestrePreviewController } from './ui-cadastro-mestre-preview.js';
 import { api } from '../src/services/api.js';
 import { escapeHtml, fillSelect, showToast } from './ui-utils.js';
 
@@ -47,31 +47,13 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     render();
   }
 
-  async function importXlsm(file) {
-    if (!/\.xlsm$/i.test(file?.name || '')) {
-      showToast('warning', 'Selecione o XLSM mestre de produtos (.xlsm).');
-      return;
-    }
-    const { data, error } = await api.importProductMasterXlsm(readWorkbook(await file.arrayBuffer()));
-    if (error) throw error;
-    await reload();
-    await onChanged?.();
-    const pendencias = (data.invalidRows?.length || 0) + (data.unresolvedCategories?.length || 0);
-    showToast(pendencias ? 'warning' : 'success', `${data.importados} produto(s) reconciliado(s) do mestre.${pendencias ? ` ${pendencias} pendência(s) não alteraram dados existentes.` : ''}`);
-  }
-
   function bind() {
     if (!dom.masterTableBody) return;
     dom.masterSearch.addEventListener('input', render);
     dom.masterOrigemFilter.addEventListener('change', render);
     dom.masterFamiliaFilter.addEventListener('change', render);
     dom.masterNewBtn.addEventListener('click', () => openEditor());
-    dom.masterImportBtn.addEventListener('click', () => dom.masterImportInput.click());
-    dom.masterImportInput.addEventListener('change', async () => {
-      const file = dom.masterImportInput.files?.[0];
-      if (file) await executeOperationalBoundary('importação do XLSM mestre de produtos', () => importXlsm(file), { message: 'Não foi possível importar o XLSM mestre de produtos.' });
-      dom.masterImportInput.value = '';
-    });
+    createCadastroMestrePreviewController({ dom, executeOperationalBoundary }).bind();
     dom.masterCancelBtn.addEventListener('click', () => dom.masterForm.classList.add('hidden'));
     dom.masterTableBody.addEventListener('click', event => { const code = event.target.closest('[data-master-code]')?.dataset.masterCode; if (code) openEditor(code); });
     dom.masterForm.addEventListener('submit', event => executeOperationalBoundary('salvar cadastro mestre de produto', async () => {

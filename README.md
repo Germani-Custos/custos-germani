@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-08 — CAD-XLS-01: Preview direto do ERP
+
+Em **Cadastro → Preview mestre (XLSM / XLSX / XLS)**, escolha o arquivo ERP original, sem conversão manual. Os três formatos usam o mesmo adapter e motores de Preview/aprovação. A janela mostra contagens, propostas e preservações; decisões e download JSON são locais, sem execução ou escrita no banco. Após esclarecimento humano, o seletor deixou de chamar o importador legado. [Fluxo, contratos e validação](docs/ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 ## Atualização 2026-10-08 — CAD-UX-01: usabilidade do Cadastro
 
 A tabela do Cadastro usa uma área de rolagem com altura limitada à viewport: a barra horizontal permanece acessível enquanto as linhas rolam, com cabeçalho fixo. Na edição manual, selecionar **Sem agrupamento** grava `agrupamento_cod = NULL`; vazios na importação continuam preservando valores. A tela mantém sua ligação atual com `dicionario_produtos`, sem alterar o Master ERP ou o pipeline da Fase 3.4. [Comportamento e validação](docs/ux/cadastro-mestre.md).

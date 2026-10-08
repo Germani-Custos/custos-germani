@@ -1,5 +1,9 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
+## Continuidade — CAD-XLS-01 (08/10/2026)
+
+O seletor do Cadastro aceita XLSM/XLSX/XLS e reutiliza este adapter via `prepararAprovacaoArquivoCadastroMestre`. O modal apresenta contagens, propostas, preservações e aprovação local, com download JSON sem execução. A integração foi confirmada após constatar que a tela executava o legado diretamente. Adapter, filtros e reconciliação não mudaram; XLS é lido diretamente pelo SheetJS. Referências abaixo à ausência de integração descrevem a entrega original. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+
 Continuidade: a [Fase 3.4](cadastro-mestre-execucao-fase3-4.md) executou uma única carga autorizada após reprocessar o mesmo arquivo e confirmar identidade integral com o manifesto da Fase 3.3. O Preview permanece somente leitura; não é executor/importer. O Master atual contém 5.706 registros, portanto um Preview novo não deve repetir as contagens pré-carga como se fossem atuais.
 
 Entrega CAD-PREVIEW-01 em 2026-10-08. Esta fase calcula um Preview; **não importa dados**. O contrato original não inclui aprovação nem execução. A [Fase 3.3](./cadastro-mestre-aprovacao.md) acrescenta manifesto/revisão local em módulo separado, sem escrita de log ou preenchimento de proveniência. Nenhuma tela do runtime foi ligada ao novo pipeline. O importador legado e a dimensão operacional continuam com seus contratos anteriores.
