@@ -1,6 +1,7 @@
 // @ts-check
 /* Adaptador de arquivo + leitura do contexto. Nenhum método de escrita. */
 import { criarPreviewCadastroMestre } from '../../core/cadastro-mestre-preview-engine.js';
+import { criarManifestoCadastroMestre, criarRevisaoCadastroMestre, serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
 
 const ALIASES = {
   codigo_produto: ['produto', 'codigo produto', 'cod produto', 'codigo', 'cod'],
@@ -9,7 +10,8 @@ const ALIASES = {
   descr_origem: ['descr origem', 'descricao origem'],
   origem_cod: ['origem', 'origem cod', 'codigo origem', 'cod origem'],
   familia_cod: ['familia', 'familia cod', 'codigo familia', 'cod familia'],
-  agrupamento_erp_valor: ['agrupamento', 'agrupamento erp', 'agrupamento erp valor']
+  // Decisão de negócio Fase 3.3: alias explícito, nunca equivalência Pxxx → Mxxx.
+  agrupamento_erp_valor: ['agrupamento', 'agrupamento erp', 'agrupamento erp valor', 'agrup prod']
 };
 const OBRIGATORIOS = ['codigo_produto', 'descricao', 'tipo', 'descr_origem'];
 const normalizarCabecalho = value => String(value ?? '').normalize('NFD')
@@ -73,6 +75,21 @@ export async function previewArquivoCadastroMestre(arquivo, contexto, leitor, no
   const leitura = await lerArquivoCadastroMestre(arquivo, leitor, nomeAba);
   return { ...criarPreviewCadastroMestre(leitura.linhas, contexto), arquivo: leitura.arquivo,
     tipo_arquivo: leitura.tipo_arquivo, aba: leitura.aba, colunas: leitura.colunas, linha_cabecalho: leitura.linha_cabecalho };
+}
+
+/** Arquivo e contexto → manifesto/revisão PENDENTE. Não aprova nem executa. */
+export async function prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, leitor, nomeAba) {
+  const bytes = await arquivo.arrayBuffer();
+  const leitura = await lerArquivoCadastroMestre({ name: arquivo.name, arrayBuffer: async () => bytes }, leitor, nomeAba);
+  const hash = async buffer => [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))]
+    .map(value => value.toString(16).padStart(2, '0')).join('');
+  const manifesto = criarManifestoCadastroMestre(leitura.linhas, contexto, {
+    arquivo: leitura.arquivo, tipo_arquivo: leitura.tipo_arquivo, aba: leitura.aba,
+    colunas: leitura.colunas, linha_cabecalho: leitura.linha_cabecalho,
+    hash_arquivo_sha256: await hash(bytes),
+    hash_contexto_sha256: await hash(new globalThis.TextEncoder().encode(serializarDeterministico(contexto)))
+  });
+  return { manifesto, revisao: criarRevisaoCadastroMestre(manifesto) };
 }
 
 /**

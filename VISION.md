@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-08 — aprovação explícita do Cadastro Mestre
+
+A evidência ERP passa por manifesto revisável antes de qualquer execução. `Agrup. Prod.` é o agrupamento ERP oficial, mas não é categoria Kustos: códigos Pxxx são preservados sem conversão para Mxxx. A revisão local não grava dados nem transforma pendência de família em classificação. A dimensão operacional e fatos de Custos/OP permanecem fora deste fluxo.
+
 ## Missão
 
 Transformar auditoria de custos em um processo rápido, investigativo, contextual e orientado por anomalias.

@@ -1,5 +1,11 @@
 # Manual de Operação — Kustos Germani
 
+## Fase 3.3 — preparar aprovação, não importar (08/10/2026)
+
+Conferir manifesto e hashes antes de uma execução futura: base 853/750/103 e 11 descrições; com `Agrup. Prod.` há 342 agrupamentos ERP preenchidos, 511 vazios e 4.853 produtos preservados fora do conjunto. O manifesto tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; oito possuem duas propostas. As 423 propostas são entregues pendentes.
+
+Família pendente não autoriza classificação inventada; ERP Pxxx não é Kustos Mxxx. Controles de revisão/download trabalham somente localmente. Não usar o importador legado para executar este manifesto, não liberar RLS, gerar lote ou preencher proveniência nesta fase. A execução requer autorização e revalidação próprias. [Evidências, contrato e limitações](../arquitetura/cadastro-mestre-aprovacao.md).
+
 Procedimentos para **manter o sistema rodando** em produção: rotina mensal, categorização de órfãos, deploy/rollback, administração do Supabase e diagnóstico de problemas. Público: operação/controladoria com acesso ao Supabase e à Vercel. Para uso da tela, ver [Manual do Usuário](./manual-usuario.md); para código, [Manual Técnico](./manual-tecnico.md).
 
 ---

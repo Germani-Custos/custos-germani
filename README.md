@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-08 — Fase 3.3: manifesto antes da execução
+
+`Agrup. Prod.` (Q) é o campo ERP oficial para `agrupamento_erp_valor`, por decisão de negócio; Pxxx não é convertido em Mxxx. Novo núcleo puro prepara manifesto determinístico e revisão local individual/em lote, sem gravação ou ativação no importador legado. O lote real tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; as 423 propostas foram entregues pendentes. [Contrato, contagens e limites](docs/arquitetura/cadastro-mestre-aprovacao.md). Nenhuma alteração de Custos, OP, mapa, fatos, schema ou RLS.
+
 Sistema operacional de auditoria analítica de custos. Não é um dashboard genérico.
 
 É um cockpit investigativo que transforma planilhas ERP em velocidade de investigação.

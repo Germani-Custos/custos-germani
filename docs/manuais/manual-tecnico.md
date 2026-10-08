@@ -1,5 +1,11 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Fase 3.3 — manifesto e decisões sem executor (08/10/2026)
+
+`prepararAprovacaoArquivoCadastroMestre` reutiliza o adaptador, reconhece explicitamente `Agrup. Prod.` e calcula hashes SHA-256 de arquivo/contexto com Web Crypto. `core/cadastro-mestre-approval-engine.js` calcula propostas determinísticas e decisões individuais/em lote sem I/O. Revisão começa pendente e se vincula ao manifesto completo; mudança de conteúdo invalida decisões anteriores. Exportar aprovadas não é executar.
+
+Destino único das propostas: `dicionario_master_produtos`; nenhum Pxxx vira agrupamento Kustos. Origem/família são códigos ERP brutos com resolução exata separada. Proveniência BIGINT é requisito da execução futura, não valor já preenchido. Sem alteração de `data_referencia` (competência), `criado_em` (importação), runtime ou RLS. [Contrato completo](../arquitetura/cadastro-mestre-aprovacao.md).
+
 Guia para **desenvolvedores e agentes de IA** que vão evoluir o sistema. Antes de qualquer mudança, leia o `AGENTS.md` (contratos inegociáveis) e as [Regras Gerais](../regras-gerais.md). Para encontrar fragilidades e o backlog, veja [`docs/auditoria/`](../auditoria/README.md).
 
 > Este manual é uma **porta de entrada**. Documentação aprofundada já existe em `docs/arquitetura/`, `docs/ux/` e `docs/regras-negocio/` — esses são linkados, não duplicados.

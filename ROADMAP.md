@@ -1,5 +1,12 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-08 — Fase 3.3: preparar, não executar
+
+- [x] **CAD-APPROVAL-01** — alias oficial `Agrup. Prod.` → agrupamento ERP bruto; manifesto determinístico e controles locais para revisão/decisão individual ou global, com testes e nenhuma escrita.
+- [ ] Executar importação/proveniência somente em nova fase explicitamente autorizada, após revisão, revalidação do contexto e permissões. A reconciliação operacional e a ponte ERP → categoria de agrupamento continuam não implementadas.
+
+O manifesto real foi entregue com 423 propostas pendentes, sem aprovação aplicada. `data_referencia` continua competência e `criado_em` evento de importação; nenhum fato foi reescrito. Ver [contrato](docs/arquitetura/cadastro-mestre-aprovacao.md).
+
 > Princípio do roadmap: toda feature deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Funcionalidades decorativas não entram.
 
 ---
@@ -231,4 +238,5 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 ## Atualização 2026-10-08 — Fase 3.1: núcleo de Preview
 
 - [x] **CAD-PREVIEW-01** — leitura XLSM/XLSX/XLS, normalização canônica, filtros ordenados e comparação em memória contra `dicionario_master_produtos`, com testes e sem gravação/ativação na UI.
-- [ ] Aprovação, execução auditável e eventual projeção operacional exigem fases futuras explícitas; não fazem parte deste Preview. Agrupamento ERP continua sem ponte oficial.
+- [x] Preparação de manifesto e revisão local entregue na Fase 3.3; o lote real não foi aprovado.
+- [ ] Execução auditável e eventual projeção operacional exigem novas fases explícitas. Agrupamento ERP continua sem ponte oficial.

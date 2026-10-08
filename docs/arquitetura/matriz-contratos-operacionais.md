@@ -12,6 +12,10 @@ Os métodos legados `getProductMaster`/`upsertProductMaster` continuam ligados a
 
 ## Objetivo
 
+### Contrato adicional — Fase 3.3
+
+`prepararAprovacaoArquivoCadastroMestre(arquivo,contexto,XLSX)` → leitura dos mesmos bytes + hashes → `criarManifestoCadastroMestre` puro → manifesto e revisão PENDENTE. `Agrup. Prod.` é o alias oficial para valor ERP, sem ponte Kustos. Decisões individuais/em lote e extração de aprovadas são exclusivamente locais. Não há nova chamada UI→API, escrita, executor ou alteração das telas do runtime. [Contrato](./cadastro-mestre-aprovacao.md).
+
 Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, rastreabilidade e previsibilidade operacional.
 
 ## Convenções

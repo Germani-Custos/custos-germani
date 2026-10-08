@@ -7,6 +7,7 @@ vi.mock('../src/config/app-config.js', () => ({
   debugLog: vi.fn()
 }));
 import { api } from '../src/services/api.js';
+import { criarManifestoCadastroMestre, criarRevisaoCadastroMestre, decidirOperacoesCadastroMestre, obterOperacoesAprovadasCadastroMestre } from '../core/cadastro-mestre-approval-engine.js';
 
 describe('api.getCadastroMestrePreviewContext', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -24,5 +25,14 @@ describe('api.getCadastroMestrePreviewContext', () => {
     const result = await api.getCadastroMestrePreviewContext();
     expect(result.data).toBeNull();
     expect(result.error.message).toContain('contexto completo');
+  });
+  it('SELECT → manifesto → revisão sintética não chama persistência Supabase', async () => {
+    const tables = { dicionario_master_produtos: [{ codigo_produto: '1', descricao: 'Atual', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: null }], categorias_origem: [{ codigo: '01' }], categorias_familia: [{ codigo: 'F1' }] };
+    client.from.mockImplementation(table => ({ select: () => ({ order: () => ({ range: async () => ({ data: tables[table], count: tables[table].length, error: null }) }) }) }));
+    const contexto = await api.getCadastroMestrePreviewContext();
+    const m = criarManifestoCadastroMestre([{ codigo_produto: '1', descricao: 'Nova', tipo: 'P', descr_origem: 'Produzido', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' }], contexto.data);
+    const r = decidirOperacoesCadastroMestre(m, criarRevisaoCadastroMestre(m), m.operacoes.map(o => o.id), 'APROVADO');
+    expect(obterOperacoesAprovadasCadastroMestre(m, r).operacoes).toHaveLength(2);
+    for (const method of ['insert', 'update', 'delete', 'upsert', 'rpc']) expect(client[method]).not.toHaveBeenCalled();
   });
 });

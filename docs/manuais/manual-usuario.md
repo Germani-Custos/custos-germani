@@ -1,5 +1,11 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro Mestre — revisão local (Fase 3.3, 08/10/2026)
+
+O manifesto entregue separa novos produtos, descrições alteradas, agrupamento ERP e pendências. Abra Detalhes para conferir atual/recebido/proposto; os controles permitem aprovar/rejeitar uma operação ou todas, e voltar a pendente. Descrição e agrupamento do mesmo existente têm decisões independentes; novo produto é uma única proposta. A busca/paginação não limita as ações globais.
+
+`Agrup. Prod.` é o agrupamento ERP oficial, sem conversão para categoria Kustos. Aprovar no relatório apenas prepara decisões locais, não grava no banco. Download entrega o conjunto explícito aprovado para uma etapa futura. O lote foi entregue sem aprovação aplicada. A tela Cadastro legada, Custos e OP não mudaram. [Contrato e limites](../arquitetura/cadastro-mestre-aprovacao.md).
+
 Guia de uso para quem **opera** o sistema no dia a dia (analistas, controladoria). Linguagem direta, sem jargão técnico. Para dúvidas de instalação/infra veja o [Manual Técnico](./manual-tecnico.md); para rotina e problemas veja o [Manual de Operação](./manual-operacao.md).
 
 > **O que é o Kustos Germani?** Uma ferramenta para **investigar variações de custo** de produtos a partir das planilhas do ERP. O objetivo é simples: **achar o que mudou de preço, quanto e quando — em segundos.**

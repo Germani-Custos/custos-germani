@@ -1,6 +1,6 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
-Entrega CAD-PREVIEW-01 em 2026-10-08. Esta fase calcula um Preview; **não importa dados**. Não há migration, aprovação, execução, escrita de log ou preenchimento de proveniência. Nenhuma tela foi ligada ao novo pipeline. O importador legado e a dimensão operacional continuam com seus contratos anteriores.
+Entrega CAD-PREVIEW-01 em 2026-10-08. Esta fase calcula um Preview; **não importa dados**. O contrato original não inclui aprovação nem execução. A [Fase 3.3](./cadastro-mestre-aprovacao.md) acrescenta manifesto/revisão local em módulo separado, sem escrita de log ou preenchimento de proveniência. Nenhuma tela do runtime foi ligada ao novo pipeline. O importador legado e a dimensão operacional continuam com seus contratos anteriores.
 
 ## Arquitetura e chamada
 
@@ -30,7 +30,7 @@ Extensões sem distinção de caixa. Primeira aba por padrão; o quarto argument
 
 Detecta a linha de cabeçalho após títulos/linhas vazias. Obrigatórios: Produto, Descrição, Tipo, Descr(Origem). Colunas extras são ignoradas. Código de origem, família e agrupamento ERP são opcionais: ausência da coluna resulta em `CAMPO_NAO_FORNECIDO`, distinto de célula vazia. Cabeçalho ausente ou com múltiplas colunas para o mesmo campo gera erro explícito.
 
-Aliases canônicos aceitam underscores, caixa e acentos: `codigo_produto`, `descricao`, `tipo`, `descr_origem`, `origem_cod`, `familia_cod`, `agrupamento_erp_valor`. Também aceita Produto/Código Produto/Cod Produto/Código/Cod; Descrição/Descr/Desc; Tipo Produto; Descr(Origem)/Descrição Origem; Origem/Código Origem/Cod Origem; Família/Código Família/Cod Família; Agrupamento/Agrupamento ERP. Esses aliases só identificam **colunas**, não classificam produtos.
+Aliases canônicos aceitam underscores, caixa e acentos: `codigo_produto`, `descricao`, `tipo`, `descr_origem`, `origem_cod`, `familia_cod`, `agrupamento_erp_valor`. Também aceita Produto/Código Produto/Cod Produto/Código/Cod; Descrição/Descr/Desc; Tipo Produto; Descr(Origem)/Descrição Origem; Origem/Código Origem/Cod Origem; Família/Código Família/Cod Família; Agrupamento/Agrupamento ERP e, desde a decisão de negócio da Fase 3.3, **Agrup. Prod.**. Esses aliases só identificam **colunas**, não classificam produtos. No arquivo real, somente a coluna Q é o agrupamento ERP oficial; nenhum Pxxx é convertido para Mxxx.
 
 Após leitura, campos escalares viram texto com trim lateral; vazio vira null. Caixa, zeros textuais e espaços internos permanecem. Identidade do produto usa a função canônica. Inteiros numéricos além da precisão segura são rejeitados antes de normalizar; zeros de máscara Excel explicitamente composta apenas por `0` são preservados nos identificadores e agrupamento. Formatação genérica de milhar/decimal não inventa códigos.
 
