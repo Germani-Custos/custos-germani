@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-08 — carga mestre com proveniência
+
+A primeira carga ERP autorizada foi revalidada contra o manifesto e registrada em lote, sem mudar classificações operacionais ou fatos. O Master preserva códigos ERP e proveniência; resolução Kustos continua uma decisão separada. A carga pontual da [Fase 3.4](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md) não ativa o importer legado nem cria ponte por descrição.
+
 ## Atualização 2026-10-08 — aprovação explícita do Cadastro Mestre
 
 A evidência ERP passa por manifesto revisável antes de qualquer execução. `Agrup. Prod.` é o agrupamento ERP oficial, mas não é categoria Kustos: códigos Pxxx são preservados sem conversão para Mxxx. A revisão local não grava dados nem transforma pendência de família em classificação. A dimensão operacional e fatos de Custos/OP permanecem fora deste fluxo.

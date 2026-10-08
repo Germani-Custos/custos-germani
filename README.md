@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-08 — Fase 3.4: primeira carga do Cadastro Mestre
+
+Após revalidação integral, a carga pontual autorizada concluiu o lote 1: 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP), com Master final de 5.706. Os 4.853 fora dos filtros foram preservados; operacional/mapa/fatos/categorias não mudaram. Não há importer de runtime nem ponte Pxxx → Mxxx. [Lote, migration e provas](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md).
+
 ## Atualização 2026-10-08 — Fase 3.3: manifesto antes da execução
 
 `Agrup. Prod.` (Q) é o campo ERP oficial para `agrupamento_erp_valor`, por decisão de negócio; Pxxx não é convertido em Mxxx. Novo núcleo puro prepara manifesto determinístico e revisão local individual/em lote, sem gravação ou ativação no importador legado. O lote real tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; as 423 propostas foram entregues pendentes. [Contrato, contagens e limites](docs/arquitetura/cadastro-mestre-aprovacao.md). Nenhuma alteração de Custos, OP, mapa, fatos, schema ou RLS.

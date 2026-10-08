@@ -1,5 +1,9 @@
 # Manual de Operação — Kustos Germani
 
+## Fase 3.4 — lote 1 concluído (08/10/2026)
+
+A carga autorizada terminou sem erros: 103 novos no Master e 312 existentes atualizados, preservando operacional/mapa/fatos e 4.853 produtos fora dos filtros. Master final = 5.706. Os 103 códigos já existiam no operacional; nenhum foi criado ali por esta carga. Não executar novamente a migration 20261008184501 nem usar o importer legado para repetir o lote. O relatório original continua evidência da preparação, não autorização de nova carga. [Lote, hashes e validações](../arquitetura/cadastro-mestre-execucao-fase3-4.md). Competência `data_referencia` e evento `criado_em` nos fatos continuam intactos.
+
 ## Fase 3.3 — preparar aprovação, não importar (08/10/2026)
 
 Conferir manifesto e hashes antes de uma execução futura: base 853/750/103 e 11 descrições; com `Agrup. Prod.` há 342 agrupamentos ERP preenchidos, 511 vazios e 4.853 produtos preservados fora do conjunto. O manifesto tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; oito possuem duas propostas. As 423 propostas são entregues pendentes.

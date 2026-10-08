@@ -1,5 +1,9 @@
 # Cadastro Mestre — manifesto e revisão local (Fase 3.3)
 
+## Continuidade autorizada — Fase 3.4
+
+Em 08/10/2026, um pedido humano separado autorizou as 423 propostas após revalidação integral. A execução pontual concluiu o lote 1, com 103 novos e 312 existentes atualizados (320 patches). O manifesto/evidência originais não foram editados. O núcleo/relatório de revisão continuam sem executor; somente a migration pontual realizou a carga no Master/log, sem escrita operacional ou alteração de RLS. [Registro completo da Fase 3.4](cadastro-mestre-execucao-fase3-4.md). As referências a 'sem execução' abaixo descrevem a entrega histórica da Fase 3.3, não anulam o lote posterior.
+
 Entrega **CAD-APPROVAL-01**, 2026-10-08. Prepara propostas e controles de revisão; **não executa aprovação do lote real nem grava dados**. Não existe executor, migration, escrita de log ou ativação no importador legado. Custos e OP continuam consumindo `dicionario_produtos`.
 
 ## Campo ERP oficialmente identificado

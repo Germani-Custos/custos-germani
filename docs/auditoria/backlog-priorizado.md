@@ -117,6 +117,8 @@ Objetivo: consolidar contratos de serviço e validação depois que o fluxo de i
 5. **Ao concluir**: marcar o checkbox aqui, atualizar manuais/`docs` afetados e registrar no log do `AGENTS.md`.
 ## Concluído
 
+- [x] **CAD-EXEC-01** — Fase 3.4 (2026-10-08): carga pontual autorizada, revalidação integral, migration 20261008184501 e lote 1 concluído. Master 5.706, 103 inserções, 312 produtos atualizados (320 campos), zero erros. Preservação integral fora dos filtros e do operacional/mapa/fatos/categorias, sem ponte, RLS ou importer de runtime. → [Contrato e provas](../arquitetura/cadastro-mestre-execucao-fase3-4.md)
+
 - [x] **CAD-APPROVAL-01** — Fase 3.3 (2026-10-08): alias empresarial `Agrup. Prod.` → valor ERP bruto, manifesto determinístico, revisão/decisões locais individuais ou globais e exportação explícita de aprovadas. Lote real entregue pendente; zero escrita pelo fluxo, sem execução, ponte ou ativação no legado. → [Contrato e evidência](../arquitetura/cadastro-mestre-aprovacao.md)
 
 - [x] **CAD-PREVIEW-01** — Fase 3.1 (2026-10-08): núcleo puro e adaptador de Preview XLSM/XLSX/XLS contra `dicionario_master_produtos`, com filtros ordenados, preservação de vazios/ausentes, resolução exclusivamente por código exato e agrupamento ERP sem ponte. Somente leitura, sem migration ou alteração de telas/legado. → [Contrato e limites](../arquitetura/cadastro-mestre-preview.md)

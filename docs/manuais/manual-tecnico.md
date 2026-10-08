@@ -1,5 +1,9 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Fase 3.4 — carga pontual autorizada (08/10/2026)
+
+Migration 20261008184501, lote 1 concluído: Master 5.706, 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP). A gravação foi precedida por manifesto/contexto/arquivo integralmente idênticos e usa guardas contra repetição/concorrência, EXCEPT integral e log com imagens anteriores. Proveniência vincula somente 415 escritas e 342 agrupamentos recebidos. Sem schema/RLS, importer/UI, ponte ou escrita operacional. [Contrato e testes](../arquitetura/cadastro-mestre-execucao-fase3-4.md). `data_referencia` continua competência e `criado_em` evento de importação nos fatos, que não foram alterados.
+
 ## Fase 3.3 — manifesto e decisões sem executor (08/10/2026)
 
 `prepararAprovacaoArquivoCadastroMestre` reutiliza o adaptador, reconhece explicitamente `Agrup. Prod.` e calcula hashes SHA-256 de arquivo/contexto com Web Crypto. `core/cadastro-mestre-approval-engine.js` calcula propostas determinísticas e decisões individuais/em lote sem I/O. Revisão começa pendente e se vincula ao manifesto completo; mudança de conteúdo invalida decisões anteriores. Exportar aprovadas não é executar.

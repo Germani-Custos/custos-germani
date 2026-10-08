@@ -1,5 +1,9 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro Mestre — primeira carga concluída (08/10/2026)
+
+A Fase 3.4 autorizou e concluiu um lote específico depois de reconferir as 423 propostas. O Master passou para 5.706 produtos; nenhuma classificação de Custos/OP foi alterada. A tela legada e os controles locais de revisão continuam com o comportamento anterior e não executam esse novo fluxo. Agrupamento ERP continua separado do agrupamento Kustos. [Resultado e limites](../arquitetura/cadastro-mestre-execucao-fase3-4.md).
+
 ## Cadastro Mestre — revisão local (Fase 3.3, 08/10/2026)
 
 O manifesto entregue separa novos produtos, descrições alteradas, agrupamento ERP e pendências. Abra Detalhes para conferir atual/recebido/proposto; os controles permitem aprovar/rejeitar uma operação ou todas, e voltar a pendente. Descrição e agrupamento do mesmo existente têm decisões independentes; novo produto é uma única proposta. A busca/paginação não limita as ações globais.

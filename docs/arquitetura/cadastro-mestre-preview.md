@@ -1,5 +1,7 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
+Continuidade: a [Fase 3.4](cadastro-mestre-execucao-fase3-4.md) executou uma única carga autorizada após reprocessar o mesmo arquivo e confirmar identidade integral com o manifesto da Fase 3.3. O Preview permanece somente leitura; não é executor/importer. O Master atual contém 5.706 registros, portanto um Preview novo não deve repetir as contagens pré-carga como se fossem atuais.
+
 Entrega CAD-PREVIEW-01 em 2026-10-08. Esta fase calcula um Preview; **não importa dados**. O contrato original não inclui aprovação nem execução. A [Fase 3.3](./cadastro-mestre-aprovacao.md) acrescenta manifesto/revisão local em módulo separado, sem escrita de log ou preenchimento de proveniência. Nenhuma tela do runtime foi ligada ao novo pipeline. O importador legado e a dimensão operacional continuam com seus contratos anteriores.
 
 ## Arquitetura e chamada

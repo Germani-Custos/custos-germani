@@ -1,9 +1,16 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-08 — Fase 3.4 concluída
+
+- [x] **CAD-EXEC-01** — primeira carga pontual do Master, após manifesto integral idêntico; lote 1 concluído, Master 5.706, zero erros, EXCEPTs e preservação operacional validados.
+- [ ] Importer geral/integrado, permissões de escrita para clientes e reconciliação operacional continuam fora da entrega. Nenhuma ponte de agrupamento ou regra para família pendente foi criada.
+
+[Contrato e evidência da execução](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md). Os eixos `data_referencia` (competência) e `criado_em` (importação) nos fatos continuam inalterados.
+
 ## Atualização 2026-10-08 — Fase 3.3: preparar, não executar
 
 - [x] **CAD-APPROVAL-01** — alias oficial `Agrup. Prod.` → agrupamento ERP bruto; manifesto determinístico e controles locais para revisão/decisão individual ou global, com testes e nenhuma escrita.
-- [ ] Executar importação/proveniência somente em nova fase explicitamente autorizada, após revisão, revalidação do contexto e permissões. A reconciliação operacional e a ponte ERP → categoria de agrupamento continuam não implementadas.
+- [x] Primeira execução pontual/proveniência autorizada e entregue na Fase 3.4. A reconciliação operacional e a ponte ERP → categoria de agrupamento continuam não implementadas.
 
 O manifesto real foi entregue com 423 propostas pendentes, sem aprovação aplicada. `data_referencia` continua competência e `criado_em` evento de importação; nenhum fato foi reescrito. Ver [contrato](docs/arquitetura/cadastro-mestre-aprovacao.md).
 
