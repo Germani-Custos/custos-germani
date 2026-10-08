@@ -117,4 +117,6 @@ Objetivo: consolidar contratos de serviço e validação depois que o fluxo de i
 5. **Ao concluir**: marcar o checkbox aqui, atualizar manuais/`docs` afetados e registrar no log do `AGENTS.md`.
 ## Concluído
 
+- [x] **CAD-PREVIEW-01** — Fase 3.1 (2026-10-08): núcleo puro e adaptador de Preview XLSM/XLSX/XLS contra `dicionario_master_produtos`, com filtros ordenados, preservação de vazios/ausentes, resolução exclusivamente por código exato e agrupamento ERP sem ponte. Somente leitura, sem migration ou alteração de telas/legado. → [Contrato e limites](../arquitetura/cadastro-mestre-preview.md)
+
 - [x] **CAD-01** — Cadastro mestre em `dicionario_produtos`: XLSM incremental, agrupamento investigativo manual e resolução compartilhada por Custos/OP sem segunda fonte de verdade.

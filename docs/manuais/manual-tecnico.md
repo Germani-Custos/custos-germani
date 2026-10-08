@@ -285,3 +285,9 @@ O contrato da OP separa fatos de interpretação. Qualquer regra futura deve amp
 ## Atualização 2026-10-05 — Fase 2C.2: agrupamento ERP
 
 O Master recebeu `agrupamento_erp_valor` (valor bruto, sem normalização) e `agrupamento_erp_importacao_id` (lote de origem). A dimensão operacional recebeu `agrupamento_override_manual_cod`, com FK para `categorias_agrupamento.id`, e `agrupamento_classificacao_origem`, restrita a `MASTER`, `MANUAL` ou `LEGADO_NAO_RASTREAVEL`. Nenhuma linha existente foi preenchida; `agrupamento_cod` permanece a classificação efetiva do runtime e não existe ponte ERP → Kustos nesta etapa.
+
+## Atualização 2026-10-08 — Fase 3.1: Preview puro do Mestre ERP
+
+O novo fluxo XLSM/XLSX/XLS existe como módulo, sem integração à tela: adaptador de arquivo → normalização → filtros ordenados (P/C, Produzido/Revenda, excluir inativo/EXLUIR) → comparação por `codigo_produto` no Master → Preview. Campos vazios/colunas opcionais ausentes preservam o atual; produtos ausentes não são excluídos. Origem/família resolvem exclusivamente `categorias_*.codigo`; agrupamento ERP não gera categoria Kustos.
+
+`api.getCadastroMestrePreviewContext()` fornece SELECTs paginados do Master e dos códigos de categoria, falhando explicitamente em contexto incompleto. Não há gravação, log, migration, aprovação ou execução. `data_referencia` permanece competência e `criado_em` evento de importação; nenhum é alterado no Preview. Veja [contrato, contagens e exemplo de chamada](../arquitetura/cadastro-mestre-preview.md). SheetJS 0.20.3 foi acrescentado somente como devDependency para testes de bytes reais, mantendo o CDN de produção.

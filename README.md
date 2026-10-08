@@ -433,3 +433,7 @@ A Auditoria de Custos exibe no máximo os **200 itens mais prioritários** da fi
 ## Atualização 2026-10-05 — Fase 2C.2: proveniência de agrupamento
 
 O Master passou a poder preservar o valor bruto de agrupamento recebido do ERP e seu lote, sem convertê-lo para uma categoria Kustos. A dimensão operacional agora comporta override manual e origem de classificação, ambos inicialmente nulos; a ponte ERP → Kustos continua inexistente e não houve alteração de agrupamentos, fatos ou runtime.
+
+## Atualização 2026-10-08 — Fase 3.1: Preview do Cadastro Mestre
+
+Novo núcleo puro e adaptador para XLSM/XLSX/XLS: filtros Tipo P/C → Descr(Origem) Produzido/Revenda → exclusão de inativo/EXLUIR; comparação por código contra `dicionario_master_produtos`. Preview preserva vazios/ausentes, resolve origem/família somente por código exato e guarda agrupamento ERP sem ponte Kustos. Sem gravação, migration, aprovação ou execução, e sem ativação na UI/importador legado. Contrato e exemplo em [Cadastro Mestre — Preview](docs/arquitetura/cadastro-mestre-preview.md).

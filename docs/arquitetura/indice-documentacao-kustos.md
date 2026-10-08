@@ -1,5 +1,7 @@
 # Kustos — Manual Técnico
 
+Novo contrato de desenvolvimento (2026-10-08): [Cadastro Mestre — Preview determinístico, Fase 3.1](./cadastro-mestre-preview.md), sem gravação ou ativação na UI.
+
 **Sistema:** kustos germani  
 **Escopo:** estado atual implementado no repositório  
 **Atualização:** 2026-05-08

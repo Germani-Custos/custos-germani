@@ -16,6 +16,7 @@
   "include": [
     "core/**/*.js",
     "src/services/api.js",
+    "src/services/cadastro-mestre-preview.js",
     "src/utils/**/*.js",
     "src/config/app-config.js",
     "types/**/*.d.ts"

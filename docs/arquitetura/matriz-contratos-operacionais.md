@@ -1,6 +1,14 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
-Atualizado em: **2026-08-03**.
+Atualizado em: **2026-10-08**.
+
+## Contrato adicional — Cadastro Mestre / Fase 3.1
+
+`api.getCadastroMestrePreviewContext()` → SELECT paginado de `dicionario_master_produtos` (código, descrição, origem/família ERP e agrupamento ERP bruto), `categorias_origem` e `categorias_familia` (códigos exatos). Retorno `{data,error}`, sem fallback para contexto vazio em falha. Não há chamada nova UI→API nesta fase.
+
+`previewArquivoCadastroMestre(arquivo,contexto,XLSX)` → adaptador de arquivo → `criarPreviewCadastroMestre(linhas,contexto)` puro → resumo/produtos/ausentes/excluídos/erros, sem escrita ou projeção operacional. [Contrato completo](./cadastro-mestre-preview.md).
+
+Os métodos legados `getProductMaster`/`upsertProductMaster` continuam ligados a `dicionario_produtos`; não devem ser usados como fonte do novo Preview. A dimensão operacional segue necessária para Custos/OP; não substitui o Mestre ERP no novo contrato.
 
 ## Objetivo
 

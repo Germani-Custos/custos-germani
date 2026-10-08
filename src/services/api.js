@@ -5,6 +5,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { appConfig, debugLog } from '../config/app-config.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
 import { buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
+import { lerContextoCadastroMestrePreview } from './cadastro-mestre-preview.js';
 
 /**
  * @typedef {import('../../core/report-engine.js').Masters} Masters
@@ -549,7 +550,16 @@ export const api = {
     };
   },
 
-  /** Cadastro mestre: a mesma dimensão consultada por Custos e OP. */
+  /** Fase 3.1: SELECT integral do Mestre ERP, sem tocar na dimensão operacional. */
+  async getCadastroMestrePreviewContext() {
+    try {
+      return ok(await lerContextoCadastroMestrePreview(supabase));
+    } catch (error) {
+      return fail('Falha ao carregar contexto completo do Preview do Cadastro Mestre.', { metodo: 'getCadastroMestrePreviewContext' }, error);
+    }
+  },
+
+  /** Cadastro legado: a mesma dimensão consultada por Custos e OP. */
   async getProductMaster() {
     const [produtosResult, origensResult, familiasResult, agrupamentosResult, historicoResult, opResult] = await Promise.all([
       supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod').order('codigo_produto'),

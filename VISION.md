@@ -219,3 +219,7 @@ O Cadastro Mestre ERP passa a ter base auditável de proveniência por lote, sem
 ## Atualização 2026-10-05 — agrupamento ERP sem inferência
 
 O valor de agrupamento recebido do ERP será preservado como proveniência cadastral, separado da classificação efetiva do Kustos e de eventual override manual. Sem ponte empresarial aprovada, nenhum valor ERP é convertido em agrupamento investigativo.
+
+## Atualização 2026-10-08 — conferir antes de importar
+
+O Preview do Cadastro Mestre separa evidência ERP, mudanças potenciais e pendências de classificação antes de qualquer escrita. O núcleo não transforma descrição em regra de negócio e não converte agrupamento ERP sem ponte oficial; a investigação atual continua consumindo a dimensão operacional, sem mudança de Custos/OP.

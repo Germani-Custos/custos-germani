@@ -227,3 +227,8 @@ Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: segu
 
 - [x] Estrutura aditiva para guardar agrupamento ERP bruto, lote de origem, override manual e origem de classificação.
 - [ ] Definir uma ponte empresarial explícita antes de qualquer conversão de agrupamento ERP para categoria Kustos.
+
+## Atualização 2026-10-08 — Fase 3.1: núcleo de Preview
+
+- [x] **CAD-PREVIEW-01** — leitura XLSM/XLSX/XLS, normalização canônica, filtros ordenados e comparação em memória contra `dicionario_master_produtos`, com testes e sem gravação/ativação na UI.
+- [ ] Aprovação, execução auditável e eventual projeção operacional exigem fases futuras explícitas; não fazem parte deste Preview. Agrupamento ERP continua sem ponte oficial.
