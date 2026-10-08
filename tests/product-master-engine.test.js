@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildProductMasterPayload, createProductMasterIndex, getProductClassificationStatus, reconcileProductMasterImport, resolveProductClassification } from '../core/product-master-engine.js';
+import { buildManualProductMasterPayload, buildProductMasterPayload, createProductMasterIndex, getProductClassificationStatus, reconcileProductMasterImport, resolveProductClassification } from '../core/product-master-engine.js';
 
 const masters = {
   produtos: [{ codigo_produto: '001', descricao: 'Anterior', origem_id: 'o1', familia_id: 'f1', agrupamento_cod: 'AG-1' }],
@@ -53,5 +53,22 @@ describe('cadastro mestre de produtos', () => {
   it('prepara o cadastro manual com agrupamento investigativo opcional', () => {
     expect(buildProductMasterPayload({ codigo_produto: ' 003 ', descricao: 'Manual', agrupamento_cod: 'AG-1' }))
       .toEqual({ codigo_produto: '003', descricao: 'Manual', agrupamento_cod: 'AG-1' });
+  });
+
+  it.each(['', null, '  '])('remoção manual explícita (%s) envia NULL', agrupamento => {
+    expect(buildManualProductMasterPayload({ ...masters.produtos[0], agrupamento_cod: agrupamento }))
+      .toEqual({ ...masters.produtos[0], agrupamento_cod: null });
+  });
+
+  it('não inventa remoção manual quando o agrupamento está omitido', () => {
+    expect(buildManualProductMasterPayload({ codigo_produto: '003', descricao: 'Manual' }))
+      .toEqual({ codigo_produto: '003', descricao: 'Manual' });
+  });
+
+  it('payload da importação continua omitindo vazios em vez de escrever NULL', () => {
+    expect(buildProductMasterPayload({ codigo_produto: '001', descricao: '', agrupamento_cod: null }))
+      .toEqual({ codigo_produto: '001' });
+    const reconciled = reconcileProductMasterImport([{ Produto: '001', Descrição: '', Origem: '', Família: '' }], masters);
+    expect(reconciled.rows.map(buildProductMasterPayload)).toEqual(masters.produtos);
   });
 });

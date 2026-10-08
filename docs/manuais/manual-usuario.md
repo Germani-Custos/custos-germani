@@ -1,5 +1,11 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro — rolagem e remoção de agrupamento (08/10/2026, CAD-UX-01)
+
+A lista de produtos fica em uma área com altura limitada à janela. Role as linhas dentro dela; a barra horizontal permanece no rodapé da área, acessível sem ir até o último produto. O cabeçalho acompanha a navegação vertical, inclusive em janela estreita.
+
+Para remover um agrupamento, clique **Editar**, selecione **Sem agrupamento** e **Salvar classificação**. A tabela passa a mostrar **Sem agrupamento** e reabrir o editor mantém essa seleção. Cancelar não altera o cadastro. Células vazias na importação continuam preservando valores existentes. Esta edição mantém a classificação atual na dimensão operacional, sem editar o Master ERP ou os fatos.
+
 ## Cadastro Mestre — primeira carga concluída (08/10/2026)
 
 A Fase 3.4 autorizou e concluiu um lote específico depois de reconferir as 423 propostas. O Master passou para 5.706 produtos; nenhuma classificação de Custos/OP foi alterada. A tela legada e os controles locais de revisão continuam com o comportamento anterior e não executam esse novo fluxo. Agrupamento ERP continua separado do agrupamento Kustos. [Resultado e limites](../arquitetura/cadastro-mestre-execucao-fase3-4.md).

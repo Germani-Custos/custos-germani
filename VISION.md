@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-08 — CAD-UX-01
+
+O Cadastro permite navegar por listas extensas mantendo acesso à rolagem horizontal e ao cabeçalho. A intenção manual **Sem agrupamento** remove a classificação investigativa; células ERP vazias continuam preservando dados. A melhoria acelera a revisão sem mudar a arquitetura do Master ou a importação.
+
 ## Atualização 2026-10-08 — carga mestre com proveniência
 
 A primeira carga ERP autorizada foi revalidada contra o manifesto e registrada em lote, sem mudar classificações operacionais ou fatos. O Master preserva códigos ERP e proveniência; resolução Kustos continua uma decisão separada. A carga pontual da [Fase 3.4](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md) não ativa o importer legado nem cria ponte por descrição.

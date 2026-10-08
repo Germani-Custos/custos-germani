@@ -117,3 +117,12 @@ export function buildProductMasterPayload(product = {}) {
   if (hasValue(product.agrupamento_cod)) payload.agrupamento_cod = cleanText(product.agrupamento_cod);
   return payload;
 }
+
+/** Edição manual: agrupamento informado vazio/null é remoção explícita, não preservação ERP. */
+export function buildManualProductMasterPayload(product = {}) {
+  const payload = buildProductMasterPayload(product);
+  if (Object.hasOwn(product, 'agrupamento_cod') && product.agrupamento_cod !== undefined) {
+    payload.agrupamento_cod = cleanText(product.agrupamento_cod);
+  }
+  return payload;
+}

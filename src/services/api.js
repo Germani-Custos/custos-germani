@@ -4,7 +4,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 import { appConfig, debugLog } from '../config/app-config.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
-import { buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
+import { buildManualProductMasterPayload, buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
 import { lerContextoCadastroMestrePreview } from './cadastro-mestre-preview.js';
 
 /**
@@ -586,7 +586,7 @@ export const api = {
     const { data: current, error: currentError } = await supabase.from(TABLES.dicionario)
       .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod').eq('codigo_produto', codigo).maybeSingle();
     if (currentError) return fail('Falha ao consultar o cadastro mestre do produto.', { metodo: 'upsertProductMaster' }, currentError);
-    const next = buildProductMasterPayload({ ...current, ...payload, codigo_produto: codigo });
+    const next = buildManualProductMasterPayload({ ...current, ...payload, codigo_produto: codigo });
     const { error } = await supabase.from(TABLES.dicionario).upsert(next, { onConflict: 'codigo_produto' });
     if (error) return fail('Falha ao atualizar o cadastro mestre do produto.', { metodo: 'upsertProductMaster' }, error);
     return ok({ codigo_produto: codigo });

@@ -10,6 +10,8 @@ Atualizado em: **2026-10-08**.
 
 Os métodos legados `getProductMaster`/`upsertProductMaster` continuam ligados a `dicionario_produtos`; não devem ser usados como fonte do novo Preview. A dimensão operacional segue necessária para Custos/OP; não substitui o Mestre ERP no novo contrato.
 
+**CAD-UX-01 (2026-10-08):** `upsertProductMaster(payload)` interpreta `agrupamento_cod: ''`/`null` explicitamente informado como remoção e envia `NULL` via `buildManualProductMasterPayload`. Campo omitido preserva o atual. `importProductMasterXlsm` continua usando `buildProductMasterPayload`/reconciliação ERP, preservando vazios e agrupamento investigativo. Sem alteração de schema, Master ERP, mapa ou fatos; `data_referencia` e `criado_em` mantêm seus eixos. [Contrato de UX](../ux/cadastro-mestre.md).
+
 ## Objetivo
 
 ### Contrato adicional — Fase 3.3

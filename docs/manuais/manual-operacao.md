@@ -1,5 +1,9 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-UX-01 — conferência do Cadastro (08/10/2026)
+
+Após deploy, conferir a rolagem horizontal no meio de uma lista longa e em janela estreita, mantendo o cabeçalho fixo. Em produto de teste autorizado, selecionar **Sem agrupamento**, salvar e reabrir: a dimensão operacional deve conter `agrupamento_cod = NULL`, e tabela/editor mostrar **Sem agrupamento**. Reatribuir agrupamento e testar cancelar sem gravar. Vazio no ERP continua preservando o cadastro; não usar importação para remover classificação nem repetir a carga da Fase 3.4. [Validação local e passos completos](../ux/cadastro-mestre.md).
+
 ## Fase 3.4 — lote 1 concluído (08/10/2026)
 
 A carga autorizada terminou sem erros: 103 novos no Master e 312 existentes atualizados, preservando operacional/mapa/fatos e 4.853 produtos fora dos filtros. Master final = 5.706. Os 103 códigos já existiam no operacional; nenhum foi criado ali por esta carga. Não executar novamente a migration 20261008184501 nem usar o importer legado para repetir o lote. O relatório original continua evidência da preparação, não autorização de nova carga. [Lote, hashes e validações](../arquitetura/cadastro-mestre-execucao-fase3-4.md). Competência `data_referencia` e evento `criado_em` nos fatos continuam intactos.

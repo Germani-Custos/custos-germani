@@ -22,7 +22,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     dom.masterMissingCount.textContent = String(cadastro.ausentes.length);
     dom.masterTableBody.innerHTML = rows.length ? rows.map(produto => `
       <tr><td>${escapeHtml(produto.codigo_produto)}</td><td>${escapeHtml(produto.descricao || '-')}</td>
-      <td>${escapeHtml(labelById(cadastro.origens, produto.origem_id))}</td><td>${escapeHtml(labelById(cadastro.familias, produto.familia_id))}</td><td>${escapeHtml(labelById(cadastro.agrupamentos, produto.agrupamento_cod))}</td>
+      <td>${escapeHtml(labelById(cadastro.origens, produto.origem_id))}</td><td>${escapeHtml(labelById(cadastro.familias, produto.familia_id))}</td><td>${escapeHtml(produto.agrupamento_cod ? labelById(cadastro.agrupamentos, produto.agrupamento_cod) : 'Sem agrupamento')}</td>
       <td>${escapeHtml(status(produto))}</td><td><button class="btn-outline btn-sm" data-master-code="${escapeHtml(produto.codigo_produto)}">Editar</button></td></tr>`).join('') :
       '<tr><td colspan="7" style="text-align:center;padding:16px">Nenhum produto encontrado.</td></tr>';
   }
@@ -34,7 +34,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     dom.masterDescription.value = produto.descricao || descricao || '';
     fillSelect(dom.masterOrigem, cadastro.origens.map(item => ({ value: item.id, label: item.descricao })), { value: '', label: 'Sem origem' }, produto.origem_id || '');
     fillSelect(dom.masterFamilia, cadastro.familias.map(item => ({ value: item.id, label: item.descricao })), { value: '', label: 'Sem família' }, produto.familia_id || '');
-    fillSelect(dom.masterAgrupamento, cadastro.agrupamentos.map(item => ({ value: item.id, label: item.descricao })), { value: '', label: 'Sem agrupamento investigativo' }, produto.agrupamento_cod || '');
+    fillSelect(dom.masterAgrupamento, cadastro.agrupamentos.map(item => ({ value: item.id, label: item.descricao })), { value: '', label: 'Sem agrupamento' }, produto.agrupamento_cod || '');
     dom.masterForm.classList.remove('hidden');
   }
 

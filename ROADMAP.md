@@ -1,5 +1,12 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-08 — CAD-UX-01 concluído
+
+- [x] Barra horizontal acessível durante a navegação vertical da tabela do Cadastro, usando um único contêiner com cabeçalho sticky.
+- [x] Remoção explícita do agrupamento na edição manual (`agrupamento_cod = NULL`), com regressões para preservação de vazios no importador.
+
+[Contrato e validação](docs/ux/cadastro-mestre.md). Sem mudança de ordenação, paginação, Master ERP, mapa, fatos ou pipeline da Fase 3.4.
+
 ## Atualização 2026-10-08 — Fase 3.4 concluída
 
 - [x] **CAD-EXEC-01** — primeira carga pontual do Master, após manifesto integral idêntico; lote 1 concluído, Master 5.706, zero erros, EXCEPTs e preservação operacional validados.

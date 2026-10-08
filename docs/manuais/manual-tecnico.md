@@ -288,6 +288,12 @@ O contrato da OP separa fatos de interpretação. Qualquer regra futura deve amp
 
 `view/ui-table.js` define `MAX_VISIBLE_INVESTIGATION_ROWS = 200` e faz `slice(0, 200)` sobre as linhas já ordenadas recebidas da fila; não deve recalcular prioridade localmente. O controlador registra um único `click` no `tbody` e resolve, por delegação, a alternância de detalhes e o drill-through. A mudança não toca API, estado, KPIs, exportação nem `data_referencia`/`criado_em`.
 
+## Atualização 2026-10-08 — CAD-UX-01
+
+O Cadastro permanece ligado a `dicionario_produtos`. `.master-table-scroll` é um único contêiner com `overflow: auto`, `max-height: 60dvh` (fallback `60vh`) e padding zero, mantendo a barra horizontal na área visível e os `th` sticky existentes, sem JS de sincronização ou alteração de filtros/ordem/paginação.
+
+`upsertProductMaster` passa pelo helper puro `buildManualProductMasterPayload`: agrupamento explicitamente vazio/null entra como `NULL`; campo omitido preserva o atual na API. O importador continua chamando `buildProductMasterPayload`, com a preservação ERP intacta. Sem mudança no Master ERP, schema, RLS, mapa, proveniência ou fatos; `data_referencia` é competência e `criado_em` é importação. [Causas, testes e limitação CRLF preexistente](../ux/cadastro-mestre.md).
+
 ## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
 
 `dicionario_master_produtos` preserva os dados básicos ERP e agora pode apontar opcionalmente para `log_importacao_cadastro_mestre` por `ultima_importacao_cadastro_mestre_id`. O log guarda a evidência de arquivo/lote e resultado da futura carga; RLS está ativo e não existe policy de escrita ou importer nesta fase. O runtime, `dicionario_produtos`, fatos e classificações continuam inalterados.

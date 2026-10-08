@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-08 — CAD-UX-01: usabilidade do Cadastro
+
+A tabela do Cadastro usa uma área de rolagem com altura limitada à viewport: a barra horizontal permanece acessível enquanto as linhas rolam, com cabeçalho fixo. Na edição manual, selecionar **Sem agrupamento** grava `agrupamento_cod = NULL`; vazios na importação continuam preservando valores. A tela mantém sua ligação atual com `dicionario_produtos`, sem alterar o Master ERP ou o pipeline da Fase 3.4. [Comportamento e validação](docs/ux/cadastro-mestre.md).
+
 ## Atualização 2026-10-08 — Fase 3.4: primeira carga do Cadastro Mestre
 
 Após revalidação integral, a carga pontual autorizada concluiu o lote 1: 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP), com Master final de 5.706. Os 4.853 fora dos filtros foram preservados; operacional/mapa/fatos/categorias não mudaram. Não há importer de runtime nem ponte Pxxx → Mxxx. [Lote, migration e provas](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md).
