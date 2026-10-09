@@ -1,8 +1,12 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-DIAG-TLS-01 — instrumentação local** (2026-10-09): presença/tamanho/PEM/X.509/fingerprint da CA e parâmetros efetivos sanitizados no GET autorizado. Sem mudar TLS/flag/POST/executor; testes sem rede/DML/upload. [Contrato](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+- [x] **CAD-DIAG-TLS-01 — deploy autorizado**: Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`, GET público 401 sem CA/endpoint e execução false, disponibilidade 503. 369 testes/lint/typecheck/diff check passaram; sem commit/env/DML/upload.
+- [x] **CAD-DIAG-TLS-01 — verificação autenticada Production**: JSON recebido do usuário confirma HTTP 409 TLS `SELF_SIGNED_CERT_IN_CHAIN`, CA presente/aplicada de 1.365 bytes, marcadores PEM presentes mas parsing X.509 inválido/fingerprint null, execução false. Correção da CA depende de ação administrativa posterior, não foi aplicada.
+
 - [x] **CAD-DIAG-01 — diagnóstico local por etapas** (2026-10-09): GET de leitura com catálogo de erros sanitizados, sem credenciais/erro bruto; regressões para conexão/TLS/Storage/bucket/auth e rollback de leitura. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
 - [x] **CAD-DIAG-01 — publicação autorizada**: Production READY B2mVXerHzJjbRjaYHSjZMm3TWPvF; GET público confirma instrumentação/configuração OK e flag false, 401 sem sessão.
-- [ ] **CAD-DIAG-01 — confirmar falha remota**: obter GET autenticado com flag false. HTTP 409 genérico anterior não identifica causa nem prova execução.
+- [x] **CAD-DIAG-01 — confirmar falha remota**: usuário confirmou HTTP 409 `SELF_SIGNED_CERT_IN_CHAIN`, etapa TLS; configuração/origem/auth/autorização OK, PostgreSQL não concluído, Storage não verificado e execução false. CA ainda depende de inspeção.
 
 **Ponto de partida para o agente de desenvolvimento.** Este backlog foi **reavaliado em 2026-07-02** após a conclusão da Onda 2 (tooling), a entrada de CI/lint/typecheck/testes e a estabilização dos contratos VAL-01/LOG-01/ERR-01. A ordem abaixo agora é arquitetural: prioriza itens que reduzem risco de regressão, desbloqueiam refatorações futuras, preservam contratos existentes e aumentam velocidade investigativa sem alterar comportamento funcional desnecessariamente.
 

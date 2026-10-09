@@ -1,5 +1,40 @@
 # CAD-ENV-01 — Preparação da execução web (09/10/2026)
 
+## CAD-DIAG-TLS-01 — metadados da CA e do driver
+
+O GET autenticado anterior confirmou HTTP 409, `DIAGNOSTICO_TLS_FALHOU`/`SELF_SIGNED_CERT_IN_CHAIN`: configuração/origem/autenticação/autorização OK, conexão PostgreSQL não concluída, Storage não verificado, execução false. A CA Secret foi configurada pelo administrador; esse erro sozinho não prova se o PEM é válido ou se é a CA correta.
+
+A instrumentação exclusiva do GET `?verificar=1` inspeciona os valores **depois de autenticar e autorizar**, antes de `connect()`. Respostas anteriores à autorização não incluem CA/endpoint. Não altera valores, normaliza escapes/quebras, corrige URI, muda `rejectUnauthorized=true`, chama executor ou habilita execução. Nenhum certificado, senha, URL de conexão, chave ou token é serializado.
+
+Publicado checkout local autorizado em Production, deployment `9swD3fEMicHbkGRzHKYqjUzDdyra`, READY, alias `custos-germani.vercel.app`. Nova resposta pública confirma instrumentação (`tls_codigo`/`tls_mensagem_sanitizada`), configuração OK, HTTP 401 na autenticação, sem CA/endpoint e execução false; disponibilidade normal HTTP 503. 369 testes em 30 arquivos, lint/typecheck/diff check passaram. Nenhuma variável/credencial alterada, commit criado ou escrita PostgreSQL/Storage executada.
+
+JSON autenticado recebido do usuário após o novo deploy: HTTP 409, configuração/origem/auth/autorização OK; CA presente, 1.365 bytes/caracteres, BEGIN/END e formato PEM true, parsing X.509 false, fingerprint null, quantidade de certificados válidos zero. `ssl.ca` configurado e igual à variável. Parâmetros efetivos: `aws-1-sa-east-1.pooler.supabase.com`, porta 5432, database postgres, usuário `postgres.[PROJECT_REF]`. Etapa TLS falhou com `SELF_SIGNED_CERT_IN_CHAIN`, mensagem fixa “Certificado autoassinado na cadeia TLS.”; conexão PostgreSQL não concluída, Storage/bucket/leitura não verificados e execução false.
+
+Conclusão limitada: CA carregada/aplicada mas inválida para parsing X.509; marcadores não garantem certificado válido. Sem fingerprint não é possível comparar identidade com CA oficial. Não há evidência para distinguir truncamento, conteúdo corrompido ou escapes/quebras incorretos. Próxima ação administrativa recomendada, ainda não aplicada: obter PEM oficial completo do endpoint/projeto correto, validar X.509 localmente sem imprimir conteúdo, substituir a CA em Production preservando quebras reais e redeploy com execução false; repetir somente GET. Não mudar DATABASE_URL, desabilitar validação TLS ou executar reconstrução para testar.
+
+Campos em `diagnostico`:
+
+- `ca_presente`, `ca_tamanho` (bytes UTF-8), `ca_tamanho_caracteres` (comprimento JavaScript), `ca_contem_begin_certificate`, `ca_contem_end_certificate`.
+- `ca_pem_formato`: blocos BEGIN/END presentes, sem conteúdo externo além de espaço. `ca_x509_valido`: todos os blocos interpretados como X.509. Literal `\\n`, aspas externas ou blocos corrompidos não são reparados.
+- `ca_fingerprint_sha256`: SHA-256 DER do primeiro certificado, 64 caracteres hexadecimais; null se ausente/inválido. `ca_fingerprints_sha256` lista cada certificado do bundle; `ca_certificados_quantidade` e `ca_mensagem_sanitizada` explicam o resultado. Parsing X.509 não comprova validade temporal nem confiança/correspondência com endpoint.
+- `postgres_host`, `postgres_port`, `postgres_database`, `postgres_user_sanitizado`: parâmetros efetivos de `pg.Client.connectionParameters`. Host somente no formato público Supabase direto/pooler; outros hosts ocultos. Database `postgres` é exibido; outros nomes ocultos. Usuário de pooler aparece como `postgres.[PROJECT_REF]`; outros usuários ocultos, exceto `postgres`.
+- `postgres_ssl_ca_configurado`: CA presente no objeto SSL efetivo; `postgres_ssl_ca_corresponde_variavel`: igualdade com CA carregada. Inspeção não serializa objeto do driver, que contém senha.
+- `tls_codigo`, `tls_mensagem_sanitizada`: somente catálogo fechado, preservando `SELF_SIGNED_CERT_IN_CHAIN`. Sem texto original arbitrário do driver. Sucesso TLS tem código null; falha de conexão não TLS não é apresentada como falha TLS.
+
+Após publicação autorizada, recarregar a aplicação Production autenticada e executar apenas:
+
+```js
+try {
+  const { api } = await import('/src/services/api.js');
+  const r = await api.verificarAmbienteReconstrucaoCadastroMestre();
+  console.log(JSON.stringify({ status: 200, diagnostico: r.diagnostico }));
+} catch (e) {
+  console.log(JSON.stringify({ status: e.status, diagnostico: e.diagnostico }));
+}
+```
+
+Enviar somente esse JSON. Comparar fingerprint com DER SHA-256 do certificado oficial do endpoint, sem compartilhar PEM. Não corrigir configuração automaticamente com base no resultado. Flag deve permanecer false; consultas e validação de bucket continuam somente leitura, sem upload/snapshot/lote. POST e executor central não mudam. `data_referencia` (competência) e `criado_em` (importação) dos fatos permanecem intactos.
+
 ## CAD-DIAG-01 — diagnóstico de etapas sem escrita
 
 Atualização posterior à preparação inicial: o administrador informou redeploy Production e criação do bucket privado. GET autenticado verificar=1 retorna 409 com mensagem genérica de COMMIT; o handler antigo suprime o erro original também no caminho de leitura. Isso não comprova execução nem identifica TLS/senha/bucket como causa.

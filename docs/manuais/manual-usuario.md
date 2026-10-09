@@ -1,5 +1,9 @@
 # Manual do Usuário — Custos Germani
 
+## Diagnóstico da CA — CAD-DIAG-TLS-01 (09/10/2026)
+
+O administrador autorizado pode conferir formato e fingerprint da CA pelo GET de diagnóstico, com execução desabilitada. Isso não reconstrói produtos nem libera o botão. O certificado e as credenciais não aparecem na resposta. [Procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+
 ## Diagnóstico sem reconstrução — CAD-DIAG-01 (09/10/2026)
 
 Com execução desabilitada, o botão continua indisponível. O administrador pode consultar separadamente o GET de diagnóstico para identificar falhas por etapa, sem importar produtos. HTTP 409 nesse GET não indica execução/COMMIT. [Procedimento de leitura](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).

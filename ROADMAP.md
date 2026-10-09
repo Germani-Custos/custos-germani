@@ -1,10 +1,16 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-DIAG-TLS-01
+
+- [x] Inspeção local da CA X.509 e parâmetros efetivos do driver no GET autorizado; regressões sem rede/DML/upload ou alteração de TLS/flag/executor.
+- [x] Publicado diagnóstico autorizado em Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`; GET público 401 sem CA/endpoint, execução false e disponibilidade 503. 369 testes/lint/typecheck/diff check passaram.
+- [x] GET autenticado confirmado pelo usuário: CA presente/aplicada, 1.365 bytes, marcadores PEM presentes, parsing X.509 inválido/fingerprint null; HTTP 409 `SELF_SIGNED_CERT_IN_CHAIN`, execução false. Reconstrução continua pendente; não corrigir CA automaticamente.
+
 ## Atualização 2026-10-09 — CAD-DIAG-01
 
 - [x] Instrumentação local do GET por etapa, códigos sanitizados e testes sem escrita/segredos.
 - [x] Diagnóstico publicado em Production após autorização explícita: READY, configuração OK e flag false no GET público (401 sem sessão).
-- [ ] Obter o erro original sanitizado do GET autenticado de Production. O diagnóstico anterior retorna 409 genérico; não considerar reconstrução realizada.
+- [x] Usuário confirmou GET autenticado HTTP 409: `SELF_SIGNED_CERT_IN_CHAIN`, configuração/origem/auth/autorização OK, PostgreSQL não concluído e Storage não verificado. Não houve execução.
 
 ## Atualização 2026-10-09 — CAD-ENV-01
 

@@ -192,6 +192,8 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
       if (req.method === 'POST') pedido = lerPedido(req.body);
       etapas?.iniciar('conexao_postgresql');
       client = criarClientePg({ connectionString: cfg.database, ssl: { rejectUnauthorized: true, ...(cfg.ca ? { ca: cfg.ca } : {}) }, connectionTimeoutMillis: 5000 });
+      // Exclusivo do GET autenticado/autorizado; inspeciona sem corrigir PEM/SSL/URI.
+      etapas?.inspecionarTls(cfg.ca, client.connectionParameters);
       await client.connect();
       etapas?.concluir();
       etapas?.concluir('tls');

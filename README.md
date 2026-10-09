@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-09 — CAD-DIAG-TLS-01: inspecionar CA sem expor credenciais
+
+GET `?verificar=1`, após autenticação e autorização, informa presença/tamanho/formato/X.509/fingerprint SHA-256 da CA e parâmetros sanitizados efetivos do driver. Não corrige CA/URI/TLS, altera variáveis nem chama executor. `rejectUnauthorized=true` e execução desabilitada permanecem. Publicado em Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`; usuário confirmou HTTP 409: CA presente/aplicada, 1.365 bytes, marcadores PEM presentes, parsing X.509 inválido e fingerprint null, `SELF_SIGNED_CERT_IN_CHAIN`, execução false. 369 testes/lint/typecheck/diff check passaram. Nenhuma correção/env/escrita/commit. [Campos e procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+
 ## Atualização 2026-10-09 — CAD-DIAG-01: localizar falhas do GET
 
 Diagnóstico instrumentado distingue configuração, autenticação, autorização, conexão PostgreSQL, TLS, Storage e bucket, além das guardas de leitura. Retorna apenas etapas/códigos conhecidos e mensagens fixas, sem erro bruto/credenciais. Publicado em Production após autorização explícita (deployment B2mVXerHzJjbRjaYHSjZMm3TWPvF, READY), sem commit/env/DML. GET público confirma configuração OK, autenticação 401 e `execucao_habilitada:false`. Falha original 409 ainda depende de nova consulta autenticada; não comprova COMMIT/reconstrução. [Procedimento seguro](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).

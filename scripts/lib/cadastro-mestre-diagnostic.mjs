@@ -1,4 +1,39 @@
 /* Catálogo fechado: nunca encaminhar message/detail/hint/stack/cause de SDK/driver. */
+import { createHash, X509Certificate } from 'node:crypto';
+
+export function inspecionarTlsCadastroMestre(ca, parametros) {
+  const pem = typeof ca === 'string' ? ca : '';
+  const begin = pem.includes('-----BEGIN CERTIFICATE-----');
+  const end = pem.includes('-----END CERTIFICATE-----');
+  const blocos = pem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) || [];
+  const formato = begin && end && blocos.length > 0 &&
+    pem.replace(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g, '').trim() === '';
+  let fingerprints = [];
+  let valido = false;
+  if (formato) {
+    try {
+      fingerprints = blocos.map(bloco => createHash('sha256').update(new X509Certificate(bloco).raw).digest('hex'));
+      valido = true;
+    } catch { fingerprints = []; /* Nunca serializar o erro de parsing ou certificado. */ }
+  }
+  // Ler os parâmetros efetivos do driver, sem serializar o objeto (contém senha).
+  const host = parametros?.host || '';
+  const hostPublico = /^(?:db\.[a-z0-9]+\.supabase\.co|aws-\d+-[a-z]+(?:-[a-z]+)*-\d+\.pooler\.supabase\.com)$/.test(host);
+  const port = Number(parametros?.port);
+  const user = parametros?.user || '';
+  return { ca_presente: pem.length > 0, ca_tamanho: Buffer.byteLength(pem, 'utf8'), ca_tamanho_caracteres: pem.length,
+    ca_contem_begin_certificate: begin, ca_contem_end_certificate: end, ca_pem_formato: formato,
+    ca_x509_valido: valido, ca_fingerprint_sha256: fingerprints[0] || null,
+    ca_fingerprints_sha256: fingerprints, ca_certificados_quantidade: valido ? fingerprints.length : 0,
+    ca_mensagem_sanitizada: !pem ? 'CA ausente.' : valido ? 'PEM interpretado como X.509; confiança no endpoint ainda depende do handshake.' : 'CA inválida: formato PEM ou parsing X.509 falhou.',
+    postgres_host: hostPublico ? host : '[HOST_NAO_EXIBIDO]',
+    postgres_port: Number.isInteger(port) && port > 0 && port <= 65535 ? port : null,
+    postgres_database: parametros?.database === 'postgres' ? 'postgres' : '[BANCO_NAO_EXIBIDO]',
+    postgres_user_sanitizado: user === 'postgres' ? 'postgres' : /^postgres\.[a-z0-9]+$/.test(user) ? 'postgres.[PROJECT_REF]' : '[USUARIO_NAO_EXIBIDO]',
+    postgres_ssl_ca_configurado: !!parametros?.ssl?.ca,
+    postgres_ssl_ca_corresponde_variavel: !!pem && parametros?.ssl?.ca === pem };
+}
+
 const erros = {
   SELF_SIGNED_CERT_IN_CHAIN: ['tls', 'Certificado autoassinado na cadeia TLS.'],
   DEPTH_ZERO_SELF_SIGNED_CERT: ['tls', 'Certificado TLS autoassinado.'],
@@ -48,11 +83,15 @@ const mensagens = {
 export function criarDiagnosticoCadastroMestre() {
   const etapas = Object.fromEntries(Object.keys(mensagens).map(etapa => [etapa, 'NAO_VERIFICADO']));
   let atual = 'configuracao';
+  let tls = {};
   return {
     iniciar(etapa) { atual = etapa; etapas[etapa] = 'EM_VALIDACAO'; },
     concluir(etapa = atual) { etapas[etapa] = 'OK'; },
+    inspecionarTls(ca, parametros) { tls = inspecionarTlsCadastroMestre(ca, parametros); },
     resultado(error) {
-      if (!error) return { etapa: 'concluido', codigo: 'DIAGNOSTICO_OK', etapas: { ...etapas }, execucao_realizada: false };
+      const metadados = { ...tls, tls_codigo: null,
+        tls_mensagem_sanitizada: etapas.tls === 'OK' ? 'Validação TLS concluída.' : 'Validação TLS não concluída.' };
+      if (!error) return { etapa: 'concluido', codigo: 'DIAGNOSTICO_OK', ...metadados, etapas: { ...etapas }, execucao_realizada: false };
       // Código original somente se conhecido. Nem código arbitrário pode transportar segredo.
       const codigoOriginal = [error.code, error.cause?.code].find(code =>
         typeof code === 'string' && Object.hasOwn(erros, code)) ||
@@ -64,7 +103,8 @@ export function criarDiagnosticoCadastroMestre() {
       // HTTP de Storage também é metadado fixo, nunca a mensagem recebida do serviço.
       const httpStorage = error.status ?? error.statusCode;
       const statusStorage = ['storage', 'bucket'].includes(atual) && [400, 401, 403, 404].includes(Number(httpStorage)) ? Number(httpStorage) : null;
-      return { etapa, codigo: `DIAGNOSTICO_${etapa.toUpperCase()}_FALHOU`,
+      return { etapa, codigo: `DIAGNOSTICO_${etapa.toUpperCase()}_FALHOU`, ...metadados,
+        ...(etapa === 'tls' ? { tls_codigo: codigoOriginal || 'NAO_CLASSIFICADO', tls_mensagem_sanitizada: conhecido?.[1] || mensagens.tls } : {}),
         codigo_original: codigoOriginal || (statusStorage ? `STORAGE_HTTP_${statusStorage}` : 'NAO_CLASSIFICADO'),
         mensagem: conhecido?.[1] || mensagens[etapa], etapas: { ...etapas }, execucao_realizada: false };
     }

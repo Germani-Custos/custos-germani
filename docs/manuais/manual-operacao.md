@@ -1,5 +1,9 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-DIAG-TLS-01 — comparar CA sem alteração (09/10/2026)
+
+Manter execução false. Após publicação autorizada, recarregar Production e usar somente o GET autenticado conforme [procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver). Enviar somente JSON sanitizado; comparar fingerprint DER SHA-256 com certificado oficial fora do chat. CA ausente/inválida é informada explicitamente. Não corrigir variável, publicar certificado, enviar POST ou testar upload durante o diagnóstico.
+
 ## CAD-DIAG-01 — investigar 409 sem executar (09/10/2026)
 
 Publicar a instrumentação local somente após confirmação administrativa, sem mudar env/flag. Usar exclusivamente GET verificar=1 autenticado e enviar apenas status/diagnostico sanitizados conforme [guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita). Não enviar POST, testar upload, conceder privilégio ou criar lote para investigar. Não atribuir causa TLS/senha sem código remoto. Upload/rollback de produção continuam não testados; fatos e eixos temporais não mudam.

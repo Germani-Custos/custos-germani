@@ -1,5 +1,9 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-DIAG-TLS-01 — metadados da CA (09/10/2026)
+
+Após autenticação/allowlist, o GET inspeciona a variável CA sem repará-la e os `connectionParameters` efetivos do pg antes de conectar. X509Certificate valida parsing de todos os blocos; SHA-256 usa DER e não texto PEM. Erros de parsing nunca são serializados. Certificado parseável não prova confiança no endpoint ou validade temporal. Endpoint/usuário são sanitizados, e POST/executor/TLS verificado permanecem intactos. [Contrato dos campos](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+
 ## CAD-DIAG-01 — erros sanitizados do GET (09/10/2026)
 
 `cadastro-mestre-diagnostic.mjs` é catálogo de diagnóstico, não executor/importador. Handler rastreia sete etapas de infraestrutura e as guardas centrais. Código original só é retornado por allowlist; texto do driver/SDK nunca atravessa HTTP/logs. Cliente preserva `error.diagnostico`/`error.status` somente para GET verificar=1. Testes simulam erros com canários e comprovam ausência de DML/upload e flag false intacta. [Operação](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).

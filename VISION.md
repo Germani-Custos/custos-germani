@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-09 — observabilidade TLS administrativa
+
+CAD-DIAG-TLS-01 permite comparar a identidade da CA por fingerprint sem divulgar certificado ou credenciais. Inspeção restrita ao GET administrativo autorizado; não muda reconstrução, fatos ou eixos temporais. [Limites](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+
 ## Atualização 2026-10-09 — diagnóstico administrativo seguro
 
 CAD-DIAG-01 torna falhas de infraestrutura distinguíveis por etapa/código sanitizado no GET de leitura, sem habilitar execução nem expor segredos. Não muda filtros, fatos, competência (`data_referencia`) ou importação (`criado_em`). [Procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).

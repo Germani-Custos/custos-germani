@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import pg from 'pg';
+import { rootCertificates } from 'node:tls';
 import { criarCadastroMestreWebHandler } from '../scripts/lib/cadastro-mestre-web.mjs';
 import { ambienteWeb, respostaWeb, storageWeb } from './fixtures/cadastro-mestre-web.js';
 const req = (extras = {}) => ({ method: 'GET', headers: { authorization: 'Bearer valid-token', origin: ambienteWeb.CADASTRO_MESTRE_APP_ORIGIN }, ...extras });
@@ -82,7 +84,11 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
     }) };
     const ambiente = { ...ambienteWeb, CADASTRO_MESTRE_EXECUTION_ENABLED: 'false', ...env };
     const handler = criarCadastroMestreWebHandler({ env: ambiente,
-      criarClientePg: () => client, criarSupabase: autorizado && !authError ? storage.criarSupabase : () => ({ auth: { getUser: async () => ({ data: { user: { id: 'other-id' } }, error: authError }) } }) });
+      criarClientePg: options => {
+        // Parser real do driver, sem conectar a PostgreSQL.
+        client.connectionParameters = new pg.Client(options).connectionParameters;
+        return client;
+      }, criarSupabase: autorizado && !authError ? storage.criarSupabase : () => ({ auth: { getUser: async () => ({ data: { user: { id: 'other-id' } }, error: authError }) } }) });
     return { client, storage, handler, ambiente };
   }
   it('valida infraestrutura sem DML, upload, lote ou executor', async () => {
@@ -117,6 +123,8 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
     await handler(req({ query: { verificar: '1' } }), res);
     expect(res.code).toBe(403);
     expect(client.connect).not.toHaveBeenCalled();
+    expect(res.body.diagnostico.ca_presente).toBeUndefined();
+    expect(res.body.diagnostico.postgres_host).toBeUndefined();
   });
   it.each(['POST', 'DELETE'])('parâmetro de diagnóstico não habilita execução por %s', async method => {
     const { client, storage, handler } = setup();
@@ -129,6 +137,29 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
   const canario = 'SEGREDO-NAO-PODE-SAIR';
   const erroSecreto = code => Object.assign(new Error(`postgresql://senha:${canario}@host/db`), {
     code, detail: canario, hint: canario, stack: canario, cause: { message: canario }
+  });
+  it.each([rootCertificates[0], '-----BEGIN CERTIFICATE-----\\nINVALIDO\\n-----END CERTIFICATE-----'])('inspeciona CA no GET autorizado antes da falha TLS, sem reparar configuração', async ca => {
+    const { client, storage, handler, ambiente } = setup({ connectError: erroSecreto('SELF_SIGNED_CERT_IN_CHAIN'), env: {
+      CADASTRO_MESTRE_DATABASE_CA: ca,
+      CADASTRO_MESTRE_DATABASE_URL: `postgresql://postgres.teste:${canario}@aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require`
+    } });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.code).toBe(409);
+    expect(res.body.diagnostico).toMatchObject({ ca_presente: true, ca_tamanho: Buffer.byteLength(ca),
+      ca_x509_valido: ca === rootCertificates[0], postgres_host: 'aws-0-sa-east-1.pooler.supabase.com',
+      postgres_port: 5432, postgres_database: 'postgres', postgres_user_sanitizado: 'postgres.[PROJECT_REF]',
+      postgres_ssl_ca_configurado: true, postgres_ssl_ca_corresponde_variavel: true,
+      tls_codigo: 'SELF_SIGNED_CERT_IN_CHAIN', tls_mensagem_sanitizada: 'Certificado autoassinado na cadeia TLS.', execucao_realizada: false });
+    expect(client.connectionParameters.ssl).toEqual({ rejectUnauthorized: true, ca });
+    expect(ambiente.CADASTRO_MESTRE_DATABASE_CA).toBe(ca);
+    expect(ambiente.CADASTRO_MESTRE_EXECUTION_ENABLED).toBe('false');
+    for (const segredo of [ca, canario, ambiente.CADASTRO_MESTRE_DATABASE_URL, ambiente.CADASTRO_MESTRE_STORAGE_SECRET_KEY, 'valid-token']) {
+      expect(JSON.stringify(res.body)).not.toContain(segredo);
+    }
+    expect(client.query).not.toHaveBeenCalled();
+    expect(storage.storage.getBucket).not.toHaveBeenCalled();
+    expect(storage.upload).not.toHaveBeenCalled();
   });
   it.each([
     ['SELF_SIGNED_CERT_IN_CHAIN', 'tls'], ['ERR_TLS_CERT_ALTNAME_INVALID', 'tls'],
