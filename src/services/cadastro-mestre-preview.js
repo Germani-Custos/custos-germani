@@ -84,7 +84,7 @@ export async function prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, 
   const hash = async buffer => [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))]
     .map(value => value.toString(16).padStart(2, '0')).join('');
   const manifesto = criarManifestoCadastroMestre(leitura.linhas, contexto, {
-    arquivo: leitura.arquivo, tipo_arquivo: leitura.tipo_arquivo, aba: leitura.aba,
+    modo: 'RECONSTRUCAO_UNIVERSO', arquivo: leitura.arquivo, tipo_arquivo: leitura.tipo_arquivo, aba: leitura.aba,
     colunas: leitura.colunas, linha_cabecalho: leitura.linha_cabecalho,
     hash_arquivo_sha256: await hash(bytes),
     hash_contexto_sha256: await hash(new globalThis.TextEncoder().encode(serializarDeterministico(contexto)))
@@ -114,7 +114,7 @@ export async function lerContextoCadastroMestrePreview(client) {
     }
   };
   const [produtos, origens, familias] = await Promise.all([
-    lerTabela('dicionario_master_produtos', 'codigo_produto,descricao,origem_cod,familia_cod,agrupamento_erp_valor', 'codigo_produto'),
+    lerTabela('dicionario_master_produtos', '*', 'codigo_produto'),
     lerTabela('categorias_origem', 'id,codigo,descricao', 'id'),
     lerTabela('categorias_familia', 'id,codigo,descricao', 'id')
   ]);

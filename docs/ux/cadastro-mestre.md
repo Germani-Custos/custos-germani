@@ -1,5 +1,13 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+## CAD-REBUILD-01 — Preview de reconstrução (09/10/2026)
+
+O fluxo CAD-XLS-01 agora usa o contrato `RECONSTRUCAO_UNIVERSO_V1`. A contagem antes chamada **preservados fora dos filtros ou ausentes** passa a **produtos a remover do Cadastro Mestre**, com imagem anterior e motivo por código. O modal também mostra Master antes/depois, válidos, novos, existentes e existentes com UPDATE. Preservações passam a se referir aos campos vazios de quem permanece, sem preservar produtos fora do universo.
+
+Origem/família ERP preenchidas podem ser propostas, assim como descrição e agrupamento. Todas as propostas, incluindo remoções, precisam de aprovação para a execução integral; revisão parcial, erros ou universo vazio impedem a reconstrução. A tela continua somente SELECT, decisões locais e download: sem botão de execução, DELETE, SQL ou RPC. O comando administrativo usa o mesmo adapter/motores e tem snapshot/log/transação, descritos no [contrato vigente](../arquitetura/cadastro-mestre-reconstrucao.md). Tabela manual continua na dimensão operacional. Sem alterações de competência `data_referencia` ou evento `criado_em` nos fatos.
+
+Os registros de CAD-XLS-01/CAD-UX-01 abaixo descrevem o comportamento e validação das entregas originais. A preservação de ausentes/bloqueios de origem/família da primeira entrega de Preview foi substituída apenas para o Master ERP. Regressores atuais de formatos/UI validam cinco remoções, quatro produtos finais e oito propostas no contexto sintético de oito produtos; PostgreSQL em memória verifica reversão integral sem banco real.
+
 ## CAD-XLS-01 — Preview e aprovação na tela (08/10/2026)
 
 ### Causa e decisão de integração

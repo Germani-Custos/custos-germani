@@ -1,5 +1,9 @@
 # Cadastro Mestre — execução pontual Fase 3.4
 
+## Continuidade do contrato em 09/10/2026
+
+Este documento preserva evidências da carga pontual já concluída; sua migration não é um importador e não deve ser reexecutada. A próxima reconstrução usa o [contrato CAD-REBUILD-01](./cadastro-mestre-reconstrucao.md): o universo filtrado é a fonte de verdade do Master, com remoções aprovadas, snapshot integral e transação administrativa. A preservação histórica de 4.853 fora dos filtros permanece como fato do lote anterior, mas foi substituída como regra de execução futura. Nenhuma reconstrução real foi executada no desenvolvimento da nova entrega.
+
 Entrega **CAD-EXEC-01**, em 08/10/2026. Primeira gravação autorizada exclusivamente em `dicionario_master_produtos` e `log_importacao_cadastro_mestre`. Não é um importer integrado ao runtime e não reconcilia a dimensão operacional.
 
 ## Autorização e revalidação

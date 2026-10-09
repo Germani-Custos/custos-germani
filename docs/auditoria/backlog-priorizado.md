@@ -14,6 +14,8 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ## Estabilizações operacionais concluídas
 
+- [x] **CAD-REBUILD-01** 🟠 M — Reconstrução do universo ERP (2026-10-09): Preview/aprovação substituem preservados fora do conjunto por remoções revisáveis; campos vazios de pertencentes preservados. Executor administrativo opt-in, mesma leitura/filtros, snapshot integral durável/no log existente, transação dedicada com rollback, lote/proveniência e provas de tabelas protegidas. Testes XLS/XLSX/XLSM e PostgreSQL em memória, nenhuma carga real ou alteração de schema/migration/RLS/Custos/OP. Execução real ainda depende da aprovação operacional. → [Contrato](../arquitetura/cadastro-mestre-reconstrucao.md).
+
 - [x] **CAD-XLS-01** 🟠 P — Seletor XLSM/XLSX/XLS ligado ao adapter/motores existentes de Preview/aprovação após esclarecer que a tela anterior executava o legado diretamente. Contagens, preservações, decisões e download são locais; regressões BIFF/UI sem parser paralelo, executor, schema, migration ou carga real. → [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
 
 - [x] **CAD-UX-01** 🟠 P — Usabilidade do Cadastro (2026-10-08): tabela em contêiner único com altura limitada à viewport, barra horizontal acessível e cabeçalho sticky; remoção manual explícita grava `agrupamento_cod = NULL` sem mudar a preservação do importador. Validado em Chrome com 5.706 linhas sintéticas e três viewports; lint/typecheck verdes. Suíte: 247/250 passaram, três falhas CRLF preexistentes no artefato da Fase 3.3, fora deste escopo. → [Causas, contrato e validação](../ux/cadastro-mestre.md).

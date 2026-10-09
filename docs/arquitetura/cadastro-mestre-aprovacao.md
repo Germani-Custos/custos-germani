@@ -1,5 +1,9 @@
 # Cadastro Mestre — manifesto e revisão local (Fase 3.3)
 
+## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01
+
+O adapter da tela usa `RECONSTRUCAO_UNIVERSO_V1`: propostas de novos, alterações de campos ERP e remoções de produtos fora do universo; todas precisam estar aprovadas para execução atômica administrativa. O modo incremental FASE_3_3 permanece apenas para compatibilidade das evidências históricas abaixo. Preservação de produtos ausentes e bloqueio de UPDATE de origem/família deixam de ser o contrato do Master ERP; preservação de campos vazios continua. [Contrato atual, snapshot e execução](./cadastro-mestre-reconstrucao.md). Download/decisão na UI não executa; `data_referencia` e `criado_em` dos fatos permanecem intactos.
+
 ## Continuidade — CAD-XLS-01 (08/10/2026)
 
 O seletor do Cadastro prepara manifesto/revisão com este pipeline para XLSM/XLSX/XLS. A UI apresenta atual/ERP/proposto, preservações e decisões individuais/globais pelos helpers existentes. JSON contém manifesto, revisão e conjunto aprovado; `execucao_permitida:false` permanece. Sem executor ou repetição da carga pontual. Referências abaixo à revisão isolada/ausência de integração descrevem a entrega histórica. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).

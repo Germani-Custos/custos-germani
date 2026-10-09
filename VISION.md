@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-09 — universo mestre auditável
+
+O Master ERP representa o universo atual filtrado do arquivo, permitindo revisar claramente quem pertence e quem será removido. A reconstrução exige aprovação integral e execução administrativa atômica com snapshot auditável. Preservação de campos vazios vale para produtos que continuam no universo; fatos históricos e classificação operacional de Custos/OP permanecem intactos. Esta decisão sucede a preservação de ausentes no Master descrita nas entregas históricas abaixo. [Contrato CAD-REBUILD-01](docs/arquitetura/cadastro-mestre-reconstrucao.md). `data_referencia` permanece competência e `criado_em` proveniência de importação.
+
 ## Atualização 2026-10-08 — arquivo ERP direto no Preview
 
 O Cadastro aceita XLS, XLSX e XLSM diretamente no navegador para revisar o Master ERP. O formato não muda os filtros ou a preservação. Aprovar prepara decisões locais antes de eventual execução futura; o Preview não altera a classificação usada por Custos/OP.

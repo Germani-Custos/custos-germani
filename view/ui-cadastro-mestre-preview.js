@@ -7,11 +7,12 @@ import { escapeHtml } from './ui-utils.js';
 
 const DECISOES = { PENDENTE: 'Pendente', APROVADO: 'Aprovado', REJEITADO: 'Rejeitado' };
 const CAMPOS = { descricao: 'Descrição', origem_cod: 'Origem ERP', familia_cod: 'Família ERP', agrupamento_erp_valor: 'Agrup. Prod. (ERP)' };
-const CATEGORIAS = { NOVO_PRODUTO: 'Novo no Cadastro Mestre', ATUALIZAR_DESCRICAO: 'Atualizar descrição', ATUALIZAR_AGRUPAMENTO_ERP: 'Atualizar agrupamento ERP' };
+const CATEGORIAS = { NOVO_PRODUTO: 'Novo no Cadastro Mestre', ATUALIZAR_DESCRICAO: 'Atualizar descrição', ATUALIZAR_AGRUPAMENTO_ERP: 'Atualizar agrupamento ERP', ATUALIZAR_ORIGEM_ERP: 'Atualizar origem ERP', ATUALIZAR_FAMILIA_ERP: 'Atualizar família ERP', REMOVER_FORA_UNIVERSO: 'Remover do Cadastro Mestre' };
 const valor = value => escapeHtml(value ?? '(vazio)');
 const tabela = (headers, rows) => `<div style="max-height:360px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
 
 function detalhesOperacao(operacao) {
+  if (operacao.acao === 'DELETE') return `<details><summary>Conferir remoção do Master</summary><p>${valor(operacao.atual?.descricao)} · ${operacao.motivo === 'AUSENTE_NO_ARQUIVO' ? 'Ausente do arquivo' : 'Fora dos filtros oficiais'}</p><p>Remover somente do Cadastro Mestre ERP após aprovação. Custos, OP, cadastro operacional e históricos permanecem intactos.</p></details>`;
   const fields = Object.keys(operacao.dados).filter(campo => campo !== 'codigo_produto');
   return `<details><summary>Atual / ERP / proposto</summary>${tabela(['Campo', 'Atual', 'ERP', 'Proposto'], fields.map(campo =>
     `<tr><td>${valor(CAMPOS[campo])}</td><td>${valor(operacao.atual?.[campo])}</td><td>${valor(operacao.recebido[campo])}</td><td>${valor(operacao.dados[campo])}</td></tr>`))}
@@ -25,7 +26,8 @@ function htmlPreview(manifesto, revisao) {
     ['Linhas excluídas', r.linhas_excluidas], ['Produtos válidos', r.produtos_com_preview],
     ['Existentes', r.produtos_existentes], ['Novos', r.novos_produtos],
     ['Produtos com alterações', r.produtos_com_alteracoes], ['Alterações de campos', r.alteracoes_potenciais],
-    ['Produtos preservados fora dos filtros ou ausentes', r.produtos_fora_conjunto_preservados],
+    ['Produtos a remover do Cadastro Mestre', r.produtos_a_remover],
+    ['Cadastro Mestre antes', r.produtos_master_antes], ['Cadastro Mestre após reconstrução', r.produtos_master_depois],
     ['Existentes sem operação', r.existentes_sem_operacao], ['Campos preservados', r.preservacoes_campos],
     ['Erros', r.erros]
   ];
@@ -35,7 +37,9 @@ function htmlPreview(manifesto, revisao) {
       ${Object.entries(DECISOES).map(([status, label]) => `<option value="${status}" ${decisoes.get(o.id) === status ? 'selected' : ''} ${status === 'APROVADO' && !o.aprovavel ? 'disabled' : ''}>${label}</option>`).join('')}
     </select></td></tr>`);
   return `<p>${valor(manifesto.fonte.arquivo)} · ${valor(manifesto.fonte.tipo_arquivo)} · Aba ${valor(manifesto.fonte.aba)}</p>
-    <p>Confira as propostas antes de decidir. Aprovar prepara uma revisão local; nenhuma alteração é gravada no banco.</p>
+    <p>Reconstrução do universo: o Cadastro Mestre deverá conter somente os produtos válidos do arquivo filtrado. Confira também as remoções antes de aprovar. Decisões e download são locais; a seleção do arquivo não executa a carga.</p>
+    <p>A execução administrativa exige todas as propostas aprovadas, inclusive remoções. Qualquer proposta pendente ou rejeitada impede a reconstrução inteira.</p>
+    ${manifesto.reconstrucao_bloqueada ? '<p role="alert">Reconstrução bloqueada: existem erros no arquivo ou o universo filtrado está vazio. Corrija e gere novo Preview antes de aprovar.</p>' : ''}
     ${tabela(['Resumo', 'Quantidade'], contagens.map(([label, count]) => `<tr><td>${escapeHtml(label)}</td><td>${count}</td></tr>`))}
     <p>Decisões: <span data-master-decisions></span></p>
     <div class="master-preview-actions">${Object.entries(DECISOES).map(([status, label]) => `<button type="button" class="btn-outline" data-master-decision="${status}">${label === 'Aprovado' ? 'Aprovar todas as permitidas' : label === 'Rejeitado' ? 'Rejeitar todas' : 'Voltar todas a pendente'}</button>`).join('')}</div>
@@ -43,8 +47,8 @@ function htmlPreview(manifesto, revisao) {
     <details><summary>Produtos válidos e valores após preservação (${manifesto.produtos.length})</summary>
       ${tabela(['Produto', 'Descrição', 'Origem ERP', 'Família ERP', 'Agrup. Prod. (ERP)'], manifesto.produtos.map(p =>
         `<tr><td>${valor(p.codigo_produto)}</td>${Object.keys(CAMPOS).map(c => `<td>${valor(p.calculado[c])}</td>`).join('')}</tr>`))}</details>
-    <details><summary>Produtos preservados fora dos filtros ou ausentes (${manifesto.preservados.length})</summary>
-      ${tabela(['Produto', 'Motivo'], manifesto.preservados.map(p => `<tr><td>${valor(p.codigo_produto)}</td><td>${p.motivo === 'AUSENTE_NO_ARQUIVO' ? 'Ausente do arquivo: preservar' : 'Fora do conjunto filtrado: preservar'}</td></tr>`))}</details>
+    <details><summary>Produtos a remover do Cadastro Mestre (${manifesto.remocoes.length})</summary>
+      ${tabela(['Produto', 'Descrição atual', 'Motivo'], manifesto.remocoes.map(p => `<tr><td>${valor(p.codigo_produto)}</td><td>${valor(p.atual?.descricao)}</td><td>${p.motivo === 'AUSENTE_NO_ARQUIVO' ? 'Ausente do arquivo' : 'Fora dos filtros oficiais'}</td></tr>`))}</details>
     <details><summary>Campos preservados (${manifesto.preservacoes.length})</summary>
       ${tabela(['Produto', 'Campo', 'Valor atual'], manifesto.preservacoes.map(p => `<tr><td>${valor(p.codigo_produto)}</td><td>${valor(CAMPOS[p.campo])}</td><td>${valor(p.atual)}</td></tr>`))}</details>
     <details><summary>Pendências de classificação (${manifesto.pendencias.length})</summary>

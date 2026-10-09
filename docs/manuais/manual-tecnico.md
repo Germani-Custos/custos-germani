@@ -1,5 +1,13 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-REBUILD-01 — contrato vigente (09/10/2026)
+
+O adapter existente passa `modo:RECONSTRUCAO_UNIVERSO` ao motor de aprovação. O motor de filtros permanece intacto; `core/cadastro-mestre-reconstruction-engine.js` valida aprovação integral e consolida o plano puro. Master é lido com `supabase.from().select('*')` paginado para vincular a imagem inteira. Manifesto `RECONSTRUCAO_UNIVERSO_V1` inclui remoções revisáveis e universo esperado, mantendo download com execução desabilitada.
+
+O executor `scripts/lib/cadastro-mestre-reconstruction.mjs`, chamado apenas pelo comando administrativo `scripts/reconstruir-cadastro-mestre.mjs`, usa cliente PostgreSQL dedicado, BEGIN/locks/validação completa, snapshot durável, SAVEPOINT, bulk INSERT/UPDATE e DELETE explícito somente no Master, prova final e COMMIT. Falha de DML reverte integralmente e registra lote falhou; confirmação de COMMIT perdida exige consulta e nunca retry automático. Não há SQL/RPC/DELETE no frontend.
+
+Snapshot completo, hashes, decisões e remoções ficam no JSONB existente do log e em arquivo independente antes do DML do Master. Proveniência é preenchida apenas nas escritas efetivas. Não muda schema/RLS nem cria migration. `pg` 8.16.3 é exclusivo do comando Node; PGlite 0.3.14 é exclusivo de testes locais, ambos devDependencies, sem alteração do CDN/runtime frontend. Nenhum fato, mapa, categoria ou operacional recebe DML; `data_referencia` continua competência e `criado_em` importação. [Contrato e testes transacionais](../arquitetura/cadastro-mestre-reconstrucao.md). Os limites de preservação/execução descritos nas entregas abaixo são históricos.
+
 ## CAD-XLS-01 — Preview na tela (08/10/2026)
 
 `view/ui-product-master.js` delega o seletor a `createCadastroMestrePreviewController({dom,executeOperationalBoundary})` em `view/ui-cadastro-mestre-preview.js`. Fluxo: arquivo → `api.getCadastroMestrePreviewContext()` (SELECT paginado do Master ERP/categorias) → `prepararAprovacaoArquivoCadastroMestre(arquivo,contexto,globalThis.XLSX)` → manifesto/revisão pendente → modal → helpers canônicos de decisão → download JSON opcional. A fonte do Preview é `dicionario_master_produtos`, nunca `getProductMaster()`.

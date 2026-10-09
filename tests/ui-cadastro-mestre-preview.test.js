@@ -91,13 +91,13 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(options.title).toBe('Preview do Cadastro Mestre');
     for (const [label, total] of [['Linhas lidas', 8], ['Linhas após filtros', 4], ['Linhas excluídas', 4],
       ['Produtos válidos', 4], ['Existentes', 3], ['Novos', 1], ['Produtos com alterações', 1],
-      ['Produtos preservados fora dos filtros ou ausentes', 5], ['Campos preservados', 4]]) {
+      ['Produtos a remover do Cadastro Mestre', 5], ['Cadastro Mestre após reconstrução', 4], ['Campos preservados', 4]]) {
       expect(options.html).toContain(`<td>${label}</td><td>${total}</td>`);
     }
     expect(options.html).toContain('P801');
     expect(options.html).toContain('Preservar descrição');
     expect(options.html).toContain('009');
-    expect(container.counter.textContent).toBe('Pendente: 3 · Aprovado: 0 · Rejeitado: 0');
+    expect(container.counter.textContent).toBe('Pendente: 8 · Aprovado: 0 · Rejeitado: 0');
     expect(URL.createObjectURL).not.toHaveBeenCalled();
     expect(onChanged).not.toHaveBeenCalled();
     expect(api.getProductMaster).toHaveBeenCalledOnce();
@@ -122,7 +122,7 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     const output = JSON.parse(await blob.text());
     expect(output.aprovado.execucao_permitida).toBe(false);
     expect(output.aprovado.operacoes.map(o => o.dados)).toEqual([{ descricao: 'Descrição atualizada çã' }]);
-    expect(output.revisao.decisoes.filter(d => d.status === 'PENDENTE')).toHaveLength(2);
+    expect(output.revisao.decisoes.filter(d => d.status === 'PENDENTE')).toHaveLength(7);
     expect(download.click).toHaveBeenCalledOnce();
     expect(download.download).toBe('revisao_cadastro.xls.json');
   });
@@ -132,7 +132,7 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
       abrirModal(options);
       for (const status of ['APROVADO', 'REJEITADO', 'PENDENTE']) {
         await container.emit('click', target({ dataset: { masterDecision: status } }));
-        expect(container.counter.textContent).toContain(`${{ APROVADO: 'Aprovado', REJEITADO: 'Rejeitado', PENDENTE: 'Pendente' }[status]}: 3`);
+        expect(container.counter.textContent).toContain(`${{ APROVADO: 'Aprovado', REJEITADO: 'Rejeitado', PENDENTE: 'Pendente' }[status]}: 8`);
         expect(container.selects.every(s => s.value === status)).toBe(true);
       }
       return { isConfirmed: false };
@@ -180,15 +180,15 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
-  it('aprovação global mantém bloqueios de origem/família sem aprovar silenciosamente', async () => {
+  it('reconstrução propõe atualizar origem ERP preenchida, sem criar classificação operacional', async () => {
     const ctx = JSON.parse(JSON.stringify(contexto));
     ctx.produtos[0].origem_cod = '99';
     api.getCadastroMestrePreviewContext.mockResolvedValue({ data: ctx, error: null });
     Swal.fire.mockImplementation(async options => {
       abrirModal(options);
-      expect(options.html).toContain('Bloqueada: alteração de Origem ERP fora do escopo');
+      expect(options.html).toContain('Atualizar origem ERP');
       await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
-      expect(container.counter.textContent).toBe('Pendente: 2 · Aprovado: 1 · Rejeitado: 0');
+      expect(container.counter.textContent).toBe('Pendente: 0 · Aprovado: 9 · Rejeitado: 0');
       return { isConfirmed: true };
     });
     const { dom, controller, errors } = setup();
@@ -196,7 +196,7 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     await dom.masterImportInput.emit('change');
     expect(errors).toEqual([]);
     const output = JSON.parse(await URL.createObjectURL.mock.calls[0][0].text());
-    expect(output.aprovado.operacoes.map(o => o.codigo_produto)).toEqual(['1000']);
+    expect(output.aprovado.operacoes.find(o => o.categoria === 'ATUALIZAR_ORIGEM_ERP').dados).toEqual({ origem_cod: '01' });
   });
 
   it('impede processamento concorrente enquanto um Preview estiver aberto', async () => {

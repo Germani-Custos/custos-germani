@@ -2,6 +2,8 @@
 
 `src/services/api.js` é a camada única de acesso ao Supabase.
 
+CAD-REBUILD-01 (09/10/2026): o Preview do Master lê contexto completo via `supabase.from()` e calcula localmente propostas, inclusive remoções. O frontend não executa DELETE, SQL ou RPC. A reconstrução transacional aprovada usa um comando administrativo Node separado, sem endpoint na UI; [contrato e limites](./cadastro-mestre-reconstrucao.md).
+
 ## Responsabilidades principais
 - Carregar dados mestres com recorte por produtos que têm custo.
 - Garantir produto no dicionário antes da gravação de custo.

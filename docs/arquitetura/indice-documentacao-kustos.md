@@ -1,6 +1,6 @@
 # Kustos — Manual Técnico
 
-Novo contrato de desenvolvimento (2026-10-08): [Cadastro Mestre — Preview determinístico, Fase 3.1](./cadastro-mestre-preview.md), sem gravação ou ativação na UI.
+Contrato vigente (2026-10-09): [Cadastro Mestre — reconstrução do universo ERP](./cadastro-mestre-reconstrucao.md), com Preview/aprovação local e execução administrativa atômica explícita. Substitui a preservação de produtos fora do conjunto somente no Master ERP. Histórico: [Preview determinístico, Fase 3.1](./cadastro-mestre-preview.md), [aprovação Fase 3.3](./cadastro-mestre-aprovacao.md) e [execução pontual Fase 3.4](./cadastro-mestre-execucao-fase3-4.md).
 
 **Sistema:** kustos germani  
 **Escopo:** estado atual implementado no repositório  

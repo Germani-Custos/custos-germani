@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## Contrato vigente — CAD-REBUILD-01 (09/10/2026)
+
+UI → `getCadastroMestrePreviewContext()` (SELECT `*` paginado do Master e catálogos via `supabase.from()`) → adapter existente → manifesto `RECONSTRUCAO_UNIVERSO_V1` com universo, alterações e remoções → decisões/download locais. Sem escrita, DELETE, RPC ou SQL no frontend. Produtos fora do universo não são preservados no Master; vazios preservam campos de pertencentes.
+
+Comando administrativo → mesmo adapter/contexto sob locks → revisão integral idêntica → snapshot em arquivo e JSONB do log → transação PostgreSQL dedicada → INSERT/UPDATE/DELETE somente Master e DML de auditoria no log → provas finais/COMMIT. Erro reverte Master inteiro; lote falhou mantém snapshot, resposta de COMMIT incerta não é repetida automaticamente. [Contrato completo](./cadastro-mestre-reconstrucao.md). Sem schema/migration/RLS, alteração operacional ou mudança nos eixos `data_referencia` (competência) e `criado_em` (importação).
+
+Os contratos de fases abaixo são históricos quando conflitarem com este. A antiga ausência de executor refere-se à primeira entrega da tela; o executor atual é administrativo e não está conectado ao navegador.
+
 Atualizado em: **2026-10-08**.
 
 ## Contrato atual — CAD-XLS-01 / seletor do Cadastro

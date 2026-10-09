@@ -1,5 +1,14 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro Mestre — reconstrução do universo (09/10/2026, CAD-REBUILD-01)
+
+1. Abra **Preview mestre (XLSM / XLSX / XLS)** com o original ERP e confira produtos válidos, novos, existentes com alterações e **produtos a remover do Cadastro Mestre**. Expanda os detalhes das remoções para conferir código, descrição e motivo.
+2. Campos ERP vazios preservam o existente de quem continua no universo. Produtos ausentes ou fora dos filtros deixam de ser preservados no Master; Tipo P/C, Produzido/Revenda e exclusões inativo/EXLUIR continuam iguais.
+3. Revise e aprove todas as propostas. Qualquer pendente/rejeitada impede a reconstrução inteira; arquivo com erros ou universo vazio fica bloqueado.
+4. Baixe a revisão para a execução administrativa explícita. Selecionar, aprovar ou baixar na tela não grava nem apaga dados; fechar descarta a revisão local.
+
+O exemplo informado pelo usuário tem 6.230 linhas, 860 válidos (853 existentes e 7 novos) e 4.853 remoções, resultando em 860 no Master após execução aprovada. A operação guarda snapshot anterior e lote, sem apagar Custos, OP ou produtos operacionais. A tabela/edição manual do Cadastro continua mostrando a dimensão operacional, independente dessa contagem. `data_referencia` é competência e `criado_em` importação nos fatos, intactos. [Contrato atual](../arquitetura/cadastro-mestre-reconstrucao.md). As preservações de ausentes descritas abaixo são históricas para o Master ERP.
+
 ## Cadastro — Preview de XLS, XLSX e XLSM (08/10/2026, CAD-XLS-01)
 
 1. Clique **Preview mestre (XLSM / XLSX / XLS)** e escolha o arquivo ERP original. XLS é lido no navegador, sem conversão.

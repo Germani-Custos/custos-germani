@@ -26,15 +26,15 @@ describe('Cadastro Mestre — mesmos contratos em XLS, XLSX e XLSM', () => {
         ['005', 'DESCRICAO_EXCLUIDA', true], ['006', 'DESCRICAO_EXCLUIDA', true]
       ]);
       const { manifesto, revisao } = await prepararAprovacaoArquivoCadastroMestre(file, contexto, SheetJS);
-      expect(manifesto.resumo).toMatchObject({ operacoes_propostas: 3, inserts_propostos: 1, updates_propostos: 2,
-        produtos_fora_conjunto_preservados: 5, existentes_sem_operacao: 2 });
-      expect(manifesto.preservados.map(p => p.codigo_produto)).toEqual(['003', '004', '005', '006', '009']);
+      expect(manifesto.resumo).toMatchObject({ operacoes_propostas: 8, inserts_propostos: 1, updates_propostos: 2,
+        produtos_a_remover: 5, produtos_master_depois: 4, existentes_sem_operacao: 2 });
+      expect(manifesto.remocoes.map(p => p.codigo_produto)).toEqual(['003', '004', '005', '006', '009']);
       expect(manifesto.operacoes.every(o => o.tabela === 'dicionario_master_produtos')).toBe(true);
       expect(manifesto.operacoes.find(o => o.acao === 'INSERT').dados).toMatchObject({ codigo_produto: '1000', agrupamento_erp_valor: 'P302' });
       expect(revisao.decisoes.every(d => d.status === 'PENDENTE')).toBe(true);
       const decisao = decidirOperacoesCadastroMestre(manifesto, revisao, manifesto.operacoes.map(o => o.id), 'APROVADO');
       const aprovado = obterOperacoesAprovadasCadastroMestre(manifesto, decisao);
-      expect(aprovado.operacoes).toHaveLength(3);
+      expect(aprovado.operacoes).toHaveLength(8);
       expect(aprovado.execucao_permitida).toBe(false);
       expect(network).not.toHaveBeenCalled();
       expect(JSON.stringify(contexto)).toBe(original);

@@ -1,5 +1,9 @@
 # Capítulo 6 — Banco de Dados
 
+## Atualização 09/10/2026 — universo mestre e snapshot
+
+`dicionario_master_produtos` passa a refletir exatamente o arquivo ERP filtrado após execução integral aprovada. Somente Master recebe remoções. Snapshot anterior completo, SHA256, remoções, decisões e contagens ficam em `log_importacao_cadastro_mestre.metadados_origem` (JSONB existente), além de cópia durável independente. Novas escritas mantêm as FKs de lote existentes; linhas removidas ficam rastreáveis pelo log/snapshot. Nenhum schema, migration, política, fato ou dimensão operacional é alterado. A transação usa conexão administrativa separada; frontend continua `supabase.from()` somente leitura neste fluxo. [Contrato](./cadastro-mestre-reconstrucao.md). `data_referencia` permanece competência e `criado_em` evento de importação nos fatos.
+
 ## Saneamento operacional (2026-05-25)
 
 Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para alinhar schema real com API/UI/engines, com foco em velocidade investigativa e previsibilidade temporal.

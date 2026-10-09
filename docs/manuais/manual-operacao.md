@@ -1,5 +1,15 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-REBUILD-01 — procedimento vigente (09/10/2026)
+
+Conferir o universo filtrado e as remoções no Preview do original XLS/XLSX/XLSM. Produtos ausentes ou fora do filtro serão removidos somente do Master ERP; vazios preservam campos de quem permanece. Aprovar integralmente e baixar a revisão. Não repetir a migration pontual da Fase 3.4.
+
+Validar primeiro sem banco: `node scripts/reconstruir-cadastro-mestre.mjs --revisao "revisao.json"`. A saída informa contagens e confirmação vinculada ao manifesto. A execução administrativa futura exige `--executar`, original, revisão, caminho novo de snapshot em diretório existente, lote único, autor e confirmação exata; conexão administrativa integral fica em `CADASTRO_MESTRE_DATABASE_URL`, fora do frontend/repositório. [Argumentos e procedimento completo](../arquitetura/cadastro-mestre-reconstrucao.md#operação-e-exemplo).
+
+Arquivo ou Master alterado exige novo Preview. Lock ocupado, dependência desconhecida, snapshot indisponível, revisão parcial ou universo vazio impedem a carga. Erro durante DML reverte todo o Master e registra falhou com snapshot; resultado de COMMIT não confirmado exige consultar o lote e a cópia independente antes de qualquer tentativa. Guardar revisão, original e snapshot; nunca sobrescrever evidências.
+
+Expectativa informada pelo usuário: 6.230 linhas, 860 válidos, 853 existentes, 7 novos, 4.853 remoções; Master final 860. Conferir log concluído, quantidade final, hash e provas das tabelas protegidas. Nenhuma carga real foi feita no desenvolvimento; testes usam PostgreSQL em memória. A dimensão operacional da tela mantém sua contagem; Custos/OP, fatos e os eixos `data_referencia` (competência)/`criado_em` (importação) permanecem intactos. A preservação de ausentes registrada nas fases abaixo é histórica.
+
 ## CAD-XLS-01 — conferência dos formatos ERP (08/10/2026)
 
 Na aba Cadastro, testar XLS, XLSX e XLSM por **Preview mestre (XLSM / XLSX / XLS)**. Conferir contagens e detalhes: P/C e Produzido/Revenda elegíveis, D/inativo/EXLUIR excluídos, vazios/ausentes preservados e Agrup. Prod. como ERP bruto. Decisões individuais/globais e download trabalham localmente; fechar não grava nem baixa arquivo.

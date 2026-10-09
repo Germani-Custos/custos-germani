@@ -1,5 +1,9 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
+## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01
+
+O motor puro de filtros deste documento permanece intacto. A camada de manifesto/aprovação passa a interpretar produtos fora do conjunto ou ausentes como remoções do Master, conforme [reconstrução do universo](./cadastro-mestre-reconstrucao.md), substituindo a preservação histórica de produtos ausentes descrita abaixo. Campos vazios de produtos que permanecem continuam preservados. O contexto SELECT passa a incluir a imagem completa do Master. Nenhuma mudança de competência `data_referencia` ou evento `criado_em` dos fatos.
+
 ## Continuidade — CAD-XLS-01 (08/10/2026)
 
 O seletor do Cadastro aceita XLSM/XLSX/XLS e reutiliza este adapter via `prepararAprovacaoArquivoCadastroMestre`. O modal apresenta contagens, propostas, preservações e aprovação local, com download JSON sem execução. A integração foi confirmada após constatar que a tela executava o legado diretamente. Adapter, filtros e reconciliação não mudaram; XLS é lido diretamente pelo SheetJS. Referências abaixo à ausência de integração descrevem a entrega original. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).

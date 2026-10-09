@@ -1,5 +1,11 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-09 — CAD-REBUILD-01: universo atual do ERP
+
+O Preview passa a propor remoção do Master de produtos ausentes ou fora dos filtros, além de novos e alterações. Campos ERP vazios preservam valores dos produtos que permanecem. Após aprovação integral, um comando administrativo explícito reconstrói somente `dicionario_master_produtos` em uma transação, com snapshot integral em disco/log, lote e provas de preservação operacional. A tela continua sem execução automática. Não há mudança de schema, RPC ou SQL no frontend.
+
+Para as contagens do XLS real informadas pelo usuário: **6.230 linhas → 860 válidos = 853 existentes + 7 novos**; **4.853 remoções**, com **5.706 − 4.853 + 7 = 860** no Master. Nenhuma carga real foi executada nesta entrega. [Contrato, rollback, comando e validação](docs/arquitetura/cadastro-mestre-reconstrucao.md). As referências abaixo à preservação de produtos fora do conjunto descrevem as entregas históricas e são substituídas por este contrato somente no Master ERP. Custos/OP mantêm `data_referencia` como competência e `criado_em` como evento de importação.
+
 ## Atualização 2026-10-08 — CAD-XLS-01: Preview direto do ERP
 
 Em **Cadastro → Preview mestre (XLSM / XLSX / XLS)**, escolha o arquivo ERP original, sem conversão manual. Os três formatos usam o mesmo adapter e motores de Preview/aprovação. A janela mostra contagens, propostas e preservações; decisões e download JSON são locais, sem execução ou escrita no banco. Após esclarecimento humano, o seletor deixou de chamar o importador legado. [Fluxo, contratos e validação](docs/ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).

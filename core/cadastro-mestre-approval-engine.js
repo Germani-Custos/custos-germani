@@ -23,6 +23,8 @@ export function serializarDeterministico(value) {
  */
 export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
   const preview = criarPreviewCadastroMestre(linhas, contexto);
+  const reconstruir = fonte.modo === 'RECONSTRUCAO_UNIVERSO';
+  const bloqueado = reconstruir && (preview.status !== 'OK' || !preview.produtos.length);
   const operacoes = [];
   const preservacoes = [];
   const pendencias = [];
@@ -42,7 +44,7 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       if (resolucao.status !== 'RESOLVIDO') pendencias.push({ codigo_produto: codigo, campo, codigo: resolucao.codigo, status: resolucao.status, impede_dado_erp_bruto: false });
     }
     if (agrupamento !== null) pendencias.push({ codigo_produto: codigo, campo: 'agrupamento_erp_valor', codigo: agrupamento, status: 'SEM_PONTE_ERP_KUSTOS', impede_dado_erp_bruto: false });
-    const foraEscopo = produto.diferencas.filter(d => ['origem_cod', 'familia_cod'].includes(d.campo) && d.tipo === 'ALTERACAO_POTENCIAL');
+    const foraEscopo = reconstruir ? [] : produto.diferencas.filter(d => ['origem_cod', 'familia_cod'].includes(d.campo) && d.tipo === 'ALTERACAO_POTENCIAL');
     const bloqueios = foraEscopo.map(d => ({ campo: d.campo, atual: d.atual, recebido: d.recebido, motivo: 'ALTERACAO_FORA_ESCOPO_FASE_3_3' }));
     for (const bloqueio of bloqueios) pendencias.push({ codigo_produto: codigo, ...bloqueio, status: 'BLOQUEADO', impede_dado_erp_bruto: true });
     for (const diferenca of produto.diferencas) {
@@ -59,7 +61,7 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
         codigo_produto: codigo, linha: produto.linha,
         dados, atual: copiar(produto.atual), recebido: copiar(produto.recebido),
         diferencas: copiar(diferencas), origem: copiar(produto.origem), familia: copiar(produto.familia),
-        agrupamento: copiar(produto.agrupamento), aprovavel: bloqueios.length === 0, bloqueios,
+        agrupamento: copiar(produto.agrupamento), aprovavel: !bloqueado && bloqueios.length === 0, bloqueios,
         precondicao: novo ? { produto_deve_estar_ausente: true }
           : { produto_deve_existir: true, valores_anteriores: Object.fromEntries(Object.keys(dados).map(campo => [campo, textoCadastro(produto.atual[campo])])) },
         // Não são valores NULL nem IDs fictícios. O lote BIGINT só existe na execução futura.
@@ -72,7 +74,9 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       adicionar('NOVO_PRODUTO', dados, produto.diferencas);
     } else {
       const antes = operacoes.length;
-      for (const [campo, categoria] of [['descricao', 'ATUALIZAR_DESCRICAO'], ['agrupamento_erp_valor', 'ATUALIZAR_AGRUPAMENTO_ERP']]) {
+      const campos = [['descricao', 'ATUALIZAR_DESCRICAO'], ['agrupamento_erp_valor', 'ATUALIZAR_AGRUPAMENTO_ERP'],
+        ...(reconstruir ? [['origem_cod', 'ATUALIZAR_ORIGEM_ERP'], ['familia_cod', 'ATUALIZAR_FAMILIA_ERP']] : [])];
+      for (const [campo, categoria] of campos) {
         const diferenca = produto.diferencas.find(d => d.campo === campo);
         if (diferenca.tipo === 'ALTERACAO_POTENCIAL' && diferenca.recebido !== null) adicionar(categoria, { [campo]: diferenca.recebido }, [diferenca]);
       }
@@ -86,12 +90,25 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
   const preservados = contexto.produtos.filter(p => !elegiveis.has(normalizeCodigoProduto(p.codigo_produto)))
     .map(p => ({ codigo_produto: normalizeCodigoProduto(p.codigo_produto), motivo: fisicamentePresentes.has(normalizeCodigoProduto(p.codigo_produto)) ? 'FORA_DO_CONJUNTO_FILTRADO' : 'AUSENTE_NO_ARQUIVO', operacao: null }))
     .sort((a, b) => comparar(a.codigo_produto, b.codigo_produto));
+  const master = new Map(contexto.produtos.map(p => [normalizeCodigoProduto(p.codigo_produto), p]));
+  const remocoes = reconstruir ? preservados.map(p => ({ ...p, atual: copiar(master.get(p.codigo_produto)) })) : [];
+  for (const produto of remocoes) operacoes.push({
+    id: `REMOVER_FORA_UNIVERSO:${encodeURIComponent(produto.codigo_produto)}`,
+    categoria: 'REMOVER_FORA_UNIVERSO', acao: 'DELETE', tabela: 'dicionario_master_produtos',
+    codigo_produto: produto.codigo_produto, linha: null, dados: {}, atual: produto.atual,
+    recebido: null, diferencas: [], origem: null, familia: null, agrupamento: null,
+    motivo: produto.motivo, aprovavel: !bloqueado, bloqueios: [],
+    precondicao: { produto_deve_existir: true, imagem_anterior: produto.atual }, campos_lote_na_execucao: []
+  });
+  operacoes.sort((a, b) => comparar(a.codigo_produto, b.codigo_produto) || comparar(a.categoria, b.categoria));
   const existentes = preview.produtos.filter(p => p.atual !== null);
   const alteradosBase = existentes.filter(p => p.diferencas.some(d => d.campo !== 'agrupamento_erp_valor' && d.tipo === 'ALTERACAO_POTENCIAL')).length;
   const inserts = operacoes.filter(o => o.acao === 'INSERT');
   const updates = operacoes.filter(o => o.acao === 'UPDATE');
   return {
-    versao_contrato: 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
+    versao_contrato: reconstruir ? 'RECONSTRUCAO_UNIVERSO_V1' : 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
+    modo: reconstruir ? 'RECONSTRUCAO_UNIVERSO' : 'INCREMENTAL', reconstrucao_bloqueada: bloqueado,
+    universo: reconstruir ? [...elegiveis].sort(comparar) : [],
     fonte: copiar(fonte), status: preview.status,
     resumo_base: { produtos: preview.produtos.length, existentes: existentes.length, novos: inserts.length,
       existentes_sem_alteracao: existentes.length - alteradosBase, existentes_com_alteracao: alteradosBase,
@@ -100,7 +117,9 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       ...preview.resumo, inserts_propostos: inserts.length, updates_propostos: updates.length,
       produtos_existentes_com_update: new Set(updates.map(o => o.codigo_produto)).size,
       operacoes_propostas: operacoes.length, operacoes_bloqueadas: operacoes.filter(o => !o.aprovavel).length,
-      existentes_sem_operacao: semAlteracao.length, produtos_fora_conjunto_preservados: preservados.length,
+      existentes_sem_operacao: semAlteracao.length, produtos_fora_conjunto_preservados: reconstruir ? 0 : preservados.length,
+      produtos_a_remover: remocoes.length, produtos_master_antes: contexto.produtos.length,
+      produtos_master_depois: reconstruir ? preview.produtos.length : contexto.produtos.length + inserts.length,
       agrupamentos_erp_preenchidos: preview.produtos.filter(p => p.agrupamento.recebido !== null).length,
       agrupamentos_erp_vazios: preview.produtos.filter(p => p.agrupamento.recebido === null).length,
       agrupamentos_erp_distintos: porValor.size,
@@ -109,14 +128,14 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       preservacoes_campos: preservacoes.length
     },
     distribuicao_agrupamento: [...porValor.values()].sort((a, b) => comparar(a.valor, b.valor)),
-    operacoes, preservacoes, preservados, sem_alteracao: semAlteracao,
+    operacoes, preservacoes, preservados: reconstruir ? [] : preservados, remocoes, sem_alteracao: semAlteracao,
     pendencias, produtos: preview.produtos, erros: preview.erros
   };
 }
 
 /** Todas as propostas começam PENDENTES; uma revisão não é autorização de execução. */
 export function criarRevisaoCadastroMestre(manifesto) {
-  return { versao_contrato: 'FASE_3_3', vinculo_manifesto: serializarDeterministico(manifesto),
+  return { versao_contrato: manifesto.versao_contrato, vinculo_manifesto: serializarDeterministico(manifesto),
     decisoes: manifesto.operacoes.map(o => ({ id: o.id, status: 'PENDENTE' })) };
 }
 
@@ -144,7 +163,7 @@ export function decidirOperacoesCadastroMestre(manifesto, revisao, ids, decisao)
 export function obterOperacoesAprovadasCadastroMestre(manifesto, revisao) {
   validarRevisao(manifesto, revisao);
   const aprovadas = new Set(revisao.decisoes.filter(d => d.status === 'APROVADO').map(d => d.id));
-  return { versao_contrato: 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
+  return { versao_contrato: manifesto.versao_contrato, somente_preparacao: true, execucao_permitida: false,
     fonte: copiar(manifesto.fonte), vinculo_manifesto: revisao.vinculo_manifesto,
     decisoes: copiar(revisao.decisoes),
     operacoes: copiar(manifesto.operacoes.filter(o => aprovadas.has(o.id))) };

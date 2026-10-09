@@ -1,5 +1,15 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-REBUILD-01 concluído
+
+- [x] Manifesto de reconstrução do universo filtrado com INSERT, UPDATE e remoções explícitas somente do Master; Preview e aprovação local mantidos.
+- [x] Executor administrativo opt-in em uma transação, com snapshot integral independente e no log existente, lote/proveniência e proteção de operacional/mapa/fatos.
+- [x] Regressões de XLS/XLSX/XLSM e PostgreSQL em memória: preservação de vazios, remoção, erros com reversão integral, arquivo/contexto divergente e resposta de COMMIT incerta.
+- [ ] Execução do lote real permanece pendente de aprovação operacional; nenhum banco real foi carregado nesta tarefa.
+- [ ] Integração de execução no navegador e reconciliação operacional continuam fora deste escopo.
+
+[Contrato atual](docs/arquitetura/cadastro-mestre-reconstrucao.md). Substitui a preservação de produtos fora do universo no Master e a pendência histórica de executor administrativo; não muda schema, RLS, filtros nem `data_referencia` (competência)/`criado_em` (importação) dos fatos.
+
 ## Atualização 2026-10-08 — CAD-XLS-01 concluído
 
 - [x] Seletor XLSM/XLSX/XLS conectado ao adapter/motores existentes de Preview e aprovação, com contagens, preservações, decisões locais e download JSON.
