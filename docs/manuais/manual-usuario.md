@@ -1,5 +1,9 @@
 # Manual do Usuário — Custos Germani
 
+## Diagnóstico sem reconstrução — CAD-DIAG-01 (09/10/2026)
+
+Com execução desabilitada, o botão continua indisponível. O administrador pode consultar separadamente o GET de diagnóstico para identificar falhas por etapa, sem importar produtos. HTTP 409 nesse GET não indica execução/COMMIT. [Procedimento de leitura](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+
 ## Ambiente de execução — CAD-ENV-01 (09/10/2026)
 
 Enquanto o administrador prepara o deploy, a execução permanece desabilitada. Aprovar Preview não reconstrói o banco. Só o usuário explicitamente autorizado terá acesso após configuração e verificação. [Procedimento administrativo](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Master real ainda 5.706 nesta preparação; resultado 860 é expectativa futura, sem alteração de Custos/OP ou dos fatos.

@@ -8,6 +8,7 @@ import { prepararAprovacaoArquivoCadastroMestre } from '../../src/services/cadas
 import { criarPlanoReconstrucaoCadastroMestre } from '../../core/cadastro-mestre-reconstruction-engine.js';
 import { serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
 import { contextoAtual, executarReconstrucaoCadastroMestre, hashReconstrucao, validarDependencias } from './cadastro-mestre-reconstruction.mjs';
+import { criarDiagnosticoCadastroMestre } from './cadastro-mestre-diagnostic.mjs';
 
 const MAX_REQUEST = 4 * 1024 * 1024;
 const MAX_FILE = 16 * 1024 * 1024;
@@ -94,15 +95,33 @@ async function snapshotPrivado(storage, bucket, referencia, snapshot) {
   return `storage://${bucket}/${referencia}`;
 }
 
-async function verificarAmbiente(client, storage, cfg, habilitada) {
+async function verificarAmbiente(client, storage, cfg, habilitada, diagnostico) {
+  diagnostico.iniciar('storage');
   const bucket = await storage.getBucket(cfg.bucket);
-  if (bucket.error || bucket.data?.public !== false) throw erroHttp(503, 'Bucket privado ausente ou inacessível.');
+  if (bucket.error) {
+    if (Number(bucket.error.status ?? bucket.error.statusCode) === 404 || bucket.error.code === 'NoSuchBucket') diagnostico.iniciar('bucket');
+    throw Object.assign(erroHttp(503, 'Bucket privado ausente ou inacessível.'), {
+      cause: bucket.error, status: bucket.error.status, statusCode: bucket.error.statusCode
+    });
+  }
+  diagnostico.concluir();
+  diagnostico.iniciar('bucket');
+  if (bucket.data?.public !== false) throw erroHttp(503, 'Bucket privado ausente ou inacessível.');
+  diagnostico.concluir();
+  diagnostico.iniciar('leitura_postgresql');
   await client.query('BEGIN READ ONLY');
+  let falha;
+  let resultado;
   try {
     await client.query("SET LOCAL TIME ZONE 'UTC'");
     await client.query('SET LOCAL row_security=off');
+    diagnostico.iniciar('dependencias');
     await validarDependencias(client);
+    diagnostico.concluir();
+    diagnostico.iniciar('leitura_postgresql');
     const contexto = await contextoAtual(client);
+    diagnostico.concluir();
+    diagnostico.iniciar('permissoes');
     const tabelas = ['dicionario_master_produtos', 'log_importacao_cadastro_mestre', 'historico_custos',
       'apontamentos_op', 'dicionario_produtos', 'mapa_produtos', 'categorias_origem', 'categorias_familia', 'categorias_agrupamento'];
     const { rows } = await client.query(`SELECT t AS tabela,
@@ -118,13 +137,23 @@ async function verificarAmbiente(client, storage, cfg, habilitada) {
     if (rows.some(r => !r.leitura || !r.lock || !r.escrita_exigida) || sequence.rows[0]?.permitida !== true) {
       throw erroHttp(503, 'Permissões administrativas insuficientes. Nenhum privilégio será concedido automaticamente.');
     }
+    diagnostico.concluir();
+    diagnostico.iniciar('policies');
     const policies = await client.query("SELECT count(*)::int AS quantidade FROM pg_policies WHERE schemaname='storage' AND tablename='objects'");
     // Sem interpretar expressões arbitrárias de policies. Revisão explícita se houver acesso por cliente.
     if (policies.rows[0]?.quantidade !== 0) throw erroHttp(503, 'Policies de Storage exigem revisão antes da habilitação.');
-    return { pronto_para_habilitar: true, execucao_habilitada: habilitada, execucao_realizada: false,
+    diagnostico.concluir();
+    resultado = { pronto_para_habilitar: true, execucao_habilitada: habilitada, execucao_realizada: false,
       master_atual: contexto.produtos.length, bucket_privado: true, permissoes: true, dependencias: true,
       snapshot_upload_testado: false, rollback_producao_testado: false };
-  } finally { await client.query('ROLLBACK'); }
+  } catch (error) { falha = error; }
+  finally {
+    // Não substituir a etapa/erro original caso o encerramento da leitura também falhe.
+    try { await client.query('ROLLBACK'); }
+    catch (error) { if (!falha) { diagnostico.iniciar('leitura_postgresql'); falha = error; } }
+  }
+  if (falha) throw falha;
+  return resultado;
 }
 
 export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase = createClient,
@@ -136,28 +165,41 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
     let client;
     let pedido;
     let executando = false;
+    const diagnostico = req.method === 'GET' && req.query?.verificar === '1';
+    const etapas = diagnostico ? criarDiagnosticoCadastroMestre() : null;
     try {
-      const diagnostico = req.method === 'GET' && req.query?.verificar === '1';
       if (req.query?.verificar !== undefined && !diagnostico) throw erroHttp(400, 'Diagnóstico disponível somente por GET verificar=1.');
       const cfg = configuracao(env, diagnostico || (req.method === 'GET' && !!req.query?.lote));
+      etapas?.concluir('configuracao');
+      etapas?.iniciar('origem');
       if ((req.method === 'POST' || req.headers.origin) && req.headers.origin !== cfg.origin) throw erroHttp(403, 'Origem não autorizada.');
+      etapas?.concluir();
+      etapas?.iniciar('autenticacao');
       const match = /^Bearer ([^\s]+)$/.exec(req.headers.authorization || '');
       if (!match) throw erroHttp(401, 'Entre na aplicação antes de executar a reconstrução.');
       const auth = criarSupabase(cfg.url, cfg.key, { auth: { persistSession: false, autoRefreshToken: false } });
       const { data, error } = await auth.auth.getUser(match[1]);
       const user = data?.user;
       if (error || !user || user.is_anonymous) throw erroHttp(401, 'Sessão inválida ou expirada. Entre novamente.');
+      etapas?.concluir();
+      etapas?.iniciar('autorizacao');
       if (!cfg.admins.includes(user.id)) throw erroHttp(403, 'Usuário sem autorização administrativa para reconstruir o Master.');
+      etapas?.concluir();
       const loteConsulta = req.query?.lote;
       if (diagnostico && loteConsulta) throw erroHttp(400, 'Diagnóstico e consulta de lote são ações separadas.');
       if (req.method === 'GET' && !loteConsulta && !diagnostico) return res.status(200).json({ disponivel: true });
       if (req.method === 'GET' && loteConsulta && !loteValido(loteConsulta)) throw erroHttp(400, 'Identificador de lote inválido.');
       if (req.method === 'POST') pedido = lerPedido(req.body);
+      etapas?.iniciar('conexao_postgresql');
       client = criarClientePg({ connectionString: cfg.database, ssl: { rejectUnauthorized: true, ...(cfg.ca ? { ca: cfg.ca } : {}) }, connectionTimeoutMillis: 5000 });
       await client.connect();
+      etapas?.concluir();
+      etapas?.concluir('tls');
       if (diagnostico) {
+        etapas.iniciar('storage');
         const storage = criarSupabase(cfg.url, cfg.secret, { auth: { persistSession: false, autoRefreshToken: false } }).storage;
-        return res.status(200).json(await verificarAmbiente(client, storage, cfg, env.CADASTRO_MESTRE_EXECUTION_ENABLED === 'true'));
+        const resultado = await verificarAmbiente(client, storage, cfg, env.CADASTRO_MESTRE_EXECUTION_ENABLED === 'true', etapas);
+        return res.status(200).json({ ...resultado, diagnostico: etapas.resultado() });
       }
       if (req.method === 'GET') {
         const { rows } = await client.query(`SELECT id::text AS lote_id,status,registros_inseridos AS inseridos,registros_atualizados AS atualizados,
@@ -177,6 +219,11 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
         salvarSnapshot: snapshot => snapshotPrivado(storage, cfg.bucket, referencia, snapshot) });
       return res.status(200).json({ ...result, identificador_lote: pedido.lote, snapshot_referencia: `storage://${cfg.bucket}/${referencia}` });
     } catch (error) {
+      if (diagnostico) {
+        const detalhe = etapas.resultado(error);
+        return res.status(error.httpStatus || 409).json({ error: detalhe.mensagem,
+          diagnostico: detalhe, execucao_realizada: false, execucao_habilitada: env.CADASTRO_MESTRE_EXECUTION_ENABLED === 'true' });
+      }
       // Nenhum erro PostgreSQL/Storage, URL, token ou snapshot integral atravessa a fronteira HTTP.
       return res.status(error.httpStatus || 409).json({ error: error.httpStatus ? error.message :
         'Execução não confirmada. Consulte o lote antes de qualquer nova tentativa; pode ter ocorrido rollback ou perda da resposta do COMMIT.',

@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-09 — CAD-DIAG-01: localizar falhas do GET
+
+Diagnóstico instrumentado distingue configuração, autenticação, autorização, conexão PostgreSQL, TLS, Storage e bucket, além das guardas de leitura. Retorna apenas etapas/códigos conhecidos e mensagens fixas, sem erro bruto/credenciais. Publicado em Production após autorização explícita (deployment B2mVXerHzJjbRjaYHSjZMm3TWPvF, READY), sem commit/env/DML. GET público confirma configuração OK, autenticação 401 e `execucao_habilitada:false`. Falha original 409 ainda depende de nova consulta autenticada; não comprova COMMIT/reconstrução. [Procedimento seguro](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+
 ## Atualização 2026-10-09 — CAD-ENV-01: preparar sem executar
 
 Build publica somente `dist`, excluindo código administrativo/configurações privadas. Diagnóstico autenticado `GET ?verificar=1` funciona com execução desabilitada, somente leitura, sem lote/upload/executor. Allowlist inicial indica apenas o usuário solicitado. Ambiente real ainda pendente: endpoint público 404, bucket inexistente, deploy/segredos não configurados por esta entrega. [Configuração, validação sem escrita e primeira execução passo a passo](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Master continua 5.706; nenhuma reconstrução, escrita de produção ou commit. `data_referencia` é competência e `criado_em` importação dos fatos, intactos.

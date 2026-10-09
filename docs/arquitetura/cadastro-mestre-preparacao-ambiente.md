@@ -1,5 +1,29 @@
 # CAD-ENV-01 — Preparação da execução web (09/10/2026)
 
+## CAD-DIAG-01 — diagnóstico de etapas sem escrita
+
+Atualização posterior à preparação inicial: o administrador informou redeploy Production e criação do bucket privado. GET autenticado verificar=1 retorna 409 com mensagem genérica de COMMIT; o handler antigo suprime o erro original também no caminho de leitura. Isso não comprova execução nem identifica TLS/senha/bucket como causa.
+
+Após autorização humana específica, publicado este checkout sem commit/env/DML às 16:37 BRT: deployment `B2mVXerHzJjbRjaYHSjZMm3TWPvF`, Production READY e alias custos-germani.vercel.app. GET público instrumentado retorna 401 na autenticação, configuração OK e execucao_habilitada=false; GET disponibilidade normal continua 503. O metadata Git continua main/e27e119, mas upload CLI inclui mudanças locais instrumentadas. Confirmação da falha original depende de repetir GET com sessão autorizada. 355 testes locais/lint/typecheck/diff check passaram. CLI autenticada/vinculada ao projeto existente; nenhum segredo administrativo foi recuperado ou publicado. Arquivo temporário .env.local gerado pela vinculação foi removido; .gitignore preservado.
+
+O GET retorna `diagnostico` com `etapa`, `codigo`, `codigo_original` (somente allowlist), `mensagem` fixa, mapa `etapas` e `execucao_realizada:false`. Distingue configuração, conexão PostgreSQL, validação TLS do driver, acesso ao Storage, bucket privado existente, autenticação getUser e autorização UUID; inclui origem/dependências/leitura/permissões/policies. Etapas posteriores à falha ficam `NAO_VERIFICADO`. Código desconhecido resulta em `NAO_CLASSIFICADO`, nunca em mensagem bruta. TLS é marcado OK somente após conexão validada com rejectUnauthorized=true. Um erro TLS na conexão marca conexão `NAO_CONCLUIDO`.
+
+Consulta de bucket usa apenas getBucket; falha HTTP 401/403 identifica Storage e 404 identifica bucket. Não valida capacidade de upload. Banco mantém BEGIN READ ONLY/SELECT/SET LOCAL/ROLLBACK e encerra conexão, sem chamar executor, locks de escrita, lote ou snapshot. Se ROLLBACK também falhar, preserva o erro inicial da leitura.
+
+Após publicação autorizada do checkout instrumentado (redeploy do commit antigo não inclui mudança local), manter EXECUTION_ENABLED=false e, no console da aplicação autenticada, executar somente:
+
+```js
+try {
+  const { api } = await import('/src/services/api.js');
+  const r = await api.verificarAmbienteReconstrucaoCadastroMestre();
+  console.log(JSON.stringify({ status: 200, diagnostico: r.diagnostico, execucao_habilitada: r.execucao_habilitada }));
+} catch (e) {
+  console.log(JSON.stringify({ status: e.status, diagnostico: e.diagnostico }));
+}
+```
+
+Enviar somente esse JSON. Não imprimir sessão, token, error bruto ou configuração. Sem `diagnostico`, conferir se novo arquivo cliente/função foi publicado e recarregar a aplicação. A consulta normal de disponibilidade segue 503 com flag false; o botão desabilitado não indica falha desse GET separado. Não habilitar nem enviar POST para diagnosticar. Testes locais de erros simulados não comprovam a causa em Production.
+
 ## Estado verificado, sem reconstrução
 
 Preparação local concluída; ambiente real ainda **não pronto**. GET público de `/api/reconstruir-cadastro-mestre` retornou **404**. Não há `.vercel/project.json`, autenticação CLI ou variáveis administrativas no processo local. O painel aberto da Vercel não pôde ser inspecionado: duas tentativas falharam por timeout do controle do navegador. Isso não demonstra ausência de variáveis no painel; sua configuração permanece não verificada.

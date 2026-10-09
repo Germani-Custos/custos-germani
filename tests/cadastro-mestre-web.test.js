@@ -66,10 +66,13 @@ describe('Fronteira administrativa HTTP — sem conexão real', () => {
 });
 
 describe('Diagnóstico autenticado somente leitura com execução desabilitada', () => {
-  function setup({ publico = false, policies = 0, autorizado = true, permissao = true, dependencia = false } = {}) {
+  function setup({ publico = false, policies = 0, autorizado = true, permissao = true, dependencia = false,
+    connectError, bucketError, queryError, rollbackError, env = {}, authError } = {}) {
     const storage = storageWeb();
-    storage.storage.getBucket.mockResolvedValue({ data: { public: publico }, error: null });
-    const client = { connect: vi.fn(), end: vi.fn(), query: vi.fn(async (sql, params) => {
+    storage.storage.getBucket.mockResolvedValue({ data: { public: publico }, error: bucketError || null });
+    const client = { connect: connectError ? vi.fn().mockRejectedValue(connectError) : vi.fn(), end: vi.fn(), query: vi.fn(async (sql, params) => {
+      if (sql === 'ROLLBACK' && rollbackError) throw rollbackError;
+      if (sql.includes('FROM pg_trigger') && queryError) throw queryError;
       if (sql.includes('FROM pg_trigger')) return { rows: [{ triggers: dependencia }] };
       if (sql.includes('FROM unnest')) return { rows: params[0].map(tabela => ({ tabela, leitura: permissao, lock: true, escrita_exigida: true })) };
       if (sql.includes('has_sequence_privilege')) return { rows: [{ permitida: permissao }] };
@@ -77,9 +80,10 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
       if (sql.includes('FROM public.dicionario_master_produtos')) return { rows: [{ registro: { codigo_produto: '001' } }] };
       return { rows: [] };
     }) };
-    const handler = criarCadastroMestreWebHandler({ env: { ...ambienteWeb, CADASTRO_MESTRE_EXECUTION_ENABLED: 'false' },
-      criarClientePg: () => client, criarSupabase: autorizado ? storage.criarSupabase : () => ({ auth: { getUser: async () => ({ data: { user: { id: 'other-id' } } }) } }) });
-    return { client, storage, handler };
+    const ambiente = { ...ambienteWeb, CADASTRO_MESTRE_EXECUTION_ENABLED: 'false', ...env };
+    const handler = criarCadastroMestreWebHandler({ env: ambiente,
+      criarClientePg: () => client, criarSupabase: autorizado && !authError ? storage.criarSupabase : () => ({ auth: { getUser: async () => ({ data: { user: { id: 'other-id' } }, error: authError }) } }) });
+    return { client, storage, handler, ambiente };
   }
   it('valida infraestrutura sem DML, upload, lote ou executor', async () => {
     const { client, storage, handler } = setup();
@@ -94,6 +98,9 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
     expect(storage.upload).not.toHaveBeenCalled();
     expect(storage.download).not.toHaveBeenCalled();
     expect(JSON.stringify(res.body)).not.toContain(ambienteWeb.CADASTRO_MESTRE_STORAGE_SECRET_KEY);
+    for (const etapa of ['configuracao', 'conexao_postgresql', 'tls', 'storage', 'bucket', 'autenticacao', 'autorizacao']) {
+      expect(res.body.diagnostico.etapas[etapa]).toBe('OK');
+    }
   });
   it.each([{ publico: true }, { policies: 1 }, { permissao: false }, { dependencia: true }])('recusa bucket/policies/permissões/dependências inválidos (%j)', async input => {
     const { client, storage, handler } = setup(input);
@@ -117,6 +124,83 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
     await handler(req({ method, query: { verificar: '1' }, body: {} }), res);
     expect([400, 405]).toContain(res.code);
     expect(client.connect).not.toHaveBeenCalled();
+    expect(storage.upload).not.toHaveBeenCalled();
+  });
+  const canario = 'SEGREDO-NAO-PODE-SAIR';
+  const erroSecreto = code => Object.assign(new Error(`postgresql://senha:${canario}@host/db`), {
+    code, detail: canario, hint: canario, stack: canario, cause: { message: canario }
+  });
+  it.each([
+    ['SELF_SIGNED_CERT_IN_CHAIN', 'tls'], ['ERR_TLS_CERT_ALTNAME_INVALID', 'tls'],
+    ['ERR_OSSL_PEM_NO_START_LINE', 'tls'], ['ENOTFOUND', 'conexao_postgresql'],
+    ['ECONNREFUSED', 'conexao_postgresql'], ['28P01', 'conexao_postgresql'],
+    [canario, 'conexao_postgresql']
+  ])('conexão recusada %s identifica etapa %s sem vazar credenciais', async (code, etapa) => {
+    const { client, storage, handler, ambiente } = setup({ connectError: erroSecreto(code) });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.code).toBe(409);
+    expect(res.body.diagnostico).toMatchObject({ etapa, codigo_original: code === canario ? 'NAO_CLASSIFICADO' : code, execucao_realizada: false });
+    expect(res.body.diagnostico.etapas.autorizacao).toBe('OK');
+    expect(res.body.diagnostico.etapas.storage).toBe('NAO_VERIFICADO');
+    expect(JSON.stringify(res.body)).not.toContain(canario);
+    expect(JSON.stringify(res.body)).not.toContain('postgresql://');
+    expect(client.query).not.toHaveBeenCalled();
+    expect(client.end).toHaveBeenCalledOnce();
+    expect(storage.storage.getBucket).not.toHaveBeenCalled();
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect(ambiente.CADASTRO_MESTRE_EXECUTION_ENABLED).toBe('false');
+  });
+  it.each([[401, 'storage'], [403, 'storage'], [404, 'bucket']])('distingue Storage HTTP %s da etapa %s', async (statusCode, etapa) => {
+    const { handler, client, storage } = setup({ bucketError: { statusCode: String(statusCode), message: canario } });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.code).toBe(503);
+    expect(res.body.diagnostico).toMatchObject({ etapa, codigo_original: `STORAGE_HTTP_${statusCode}` });
+    expect(JSON.stringify(res.body)).not.toContain(canario);
+    expect(client.query).not.toHaveBeenCalled();
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect(storage.storage.from).not.toHaveBeenCalled();
+  });
+  it('reconhece código de bucket na API moderna sem expor mensagem/statusCode arbitrário', async () => {
+    const { handler, client } = setup({ bucketError: { status: 400, statusCode: canario, code: 'NoSuchBucket', message: canario } });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.body.diagnostico).toMatchObject({ etapa: 'bucket', codigo_original: 'NoSuchBucket' });
+    expect(JSON.stringify(res.body)).not.toContain(canario);
+    expect(client.query).not.toHaveBeenCalled();
+  });
+  it('falha no encerramento da leitura não retorna sucesso', async () => {
+    const { handler } = setup({ rollbackError: erroSecreto('ECONNRESET') });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.code).toBe(409);
+    expect(res.body.diagnostico).toMatchObject({ etapa: 'leitura_postgresql', codigo_original: 'ECONNRESET' });
+    expect(res.body.pronto_para_habilitar).toBeUndefined();
+  });
+  it.each([
+    [{ env: { CADASTRO_MESTRE_DATABASE_URL: '' } }, 'configuracao', 503],
+    [{ env: { CADASTRO_MESTRE_DATABASE_URL: canario } }, 'configuracao', 409],
+    [{ authError: erroSecreto(canario) }, 'autenticacao', 401],
+    [{ autorizado: false }, 'autorizacao', 403]
+  ])('identifica guarda anterior à conexão sem detalhes sensíveis (%j)', async (input, etapa, status) => {
+    const { handler, client, storage } = setup(input);
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.code).toBe(status);
+    expect(res.body.diagnostico.etapa).toBe(etapa);
+    expect(JSON.stringify(res.body)).not.toContain(canario);
+    expect(client.connect).not.toHaveBeenCalled();
+    expect(storage.storage.getBucket).not.toHaveBeenCalled();
+  });
+  it('preserva erro original da leitura mesmo quando ROLLBACK também falha', async () => {
+    const { handler, client, storage } = setup({ queryError: erroSecreto('42501'), rollbackError: erroSecreto('ECONNRESET') });
+    const res = respostaWeb();
+    await handler(req({ query: { verificar: '1' } }), res);
+    expect(res.body.diagnostico).toMatchObject({ etapa: 'dependencias', codigo_original: '42501' });
+    expect(client.query.mock.calls.at(-1)[0]).toBe('ROLLBACK');
+    expect(client.query.mock.calls.every(([sql]) => /^(BEGIN READ ONLY|SET LOCAL|SELECT|ROLLBACK)/.test(sql))).toBe(true);
+    expect(JSON.stringify(res.body)).not.toContain(canario);
     expect(storage.upload).not.toHaveBeenCalled();
   });
 });

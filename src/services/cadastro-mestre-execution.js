@@ -16,7 +16,12 @@ async function chamada(client, method, body, lote, diagnostico = false) {
   } catch { throw new Error(`Resposta não recebida. Consulte o lote ${lote || '(não iniciado)'} antes de tentar novamente.`); }
   let result;
   try { result = await response.json(); } catch { throw new Error(`Resposta inválida. Consulte o lote ${lote || '(não iniciado)'} antes de tentar novamente.`); }
-  if (!response.ok) throw new Error(result.error || 'Execução administrativa indisponível.');
+  if (!response.ok) {
+    const failure = new Error(result.error || 'Execução administrativa indisponível.');
+    // Metadados sanitizados do GET, sem alterar o contrato da execução/consulta de lote.
+    if (diagnostico) Object.assign(failure, { diagnostico: result.diagnostico, status: response.status });
+    throw failure;
+  }
   return result;
 }
 

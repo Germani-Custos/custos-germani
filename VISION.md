@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-09 — diagnóstico administrativo seguro
+
+CAD-DIAG-01 torna falhas de infraestrutura distinguíveis por etapa/código sanitizado no GET de leitura, sem habilitar execução nem expor segredos. Não muda filtros, fatos, competência (`data_referencia`) ou importação (`criado_em`). [Procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+
 ## Atualização 2026-10-09 — preparação verificável
 
 O administrador pode conferir os requisitos de execução por diagnóstico autenticado somente leitura, mantendo reconstrução desabilitada. Publicação por allowlist separa código/segredos administrativos do frontend; aprovação e executor permanecem únicos. [CAD-ENV-01](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Ambiente real ainda pendente; nenhuma reconstrução ou mudança em fatos/competência/importação.

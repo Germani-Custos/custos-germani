@@ -1,5 +1,11 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-DIAG-01
+
+- [x] Instrumentação local do GET por etapa, códigos sanitizados e testes sem escrita/segredos.
+- [x] Diagnóstico publicado em Production após autorização explícita: READY, configuração OK e flag false no GET público (401 sem sessão).
+- [ ] Obter o erro original sanitizado do GET autenticado de Production. O diagnóstico anterior retorna 409 genérico; não considerar reconstrução realizada.
+
 ## Atualização 2026-10-09 — CAD-ENV-01
 
 - [x] Build público isolado em dist, diagnóstico autenticado READ ONLY com flag false e testes de ausência de escrita/segredos.

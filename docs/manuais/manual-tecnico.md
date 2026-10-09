@@ -1,5 +1,9 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-DIAG-01 — erros sanitizados do GET (09/10/2026)
+
+`cadastro-mestre-diagnostic.mjs` é catálogo de diagnóstico, não executor/importador. Handler rastreia sete etapas de infraestrutura e as guardas centrais. Código original só é retornado por allowlist; texto do driver/SDK nunca atravessa HTTP/logs. Cliente preserva `error.diagnostico`/`error.status` somente para GET verificar=1. Testes simulam erros com canários e comprovam ausência de DML/upload e flag false intacta. [Operação](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+
 ## CAD-ENV-01 — fronteira de deploy (09/10/2026)
 
 Frontend publicado somente em dist; api/scripts/executor/env/pacote/SQL ficam fora. Build recusa chave administrativa na variável pública e canários secretos em arquivos publicados. `api.verificarAmbienteReconstrucaoCadastroMestre()` faz GET verificar=1 autenticado: bucket privado, contexto integral, guardas centrais e privilégios em BEGIN READ ONLY/ROLLBACK. Funciona com flag false, sem DML/upload/executor. [Limites, configuração e procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Nenhum deploy/carga real nesta entrega; competência `data_referencia` e importação `criado_em` intactas.

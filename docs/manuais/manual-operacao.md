@@ -1,5 +1,9 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-DIAG-01 — investigar 409 sem executar (09/10/2026)
+
+Publicar a instrumentação local somente após confirmação administrativa, sem mudar env/flag. Usar exclusivamente GET verificar=1 autenticado e enviar apenas status/diagnostico sanitizados conforme [guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita). Não enviar POST, testar upload, conceder privilégio ou criar lote para investigar. Não atribuir causa TLS/senha sem código remoto. Upload/rollback de produção continuam não testados; fatos e eixos temporais não mudam.
+
 ## CAD-ENV-01 — preparação sem reconstrução (09/10/2026)
 
 Seguir [passo a passo de deploy/env/bucket/diagnóstico e primeira execução](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Manter flag false e allowlist com apenas o UUID do usuário indicado. GET diagnóstico funciona nesse estado sem lote/upload/escrita; sucesso não testa upload/rollback em produção. Endpoint remoto ainda 404 e Storage sem bucket na verificação desta entrega. Configuração real permanece pendente. Nenhuma carga, snapshot de produção ou mudança nos eixos competência/importação.

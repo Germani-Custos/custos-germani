@@ -65,4 +65,10 @@ describe('Cliente HTTP — transporta aprovação e bytes, nunca SQL/credenciais
     expect(fetch.mock.calls[0][1]).toMatchObject({ method: 'GET', headers: { Authorization: 'Bearer user-token' } });
     expect(fetch.mock.calls[0][1].body).toBeUndefined();
   });
+  it('erro do GET mantém status e diagnóstico sanitizado para inspeção sem repetir requisição', async () => {
+    const diagnostico = { etapa: 'tls', codigo_original: 'SELF_SIGNED_CERT_IN_CHAIN', execucao_realizada: false };
+    fetch.mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ error: 'Certificado autoassinado na cadeia TLS.', diagnostico }) });
+    await expect(verificarAmbienteReconstrucao(client)).rejects.toMatchObject({ status: 409, diagnostico });
+    expect(fetch).toHaveBeenCalledOnce();
+  });
 });

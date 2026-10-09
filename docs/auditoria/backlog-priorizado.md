@@ -1,5 +1,9 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-DIAG-01 — diagnóstico local por etapas** (2026-10-09): GET de leitura com catálogo de erros sanitizados, sem credenciais/erro bruto; regressões para conexão/TLS/Storage/bucket/auth e rollback de leitura. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+- [x] **CAD-DIAG-01 — publicação autorizada**: Production READY B2mVXerHzJjbRjaYHSjZMm3TWPvF; GET público confirma instrumentação/configuração OK e flag false, 401 sem sessão.
+- [ ] **CAD-DIAG-01 — confirmar falha remota**: obter GET autenticado com flag false. HTTP 409 genérico anterior não identifica causa nem prova execução.
+
 **Ponto de partida para o agente de desenvolvimento.** Este backlog foi **reavaliado em 2026-07-02** após a conclusão da Onda 2 (tooling), a entrada de CI/lint/typecheck/testes e a estabilização dos contratos VAL-01/LOG-01/ERR-01. A ordem abaixo agora é arquitetural: prioriza itens que reduzem risco de regressão, desbloqueiam refatorações futuras, preservam contratos existentes e aumentam velocidade investigativa sem alterar comportamento funcional desnecessariamente.
 
 Cada item tem um **ID** detalhado no arquivo temático indicado (use Ctrl+F pelo ID). Ao concluir: marque o checkbox, referencie o ID no commit e **atualize a documentação** (ver `docs/regras-gerais.md`).
