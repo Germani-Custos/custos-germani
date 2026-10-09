@@ -1,5 +1,17 @@
 # CAD-ENV-01 — Preparação da execução web (09/10/2026)
 
+## Revisão final somente leitura (09/10/2026)
+
+Estado posterior às evidências históricas abaixo: administrador informou diagnóstico autenticado `DIAGNOSTICO_OK`, CA X.509 válida e TLS/conexão/leitura/PostgreSQL/Storage/bucket/permissões/policies/dependências/auth/autorização OK, `execucao_realizada:false`, mantendo flag false. Correção anterior da CA foi realizada fora desta revisão; seu valor/fingerprint não foi obtido aqui. Não interpretar o registro anterior de PEM inválido como falha ainda atual.
+
+Verificação direta desta revisão: Production READY `Jvnme82E7wA8R3h63YfnuaKA5KW1`, main `04a241273d8b615f83f9f810e78a291e870401cf`; função presente, configuração OK, diagnóstico público sem sessão 401 e flag false, disponibilidade 503. UI de Preview, cliente HTTP e plano puro publicados são iguais ao checkout. Revisão do servidor/executor confirma getUser e UUID allowlist, gate da flag no POST, revalidação de arquivo/hash/contexto/aprovação e nova leitura sob locks; snapshot privado com upsert false e conferência por download/hash antes do DML do Master; transação/rollback, universo exato e provas das sete tabelas protegidas antes do COMMIT.
+
+Não há quantidade 860 fixa no executor: log e resultado final usam o universo filtrado aprovado. Para o mesmo original e um novo Preview com 860 códigos, a execução exige exatamente esses códigos/valores antes de concluir. Teste sintético reproduz 6.230 linhas, Master 5.706, 853 existentes, sete novos e 4.853 remoções → 860. O usuário também informou validação anterior 5.706 → 860 e zero erros; o banco real/arquivo original não foram relidos nesta revisão para confirmar essa execução anterior. Se o Master atual já mudou, a revisão antiga falha na revalidação e é obrigatório gerar novo Preview; não repetir lote/usar contagens antigas como comando.
+
+Limites mantidos: DIAGNOSTICO_OK não testa upload/rollback de produção. Falha no snapshot aborta antes de tocar produtos; falha antes do SAVEPOINT reverte também o log; falha de DML/prova depois do SAVEPOINT reverte produtos e registra lote falhou. Objeto de snapshot já salvo é preservado. Resposta de COMMIT perdida exige consulta do lote, sem repetição automática. Somente Master/log recebem DML; fatos/operacional/mapa/categorias possuem locks e fingerprints antes/depois.
+
+Resultado da revisão: fluxo web tecnicamente apto para habilitação administrativa, com novo Preview/aprovação integral vinculados ao estado atual; nenhum bloqueio concreto encontrado. 103 testes existentes de UI/transporte/guardas/snapshot/rollback/build passaram em ambiente local sintético. Sem execução ou escrita de produção, env alterada, deploy, código de execução modificado, migration ou commit. Documentação atualizada apenas para corrigir estado desatualizado. `data_referencia` e `criado_em` dos fatos não mudam.
+
 ## CAD-DIAG-TLS-01 — metadados da CA e do driver
 
 O GET autenticado anterior confirmou HTTP 409, `DIAGNOSTICO_TLS_FALHOU`/`SELF_SIGNED_CERT_IN_CHAIN`: configuração/origem/autenticação/autorização OK, conexão PostgreSQL não concluída, Storage não verificado, execução false. A CA Secret foi configurada pelo administrador; esse erro sozinho não prova se o PEM é válido ou se é a CA correta.

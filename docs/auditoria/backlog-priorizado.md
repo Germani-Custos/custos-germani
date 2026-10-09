@@ -1,5 +1,7 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **Revisão final da execução web (2026-10-09)**: administrador informou DIAGNOSTICO_OK/CA válida; Production READY main 04a2412, flag false, UI/transporte/plano publicados iguais ao checkout. 103 regressões locais passaram e nenhum bloqueio concreto encontrado. Somente documentação atualizada, sem código/env/deploy/escrita de produção/commit. 860 exige novo Preview com esse universo. [Evidência e limites](../arquitetura/cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026). Falha TLS abaixo é histórica.
+
 - [x] **CAD-DIAG-TLS-01 — instrumentação local** (2026-10-09): presença/tamanho/PEM/X.509/fingerprint da CA e parâmetros efetivos sanitizados no GET autorizado. Sem mudar TLS/flag/POST/executor; testes sem rede/DML/upload. [Contrato](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
 - [x] **CAD-DIAG-TLS-01 — deploy autorizado**: Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`, GET público 401 sem CA/endpoint e execução false, disponibilidade 503. 369 testes/lint/typecheck/diff check passaram; sem commit/env/DML/upload.
 - [x] **CAD-DIAG-TLS-01 — verificação autenticada Production**: JSON recebido do usuário confirma HTTP 409 TLS `SELF_SIGNED_CERT_IN_CHAIN`, CA presente/aplicada de 1.365 bytes, marcadores PEM presentes mas parsing X.509 inválido/fingerprint null, execução false. Correção da CA depende de ação administrativa posterior, não foi aplicada.
@@ -23,7 +25,7 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 ## Estabilizações operacionais concluídas
 
 - [x] **CAD-ENV-01 — preparação local** (2026-10-09): publicação dist por allowlist, diagnóstico autenticado READ ONLY com flag false, verificação de bucket/permissões/dependências e proteção de segredos. UUID único indicado pelo usuário resolvido por SELECT no Auth. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md).
-- [ ] **CAD-ENV-01 — ambiente real**: deploy endpoint, segredos Production, bucket privado e diagnóstico remoto ainda pendentes. Nenhuma reconstrução/lote/snapshot/DML de produção; não tratar preparação local como deploy concluído.
+- [x] **CAD-ENV-01 — ambiente real**: Production READY main 04a2412 e administrador informou diagnóstico autenticado DIAGNOSTICO_OK com CA/TLS/PostgreSQL/Storage/bucket/guardas válidos. Flag continua false; upload/rollback de produção não testados e habilitação não realizada por esta revisão.
 
 - [x] **CAD-EXEC-WEB-01** 🟠 M (2026-10-09) — Conecta UI ao executor central por função Node Vercel autenticada/autorizada: aprovação integral, confirmação explícita, hash/revalidação, snapshot privado conferido, transação/rollback e consulta de resultado. Configuração/habilitação/deploy/carga real pendentes; zero escrita de produção/schema/RPC/fatos/operacional nesta entrega. → [Contrato](../arquitetura/cadastro-mestre-execucao-web.md).
 

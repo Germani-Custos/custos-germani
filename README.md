@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-09 — revisão final da execução web
+
+Production READY `Jvnme82E7wA8R3h63YfnuaKA5KW1`, main `04a2412`. Usuário informou novo GET autenticado `DIAGNOSTICO_OK`, CA X.509/TLS/PostgreSQL/Storage/guardas OK e execução false; a falha TLS registrada abaixo é histórica. Conferência pública nesta revisão: configuração OK, diagnóstico sem sessão 401, disponibilidade 503 e flag false. Módulos publicados de UI/transporte/plano correspondem ao checkout. 103 regressões locais passaram, somente fixtures/PGlite/Storage mockado; nenhuma escrita de produção, variável alterada, deploy ou commit nesta revisão. [Escopo, resultado esperado e limites](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026).
+
 ## Atualização 2026-10-09 — CAD-DIAG-TLS-01: inspecionar CA sem expor credenciais
 
 GET `?verificar=1`, após autenticação e autorização, informa presença/tamanho/formato/X.509/fingerprint SHA-256 da CA e parâmetros sanitizados efetivos do driver. Não corrige CA/URI/TLS, altera variáveis nem chama executor. `rejectUnauthorized=true` e execução desabilitada permanecem. Publicado em Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`; usuário confirmou HTTP 409: CA presente/aplicada, 1.365 bytes, marcadores PEM presentes, parsing X.509 inválido e fingerprint null, `SELF_SIGNED_CERT_IN_CHAIN`, execução false. 369 testes/lint/typecheck/diff check passaram. Nenhuma correção/env/escrita/commit. [Campos e procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).

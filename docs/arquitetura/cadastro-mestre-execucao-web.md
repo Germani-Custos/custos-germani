@@ -1,6 +1,6 @@
 # CAD-EXEC-WEB-01 — Execução explícita do Cadastro Mestre (09/10/2026)
 
-Preparação posterior **CAD-ENV-01**: build público agora isolado em dist e GET verificar=1 autenticado disponível com flag false. Sem execução/novo parser; guardas de dependência compartilhadas com executor. [Ambiente real, variáveis/bucket, diagnóstico e primeira execução passo a passo](./cadastro-mestre-preparacao-ambiente.md). Deploy/segredos/bucket remoto continuam pendentes na verificação de 09/10.
+Preparação posterior **CAD-ENV-01**: build público isolado em dist e GET verificar=1 autenticado disponível com flag false. Sem execução/novo parser; guardas de dependência compartilhadas com executor. Revisão final de 09/10: Production READY main `04a2412`, flag false e usuário informou `DIAGNOSTICO_OK`; deploy/configuração/bucket não estão mais pendentes. Quantidade final depende do novo universo aprovado, sem valor 860 fixo no código. [Evidência atual, limites, ambiente e execução passo a passo](./cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026). As menções abaixo à ausência de deploy/carga descrevem a entrega original.
 
 ## Arquitetura e alcance
 
