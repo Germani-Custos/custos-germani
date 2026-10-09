@@ -39,7 +39,7 @@ Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o *
   ```json
   { "scripts": { "lint": "eslint .", "typecheck": "tsc --noEmit", "test": "vitest run", "build": "node scripts/generate-runtime-config.mjs" } }
   ```
-  Manter o `buildCommand` da Vercel apontando para o script de runtime-config (`vercel.json`). Adicionar `node_modules/` ao `.gitignore` (verificar se já está).
+  Atualização CAD-ENV-01 (2026-10-09): o `buildCommand` da Vercel agora chama `scripts/build-web.mjs`, que gera runtime-config em dist e publica por allowlist. api/scripts/.env/SQL/dependências ficam fora do frontend. A recomendação histórica de publicar a raiz foi sucedida por essa fronteira administrativa. `node_modules/`, `dist/` e `.vercel/` são ignorados pelo Git.
 - **Critério de aceite:** `npm install` instala só dev tools; `npm run lint|typecheck|test` funcionam; o deploy estático na Vercel permanece inalterado (CDN no `index.html`).
 
 ---

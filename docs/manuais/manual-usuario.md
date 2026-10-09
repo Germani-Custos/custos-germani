@@ -1,5 +1,15 @@
 # Manual do Usuário — Custos Germani
 
+## Ambiente de execução — CAD-ENV-01 (09/10/2026)
+
+Enquanto o administrador prepara o deploy, a execução permanece desabilitada. Aprovar Preview não reconstrói o banco. Só o usuário explicitamente autorizado terá acesso após configuração e verificação. [Procedimento administrativo](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Master real ainda 5.706 nesta preparação; resultado 860 é expectativa futura, sem alteração de Custos/OP ou dos fatos.
+
+## Executar reconstrução — CAD-EXEC-WEB-01 (09/10/2026)
+
+No Preview XLS/XLSX/XLSM, confira Master atual, válidos, novos, alterações e remoções. **Aprovar** decide propostas; **Baixar revisão (sem gravar)** apenas salva JSON. Após aprovação integral e autorização administrativa, **Executar reconstrução…** fica habilitado. Ele irá MODIFICAR o Master ERP: revise as contagens na segunda janela e digite `RECONSTRUIR <quantidade final>` para confirmar. Cancelar não executa.
+
+Se execução estiver indisponível, solicite configuração/autorização ao administrador. Aguarde o resultado: sucesso informa lote, quantidade final e operações; erro/resposta perdida oferece consulta do lote, sem repetição automática. Guarde o identificador; lote ausente não autoriza nova tentativa enquanto puder haver execução em curso. Tabela/edição manual operacional continuam independentes. Nenhuma carga real foi feita nesta entrega. Custos/OP mantêm competência `data_referencia` e evento `criado_em`. [Procedimento completo](../arquitetura/cadastro-mestre-execucao-web.md). As restrições de UI das entregas abaixo são históricas.
+
 ## Cadastro Mestre — reconstrução do universo (09/10/2026, CAD-REBUILD-01)
 
 1. Abra **Preview mestre (XLSM / XLSX / XLS)** com o original ERP e confira produtos válidos, novos, existentes com alterações e **produtos a remover do Cadastro Mestre**. Expanda os detalhes das remoções para conferir código, descrição e motivo.

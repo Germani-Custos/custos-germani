@@ -4,6 +4,7 @@ import { arquivoCadastro, contexto, SheetJS } from './fixtures/cadastro-mestre-a
 
 vi.mock('../src/services/api.js', () => ({ api: {
   getProductMaster: vi.fn(), getCadastroMestrePreviewContext: vi.fn(),
+  getCadastroMestreExecutionAvailability: vi.fn(), executarReconstrucaoCadastroMestre: vi.fn(), consultarReconstrucaoCadastroMestre: vi.fn(),
   importProductMasterXlsm: vi.fn(() => { throw new Error('Importador legado proibido'); }),
   upsertProductMaster: vi.fn(() => { throw new Error('Escrita proibida'); })
 } }));
@@ -34,6 +35,7 @@ function setup(file = arquivoCadastro()) {
 
 let container;
 let download;
+let executarButton;
 function abrirModal(options) {
   const selects = [...options.html.matchAll(/data-master-operation="([^"]+)"/g)].map(m => ({ dataset: { masterOperation: m[1] }, value: '' }));
   const counter = { textContent: '' };
@@ -48,8 +50,9 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     vi.useFakeTimers();
     vi.stubGlobal('XLSX', SheetJS);
     download = { click: vi.fn() };
+    executarButton = { disabled: false };
     vi.stubGlobal('document', { createElement: tag => tag === 'a' ? download : {} });
-    vi.stubGlobal('Swal', { getHtmlContainer: () => container, fire: vi.fn(async options => {
+    vi.stubGlobal('Swal', { getHtmlContainer: () => container, getDenyButton: () => executarButton, showLoading: vi.fn(), fire: vi.fn(async options => {
       abrirModal(options);
       return { isConfirmed: false };
     }) });
@@ -58,6 +61,7 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => { throw new Error('Rede proibida'); });
     api.getProductMaster.mockResolvedValue({ data: { produtos: [], origens: [], familias: [], agrupamentos: [], ausentes: [] }, error: null });
     api.getCadastroMestrePreviewContext.mockResolvedValue({ data: contexto, error: null });
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: false });
   });
   afterEach(() => {
     expect(api.importProductMasterXlsm).not.toHaveBeenCalled();
@@ -230,5 +234,111 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(html).not.toContain('<script>');
     expect(html).not.toContain('<img');
     expect(html).toContain('&lt;img');
+  });
+
+  it('executar permanece desabilitado se houver pendentes/rejeitadas ou servidor indisponível', async () => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    Swal.fire.mockImplementation(async options => {
+      abrirModal(options);
+      expect(executarButton.disabled).toBe(true);
+      await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
+      expect(executarButton.disabled).toBe(false);
+      const select = container.selects[0];
+      select.value = 'REJEITADO';
+      await container.emit('change', target(select));
+      expect(executarButton.disabled).toBe(true);
+      return { isConfirmed: false };
+    });
+    const { dom, controller } = setup();
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: false });
+    Swal.fire.mockImplementation(async options => {
+      abrirModal(options);
+      await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
+      expect(executarButton.disabled).toBe(true);
+      return { isDenied: true };
+    });
+    await dom.masterImportInput.emit('change');
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
+  });
+
+  it.each([{ isConfirmed: false }, { isConfirmed: true, value: 'não' }])('cancelar/confirmar texto inválido não executa (%j)', async confirmacao => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    Swal.fire.mockImplementation(async options => {
+      if (options.title !== 'Preview do Cadastro Mestre') return confirmacao;
+      abrirModal(options);
+      await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
+      return { isDenied: true };
+    });
+    const { dom, controller } = setup();
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
+    const modal = Swal.fire.mock.calls[1][0];
+    expect(modal.html).toContain('Atual: 8 · Inserir: 1 · Atualizar: 1 · Remover: 5');
+    expect(modal.inputValidator('não')).toContain('exatamente');
+    expect(modal.inputValidator('RECONSTRUIR 4')).toBeUndefined();
+  });
+
+  it.each(['xls', 'xlsx', 'xlsm'])('aprovação integral + confirmação explícita executa %s uma vez', async formato => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    api.executarReconstrucaoCadastroMestre.mockResolvedValue({ status: 'concluido', lote_id: '2', depois: 4, inseridos: 1, atualizados: 1, removidos: 5 });
+    Swal.fire.mockImplementation(async options => {
+      if (options.title === 'Preview do Cadastro Mestre') {
+        abrirModal(options);
+        expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
+        await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
+        return { isDenied: true };
+      }
+      if (options.title === 'Modificar o Cadastro Mestre?') return { isConfirmed: true, value: 'RECONSTRUIR 4' };
+      if (options.title === 'Reconstruindo Cadastro Mestre') options.didOpen();
+      return {};
+    });
+    const file = arquivoCadastro(formato);
+    const { dom, controller, errors } = setup(file);
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(errors).toEqual([]);
+    expect(api.executarReconstrucaoCadastroMestre).toHaveBeenCalledOnce();
+    const pedido = api.executarReconstrucaoCadastroMestre.mock.calls[0][0];
+    expect(pedido.arquivo).toBe(file);
+    expect(pedido.lote).toMatch(/^CAD_UI_/);
+    expect(pedido.revisao.decisoes.every(d => d.status === 'APROVADO')).toBe(true);
+    expect(Swal.fire.mock.calls.at(-1)[0].text).toContain('Master: 4 produtos');
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('falha/rollback oferece SELECT do lote e nunca repete a execução', async () => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    api.executarReconstrucaoCadastroMestre.mockRejectedValue(new Error('Reconstrução revertida'));
+    api.consultarReconstrucaoCadastroMestre.mockResolvedValue({ resultado: { status: 'falhou', inseridos: 0, atualizados: 0, removidos: 0 } });
+    Swal.fire.mockImplementation(async options => {
+      if (options.title === 'Preview do Cadastro Mestre') {
+        abrirModal(options);
+        await container.emit('click', target({ dataset: { masterDecision: 'APROVADO' } }));
+        return { isDenied: true };
+      }
+      if (options.title === 'Modificar o Cadastro Mestre?') return { isConfirmed: true, value: 'RECONSTRUIR 4' };
+      if (options.title === 'Reconstrução não confirmada') return { isConfirmed: true };
+      return {};
+    });
+    const { dom, controller } = setup();
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(api.executarReconstrucaoCadastroMestre).toHaveBeenCalledOnce();
+    expect(api.consultarReconstrucaoCadastroMestre).toHaveBeenCalledOnce();
+    expect(Swal.fire.mock.calls.at(-1)[0].text).toContain('falhou');
+  });
+
+  it('ignora tentativa de execução com revisão parcial mesmo se o modal retornar isDenied', async () => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    Swal.fire.mockImplementation(async options => { abrirModal(options); return { isDenied: true }; });
+    const { dom, controller, errors } = setup();
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(errors[0].message).toContain('Todas as propostas');
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
   });
 });

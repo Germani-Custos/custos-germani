@@ -1,5 +1,18 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-ENV-01
+
+- [x] Build público isolado em dist, diagnóstico autenticado READ ONLY com flag false e testes de ausência de escrita/segredos.
+- [x] Usuário inicial resolvido por SELECT no Auth e procedimento completo de configuração/primeira execução documentado.
+- [ ] Deploy real, segredos Production, bucket privado e diagnóstico remoto: pendentes de acesso/configuração administrativa.
+- [ ] Reconstrução real 5.706 → 860: não executada nesta tarefa.
+
+[Evidências e procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Não alterar Custos/OP/operacional/mapa, `data_referencia` ou `criado_em`.
+
+## Atualização 2026-10-09 — CAD-EXEC-WEB-01 implementado
+
+Execução explícita pela aplicação conecta Preview integralmente aprovado ao executor central por função Node autenticada/autorizada na Vercel. Confirmação digitada, hash, revalidação, snapshot privado conferido, transação/rollback e consulta do lote preservam o contrato. Deploy/configuração/habilitação administrativa e execução real permanecem pendentes; nenhuma carga de produção ou schema nesta entrega. Custos/OP/operacional/mapa e `data_referencia` (competência)/`criado_em` (importação) não mudam. [Procedimento](docs/arquitetura/cadastro-mestre-execucao-web.md). Sucede a limitação de UI da entrega abaixo.
+
 ## Atualização 2026-10-09 — CAD-REBUILD-01 concluído
 
 - [x] Manifesto de reconstrução do universo filtrado com INSERT, UPDATE e remoções explícitas somente do Master; Preview e aprovação local mantidos.

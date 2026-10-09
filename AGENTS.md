@@ -1,5 +1,9 @@
 Você está trabalhando no projeto **Kustos Germani**, um motor de investigação operacional de custos.
 
+- Atualização 2026-10-09 (CAD-ENV-01): build-web publica apenas dist por allowlist; nunca publicar api/scripts/executor/.env/dependências/SQL. Diagnóstico GET verificar=1 autentica getUser/UUID allowlist e valida bucket privado, contexto/guardas centrais/privilégios/policies em READ ONLY/ROLLBACK, mesmo com flag false, sem executor/lote/upload. Allowlist inicial somente usuário indicado e confirmado por SELECT no Auth; não inferir outros admins. Deploy/env/bucket reais ainda pendentes; endpoint público 404 na verificação. Não habilitar/reconstruir como teste. Nenhuma escrita de produção/migration/snapshot/commit; fatos mantêm data_referencia como competência e criado_em como importação. Ver docs/arquitetura/cadastro-mestre-preparacao-ambiente.md.
+
+- Atualização 2026-10-09 (CAD-EXEC-WEB-01): execução explícita de reconstrução pela UI usa função Node Vercel autenticada por Supabase Auth, allowlist server-side/origem exata e gate desabilitado por padrão. Reutilizar plano/executor centrais; nunca importar pg/conexão administrativa no browser. Aprovação/download permanecem locais; POST exige aprovação integral, hash e segunda confirmação. Snapshot web em bucket privado existente, sem sobrescrita, conferido por download/hash antes do DML; CLI mantém wx/fsync. Lote/provas/rollback preservados, GET de resultado somente SELECT, sem retry automático. Nenhuma carga real/deploy/schema/fatos/operacional/mapa nesta entrega; data_referencia é competência e criado_em importação, intactos. Ver docs/arquitetura/cadastro-mestre-execucao-web.md.
+
 O sistema NÃO é:
 
 * ERP genérico

@@ -1,9 +1,10 @@
-/* Cadastro ERP: adapter e aprovação existentes, exclusivamente em memória.
-   A revisão não chama o importador legado nem executa propostas no banco. */
+/* Cadastro ERP: aprovação local; execução explícita pela função administrativa.
+   A revisão/download nunca chama o importador legado nem grava no banco. */
 import { api } from '../src/services/api.js';
 import { prepararAprovacaoArquivoCadastroMestre } from '../src/services/cadastro-mestre-preview.js';
 import { decidirOperacoesCadastroMestre, obterOperacoesAprovadasCadastroMestre } from '../core/cadastro-mestre-approval-engine.js';
 import { escapeHtml } from './ui-utils.js';
+import { criarPlanoReconstrucaoCadastroMestre } from '../core/cadastro-mestre-reconstruction-engine.js';
 
 const DECISOES = { PENDENTE: 'Pendente', APROVADO: 'Aprovado', REJEITADO: 'Rejeitado' };
 const CAMPOS = { descricao: 'Descrição', origem_cod: 'Origem ERP', familia_cod: 'Família ERP', agrupamento_erp_valor: 'Agrup. Prod. (ERP)' };
@@ -37,7 +38,7 @@ function htmlPreview(manifesto, revisao) {
       ${Object.entries(DECISOES).map(([status, label]) => `<option value="${status}" ${decisoes.get(o.id) === status ? 'selected' : ''} ${status === 'APROVADO' && !o.aprovavel ? 'disabled' : ''}>${label}</option>`).join('')}
     </select></td></tr>`);
   return `<p>${valor(manifesto.fonte.arquivo)} · ${valor(manifesto.fonte.tipo_arquivo)} · Aba ${valor(manifesto.fonte.aba)}</p>
-    <p>Reconstrução do universo: o Cadastro Mestre deverá conter somente os produtos válidos do arquivo filtrado. Confira também as remoções antes de aprovar. Decisões e download são locais; a seleção do arquivo não executa a carga.</p>
+    <p>Reconstrução do universo: o Cadastro Mestre deverá conter somente os produtos válidos do arquivo filtrado. Confira também as remoções antes de aprovar. Decisões e download são locais; a seleção do arquivo não executa a carga. Executar reconstrução irá MODIFICAR o Cadastro Mestre ERP.</p>
     <p>A execução administrativa exige todas as propostas aprovadas, inclusive remoções. Qualquer proposta pendente ou rejeitada impede a reconstrução inteira.</p>
     ${manifesto.reconstrucao_bloqueada ? '<p role="alert">Reconstrução bloqueada: existem erros no arquivo ou o universo filtrado está vazio. Corrija e gere novo Preview antes de aprovar.</p>' : ''}
     ${tabela(['Resumo', 'Quantidade'], contagens.map(([label, count]) => `<tr><td>${escapeHtml(label)}</td><td>${count}</td></tr>`))}
@@ -70,17 +71,61 @@ function baixarRevisao(manifesto, revisao) {
 export function createCadastroMestrePreviewController({ dom, executeOperationalBoundary }) {
   let preparando = false;
 
+  async function executarAprovado(file, manifesto, revisao) {
+    const plano = criarPlanoReconstrucaoCadastroMestre(manifesto, revisao);
+    const lote = `CAD_UI_${crypto.randomUUID()}`;
+    const frase = `RECONSTRUIR ${plano.resumo.depois}`;
+    const confirmacao = await Swal.fire({
+      title: 'Modificar o Cadastro Mestre?', icon: 'warning',
+      html: `<p>Esta ação irá MODIFICAR o Cadastro Mestre ERP.</p>
+        <p>Atual: ${plano.resumo.antes} · Inserir: ${plano.resumo.inseridos} · Atualizar: ${plano.resumo.atualizados} · Remover: ${plano.resumo.removidos}.</p>
+        <p>Resultado esperado: <strong>${plano.resumo.depois} produtos</strong>.</p>
+        <p>Somente dicionario_master_produtos será reconstruído. Custos, OP, cadastro operacional e mapa permanecem intactos. O servidor revalidará arquivo e contexto e preservará snapshot antes da alteração.</p>
+        <p>Lote: ${escapeHtml(lote)}. Digite <strong>${escapeHtml(frase)}</strong> para confirmar.</p>`,
+      input: 'text', inputPlaceholder: frase,
+      inputValidator: value => value === frase ? undefined : 'Digite a confirmação exatamente como indicada.',
+      showCancelButton: true, focusCancel: true, confirmButtonText: 'Modificar Cadastro Mestre', cancelButtonText: 'Cancelar'
+    });
+    if (!confirmacao.isConfirmed || confirmacao.value !== frase) return;
+    Swal.fire({ title: 'Reconstruindo Cadastro Mestre', text: `Lote ${lote}. Aguarde a confirmação do servidor.`,
+      allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
+    try {
+      const result = await api.executarReconstrucaoCadastroMestre({ arquivo: file, manifesto, revisao, lote });
+      await Swal.fire({ icon: 'success', title: 'Reconstrução concluída',
+        text: `Lote ${result.lote_id} (${lote}) concluído. Master: ${result.depois} produtos. Inseridos: ${result.inseridos}; atualizados: ${result.atualizados}; removidos: ${result.removidos}. Snapshot preservado. Custos, OP, cadastro operacional e mapa intactos.` });
+    } catch (error) {
+      const resposta = await Swal.fire({ icon: 'error', title: 'Reconstrução não confirmada',
+        text: `${error.message} Lote: ${lote}. Não repetir automaticamente. Consulte o resultado antes de qualquer nova tentativa.`,
+        showCancelButton: true, confirmButtonText: 'Consultar resultado do lote', cancelButtonText: 'Fechar' });
+      if (resposta.isConfirmed) {
+        try {
+          const consulta = await api.consultarReconstrucaoCadastroMestre(lote);
+          const r = consulta.resultado;
+          await Swal.fire({ icon: r?.status === 'concluido' ? 'success' : 'info', title: 'Resultado do lote',
+            text: r ? `Lote ${lote}: ${r.status}. Master após execução: ${r.depois ?? 'não concluído'}; inseridos: ${r.inseridos}; atualizados: ${r.atualizados}; removidos: ${r.removidos ?? 0}.` :
+              `Lote ${lote} não localizado. Isso não autoriza repetição: aguarde e confira com o administrador, pois uma execução ainda em curso pode não estar visível.` });
+        } catch { await Swal.fire({ icon: 'error', title: 'Consulta indisponível', text: `Solicite a conferência administrativa do lote ${lote}. Não repetir a execução automaticamente.` }); }
+      }
+    }
+  }
+
   async function abrirPreview(file) {
     const { data: contexto, error } = await api.getCadastroMestrePreviewContext();
     if (error) throw error;
     const preparado = await prepararAprovacaoArquivoCadastroMestre(file, contexto, globalThis.XLSX);
     const { manifesto } = preparado;
     let revisao = preparado.revisao;
+    let disponibilidade;
+    try { disponibilidade = await api.getCadastroMestreExecutionAvailability(); }
+    catch (error) { disponibilidade = { disponivel: false, motivo: error.message }; }
     const result = await Swal.fire({
       title: 'Preview do Cadastro Mestre', width: 1100,
       customClass: { htmlContainer: 'master-preview' },
-      html: htmlPreview(manifesto, revisao),
+      html: htmlPreview(manifesto, revisao) + (disponibilidade.disponivel ?
+        '<p>Execução disponível para seu usuário. Aprovar todas as propostas habilita Executar reconstrução; haverá outra confirmação.</p>' :
+        `<p>Execução indisponível: ${escapeHtml(disponibilidade.motivo || 'solicite habilitação administrativa')}. O Preview e o download continuam disponíveis.</p>`),
       showCancelButton: true, confirmButtonText: 'Baixar revisão (sem gravar)', cancelButtonText: 'Fechar',
+      showDenyButton: true, denyButtonText: 'Executar reconstrução…',
       didOpen: () => {
         const container = Swal.getHtmlContainer();
         const atualizarDecisoes = () => {
@@ -88,6 +133,10 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
             .map(([status, label]) => `${label}: ${revisao.decisoes.filter(d => d.status === status).length}`).join(' · ');
           const states = new Map(revisao.decisoes.map(d => [d.id, d.status]));
           container.querySelectorAll('[data-master-operation]').forEach(select => { select.value = states.get(select.dataset.masterOperation); });
+          let aprovado = false;
+          try { criarPlanoReconstrucaoCadastroMestre(manifesto, revisao); aprovado = true; } catch { /* Revisão parcial permanece local. */ }
+          const executar = Swal.getDenyButton?.();
+          if (executar) executar.disabled = !disponibilidade.disponivel || !aprovado;
         };
         container.addEventListener('change', event => {
           const select = event.target.closest('[data-master-operation]');
@@ -107,6 +156,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
       }
     });
     if (result.isConfirmed) baixarRevisao(manifesto, revisao);
+    if (result.isDenied && disponibilidade.disponivel) await executarAprovado(file, manifesto, revisao);
   }
 
   function bind() {

@@ -12,7 +12,7 @@ const CAMPOS = ['descricao', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor
 const serializar = serializarDeterministico;
 export const hashReconstrucao = value => createHash('sha256').update(serializar(value)).digest('hex');
 
-async function contextoAtual(client) {
+export async function contextoAtual(client) {
   const ler = async (table, fields, key) => (await client.query(`SELECT to_jsonb(t) AS registro FROM (SELECT ${fields} FROM public.${table} ORDER BY ${key}) t`)).rows.map(r => r.registro);
   // Uma única conexão/transaction; nenhuma consulta ao operacional como fonte ERP.
   return { produtos: await ler('dicionario_master_produtos', '*', 'codigo_produto'),
@@ -26,7 +26,7 @@ async function fingerprintsProtegidos(client) {
   return (await client.query(sql)).rows;
 }
 
-async function validarDependencias(client) {
+export async function validarDependencias(client) {
   const { rows } = await client.query(`SELECT
     EXISTS (SELECT 1 FROM pg_trigger WHERE NOT tgisinternal AND tgenabled <> 'D'
       AND tgrelid IN ('${MASTER}'::regclass, '${LOG}'::regclass)) AS triggers,
@@ -96,7 +96,7 @@ function verificarMaster(plano, depois, lote, timestamp) {
 
 /**
  * Cliente dedicado; arquivo/revisão revalidados sob locks. salvarSnapshot deve
- * persistir e sincronizar o arquivo local antes de qualquer DML destrutivo.
+ * confirmar persistência durável (arquivo local ou Storage privado) antes do DML.
  * A confirmação é o hash completo do manifesto aprovado, não booleano genérico.
  */
 export async function executarReconstrucaoCadastroMestre({ client, arquivo, evidencia, leitor, identificadorLote, autor, confirmacao, salvarSnapshot }) {
@@ -138,7 +138,11 @@ export async function executarReconstrucaoCadastroMestre({ client, arquivo, evid
       VALUES ($1,$2,$3,$4,'ERP','processando',$5,$6::jsonb) RETURNING id::text AS id`,
     [arquivo.name, preparado.manifesto.fonte.tipo_arquivo, preparado.manifesto.fonte.hash_arquivo_sha256, identificadorLote, plano.universo.length, JSON.stringify(metadados)])).rows[0].id;
     // Cópia independente preserva a imagem anterior mesmo se a conexão/COMMIT falhar.
-    await salvarSnapshot({ ...metadados, identificador_lote: identificadorLote, lote_id: lote, capturado_em: timestamp });
+    const snapshotReferencia = await salvarSnapshot({ ...metadados, identificador_lote: identificadorLote, lote_id: lote, capturado_em: timestamp });
+    if (snapshotReferencia) {
+      await client.query(`UPDATE ${LOG} SET metadados_origem=metadados_origem || $2::jsonb WHERE id=$1`,
+        [lote, JSON.stringify({ snapshot_referencia: snapshotReferencia })]);
+    }
     await client.query('SAVEPOINT reconstruir_master');
     savepoint = true;
     const inseridos = await inserirProdutos(client, plano.inserts, lote);

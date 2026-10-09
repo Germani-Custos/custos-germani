@@ -1,5 +1,13 @@
 # Setup de Ambiente (Frontend com runtime-config.js)
 
+## CAD-ENV-01 — configuração e diagnóstico sem escrita
+
+Build agora usa `scripts/build-web.mjs`/`dist`, sem publicar api/scripts/.env/dependências. Template administrativo preenchido somente com UUID autorizado, origem e nome de bucket recomendado; segredos continuam vazios e flag false. [Guia de deploy, bucket privado, diagnóstico e primeira execução](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). O ambiente na nuvem ainda depende de configuração; nenhum deploy/reconstrução nesta preparação.
+
+## CAD-EXEC-WEB-01 — configuração exclusivamente server-side
+
+A reconstrução pela aplicação usa função Node na Vercel e permanece desabilitada por padrão. [.env.example](.env.example) lista os nomes; [procedimento completo](docs/arquitetura/cadastro-mestre-execucao-web.md) explica Auth/allowlist, origem, conexão TLS do mesmo projeto e snapshot em bucket privado existente. Nunca publicar `CADASTRO_MESTRE_*` em runtime-config/variáveis VITE ou código. Não houve deploy/configuração/carga real nesta entrega. Não habilitar acesso destrutivo a produção em Preview de deploy.
+
 ## Variáveis obrigatórias
 
 Crie um arquivo `.env` local com:
@@ -70,7 +78,7 @@ Quando faltar configuração obrigatória, a mensagem inclui as fontes avaliadas
 
 ## Geração automática do runtime-config (Vercel)
 
-- O projeto inclui `scripts/generate-runtime-config.mjs`, executado no `buildCommand` da Vercel (`vercel.json`).
+- O build `scripts/build-web.mjs` chama `scripts/generate-runtime-config.mjs` em `dist`; só esse diretório é publicado como frontend pela Vercel. Funções em `/api` são empacotadas separadamente.
 - Esse script valida `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de deploy e gera `runtime-config.js` com `window.__ENV__` preenchido.
 - Se faltar variável obrigatória, o build falha cedo para evitar publicação de frontend inválido.
 - O browser **não usa** `process.env`; `process.env` é usado apenas no build/deploy para materializar `runtime-config.js`.

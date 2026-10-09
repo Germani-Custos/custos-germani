@@ -1,5 +1,15 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-ENV-01 — fronteira de deploy (09/10/2026)
+
+Frontend publicado somente em dist; api/scripts/executor/env/pacote/SQL ficam fora. Build recusa chave administrativa na variável pública e canários secretos em arquivos publicados. `api.verificarAmbienteReconstrucaoCadastroMestre()` faz GET verificar=1 autenticado: bucket privado, contexto integral, guardas centrais e privilégios em BEGIN READ ONLY/ROLLBACK. Funciona com flag false, sem DML/upload/executor. [Limites, configuração e procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Nenhum deploy/carga real nesta entrega; competência `data_referencia` e importação `criado_em` intactas.
+
+## CAD-EXEC-WEB-01 — execução pelo servidor (09/10/2026)
+
+UI → fachada API → HTTP autenticado same-origin → função Node Vercel → executor central existente. Plano central bloqueia revisão parcial; outra confirmação digitada precede POST. Servidor verifica Auth/allowlist/origem, recalcula manifesto/hash e executor revalida sob locks. Snapshot privado com upload sem sobrescrita/leitura/SHA256 é obrigatório antes do DML; referência fica no JSONB existente, junto do snapshot integral. CLI mantém cópia `wx`/`fsync`. Rollback/COMMIT/provas protegidas continuam centrais. GET de disponibilidade não conecta; GET de lote é somente SELECT.
+
+`pg`, SheetJS e SDK Supabase fixados são dependencies do servidor; PGlite continua devDependency. Nenhuma biblioteca/credencial administrativa chega ao frontend. Gate server-side desabilitado por padrão, sem deploy/carga/schema nesta entrega. [Configuração, arquivos, contratos HTTP, limites e testes](../arquitetura/cadastro-mestre-execucao-web.md). Sucede a exclusividade de CLI descrita abaixo; `data_referencia`/`criado_em` dos fatos permanecem competência/importação.
+
 ## CAD-REBUILD-01 — contrato vigente (09/10/2026)
 
 O adapter existente passa `modo:RECONSTRUCAO_UNIVERSO` ao motor de aprovação. O motor de filtros permanece intacto; `core/cadastro-mestre-reconstruction-engine.js` valida aprovação integral e consolida o plano puro. Master é lido com `supabase.from().select('*')` paginado para vincular a imagem inteira. Manifesto `RECONSTRUCAO_UNIVERSO_V1` inclui remoções revisáveis e universo esperado, mantendo download com execução desabilitada.
@@ -55,7 +65,7 @@ Detalhes: [`docs/arquitetura/stack-tecnologico.md`](../arquitetura/stack-tecnolo
 ```
 index.html               # Shell único: sidebar + <section class="view"> por tela. Carrega CDNs e o controller.
 runtime-config.js        # Gerado no build (window.__ENV__). NÃO editar à mão.
-vercel.json              # buildCommand + outputDirectory "."
+vercel.json              # buildCommand build-web + outputDirectory "dist"
 assets/style.css         # Estilos globais
 view/                    # Camada de UI (orquestração, DOM, estado, utils)
   ui-controller.js       # Bootstrap + orquestração dos fluxos de UI (MNT-01 concluído)
@@ -204,7 +214,7 @@ Se `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` faltarem, `src/config/app-config
 
 ## 6. Build e deploy (Vercel)
 
-- `vercel.json`: `buildCommand = node scripts/generate-runtime-config.mjs`, `outputDirectory = "."`.
+- `vercel.json`: `buildCommand = node scripts/build-web.mjs`, `outputDirectory = "dist"`; runtime-config gerado dentro de dist, funções /api separadas do frontend.
 - O script lê o env da Vercel e gera `runtime-config.js` com `window.__ENV__`. **Falha o build** se faltar `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` (fail-fast).
 - Variáveis ficam em **Vercel → Project Settings → Environment Variables** (não versionar `.env`).
 

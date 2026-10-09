@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## Diagnóstico — CAD-ENV-01 (09/10/2026)
+
+Administrador → `api.verificarAmbienteReconstrucaoCadastroMestre()` → cliente HTTP GET `/api/reconstruir-cadastro-mestre?verificar=1` com sessão → getUser/allowlist → Storage getBucket e PostgreSQL BEGIN READ ONLY/contexto/guardas/privilégios/policies/ROLLBACK. Nenhum executor/lote/upload/DML. Disponível com flag false; POST verificar é recusado. Frontend estático limitado a dist, administrativo só na função. [Contrato de preparação](./cadastro-mestre-preparacao-ambiente.md).
+
+## Contrato vigente — CAD-EXEC-WEB-01 (09/10/2026)
+
+Preview/decisões/download permanecem locais. `getCadastroMestreExecutionAvailability()` faz GET autenticado à função, sem conexão PostgreSQL/lote. Após aprovação integral e confirmação digitada, `executarReconstrucaoCadastroMestre({arquivo,manifesto,revisao,lote})` envia original/decisões/hash via POST à função Node Vercel, que autentica/autoriza/recalcula e chama o executor central. DML somente Master/log, snapshot independente privado conferido, locks/revalidação/rollback/provas centrais. `consultarReconstrucaoCadastroMestre(lote)` faz GET com SELECT administrativo do resultado, sem retry. Não há SQL/RPC/segredo administrativo no frontend ou carga de produção nesta entrega. [Contrato detalhado](./cadastro-mestre-execucao-web.md). Sucede a limitação de CLI das entregas abaixo, preservando `data_referencia` (competência) e `criado_em` (importação) dos fatos.
+
 ## Contrato vigente — CAD-REBUILD-01 (09/10/2026)
 
 UI → `getCadastroMestrePreviewContext()` (SELECT `*` paginado do Master e catálogos via `supabase.from()`) → adapter existente → manifesto `RECONSTRUCAO_UNIVERSO_V1` com universo, alterações e remoções → decisões/download locais. Sem escrita, DELETE, RPC ou SQL no frontend. Produtos fora do universo não são preservados no Master; vazios preservam campos de pertencentes.

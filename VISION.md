@@ -1,5 +1,13 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-09 — preparação verificável
+
+O administrador pode conferir os requisitos de execução por diagnóstico autenticado somente leitura, mantendo reconstrução desabilitada. Publicação por allowlist separa código/segredos administrativos do frontend; aprovação e executor permanecem únicos. [CAD-ENV-01](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Ambiente real ainda pendente; nenhuma reconstrução ou mudança em fatos/competência/importação.
+
+## Atualização 2026-10-09 — aprovação e execução distinguíveis
+
+O investigador pode solicitar reconstrução pela aplicação após revisão integral e confirmação explícita, separadas da aprovação/download. O servidor preserva snapshot, revalida contexto e confirma lote; fatos e classificação operacional ficam intactos. Nenhuma carga automática. [CAD-EXEC-WEB-01](docs/arquitetura/cadastro-mestre-execucao-web.md). Competência `data_referencia` e evento `criado_em` dos fatos permanecem iguais.
+
 ## Atualização 2026-10-09 — universo mestre auditável
 
 O Master ERP representa o universo atual filtrado do arquivo, permitindo revisar claramente quem pertence e quem será removido. A reconstrução exige aprovação integral e execução administrativa atômica com snapshot auditável. Preservação de campos vazios vale para produtos que continuam no universo; fatos históricos e classificação operacional de Custos/OP permanecem intactos. Esta decisão sucede a preservação de ausentes no Master descrita nas entregas históricas abaixo. [Contrato CAD-REBUILD-01](docs/arquitetura/cadastro-mestre-reconstrucao.md). `data_referencia` permanece competência e `criado_em` proveniência de importação.

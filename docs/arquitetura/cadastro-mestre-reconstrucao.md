@@ -1,5 +1,9 @@
 # CAD-REBUILD-01 — Reconstrução do universo ERP (09/10/2026)
 
+## Extensão vigente — CAD-EXEC-WEB-01
+
+Além do CLI abaixo, a aplicação agora oferece execução explícita por função Node Vercel autenticada/autorizada, reutilizando este executor. [Contrato web, configuração e recuperação](./cadastro-mestre-execucao-web.md). Snapshot durável pode ser arquivo CLI `wx`/`fsync` ou objeto privado conferido por leitura/hash; referência opcional retorna ao log existente. Nenhuma carga real/deploy nesta entrega. As menções abaixo à ausência de botão descrevem a entrega original; aprovação/download continuam locais e o novo botão exige outra confirmação.
+
 ## Decisão e alcance
 
 O conjunto de produtos elegíveis do arquivo ERP é a fonte de verdade de `dicionario_master_produtos`. Produto ausente ou excluído pelos filtros passa a ser uma **remoção proposta do Master**. Esta decisão substitui a preservação de produtos fora do conjunto nas Fases 3.1/3.3/3.4 e CAD-XLS-01. As evidências dessas entregas continuam históricas e sua migration pontual não deve ser repetida.

@@ -1,5 +1,9 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+## CAD-EXEC-WEB-01 — executar pela aplicação (09/10/2026)
+
+Preview/decisão/download não executam carga. Novo **Executar reconstrução…**, disponível apenas com aprovação integral e autorização/configuração server-side, abre confirmação digitada com Master atual, inserções, atualizações, remoções e quantidade final. Cancelamento não envia POST. Função Node Vercel chama executor central com revalidação/snapshot/transação/rollback. Sucesso informa lote/contagens; falha permite consultar lote por SELECT, sem retry. Sem banco real/deploy nesta entrega; tabela operacional continua independente. [Arquitetura e configuração](../arquitetura/cadastro-mestre-execucao-web.md). Esta seção sucede a ausência de botão das fases abaixo. `data_referencia`/`criado_em` dos fatos permanecem competência/importação.
+
 ## CAD-REBUILD-01 — Preview de reconstrução (09/10/2026)
 
 O fluxo CAD-XLS-01 agora usa o contrato `RECONSTRUCAO_UNIVERSO_V1`. A contagem antes chamada **preservados fora dos filtros ou ausentes** passa a **produtos a remover do Cadastro Mestre**, com imagem anterior e motivo por código. O modal também mostra Master antes/depois, válidos, novos, existentes e existentes com UPDATE. Preservações passam a se referir aos campos vazios de quem permanece, sem preservar produtos fora do universo.

@@ -9,6 +9,9 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { main, salvarSnapshotDuravel } from '../scripts/reconstruir-cadastro-mestre.mjs';
+import { criarCadastroMestreWebHandler } from '../scripts/lib/cadastro-mestre-web.mjs';
+import { ambienteWeb, respostaWeb, storageWeb } from './fixtures/cadastro-mestre-web.js';
+import { gzipSync } from 'node:zlib';
 
 const aprovar = m => decidirOperacoesCadastroMestre(m, criarRevisaoCadastroMestre(m), m.operacoes.filter(o => o.aprovavel).map(o => o.id), 'APROVADO');
 describe('Contrato do universo — preparação pura', () => {
@@ -88,6 +91,113 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
   const executar = (overrides = {}) => executarReconstrucaoCadastroMestre({ client, arquivo: arquivoCadastro(), evidencia, leitor: SheetJS,
     identificadorLote: 'TESTE_LOCAL', autor: 'Teste sintético', confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(evidencia.manifesto)}`,
     salvarSnapshot: snapshot, ...overrides });
+
+  async function chamadaWeb({ formato = 'xls', transform = p => p, storageOverride } = {}) {
+    const arquivo = arquivoCadastro(formato);
+    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, before, SheetJS);
+    const manifest = preparado.manifesto;
+    const pedido = transform({ nome: arquivo.name, aba: manifest.fonte.aba,
+      arquivo_base64: gzipSync(Buffer.from(await arquivo.arrayBuffer())).toString('base64'), arquivo_encoding: 'gzip',
+      decisoes: aprovar(manifest).decisoes, hash_manifesto: hashReconstrucao(manifest),
+      confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(manifest)}`, lote: 'CAD_UI_11111111-1111-4111-8111-111111111111' });
+    const storage = storageOverride || storageWeb();
+    client.connect = vi.fn(async () => {});
+    client.end = vi.fn(async () => {});
+    const handler = criarCadastroMestreWebHandler({ env: ambienteWeb, criarSupabase: storage.criarSupabase, criarClientePg: () => client, leitor: SheetJS });
+    const res = respostaWeb();
+    await handler({ method: 'POST', headers: { authorization: 'Bearer test', origin: ambienteWeb.CADASTRO_MESTRE_APP_ORIGIN }, body: pedido }, res);
+    return { res, storage, handler, pedido };
+  }
+
+  it.each(['xls', 'xlsx', 'xlsm'])('HTTP %s reutiliza executor real e confirma snapshot privado antes do DML', async formato => {
+    const storage = storageWeb();
+    const original = client.query;
+    client.query = vi.fn(async (sql, params) => {
+      if (sql.startsWith('INSERT INTO public.dicionario_master_produtos')) {
+        expect(storage.upload).toHaveBeenCalledOnce();
+        expect(storage.download).toHaveBeenCalledOnce();
+      }
+      return original(sql, params);
+    });
+    const { res } = await chamadaWeb({ formato, storageOverride: storage });
+    expect(res.code).toBe(200);
+    expect(res.body).toMatchObject({ status: 'concluido', antes: 8, depois: 4, inseridos: 1, atualizados: 1, removidos: 5 });
+    expect((await ctx()).produtos.map(p => p.codigo_produto)).toEqual(['001', '002', '008', '1000']);
+    const log = (await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows[0];
+    expect(log.metadados_origem.autor).toBe('supabase-auth:admin-id');
+    expect(log.metadados_origem.snapshot_referencia).toBe(res.body.snapshot_referencia);
+    expect(log.metadados_origem.snapshot_master).toEqual(before.produtos);
+    expect(storage.upload.mock.calls[0][2].upsert).toBe(false);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    const consulta = respostaWeb();
+    await (await chamadaHandlerSomenteConsulta(storage))({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { lote: res.body.identificador_lote } }, consulta);
+    expect(consulta.body.resultado.status).toBe('concluido');
+    expect(client.query.mock.calls.at(-1)[0]).toMatch(/^SELECT /);
+  });
+  function chamadaHandlerSomenteConsulta(storage) {
+    return criarCadastroMestreWebHandler({ env: ambienteWeb, criarSupabase: storage.criarSupabase, criarClientePg: () => client, leitor: SheetJS });
+  }
+
+  it('diagnóstico de deploy usa PostgreSQL em READ ONLY sem alterar estado ou salvar snapshot', async () => {
+    const storage = storageWeb();
+    client.connect = vi.fn();
+    client.end = vi.fn();
+    const handler = criarCadastroMestreWebHandler({ env: { ...ambienteWeb, CADASTRO_MESTRE_EXECUTION_ENABLED: 'false' },
+      criarSupabase: storage.criarSupabase, criarClientePg: () => client, leitor: SheetJS });
+    const res = respostaWeb();
+    await handler({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { verificar: '1' } }, res);
+    expect(res.code).toBe(200);
+    expect(res.body).toMatchObject({ pronto_para_habilitar: true, master_atual: 8, execucao_habilitada: false, execucao_realizada: false });
+    expect(client.query.mock.calls.every(([sql]) => /^(BEGIN READ ONLY|SET LOCAL|SELECT|ROLLBACK)/.test(sql))).toBe(true);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect(storage.download).not.toHaveBeenCalled();
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+  });
+
+  it.each(['upload', 'download', 'publico'])('falha de snapshot %s reverte log antes de qualquer alteração no Master', async etapa => {
+    const storage = storageWeb();
+    if (etapa === 'upload') storage.upload.mockResolvedValue({ error: new Error('secret-test') });
+    if (etapa === 'download') storage.download.mockResolvedValue({ data: new Blob(['corrompido']), error: null });
+    if (etapa === 'publico') storage.storage.getBucket.mockResolvedValue({ data: { public: true }, error: null });
+    const { res } = await chamadaWeb({ storageOverride: storage });
+    expect(res.code).toBe(503);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect(JSON.stringify(res.body)).not.toContain('secret-test');
+    expect(client.query.mock.calls.some(([sql]) => /^(INSERT INTO|UPDATE|DELETE FROM) public.dicionario_master_produtos/.test(sql))).toBe(false);
+  });
+
+  it('HTTP recusa decisões faltantes ou hash antigo sem log/escrita', async () => {
+    let result = await chamadaWeb({ transform: p => ({ ...p, decisoes: p.decisoes.slice(1) }) });
+    expect(result.res.code).toBe(400);
+    await db.query("UPDATE dicionario_master_produtos SET descricao='externo' WHERE codigo_produto='002'");
+    result = await chamadaWeb();
+    expect(result.res.code).toBe(409);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect(result.storage.upload).not.toHaveBeenCalled();
+  });
+
+  it('erro SQL pelo HTTP executa rollback central e consulta retorna falhou sem retry', async () => {
+    const original = client.query;
+    let falhou = false;
+    client.query = vi.fn(async (sql, params) => {
+      if (!falhou && sql.startsWith('DELETE FROM public.dicionario_master_produtos')) { falhou = true; return db.query('SELECT 1/0'); }
+      return original(sql, params);
+    });
+    const { res, storage, handler, pedido } = await chamadaWeb();
+    expect(res.code).toBe(409);
+    expect(res.body.consultar_lote).toBe(true);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect(storage.arquivos.size).toBe(1);
+    const consulta = respostaWeb();
+    await handler({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { lote: pedido.lote } }, consulta);
+    expect(consulta.body.resultado.status).toBe('falhou');
+    expect(consulta.body.resultado.inseridos).toBe(0);
+    expect(consulta.body.resultado.snapshot_referencia).toContain('storage://');
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+  });
 
   it('insere novo, atualiza existente, remove filtrados/ausente e registra snapshot/lote', async () => {
     const result = await executar();

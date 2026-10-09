@@ -3,19 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": { "node": ">=22" },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p jsconfig.json",
     "test": "vitest run",
-    "build": "node scripts/generate-runtime-config.mjs"
+    "build": "node scripts/build-web.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
+    "pg": "8.16.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
     "@eslint/js": "^9.29.0",
     "eslint": "^9.39.4",
-    "pg": "8.16.3",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "vitest": "^3.2.4"
   }
 }

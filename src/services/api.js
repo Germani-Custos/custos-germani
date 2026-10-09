@@ -6,6 +6,7 @@ import { appConfig, debugLog } from '../config/app-config.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
 import { buildManualProductMasterPayload, buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
 import { lerContextoCadastroMestrePreview } from './cadastro-mestre-preview.js';
+import { consultarDisponibilidadeReconstrucao, consultarLoteReconstrucao, executarReconstrucaoPelaAplicacao, verificarAmbienteReconstrucao } from './cadastro-mestre-execution.js';
 
 /**
  * @typedef {import('../../core/report-engine.js').Masters} Masters
@@ -684,6 +685,11 @@ export const api = {
   async getCurrentUser() {
     return supabase.auth.getUser();
   },
+
+  getCadastroMestreExecutionAvailability() { return consultarDisponibilidadeReconstrucao(supabase); },
+  verificarAmbienteReconstrucaoCadastroMestre() { return verificarAmbienteReconstrucao(supabase); },
+  executarReconstrucaoCadastroMestre(pedido) { return executarReconstrucaoPelaAplicacao(supabase, pedido); },
+  consultarReconstrucaoCadastroMestre(lote) { return consultarLoteReconstrucao(supabase, lote); },
 
   /**
    * Importa um lote de histórico de custos, registrando log_importacao,

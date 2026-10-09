@@ -1,5 +1,15 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-09 — CAD-ENV-01: preparar sem executar
+
+Build publica somente `dist`, excluindo código administrativo/configurações privadas. Diagnóstico autenticado `GET ?verificar=1` funciona com execução desabilitada, somente leitura, sem lote/upload/executor. Allowlist inicial indica apenas o usuário solicitado. Ambiente real ainda pendente: endpoint público 404, bucket inexistente, deploy/segredos não configurados por esta entrega. [Configuração, validação sem escrita e primeira execução passo a passo](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Master continua 5.706; nenhuma reconstrução, escrita de produção ou commit. `data_referencia` é competência e `criado_em` importação dos fatos, intactos.
+
+## Atualização 2026-10-09 — CAD-EXEC-WEB-01: execução explícita na aplicação
+
+Após aprovação integral, **Executar reconstrução…** abre confirmação com contagens e texto obrigatório. Função Node autenticada/autorizada na Vercel chama o executor central, revalida arquivo/contexto, preserva snapshot em Storage privado/log e mantém transação/rollback. Seleção, aprovação e download não executam carga. Execução vem desabilitada até configuração administrativa, sem segredos no navegador. [Arquitetura, configuração e recuperação](docs/arquitetura/cadastro-mestre-execucao-web.md).
+
+Nenhuma reconstrução real, deploy, migration ou escrita de produção nesta entrega. Custos/OP/dicionário operacional/mapa ficam intocados; a investigação do fingerprint operacional é separada. `data_referencia` continua competência e `criado_em` importação. Os limites de execução históricos abaixo são sucedidos por este fluxo.
+
 ## Atualização 2026-10-09 — CAD-REBUILD-01: universo atual do ERP
 
 O Preview passa a propor remoção do Master de produtos ausentes ou fora dos filtros, além de novos e alterações. Campos ERP vazios preservam valores dos produtos que permanecem. Após aprovação integral, um comando administrativo explícito reconstrói somente `dicionario_master_produtos` em uma transação, com snapshot integral em disco/log, lote e provas de preservação operacional. A tela continua sem execução automática. Não há mudança de schema, RPC ou SQL no frontend.
@@ -213,7 +223,7 @@ Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`cria
 ### Configuração operacional em deploy estático
 
 - O runtime do frontend lê configurações prioritariamente de `runtime-config.js` (`window.__ENV__`).
-- Em Vercel, `vercel.json` executa `node scripts/generate-runtime-config.mjs` para gerar o arquivo com as variáveis reais de ambiente.
+- Em Vercel, `vercel.json` executa `node scripts/build-web.mjs` e publica somente `dist`; runtime-config é gerado nesse diretório com apenas as três variáveis públicas.
 - Fallbacks de compatibilidade permanecem ativos (`window.__RUNTIME_CONFIG__`, `import.meta.env`, `<meta name="VITE_*">`).
 - `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` são obrigatórias e validadas no build e no bootstrap.
 

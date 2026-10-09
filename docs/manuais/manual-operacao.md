@@ -1,5 +1,15 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-ENV-01 — preparação sem reconstrução (09/10/2026)
+
+Seguir [passo a passo de deploy/env/bucket/diagnóstico e primeira execução](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Manter flag false e allowlist com apenas o UUID do usuário indicado. GET diagnóstico funciona nesse estado sem lote/upload/escrita; sucesso não testa upload/rollback em produção. Endpoint remoto ainda 404 e Storage sem bucket na verificação desta entrega. Configuração real permanece pendente. Nenhuma carga, snapshot de produção ou mudança nos eixos competência/importação.
+
+## CAD-EXEC-WEB-01 — habilitação e operação futura (09/10/2026)
+
+Nenhuma reconstrução real nesta entrega. Antes de publicar/habilitar: configurar função Node na Vercel com conexão PostgreSQL administrativa do mesmo projeto/TLS verificado, allowlist de UUIDs Auth, origem exata e bucket privado existente sem policies públicas. Segredos somente server-side; flag `CADASTRO_MESTRE_EXECUTION_ENABLED=false` até verificação explícita. Preview de deploy usa banco separado ou execução desabilitada. Não criar bucket/lote/migration automaticamente.
+
+Depois da habilitação, usuário autorizado seleciona original, revisa/aprova integralmente, clica **Executar reconstrução…** e confirma texto/contagens. Servidor conserva revalidação/snapshot/transação/rollback; resultado retorna lote. Conferir lote concluído/universo e fingerprints protegidos. Em erro/resposta perdida, consultar lote sem retry; snapshot privado permanece auditável, inclusive em rollback. Ausência de lote pode significar execução em curso. CLI continua alternativa explícita. [Variáveis, limites, recuperação e referências](../arquitetura/cadastro-mestre-execucao-web.md). Custos/OP/operacional/mapa não recebem DML; `data_referencia` continua competência e `criado_em` importação. Sucede a limitação de UI abaixo.
+
 ## CAD-REBUILD-01 — procedimento vigente (09/10/2026)
 
 Conferir o universo filtrado e as remoções no Preview do original XLS/XLSX/XLSM. Produtos ausentes ou fora do filtro serão removidos somente do Master ERP; vazios preservam campos de quem permanece. Aprovar integralmente e baixar a revisão. Não repetir a migration pontual da Fase 3.4.
@@ -127,7 +137,7 @@ node scripts/create-master-user.mjs --login=<usuario> --password=<senha>
 ## 5. Deploy e rollback (Vercel)
 
 ### Deploy
-O deploy é automático a partir da branch de produção (Vercel conectada ao GitHub). No build, a Vercel roda `node scripts/generate-runtime-config.mjs`, que gera `runtime-config.js` a partir das **Environment Variables** do projeto.
+O deploy é automático a partir da branch de produção (Vercel conectada ao GitHub). No build, a Vercel roda `node scripts/build-web.mjs`, que gera `dist` por allowlist e `dist/runtime-config.js` com apenas as **Environment Variables** públicas. Alterações locais ainda sem commit exigem CLI autenticada para publicar o checkout; redeploy do commit antigo não as inclui.
 
 ### Variáveis de ambiente (Vercel → Settings → Environment Variables)
 Obrigatórias em Production/Preview/Development:

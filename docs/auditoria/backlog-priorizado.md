@@ -14,6 +14,11 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 
 ## Estabilizações operacionais concluídas
 
+- [x] **CAD-ENV-01 — preparação local** (2026-10-09): publicação dist por allowlist, diagnóstico autenticado READ ONLY com flag false, verificação de bucket/permissões/dependências e proteção de segredos. UUID único indicado pelo usuário resolvido por SELECT no Auth. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md).
+- [ ] **CAD-ENV-01 — ambiente real**: deploy endpoint, segredos Production, bucket privado e diagnóstico remoto ainda pendentes. Nenhuma reconstrução/lote/snapshot/DML de produção; não tratar preparação local como deploy concluído.
+
+- [x] **CAD-EXEC-WEB-01** 🟠 M (2026-10-09) — Conecta UI ao executor central por função Node Vercel autenticada/autorizada: aprovação integral, confirmação explícita, hash/revalidação, snapshot privado conferido, transação/rollback e consulta de resultado. Configuração/habilitação/deploy/carga real pendentes; zero escrita de produção/schema/RPC/fatos/operacional nesta entrega. → [Contrato](../arquitetura/cadastro-mestre-execucao-web.md).
+
 - [x] **CAD-REBUILD-01** 🟠 M — Reconstrução do universo ERP (2026-10-09): Preview/aprovação substituem preservados fora do conjunto por remoções revisáveis; campos vazios de pertencentes preservados. Executor administrativo opt-in, mesma leitura/filtros, snapshot integral durável/no log existente, transação dedicada com rollback, lote/proveniência e provas de tabelas protegidas. Testes XLS/XLSX/XLSM e PostgreSQL em memória, nenhuma carga real ou alteração de schema/migration/RLS/Custos/OP. Execução real ainda depende da aprovação operacional. → [Contrato](../arquitetura/cadastro-mestre-reconstrucao.md).
 
 - [x] **CAD-XLS-01** 🟠 P — Seletor XLSM/XLSX/XLS ligado ao adapter/motores existentes de Preview/aprovação após esclarecer que a tela anterior executava o legado diretamente. Contagens, preservações, decisões e download são locais; regressões BIFF/UI sem parser paralelo, executor, schema, migration ou carga real. → [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).

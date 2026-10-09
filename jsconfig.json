@@ -17,6 +17,7 @@
     "core/**/*.js",
     "src/services/api.js",
     "src/services/cadastro-mestre-preview.js",
+    "src/services/cadastro-mestre-execution.js",
     "src/utils/**/*.js",
     "src/config/app-config.js",
     "types/**/*.d.ts"
