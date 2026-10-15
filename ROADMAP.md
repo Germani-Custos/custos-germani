@@ -1,5 +1,11 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
+
+- [x] Remover somente a unicidade do rótulo de família, preservando código único, PK, descrição obrigatória e todos os dados; migration 20261015182351 aplicada e conferida, rollback não executado.
+
+Cadastro automático de famílias e alteração do executor continuam fora desta etapa. [Contrato estrutural e provas](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Competência e importação dos fatos permanecem intactas.
+
 ## Atualização 2026-10-15 — CAD-ERP-VIEW-01
 
 - [x] Disponibilizar consulta do Master ERP dentro de Cadastro, com fonte/total explícitos e estado separado do operacional.

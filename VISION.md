@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
+
+Código identifica a família; descrição é rótulo e pode repetir em códigos diferentes. A migration estrutural apenas permite essa representação no catálogo, preservando dados, vínculos e separação entre ERP e operacional. Cadastro automático não foi implementado. [Registro](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Eixos `data_referencia`/`criado_em` intactos.
+
 ## Atualização 2026-10-15 — CAD-ERP-VIEW-01
 
 Consultar o universo oficial ERP deve ser possível sem confundi-lo com a dimensão operacional usada na investigação de Custos/OP. Duas visões no Cadastro explicitam fonte e total, mantendo classificação Kustos no operacional e Master ERP somente leitura. Sem sincronização, nova fonte de verdade, mudança de fatos ou dos eixos `data_referencia`/`criado_em`. [Contrato UX](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).

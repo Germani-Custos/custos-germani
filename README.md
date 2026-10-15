@@ -1,5 +1,9 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01: identidade de família por código
+
+Migration estrutural aplicada remove somente a unicidade da descrição em `categorias_familia`, permitindo rótulos iguais para códigos diferentes. PK, código único, descrição obrigatória e os 38 registros foram preservados; nenhuma carga de famílias ou alteração do executor foi implementada. [SQL, rollback não executado e provas antes/depois](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Fatos e seus eixos de competência/importação permanecem intactos.
+
 ## Atualização 2026-10-15 — CAD-ERP-VIEW-01: duas fontes no Cadastro
 
 Cadastro agora oferece **Cadastro Operacional** (`dicionario_produtos`, classificação Kustos/runtime) e **Cadastro Mestre ERP** (`dicionario_master_produtos`, universo oficial, somente consulta). Totais vêm dos dados carregados, sem fixar 6.113/860 no código. A visão ERP permite busca por código/descrição, filtros por origem/família, agrupamento ERP bruto e páginas visuais de 50; leitura Supabase em páginas de 500 com contagem exata, reutilizando o leitor existente. Origem/família resolvem exclusivamente por código ERP exato nos catálogos. [Fluxo, limites e validação](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).

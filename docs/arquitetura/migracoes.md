@@ -1,5 +1,23 @@
 # Capítulo 15 — Migrações
 
+## CAD-FAM-SCHEMA-01 — descrição de família não é identidade (15/10/2026)
+
+Aplicada, mediante solicitação humana, **20261015182351 / categorias_familia_descricao_nao_unica**. [Migration isolada](../../sql/20261015182351_categorias_familia_descricao_nao_unica.sql): transação com limites de espera/execução, removendo exclusivamente `categorias_familia_descricao_key` com `RESTRICT`, sem `CASCADE` ou DML. O índice pertencente à constraint também é removido pelo PostgreSQL; os demais objetos permanecem intactos. `codigo` continua sendo a identidade de negócio; códigos diferentes podem compartilhar um rótulo.
+
+Backup prévio dos 38 registros completos e metadados estruturais preservado localmente fora do repositório. Conferência antes/depois por SELECT:
+
+- Registros: **38 → 38**; códigos distintos não nulos: **35 → 35**; descrições distintas: **38 → 38**. Os três códigos nulos legados permanecem intactos.
+- `PRIMARY KEY (id)` / `categorias_familia_pkey`: preservada.
+- Unicidade de `codigo` / índice `ux_categorias_familia_codigo`: preservada, com definição idêntica.
+- `NOT NULL (descricao)`: preservado; todas as colunas, tipos e defaults idênticos.
+- Somente `UNIQUE (descricao)` e seu índice de suporte foram removidos. Nenhuma outra constraint, índice ou relação mudou.
+- Os 38 registros completos são idênticos, inclusive IDs e `criado_em`; fingerprint MD5 ordenado por `id`: **04b3645662df0f79ac18e9880d832592**, antes e depois.
+- Contagens e fingerprints integrais idênticos nas cinco tabelas protegidas: Master ERP **860**, operacional **6.113**, Custos **1.370**, OP **704**, mapa **292**.
+
+[Rollback manual preparado](../../sql/rollback_categorias_familia_descricao_nao_unica.sql), **não executado**: recria a constraint original, em transação, sem mudar registros. Se futuras inclusões gerarem descrições repetidas, o PostgreSQL recusará sua recriação; interromper e revisar, sem apagar ou renomear categorias para forçar a reversão. Não há rollback automático.
+
+Validação local adicional com PostgreSQL em memória e tabela vazia conferiu apenas a migration de ida e preservação das guardas, sem INSERT/UPDATE/DELETE; rollback não foi executado nem localmente. A conferência real comparou registros completos, colunas, constraints, índices, relações e fingerprints das tabelas protegidas. Nenhum cadastro automático de famílias, alteração no executor, reconstrução, importação, sync, env ou commit nesta etapa. `data_referencia` (competência) e `criado_em` (importação) dos fatos permanecem intactos.
+
 ## Fase 3.4 — carga pontual versionada (08/10/2026)
 
 Aplicada pelo Supabase MCP a migration **20261008184501 / fase3_4_execucao_cadastro_mestre**, preservada em [`sql/20261008184501_fase3_4_execucao_cadastro_mestre.sql`](../../sql/20261008184501_fase3_4_execucao_cadastro_mestre.sql). Somente DML no Master/log; sem DDL ou alteração de RLS. Lote 1 concluído, 103 inserções e 312 produtos atualizados, Master final 5.706. Guardas exigem o estado pré-carga e impedem repetição. **Não reexecutar**. Rollback futuro exige nova autorização/migration; imagens anteriores dos 312 atualizados estão no log. [Contrato e validações](cadastro-mestre-execucao-fase3-4.md).
