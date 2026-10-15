@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-PAYLOAD-01: executar o universo revisado
+
+O tamanho físico do arquivo ERP não deve impedir a execução de um universo já revisado. O original é lido no Preview; a execução transporta seus campos necessários, vinculados à aprovação, e o servidor recalcula filtros, universo e reconciliação sobre o contexto atual. Snapshot, aprovação integral e atomicidade continuam obrigatórios. O hash do arquivo preserva proveniência declarada pelo navegador; sem o binário, o servidor não comprova sozinho a origem ERP. [Contrato e limites](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto). Não muda fatos, classificação operacional, `data_referencia` ou `criado_em`.
+
 ## Atualização 2026-10-09 — observabilidade TLS administrativa
 
 CAD-DIAG-TLS-01 permite comparar a identidade da CA por fingerprint sem divulgar certificado ou credenciais. Inspeção restrita ao GET administrativo autorizado; não muda reconstrução, fatos ou eixos temporais. [Limites](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).

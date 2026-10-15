@@ -1,5 +1,13 @@
 # Manual do Usuário — Custos Germani
 
+## Execução sem enviar o XLS original — CAD-PAYLOAD-01 (09/10/2026)
+
+Escolha o XLS/XLSX/XLSM original normalmente no Preview. A execução web passa a enviar somente os campos necessários já lidos, vinculados à aprovação; o tamanho físico do XLS de 24.307.397 bytes não é mais o motivo de bloqueio do POST. O servidor refaz os filtros e a comparação com o Master atual; aprovação integral e segunda confirmação continuam obrigatórias. Se dados ou contexto mudaram, gere novo Preview e aprove novamente.
+
+Confira 6.230 linhas, 860 válidos, 4.853 remoções e 517 preservações de campos antes de confirmar. Essas contagens, dez UPDATEs e zero erros foram reproduzidos lendo a cópia local `cadastro mestre 8_10.xls`; ela possui o mesmo tamanho informado, mas não foi comparada byte a byte com o nome que inclui `(1)`. Última leitura de produção encontrou 5.706 produtos; 860 é a expectativa da futura execução. A tentativa anterior não enviou o arquivo ao servidor, não criou lote/snapshot e não reconstruiu o Master. O código `CAD_UI` nasce no navegador; sua presença na mensagem não comprova registro no banco. Não repetir automaticamente após erro ou resposta perdida. [Procedimento e limites](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+
+Guardar original e revisão para auditoria. Esta mudança não executa carga nem habilita a função; Custos/OP, operacional e mapa ficam intactos. `data_referencia` continua competência e `criado_em` importação nos fatos.
+
 ## Diagnóstico da CA — CAD-DIAG-TLS-01 (09/10/2026)
 
 O administrador autorizado pode conferir formato e fingerprint da CA pelo GET de diagnóstico, com execução desabilitada. Isso não reconstrói produtos nem libera o botão. O certificado e as credenciais não aparecem na resposta. [Procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).

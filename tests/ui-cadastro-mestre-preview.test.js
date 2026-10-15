@@ -226,7 +226,7 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     ctx.produtos[1].descricao = '<img src=x onerror=alert(1)>';
     api.getCadastroMestrePreviewContext.mockResolvedValue({ data: ctx, error: null });
     const file = arquivoCadastro();
-    file.name = '<script>alert(1)</script>.xls';
+    file.name = '<img src=x onerror=alert(1)>.xls';
     const { dom, controller } = setup(file);
     await controller.bind();
     await dom.masterImportInput.emit('change');
@@ -303,7 +303,10 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(errors).toEqual([]);
     expect(api.executarReconstrucaoCadastroMestre).toHaveBeenCalledOnce();
     const pedido = api.executarReconstrucaoCadastroMestre.mock.calls[0][0];
-    expect(pedido.arquivo).toBe(file);
+    expect(pedido.arquivo).toBeUndefined();
+    expect(pedido.dadosExecucao.fonte.arquivo).toBe(file.name);
+    expect(pedido.dadosExecucao.fonte.tipo_arquivo).toBe(formato.toUpperCase());
+    expect(pedido.dadosExecucao.linhas).toHaveLength(8);
     expect(pedido.lote).toMatch(/^CAD_UI_/);
     expect(pedido.revisao.decisoes.every(d => d.status === 'APROVADO')).toBe(true);
     expect(Swal.fire.mock.calls.at(-1)[0].text).toContain('Master: 4 produtos');

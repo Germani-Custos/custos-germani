@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { gunzipSync } from 'node:zlib';
 import { arquivoCadastro, contexto, SheetJS } from './fixtures/cadastro-mestre-arquivo.js';
 import { prepararAprovacaoArquivoCadastroMestre } from '../src/services/cadastro-mestre-preview.js';
 import { decidirOperacoesCadastroMestre } from '../core/cadastro-mestre-approval-engine.js';
@@ -10,16 +9,16 @@ const lote = 'CAD_UI_11111111-1111-4111-8111-111111111111';
 const client = { auth: { getSession: vi.fn() } };
 async function pedido(formato = 'xls') {
   const arquivo = arquivoCadastro(formato);
-  const { manifesto, revisao } = await prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, SheetJS);
-  return { arquivo, manifesto, revisao: decidirOperacoesCadastroMestre(manifesto, revisao, manifesto.operacoes.map(o => o.id), 'APROVADO'), lote };
+  const { manifesto, revisao, dadosExecucao } = await prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, SheetJS);
+  return { dadosExecucao, manifesto, revisao: decidirOperacoesCadastroMestre(manifesto, revisao, manifesto.operacoes.map(o => o.id), 'APROVADO'), lote };
 }
-describe('Cliente HTTP — transporta aprovação e bytes, nunca SQL/credenciais administrativas', () => {
+describe('Cliente HTTP — transporta aprovação e dados compactos, nunca XLS/SQL/credenciais administrativas', () => {
   beforeEach(() => {
     client.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'user-token' } }, error: null });
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ status: 'concluido', identificador_lote: lote, depois: 4 }) })));
   });
   afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
-  it.each(['xls', 'xlsx', 'xlsm'])('envia %s com bytes originais, hash integral e decisões', async formato => {
+  it.each(['xls', 'xlsx', 'xlsm'])('envia dados extraídos de %s com hash integral e decisões, sem arquivo bruto', async formato => {
     const p = await pedido(formato);
     await executarReconstrucaoPelaAplicacao(client, p);
     const [url, options] = fetch.mock.calls[0];
@@ -27,11 +26,36 @@ describe('Cliente HTTP — transporta aprovação e bytes, nunca SQL/credenciais
     expect(url).toContain('/api/reconstruir-cadastro-mestre');
     expect(options.headers.Authorization).toBe('Bearer user-token');
     expect(body.hash_manifesto).toBe(hashReconstrucao(p.manifesto));
-    const bytes = Buffer.from(body.arquivo_base64, 'base64');
-    expect(Buffer.from(await p.arquivo.arrayBuffer())).toEqual(body.arquivo_encoding === 'gzip' ? gunzipSync(bytes) : bytes);
+    expect(body.dados_execucao).toEqual(p.dadosExecucao);
+    expect(body.dados_execucao.fonte.tipo_arquivo).toBe(formato.toUpperCase());
+    expect(Object.keys(body).sort()).toEqual(['confirmacao', 'dados_execucao', 'decisoes', 'hash_manifesto', 'lote']);
+    expect(Buffer.byteLength(options.body)).toBeLessThan(4 * 1024 * 1024);
+    for (const field of ['arquivo_base64', 'arquivo_encoding', 'arquivo', 'nome', 'aba']) expect(body[field]).toBeUndefined();
     expect(body.decisoes).toEqual(p.revisao.decisoes);
     expect(body.manifesto).toBeUndefined();
     expect(body.autor).toBeUndefined();
+  });
+  it('não relê nem envia XLS original de 24.307.397 bytes após o Preview', async () => {
+    const original = arquivoCadastro();
+    const bytes = new Uint8Array(24307397);
+    bytes.set(new Uint8Array(await original.arrayBuffer()));
+    const arquivo = { name: 'cadastro mestre 8_10(1).xls', arrayBuffer: vi.fn(async () => bytes.buffer) };
+    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, SheetJS);
+    expect(arquivo.arrayBuffer).toHaveBeenCalledOnce();
+    arquivo.arrayBuffer.mockRejectedValue(new Error('Reler o arquivo bruto é proibido no POST'));
+    await executarReconstrucaoPelaAplicacao(client, { ...preparado, revisao: decidirOperacoesCadastroMestre(preparado.manifesto,
+      preparado.revisao, preparado.manifesto.operacoes.map(o => o.id), 'APROVADO'), lote });
+    expect(arquivo.arrayBuffer).toHaveBeenCalledOnce();
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body.dados_execucao.fonte.arquivo).toBe(arquivo.name);
+    expect(Buffer.byteLength(fetch.mock.calls[0][1].body)).toBeLessThan(4 * 1024 * 1024);
+    expect(body.arquivo_base64).toBeUndefined();
+  });
+  it('dados alterados depois do Preview são recusados antes da rede', async () => {
+    const p = await pedido();
+    p.dadosExecucao.linhas[0][2] = 'Descrição adulterada';
+    await expect(executarReconstrucaoPelaAplicacao(client, p)).rejects.toThrow(/dados|Preview|hash/i);
+    expect(fetch).not.toHaveBeenCalled();
   });
   it('revisão parcial não faz sequer requisição', async () => {
     const p = await pedido();

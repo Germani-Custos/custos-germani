@@ -20,6 +20,17 @@ describe('Fronteira administrativa HTTP — sem conexão real', () => {
     expect(getUser).not.toHaveBeenCalled();
     expect(criarClientePg).not.toHaveBeenCalled();
   });
+  it('EXECUTION_ENABLED=false bloqueia POST compacto antes de Auth/PostgreSQL/Storage', async () => {
+    const env = { ...ambienteWeb, CADASTRO_MESTRE_EXECUTION_ENABLED: 'false' };
+    const { handler, criarClientePg, getUser } = setup({ env });
+    const res = respostaWeb();
+    await handler(req({ method: 'POST', body: { dados_execucao: {}, decisoes: [], hash_manifesto: 'a'.repeat(64),
+      confirmacao: `RECONSTRUIR_MASTER:${'a'.repeat(64)}`, lote: 'CAD_UI_11111111-1111-4111-8111-111111111111' } }), res);
+    expect(res.code).toBe(503);
+    expect(getUser).not.toHaveBeenCalled();
+    expect(criarClientePg).not.toHaveBeenCalled();
+    expect(env.CADASTRO_MESTRE_EXECUTION_ENABLED).toBe('false');
+  });
   it.each([{ headers: {} }, { user: { id: 'other-id' } }, { user: { id: 'admin-id', is_anonymous: true } }, { error: new Error('expired') }])('bloqueia acesso ausente/não administrativo/anônimo/expirado (%j)', async input => {
     const { handler, criarClientePg } = setup(input);
     const res = respostaWeb();
@@ -57,13 +68,22 @@ describe('Fronteira administrativa HTTP — sem conexão real', () => {
     expect(res.code).toBe(503);
     expect(criarClientePg).not.toHaveBeenCalled();
   });
-  it.each([{}, '{invalid', JSON.stringify({ arquivo_base64: 'a'.repeat(4 * 1024 * 1024) })])('pedido inválido ou grande não conecta', async body => {
+  it.each([{}, '{invalid', JSON.stringify({ dados_execucao: { linhas: 'a'.repeat(4 * 1024 * 1024) } })])('pedido inválido ou grande não conecta', async body => {
     const { handler, criarClientePg } = setup();
     const res = respostaWeb();
     await handler(req({ method: 'POST', body }), res);
     expect([400, 413]).toContain(res.code);
     expect(criarClientePg).not.toHaveBeenCalled();
     expect(JSON.stringify(res.body)).not.toContain('secret-test');
+  });
+  it('contrato web antigo com XLS base64 é recusado sem abrir PostgreSQL', async () => {
+    const { handler, criarClientePg } = setup();
+    const res = respostaWeb();
+    await handler(req({ method: 'POST', body: { nome: 'cadastro.xls', aba: 'Cadastro', arquivo_base64: 'AA==', arquivo_encoding: 'raw',
+      decisoes: [], hash_manifesto: 'a'.repeat(64), confirmacao: `RECONSTRUIR_MASTER:${'a'.repeat(64)}`,
+      lote: 'CAD_UI_11111111-1111-4111-8111-111111111111' } }), res);
+    expect(res.code).toBe(400);
+    expect(criarClientePg).not.toHaveBeenCalled();
   });
 });
 

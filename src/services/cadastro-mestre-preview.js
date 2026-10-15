@@ -2,6 +2,11 @@
 /* Adaptador de arquivo + leitura do contexto. Nenhum método de escrita. */
 import { criarPreviewCadastroMestre } from '../../core/cadastro-mestre-preview-engine.js';
 import { criarManifestoCadastroMestre, criarRevisaoCadastroMestre, serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
+import { criarDadosExecucaoCadastroMestre, linhasDadosExecucaoCadastroMestre, criarFonteManifestoDadosCadastroMestre } from '../../core/cadastro-mestre-execution-data.js';
+
+const hashBytes = async buffer => [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))]
+  .map(value => value.toString(16).padStart(2, '0')).join('');
+const hashJson = value => hashBytes(new globalThis.TextEncoder().encode(serializarDeterministico(value)));
 
 const ALIASES = {
   codigo_produto: ['produto', 'codigo produto', 'cod produto', 'codigo', 'cod'],
@@ -81,15 +86,15 @@ export async function previewArquivoCadastroMestre(arquivo, contexto, leitor, no
 export async function prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, leitor, nomeAba) {
   const bytes = await arquivo.arrayBuffer();
   const leitura = await lerArquivoCadastroMestre({ name: arquivo.name, arrayBuffer: async () => bytes }, leitor, nomeAba);
-  const hash = async buffer => [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))]
-    .map(value => value.toString(16).padStart(2, '0')).join('');
-  const manifesto = criarManifestoCadastroMestre(leitura.linhas, contexto, {
-    modo: 'RECONSTRUCAO_UNIVERSO', arquivo: leitura.arquivo, tipo_arquivo: leitura.tipo_arquivo, aba: leitura.aba,
-    colunas: leitura.colunas, linha_cabecalho: leitura.linha_cabecalho,
-    hash_arquivo_sha256: await hash(bytes),
-    hash_contexto_sha256: await hash(new globalThis.TextEncoder().encode(serializarDeterministico(contexto)))
-  });
-  return { manifesto, revisao: criarRevisaoCadastroMestre(manifesto) };
+  return prepararAprovacaoDadosCadastroMestre(criarDadosExecucaoCadastroMestre(leitura, await hashBytes(bytes)), contexto);
+}
+
+/** Mesmos motores do Preview; contexto e hashes sempre recalculados por quem lê. */
+export async function prepararAprovacaoDadosCadastroMestre(dadosExecucao, contexto) {
+  const linhas = linhasDadosExecucaoCadastroMestre(dadosExecucao);
+  const fonte = criarFonteManifestoDadosCadastroMestre(dadosExecucao, await hashJson(dadosExecucao), await hashJson(contexto));
+  const manifesto = criarManifestoCadastroMestre(linhas, contexto, fonte);
+  return { manifesto, revisao: criarRevisaoCadastroMestre(manifesto), dadosExecucao };
 }
 
 /**

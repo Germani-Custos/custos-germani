@@ -1,6 +1,7 @@
-/* HTTP da aplicação: somente sessão de usuário, arquivo e revisão. Sem SQL/segredos. */
+/* HTTP da aplicação: sessão, entrada compacta aprovada e revisão. Sem XLS/SQL/segredos. */
 import { serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
 import { criarPlanoReconstrucaoCadastroMestre } from '../../core/cadastro-mestre-reconstruction-engine.js';
+import { validarDadosExecucaoCadastroMestre } from '../../core/cadastro-mestre-execution-data.js';
 
 const ENDPOINT = '/api/reconstruir-cadastro-mestre';
 
@@ -29,24 +30,16 @@ export const consultarDisponibilidadeReconstrucao = client => chamada(client, 'G
 export const consultarLoteReconstrucao = (client, lote) => chamada(client, 'GET', undefined, lote);
 export const verificarAmbienteReconstrucao = client => chamada(client, 'GET', undefined, undefined, true);
 
-export async function executarReconstrucaoPelaAplicacao(client, { arquivo, manifesto, revisao, lote }) {
+export async function executarReconstrucaoPelaAplicacao(client, { dadosExecucao, manifesto, revisao, lote }) {
   criarPlanoReconstrucaoCadastroMestre(manifesto, revisao);
-  const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new globalThis.TextEncoder().encode(serializarDeterministico(manifesto))))]
+  validarDadosExecucaoCadastroMestre(dadosExecucao);
+  const hashJson = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new globalThis.TextEncoder().encode(serializarDeterministico(value))))]
     .map(b => b.toString(16).padStart(2, '0')).join('');
-  const original = new Uint8Array(await arquivo.arrayBuffer());
-  if (!original.length || original.length > 16 * 1024 * 1024) throw new Error('Arquivo vazio ou maior que 16 MiB.');
-  // Compressão de transporte preserva os bytes ERP; não converte XLS para outro formato.
-  let bytes = original;
-  let encoding = 'raw';
-  if (globalThis.CompressionStream) {
-    bytes = new Uint8Array(await new Response(new Blob([original]).stream().pipeThrough(new globalThis.CompressionStream('gzip'))).arrayBuffer());
-    encoding = 'gzip';
-  }
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-  const body = JSON.stringify({ nome: arquivo.name, aba: manifesto.fonte.aba, arquivo_base64: globalThis.btoa(binary),
-    arquivo_encoding: encoding, decisoes: revisao.decisoes, hash_manifesto: hash, confirmacao: `RECONSTRUIR_MASTER:${hash}`, lote });
-  if (new Blob([body]).size > 4 * 1024 * 1024) throw new Error('Arquivo/revisão excedem o limite de envio de 4 MiB. Use o procedimento administrativo documentado.');
+  if (await hashJson(dadosExecucao) !== manifesto.fonte.hash_dados_sha256) throw new Error('Dados do Preview mudaram após aprovação. Gere novo Preview e aprovação.');
+  const hash = await hashJson(manifesto);
+  const body = JSON.stringify({ dados_execucao: dadosExecucao, decisoes: revisao.decisoes,
+    hash_manifesto: hash, confirmacao: `RECONSTRUIR_MASTER:${hash}`, lote });
+  if (new Blob([body]).size > 4 * 1024 * 1024) throw new Error('Dados/revisão excedem o limite de envio de 4 MiB. Use o procedimento administrativo documentado.');
   const result = await chamada(client, 'POST', body, lote);
   if (result.status !== 'concluido' || result.identificador_lote !== lote || result.depois !== manifesto.universo.length) {
     throw new Error(`Resultado não confirmado. Consulte o lote ${lote} antes de tentar novamente.`);

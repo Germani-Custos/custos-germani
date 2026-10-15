@@ -1,7 +1,7 @@
 /* Executor administrativo PostgreSQL. Nunca importado pelo frontend.
    DML somente no Master/log existentes; sem DDL, RPC ou migration. */
 import { createHash } from 'node:crypto';
-import { prepararAprovacaoArquivoCadastroMestre } from '../../src/services/cadastro-mestre-preview.js';
+import { prepararAprovacaoArquivoCadastroMestre, prepararAprovacaoDadosCadastroMestre } from '../../src/services/cadastro-mestre-preview.js';
 import { serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
 import { criarPlanoReconstrucaoCadastroMestre } from '../../core/cadastro-mestre-reconstruction-engine.js';
 
@@ -99,7 +99,8 @@ function verificarMaster(plano, depois, lote, timestamp) {
  * confirmar persistência durável (arquivo local ou Storage privado) antes do DML.
  * A confirmação é o hash completo do manifesto aprovado, não booleano genérico.
  */
-export async function executarReconstrucaoCadastroMestre({ client, arquivo, evidencia, leitor, identificadorLote, autor, confirmacao, salvarSnapshot }) {
+export async function executarReconstrucaoCadastroMestre({ client, arquivo, dadosExecucao, evidencia, leitor, identificadorLote, autor, confirmacao, salvarSnapshot }) {
+  if (!!arquivo === !!dadosExecucao) throw new Error('Uma única fonte de execução é obrigatória: dados do Preview ou arquivo administrativo.');
   const planoAprovado = criarPlanoReconstrucaoCadastroMestre(evidencia.manifesto, evidencia.revisao);
   const hashManifesto = hashReconstrucao(evidencia.manifesto);
   if (confirmacao !== `RECONSTRUIR_MASTER:${hashManifesto}` || !autor?.trim() || !identificadorLote?.trim() || typeof salvarSnapshot !== 'function') {
@@ -123,7 +124,8 @@ export async function executarReconstrucaoCadastroMestre({ client, arquivo, evid
     const repetido = await client.query(`SELECT id FROM ${LOG} WHERE identificador_lote=$1`, [identificadorLote]);
     if (repetido.rows.length) throw new Error('Identificador de lote já registrado; não repetir automaticamente.');
     antes = await contextoAtual(client);
-    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, antes, leitor, evidencia.manifesto.fonte.aba);
+    const preparado = dadosExecucao ? await prepararAprovacaoDadosCadastroMestre(dadosExecucao, antes)
+      : await prepararAprovacaoArquivoCadastroMestre(arquivo, antes, leitor, evidencia.manifesto.fonte.aba);
     if (serializar(preparado.manifesto) !== serializar(evidencia.manifesto)) throw new Error('Arquivo ou contexto mudou após Preview; gerar nova revisão antes de executar.');
     const plano = criarPlanoReconstrucaoCadastroMestre(preparado.manifesto, evidencia.revisao);
     if (serializar(plano) !== serializar(planoAprovado)) throw new Error('Plano divergente da revisão aprovada.');
@@ -136,7 +138,7 @@ export async function executarReconstrucaoCadastroMestre({ client, arquivo, evid
     lote = (await client.query(`INSERT INTO ${LOG}
       (arquivo_nome,tipo_arquivo,arquivo_hash,identificador_lote,fonte_sistema,status,total_registros,metadados_origem)
       VALUES ($1,$2,$3,$4,'ERP','processando',$5,$6::jsonb) RETURNING id::text AS id`,
-    [arquivo.name, preparado.manifesto.fonte.tipo_arquivo, preparado.manifesto.fonte.hash_arquivo_sha256, identificadorLote, plano.universo.length, JSON.stringify(metadados)])).rows[0].id;
+    [preparado.manifesto.fonte.arquivo, preparado.manifesto.fonte.tipo_arquivo, preparado.manifesto.fonte.hash_arquivo_sha256, identificadorLote, plano.universo.length, JSON.stringify(metadados)])).rows[0].id;
     // Cópia independente preserva a imagem anterior mesmo se a conexão/COMMIT falhar.
     const snapshotReferencia = await salvarSnapshot({ ...metadados, identificador_lote: identificadorLote, lote_id: lote, capturado_em: timestamp });
     if (snapshotReferencia) {

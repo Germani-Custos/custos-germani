@@ -1,17 +1,15 @@
 /* Transporte/autorização server-side. A reconstrução pertence ao executor central. */
 import { createHash } from 'node:crypto';
-import { gunzipSync } from 'node:zlib';
 import pg from 'pg';
 import { createClient } from '@supabase/supabase-js';
-import SheetJS from 'xlsx';
-import { prepararAprovacaoArquivoCadastroMestre } from '../../src/services/cadastro-mestre-preview.js';
+import { prepararAprovacaoDadosCadastroMestre } from '../../src/services/cadastro-mestre-preview.js';
+import { validarDadosExecucaoCadastroMestre } from '../../core/cadastro-mestre-execution-data.js';
 import { criarPlanoReconstrucaoCadastroMestre } from '../../core/cadastro-mestre-reconstruction-engine.js';
 import { serializarDeterministico } from '../../core/cadastro-mestre-approval-engine.js';
 import { contextoAtual, executarReconstrucaoCadastroMestre, hashReconstrucao, validarDependencias } from './cadastro-mestre-reconstruction.mjs';
 import { criarDiagnosticoCadastroMestre } from './cadastro-mestre-diagnostic.mjs';
 
 const MAX_REQUEST = 4 * 1024 * 1024;
-const MAX_FILE = 16 * 1024 * 1024;
 const loteValido = value => typeof value === 'string' && /^CAD_UI_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const erroHttp = (status, message) => Object.assign(new Error(message), { httpStatus: status });
@@ -44,30 +42,23 @@ function configuracao(env, somenteLeitura = false) {
 
 function lerPedido(body) {
   if (typeof body === 'string') {
-    if (Buffer.byteLength(body) > MAX_REQUEST) throw erroHttp(413, 'Arquivo/revisão excedem o limite de envio de 4 MiB.');
+    if (Buffer.byteLength(body) > MAX_REQUEST) throw erroHttp(413, 'Dados/revisão excedem o limite de envio de 4 MiB.');
     try { body = JSON.parse(body); } catch { throw erroHttp(400, 'Pedido inválido.'); }
   }
-  if (!body || Buffer.byteLength(JSON.stringify(body)) > MAX_REQUEST) throw erroHttp(413, 'Arquivo/revisão excedem o limite de envio de 4 MiB.');
-  if (!loteValido(body.lote) || !/^[a-f0-9]{64}$/.test(body.hash_manifesto || '') ||
+  if (!body || Buffer.byteLength(JSON.stringify(body)) > MAX_REQUEST) throw erroHttp(413, 'Dados/revisão excedem o limite de envio de 4 MiB.');
+  if (Object.keys(body).some(key => !['dados_execucao', 'decisoes', 'hash_manifesto', 'confirmacao', 'lote'].includes(key)) ||
+      !loteValido(body.lote) || !/^[a-f0-9]{64}$/.test(body.hash_manifesto || '') ||
       body.confirmacao !== `RECONSTRUIR_MASTER:${body.hash_manifesto}` ||
-      typeof body.nome !== 'string' || body.nome.length > 200 || /[\\/]/.test(body.nome) || [...body.nome].some(c => c.charCodeAt(0) < 32) ||
-      !/\.(xls|xlsx|xlsm)$/i.test(body.nome) || typeof body.aba !== 'string' || body.aba.length > 200 ||
       !Array.isArray(body.decisoes) || body.decisoes.length > 30000 ||
-      body.decisoes.some(d => typeof d?.id !== 'string' || d.id.length > 200 || d.status !== 'APROVADO') ||
-      typeof body.arquivo_base64 !== 'string') {
-    throw erroHttp(400, 'Arquivo, lote, confirmação ou aprovação integral inválidos.');
+      body.decisoes.some(d => !d || Object.keys(d).length !== 2 || typeof d.id !== 'string' || d.id.length > 200 || d.status !== 'APROVADO')) {
+    throw erroHttp(400, 'Dados, lote, confirmação ou aprovação integral inválidos.');
   }
-  let bytes = Buffer.from(body.arquivo_base64, 'base64');
-  if (bytes.toString('base64') !== body.arquivo_base64) throw erroHttp(400, 'Arquivo base64 inválido.');
-  try {
-    if (body.arquivo_encoding === 'gzip') bytes = gunzipSync(bytes, { maxOutputLength: MAX_FILE });
-    else if (body.arquivo_encoding !== 'raw') throw new Error('Encoding inválido');
-  } catch { throw erroHttp(400, 'Arquivo comprimido inválido ou maior que 16 MiB.'); }
-  if (!bytes.length || bytes.length > MAX_FILE) throw erroHttp(413, 'Arquivo vazio ou maior que 16 MiB.');
-  return { ...body, arquivo: { name: body.nome, arrayBuffer: async () => bytes } };
+  try { validarDadosExecucaoCadastroMestre(body.dados_execucao); }
+  catch { throw erroHttp(400, 'Dados compactos do Preview inválidos. Gere novo Preview e aprovação.'); }
+  return body;
 }
 
-async function evidenciaAtual(client, pedido, leitor) {
+async function evidenciaAtual(client, pedido) {
   // Contexto integral mesmo com RLS; a execução relê novamente sob os locks centrais.
   await client.query('BEGIN READ ONLY');
   let contexto;
@@ -76,7 +67,7 @@ async function evidenciaAtual(client, pedido, leitor) {
     await client.query('SET LOCAL row_security=off');
     contexto = await contextoAtual(client);
   } finally { await client.query('ROLLBACK'); }
-  const { manifesto } = await prepararAprovacaoArquivoCadastroMestre(pedido.arquivo, contexto, leitor, pedido.aba);
+  const { manifesto } = await prepararAprovacaoDadosCadastroMestre(pedido.dados_execucao, contexto);
   if (hashReconstrucao(manifesto) !== pedido.hash_manifesto) throw erroHttp(409, 'Arquivo ou contexto mudou após o Preview. Gere novo Preview e aprovação.');
   const revisao = { versao_contrato: manifesto.versao_contrato, vinculo_manifesto: serializarDeterministico(manifesto), decisoes: pedido.decisoes };
   try { criarPlanoReconstrucaoCadastroMestre(manifesto, revisao); }
@@ -157,7 +148,7 @@ async function verificarAmbiente(client, storage, cfg, habilitada, diagnostico) 
 }
 
 export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase = createClient,
-  criarClientePg = options => new pg.Client(options), leitor = SheetJS } = {}) {
+  criarClientePg = options => new pg.Client(options) } = {}) {
   return async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -213,10 +204,10 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
       const storage = criarSupabase(cfg.url, cfg.secret, { auth: { persistSession: false, autoRefreshToken: false } }).storage;
       const bucket = await storage.getBucket(cfg.bucket);
       if (bucket.error || !bucket.data || bucket.data.public !== false) throw erroHttp(503, 'Snapshot exige bucket privado existente. Nenhum bucket será criado automaticamente.');
-      const evidencia = await evidenciaAtual(client, pedido, leitor);
+      const evidencia = await evidenciaAtual(client, pedido);
       executando = true;
       const referencia = `${pedido.lote}/${pedido.hash_manifesto}.json`;
-      const result = await executarReconstrucaoCadastroMestre({ client, arquivo: pedido.arquivo, evidencia, leitor,
+      const result = await executarReconstrucaoCadastroMestre({ client, dadosExecucao: pedido.dados_execucao, evidencia,
         identificadorLote: pedido.lote, autor: `supabase-auth:${user.id}`, confirmacao: pedido.confirmacao,
         salvarSnapshot: snapshot => snapshotPrivado(storage, cfg.bucket, referencia, snapshot) });
       return res.status(200).json({ ...result, identificador_lote: pedido.lote, snapshot_referencia: `storage://${cfg.bucket}/${referencia}` });

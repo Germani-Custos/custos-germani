@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 import { criarManifestoCadastroMestre, criarRevisaoCadastroMestre, decidirOperacoesCadastroMestre } from '../core/cadastro-mestre-approval-engine.js';
 import { criarPlanoReconstrucaoCadastroMestre } from '../core/cadastro-mestre-reconstruction-engine.js';
-import { prepararAprovacaoArquivoCadastroMestre } from '../src/services/cadastro-mestre-preview.js';
+import { prepararAprovacaoArquivoCadastroMestre, prepararAprovacaoDadosCadastroMestre } from '../src/services/cadastro-mestre-preview.js';
 import { executarReconstrucaoCadastroMestre, hashReconstrucao } from '../scripts/lib/cadastro-mestre-reconstruction.mjs';
 import { arquivoCadastro, contexto, SheetJS } from './fixtures/cadastro-mestre-arquivo.js';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -11,7 +11,6 @@ import { join } from 'node:path';
 import { main, salvarSnapshotDuravel } from '../scripts/reconstruir-cadastro-mestre.mjs';
 import { criarCadastroMestreWebHandler } from '../scripts/lib/cadastro-mestre-web.mjs';
 import { ambienteWeb, respostaWeb, storageWeb } from './fixtures/cadastro-mestre-web.js';
-import { gzipSync } from 'node:zlib';
 
 const aprovar = m => decidirOperacoesCadastroMestre(m, criarRevisaoCadastroMestre(m), m.operacoes.filter(o => o.aprovavel).map(o => o.id), 'APROVADO');
 describe('Contrato do universo — preparação pura', () => {
@@ -36,13 +35,13 @@ describe('Contrato do universo — preparação pura', () => {
     // Contagens reais informadas pelo usuário; registros desta prova são sintéticos.
     const produtos = Array.from({ length: 5706 }, (_, i) => ({ codigo_produto: String(i + 1), descricao: 'Atual', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' }));
     const rows = [
-      ...produtos.map((p, i) => ({ ...p, tipo: i < 853 ? 'P' : 'D', descr_origem: 'Produzido' })),
-      ...Array.from({ length: 7 }, (_, i) => ({ codigo_produto: String(6000 + i), descricao: 'Novo', origem_cod: '01', familia_cod: 'F1', tipo: 'C', descr_origem: 'Revenda' })),
+      ...produtos.map((p, i) => ({ ...p, descricao: i < 517 ? '' : p.descricao, tipo: i < 853 ? 'P' : 'D', descr_origem: 'Produzido' })),
+      ...Array.from({ length: 7 }, (_, i) => ({ codigo_produto: String(6000 + i), descricao: 'Novo', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005', tipo: 'C', descr_origem: 'Revenda' })),
       ...Array.from({ length: 517 }, (_, i) => ({ codigo_produto: String(7000 + i), descricao: 'Excluído', tipo: 'D', descr_origem: 'Produzido' }))
     ];
     const m = criarManifestoCadastroMestre(rows, { ...contexto, produtos }, { modo: 'RECONSTRUCAO_UNIVERSO' });
     expect(m.resumo).toMatchObject({ linhas_lidas: 6230, produtos_com_preview: 860, produtos_existentes: 853, novos_produtos: 7,
-      produtos_a_remover: 4853, produtos_master_antes: 5706, produtos_master_depois: 860 });
+      produtos_a_remover: 4853, produtos_master_antes: 5706, produtos_master_depois: 860, preservacoes_campos: 517 });
     expect(criarPlanoReconstrucaoCadastroMestre(m, aprovar(m)).resumo).toMatchObject({ depois: 860, removidos: 4853, inseridos: 7 });
   });
 });
@@ -51,6 +50,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
   let db;
   let client;
   let evidencia;
+  let dadosExecucao;
   let snapshot;
   let before;
   const protegidas = ['apontamentos_op', 'categorias_agrupamento', 'dicionario_produtos', 'historico_custos', 'mapa_produtos'];
@@ -81,6 +81,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     before = await ctx();
     const result = await prepararAprovacaoArquivoCadastroMestre(arquivoCadastro(), before, SheetJS);
     evidencia = { manifesto: result.manifesto, revisao: aprovar(result.manifesto) };
+    dadosExecucao = result.dadosExecucao;
     snapshot = vi.fn(async () => {});
   });
   async function ctx() {
@@ -96,8 +97,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     const arquivo = arquivoCadastro(formato);
     const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, before, SheetJS);
     const manifest = preparado.manifesto;
-    const pedido = transform({ nome: arquivo.name, aba: manifest.fonte.aba,
-      arquivo_base64: gzipSync(Buffer.from(await arquivo.arrayBuffer())).toString('base64'), arquivo_encoding: 'gzip',
+    const pedido = await transform({ dados_execucao: preparado.dadosExecucao,
       decisoes: aprovar(manifest).decisoes, hash_manifesto: hashReconstrucao(manifest),
       confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(manifest)}`, lote: 'CAD_UI_11111111-1111-4111-8111-111111111111' });
     const storage = storageOverride || storageWeb();
@@ -177,6 +177,78 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(result.res.code).toBe(409);
     expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
     expect(result.storage.upload).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['descrição', linhas => { linhas[0][2] = 'Valor adulterado'; }],
+    ['remoção de linha válida', linhas => { linhas.splice(0, 1); }],
+    ['remoção de linha filtrada', linhas => { linhas.splice(2, 1); }],
+    ['alteração de filtro', linhas => { linhas[2][3] = 'P'; }],
+    ['inclusão no universo', linhas => { linhas.push([90, '999', 'Novo não aprovado', 'P', 'Produzido', '01', 'F1', 'P005']); }]
+  ])('HTTP recusa %s nos dados depois da aprovação sem log/snapshot/DML', async (_nome, alterar) => {
+    const { res, storage } = await chamadaWeb({ transform: p => { alterar(p.dados_execucao.linhas); return p; } });
+    expect([400, 409]).toContain(res.code);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect(client.query.mock.calls.some(([sql]) => /^(INSERT INTO|UPDATE|DELETE FROM) public\./.test(sql))).toBe(false);
+  });
+
+  it.each(['universo', 'patches', 'sql', 'arquivo_base64'])('HTTP não aceita campo %s como substituto do motor do servidor', async campo => {
+    const { res, storage } = await chamadaWeb({ transform: p => ({ ...p, [campo]: ['999'] }) });
+    expect(res.code).toBe(400);
+    expect(client.connect).not.toHaveBeenCalled();
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+  });
+
+  it('servidor bloqueia universo filtrado vazio mesmo com novo hash e decisões declaradas aprovadas', async () => {
+    const { res, storage } = await chamadaWeb({ transform: async p => {
+      p.dados_execucao.linhas.forEach(row => { row[3] = 'D'; });
+      const { manifesto } = await prepararAprovacaoDadosCadastroMestre(p.dados_execucao, before);
+      const hash = hashReconstrucao(manifesto);
+      return { ...p, hash_manifesto: hash, confirmacao: `RECONSTRUIR_MASTER:${hash}`,
+        decisoes: manifesto.operacoes.map(o => ({ id: o.id, status: 'APROVADO' })) };
+    } });
+    expect(res.code).toBe(400);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect(client.query.mock.calls.every(([sql]) => /^(BEGIN READ ONLY|SET LOCAL|SELECT|ROLLBACK)/.test(sql))).toBe(true);
+  });
+
+  it('executor compacto relê o contexto sob locks e rejeita mudança depois da aprovação HTTP', async () => {
+    const original = client.query;
+    let mudou = false;
+    client.query = vi.fn(async (sql, params) => {
+      if (!mudou && sql.startsWith('LOCK TABLE')) {
+        mudou = true;
+        await db.query("UPDATE dicionario_master_produtos SET descricao='Mudança concorrente' WHERE codigo_produto='002'");
+      }
+      return original(sql, params);
+    });
+    const { res, storage } = await chamadaWeb();
+    expect(res.code).toBe(409);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+  });
+
+  it('executor compacto central executa sem arquivo nem SheetJS e preserva snapshot e vazios', async () => {
+    const result = await executar({ arquivo: undefined, leitor: undefined, dadosExecucao });
+    expect(result).toMatchObject({ antes: 8, depois: 4, inseridos: 1, atualizados: 1, removidos: 5 });
+    expect(snapshot).toHaveBeenCalledOnce();
+    expect((await ctx()).produtos.find(p => p.codigo_produto === '002')).toEqual(before.produtos.find(p => p.codigo_produto === '002'));
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+  });
+
+  it('executor compacto recusa dados incompatíveis com o manifesto sob locks sem snapshot', async () => {
+    const alterado = globalThis.structuredClone(dadosExecucao);
+    alterado.linhas[0][1] = '999';
+    await expect(executar({ arquivo: undefined, leitor: undefined, dadosExecucao: alterado })).rejects.toThrow(/dados|contexto|Preview|Arquivo/i);
+    expect(snapshot).not.toHaveBeenCalled();
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
   });
 
   it('erro SQL pelo HTTP executa rollback central e consulta retorna falhou sem retry', async () => {

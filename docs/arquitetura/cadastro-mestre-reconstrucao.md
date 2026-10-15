@@ -1,5 +1,11 @@
 # CAD-REBUILD-01 — Reconstrução do universo ERP (09/10/2026)
 
+## CAD-PAYLOAD-01 — entrada compacta na execução web (09/10/2026)
+
+Na web, o XLS/XLSX/XLSM original é lido somente para o Preview. O POST passa a entregar os campos canônicos necessários de todas as linhas em tuplas compactas, metadados da fonte, decisões, hash do manifesto, confirmação e lote. O servidor regenera filtros/manifesto/contexto e o executor central repete essa revalidação sob locks, mantendo este plano, snapshot e transação. Não aceitar plano de DML do cliente nem conjunto previamente filtrado como substituto da evidência das linhas. [Contrato completo, teto JSON e limite da proveniência do arquivo](./cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+
+O CLI documentado abaixo continua recebendo o original e conferindo seus bytes; só a entrada web muda. O hash de dados integra o manifesto aprovado antes das decisões. Revisões anteriores exigem novo Preview/aprovação, inclusive para CLI que regenera pelo mesmo adapter. Campos vazios e colunas opcionais ausentes conservam sua distinção, filtros/motivos/contagens/duplicidades permanecem calculados pelos motores existentes. Somente Master/log recebem DML numa futura execução autorizada. Nenhuma execução real, variável, schema ou fato é alterado por esta mudança; `data_referencia` e `criado_em` permanecem competência/importação.
+
 ## Extensão vigente — CAD-EXEC-WEB-01
 
 Além do CLI abaixo, a aplicação agora oferece execução explícita por função Node Vercel autenticada/autorizada, reutilizando este executor. [Contrato web, configuração e recuperação](./cadastro-mestre-execucao-web.md). Snapshot durável pode ser arquivo CLI `wx`/`fsync` ou objeto privado conferido por leitura/hash; referência opcional retorna ao log existente. Nenhuma carga real/deploy nesta entrega. As menções abaixo à ausência de botão descrevem a entrega original; aprovação/download continuam locais e o novo botão exige outra confirmação.

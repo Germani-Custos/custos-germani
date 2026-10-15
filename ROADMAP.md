@@ -1,5 +1,15 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-09 — CAD-PAYLOAD-01
+
+- [x] Transporte web por representação compacta dos campos ERP necessários de todas as linhas, sem binário XLS/base64/gzip ou plano de DML fornecido pelo cliente.
+- [x] Hash dos dados vinculado ao manifesto aprovado; servidor recalcula filtros/universo/contexto e executor central repete a validação sob locks, mantendo snapshot/transação/rollback.
+- [x] Cópia local `cadastro mestre 8_10.xls` (24.307.397 bytes) lida: 6.230 linhas, 860 válidos, 4.853 remoções, dez UPDATEs e 517 preservações de campos. Manifestos direto/compacto/servidor iguais; POST medido localmente 885.146 bytes/4.870 decisões. 409 testes/31 arquivos passaram. [Evidência e limites](docs/auditoria/cadastro-mestre-payload-validacao.md).
+- [ ] Publicação e nova conferência na UI do contrato atualizado; não habilitar nem executar como teste. Tamanho igual da cópia local não comprova identidade com o original nomeado `(1)`.
+- [ ] Reconstrução real continua pendente: última leitura confirmou Master 5.706 e apenas lote 1; tentativa local `CAD_UI` bloqueada antes do POST não é lote persistido.
+
+[Contrato](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto). Sem schema, nova credencial, mudança de filtro ou DML de produção nesta entrega; `data_referencia` continua competência e `criado_em` importação nos fatos. Registros abaixo são históricos e sucedidos quando descrevem transporte do arquivo bruto.
+
 ## Atualização 2026-10-09 — CAD-DIAG-TLS-01
 
 - [x] Inspeção local da CA X.509 e parâmetros efetivos do driver no GET autorizado; regressões sem rede/DML/upload ou alteração de TLS/flag/executor.

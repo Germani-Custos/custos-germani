@@ -71,7 +71,7 @@ function baixarRevisao(manifesto, revisao) {
 export function createCadastroMestrePreviewController({ dom, executeOperationalBoundary }) {
   let preparando = false;
 
-  async function executarAprovado(file, manifesto, revisao) {
+  async function executarAprovado(dadosExecucao, manifesto, revisao) {
     const plano = criarPlanoReconstrucaoCadastroMestre(manifesto, revisao);
     const lote = `CAD_UI_${crypto.randomUUID()}`;
     const frase = `RECONSTRUIR ${plano.resumo.depois}`;
@@ -80,7 +80,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
       html: `<p>Esta ação irá MODIFICAR o Cadastro Mestre ERP.</p>
         <p>Atual: ${plano.resumo.antes} · Inserir: ${plano.resumo.inseridos} · Atualizar: ${plano.resumo.atualizados} · Remover: ${plano.resumo.removidos}.</p>
         <p>Resultado esperado: <strong>${plano.resumo.depois} produtos</strong>.</p>
-        <p>Somente dicionario_master_produtos será reconstruído. Custos, OP, cadastro operacional e mapa permanecem intactos. O servidor revalidará arquivo e contexto e preservará snapshot antes da alteração.</p>
+        <p>Somente dicionario_master_produtos será reconstruído. Custos, OP, cadastro operacional e mapa permanecem intactos. O servidor revalidará dados do Preview, universo e contexto e preservará snapshot antes da alteração.</p>
         <p>Lote: ${escapeHtml(lote)}. Digite <strong>${escapeHtml(frase)}</strong> para confirmar.</p>`,
       input: 'text', inputPlaceholder: frase,
       inputValidator: value => value === frase ? undefined : 'Digite a confirmação exatamente como indicada.',
@@ -90,7 +90,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
     Swal.fire({ title: 'Reconstruindo Cadastro Mestre', text: `Lote ${lote}. Aguarde a confirmação do servidor.`,
       allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
     try {
-      const result = await api.executarReconstrucaoCadastroMestre({ arquivo: file, manifesto, revisao, lote });
+      const result = await api.executarReconstrucaoCadastroMestre({ dadosExecucao, manifesto, revisao, lote });
       await Swal.fire({ icon: 'success', title: 'Reconstrução concluída',
         text: `Lote ${result.lote_id} (${lote}) concluído. Master: ${result.depois} produtos. Inseridos: ${result.inseridos}; atualizados: ${result.atualizados}; removidos: ${result.removidos}. Snapshot preservado. Custos, OP, cadastro operacional e mapa intactos.` });
     } catch (error) {
@@ -113,7 +113,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
     const { data: contexto, error } = await api.getCadastroMestrePreviewContext();
     if (error) throw error;
     const preparado = await prepararAprovacaoArquivoCadastroMestre(file, contexto, globalThis.XLSX);
-    const { manifesto } = preparado;
+    const { manifesto, dadosExecucao } = preparado;
     let revisao = preparado.revisao;
     let disponibilidade;
     try { disponibilidade = await api.getCadastroMestreExecutionAvailability(); }
@@ -156,7 +156,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
       }
     });
     if (result.isConfirmed) baixarRevisao(manifesto, revisao);
-    if (result.isDenied && disponibilidade.disponivel) await executarAprovado(file, manifesto, revisao);
+    if (result.isDenied && disponibilidade.disponivel) await executarAprovado(dadosExecucao, manifesto, revisao);
   }
 
   function bind() {

@@ -1,5 +1,13 @@
 # Manual de Operação — Kustos Germani
 
+## CAD-PAYLOAD-01 — publicar o contrato e conferir sem executar (09/10/2026)
+
+O transporte antigo bloqueou o XLS de 24.307.397 bytes no cliente antes do POST; CAD_UI local não criou lote ou snapshot. Última leitura registrada: Master 5.706, somente lote 1 da Fase 3.4, reconstrução pendente. A entrega substitui binário/base64/gzip por JSON dos campos ERP necessários, mantendo teto de 4 MiB, guardas, contexto/universo revalidados, snapshot/transação/rollback no mesmo executor. Não exige nova variável ou bucket/policy/schema. [Contrato e limite da proveniência](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+
+Após publicação explicitamente autorizada, frontend e função devem usar a mesma versão do contrato. Manter a flag inalterada/desabilitada nos testes; não enviar POST para produção para verificar transporte. Gerar novo Preview do original real e conferir 6.230 linhas, 860 válidos, 4.853 remoções e 517 preservações de campos. A cópia local `cadastro mestre 8_10.xls` reproduziu essas contagens, dez UPDATEs e zero erros; tamanho igual não comprovou identidade com nome `(1)`. [Medição local de 885.146 bytes e validação](../auditoria/cadastro-mestre-payload-validacao.md). Revisões anteriores precisam ser regeneradas, inclusive no CLI; CLI mantém o original como argumento e confere seus bytes. Guardar original e revisão. Habilitação e reconstrução real exigem etapa futura autorizada, fora desta entrega.
+
+Dados/manifesto/contexto divergentes ou aprovação parcial devem falhar antes do snapshot/DML. Em execução futura, consultar lote após erro/resposta perdida e investigar antes de outra tentativa; identificador local ausente do log não comprova sozinho que um POST em curso terminou. Não alterar Custos/OP/operacional/mapa. Competência `data_referencia` e evento `criado_em` dos fatos permanecem intactos.
+
 ## CAD-DIAG-TLS-01 — comparar CA sem alteração (09/10/2026)
 
 Manter execução false. Após publicação autorizada, recarregar Production e usar somente o GET autenticado conforme [procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver). Enviar somente JSON sanitizado; comparar fingerprint DER SHA-256 com certificado oficial fora do chat. CA ausente/inválida é informada explicitamente. Não corrigir variável, publicar certificado, enviar POST ou testar upload durante o diagnóstico.

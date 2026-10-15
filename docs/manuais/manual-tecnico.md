@@ -1,5 +1,13 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## CAD-PAYLOAD-01 — contrato compacto do Preview (09/10/2026)
+
+O adapter retorna `dadosExecucao` de versão `CADASTRO_MESTRE_DADOS_V1`, além de manifesto/revisão. Fonte contém arquivo/tipo/aba/colunas/linha de cabeçalho/hash local do original; tuplas de oito posições guardam linha/código/descrição/Tipo/Descr. Origem/origem/família/agrupamento ERP. Todas as linhas não vazias são mantidas, inclusive excluídas e inválidas; colunas presentes distinguem célula vazia de campo omitido. SHA-256 dos dados inteiros serializados deterministicamente integra `manifesto.fonte.hash_dados_sha256` antes da aprovação.
+
+Cliente envia somente `{dados_execucao,decisoes,hash_manifesto,confirmacao,lote}` em JSON até 4 MiB, sem ler novamente o arquivo ou enviar binário/base64/gzip/manifesto/contexto. Servidor valida esquema/valores/hash, relê contexto integral e regenera filtros/universo/manifesto pelos motores existentes; exige hash aprovado e decisões integrais. Executor central repete a validação sob locks, mantendo snapshot, SAVEPOINT, DML somente Master/log, provas e rollback. CLI conserva leitura dos bytes; revisões anteriores exigem novo Preview no contrato atualizado.
+
+O hash do XLS na web é proveniência declarada pelo navegador: sem o original, o servidor não pode provar sozinho seus bytes/origem ERP. Hashes asseguram consistência com revisão/contexto, não assinatura ERP ou proteção contra substituição conjunta por administrador autorizado. Não confiar em plano SQL/patches ou contagens do cliente. Nenhum parser paralelo, nova dependência, schema, variável ou carga de produção; `data_referencia`/`criado_em` dos fatos intactos. [Formato, revalidação e limites](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+
 ## CAD-DIAG-TLS-01 — metadados da CA (09/10/2026)
 
 Após autenticação/allowlist, o GET inspeciona a variável CA sem repará-la e os `connectionParameters` efetivos do pg antes de conectar. X509Certificate valida parsing de todos os blocos; SHA-256 usa DER e não texto PEM. Erros de parsing nunca são serializados. Certificado parseável não prova confiança no endpoint ou validade temporal. Endpoint/usuário são sanitizados, e POST/executor/TLS verificado permanecem intactos. [Contrato dos campos](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
