@@ -1,5 +1,21 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+## CAD-OP-PAGE-01 — Leitura integral do Cadastro operacional (15/10/2026)
+
+O diagnóstico somente leitura confirmou uma separação intencional: a tabela/edição de Cadastro usam `dicionario_produtos` (6.113), e Preview/reconstrução usam `dicionario_master_produtos` (860 após reconstrução já executada). Os códigos 000001/000002/000003 continuam no operacional, fora do Master ERP. F5 não troca a fonte. Esta entrega mantém essa separação; não cria uma visão ERP nem altera classificação ou registros.
+
+O bug independente estava em `getProductMaster()`: SELECTs sem range recebiam 1.000/6.113 produtos e 1.000/1.370 Custos, além de 704/704 OP. O cálculo comparava somente essas respostas, reproduzindo 407 ausentes. Com fontes completas e o normalizador canônico, foram confirmados 501 códigos importados únicos e zero ausentes operacionais.
+
+`ui-controller.init` → `createProductMasterController.bind/reload` → `api.getProductMaster` → três leituras paginadas via `supabase.from()` → normalização/índice/deduplicação existentes → `cadastro.produtos`/`cadastro.ausentes` → render. Cada fonte usa páginas de 500 com count exact e ordenação ascendente pelo código (`codigo_produto` ou `cod_produto`). Os fatos selecionam somente códigos, portanto empates são projeções idênticas. Catálogos auxiliares mantêm suas consultas atuais. A tabela continua filtrando localmente por busca/origem/família; o contador continua global.
+
+A leitura termina ao atingir o total declarado, inclusive em zero e múltiplos exatos de página. Falha em qualquer página, resposta inválida, count ausente/alterado ou página curta antes do total impedem sucesso parcial; o contrato de erro existente é preservado. Quantidade estável não garante snapshot atômico entre páginas/fontes durante escritas concorrentes. O aviso passa a **código(s) importado(s) ausente(s) do cadastro operacional**; não compara com o Master ERP nem conta ausências históricas nesse universo de 860.
+
+Regressões em `tests/api-product-master-pagination.test.js` cobrem 500/1.000/1.001/1.501 registros por fonte, fontes vazias, normalização e deduplicação entre fatos/páginas, ausentes além da primeira página, volume sintético 6.113/1.370/704 → 501/0, falhas/truncamento/contagem alterada e texto do aviso. Os 23 testes novos mockam o Supabase e não chamam escrita, RPC ou Master ERP. Resultado final: **432 testes em 32 arquivos passaram; lint, typecheck, build e git diff --check passaram**. CLIs locais foram executados com Node; o build usou configuração pública sintética, sem mudar env de produção ou fazer deploy.
+
+Também foi executada uma sonda local do `getProductMaster()` alterado, carregado em memória com cliente restrito a GETs da Data API e sem métodos de escrita. Leitura real por configuração pública, sem usar a sessão do usuário: `dicionario_produtos` **13 páginas/6.113 linhas**, `historico_custos` **três páginas/1.370 linhas**, `apontamentos_op` **duas páginas/704 linhas**. Catálogos: 50 origens, 38 famílias e 34 agrupamentos, em uma leitura cada. Resultado: **501 códigos importados únicos e zero ausentes operacionais**. Nenhum SELECT do Master ERP, escrita, upload ou reconstrução; essa sonda não equivale a publicar/testar a UI corrigida em produção.
+
+Sem escrita no banco, reconstrução, schema/migration, nova visão, sincronização Master → operacional ou mudança de agrupamentos. `data_referencia` continua competência e `criado_em` importação. Esta alteração ainda requer publicação autorizada; os registros abaixo documentam fases anteriores.
+
 ## CAD-EXEC-WEB-01 — executar pela aplicação (09/10/2026)
 
 Preview/decisão/download não executam carga. Novo **Executar reconstrução…**, disponível apenas com aprovação integral e autorização/configuração server-side, abre confirmação digitada com Master atual, inserções, atualizações, remoções e quantidade final. Cancelamento não envia POST. Função Node Vercel chama executor central com revalidação/snapshot/transação/rollback. Sucesso informa lote/contagens; falha permite consultar lote por SELECT, sem retry. Sem banco real/deploy nesta entrega; tabela operacional continua independente. [Arquitetura e configuração](../arquitetura/cadastro-mestre-execucao-web.md). Esta seção sucede a ausência de botão das fases abaixo. `data_referencia`/`criado_em` dos fatos permanecem competência/importação.

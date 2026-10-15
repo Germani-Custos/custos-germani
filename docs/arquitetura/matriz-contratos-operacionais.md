@@ -1,5 +1,9 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
+
+UI `createProductMasterController.reload` → `getProductMaster()` → SELECTs paginados de `dicionario_produtos`, códigos de `historico_custos` e de `apontamentos_op`, 500 linhas/count exact/ORDER BY código → normalização/deduplicação existentes → tabela operacional e contador global. Catálogos de origem/família/agrupamento continuam auxiliares. Falha/truncamento/contagem alterada retorna erro, não total parcial. Aviso nomeia cadastro operacional. Contrato de retorno e edição operacional mantidos; não consultar/sincronizar Master ERP nesta carga, nem alterar fatos, classificação ou `data_referencia`/`criado_em`. [Contrato e regressões](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## Diagnóstico — CAD-ENV-01 (09/10/2026)
 
 Administrador → `api.verificarAmbienteReconstrucaoCadastroMestre()` → cliente HTTP GET `/api/reconstruir-cadastro-mestre?verificar=1` com sessão → getUser/allowlist → Storage getBucket e PostgreSQL BEGIN READ ONLY/contexto/guardas/privilégios/policies/ROLLBACK. Nenhum executor/lote/upload/DML. Disponível com flag false; POST verificar é recusado. Frontend estático limitado a dist, administrativo só na função. [Contrato de preparação](./cadastro-mestre-preparacao-ambiente.md).

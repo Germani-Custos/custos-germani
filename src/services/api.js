@@ -33,6 +33,9 @@ const supabase = createClient(appConfig.supabase.url, appConfig.supabase.anonKey
 // subir com segurança se a importação ficar lenta em bases maiores.
 const IMPORT_CHUNK_SIZE = 400;
 
+// Cadastro operacional: páginas abaixo do teto PostgREST, sem truncar o contador.
+const PRODUCT_MASTER_PAGE_SIZE = 500;
+
 // MNT-07: teto de linhas lidas (apenas coluna `criado_em`) para descobrir as
 // duas últimas importações distintas em getLatestImportComparison/getTopVariacoesImportacao.
 // Risco conhecido: se uma única importação gravar mais de IMPORT_COMPARISON_LOOKBACK_LIMIT
@@ -562,13 +565,34 @@ export const api = {
 
   /** Cadastro legado: a mesma dimensão consultada por Custos e OP. */
   async getProductMaster() {
+    const lerCompleto = async (table, fields, key) => {
+      const rows = [];
+      let expected = null;
+      try {
+        for (let start = 0; ; start += PRODUCT_MASTER_PAGE_SIZE) {
+          const { data, error, count } = await supabase.from(table).select(fields, { count: 'exact' })
+            .order(key, { ascending: true }).range(start, start + PRODUCT_MASTER_PAGE_SIZE - 1);
+          if (error) throw error;
+          if (!Array.isArray(data) || !Number.isSafeInteger(count) || count < 0 ||
+              (expected !== null && expected !== count)) throw createApiError('Contagem incompleta ou alterada durante a leitura do cadastro operacional.', { tabela: table });
+          expected = count;
+          rows.push(...data);
+          if (rows.length === count) return { data: rows, error: null };
+          if (data.length !== PRODUCT_MASTER_PAGE_SIZE || rows.length > count) {
+            throw createApiError('Leitura paginada incompleta do cadastro operacional.', { tabela: table });
+          }
+        }
+      } catch (error) {
+        return { data: null, error };
+      }
+    };
     const [produtosResult, origensResult, familiasResult, agrupamentosResult, historicoResult, opResult] = await Promise.all([
-      supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod').order('codigo_produto'),
+      lerCompleto(TABLES.dicionario, 'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto'),
       supabase.from(TABLES.origem).select('id, descricao').order('descricao'),
       supabase.from(TABLES.familia).select('id, descricao').order('descricao'),
       supabase.from(TABLES.agrupamento).select('*').order('descricao'),
-      supabase.from(TABLES.historico).select('codigo_produto'),
-      supabase.from(TABLES.apontamentosOp).select('cod_produto')
+      lerCompleto(TABLES.historico, 'codigo_produto', 'codigo_produto'),
+      lerCompleto(TABLES.apontamentosOp, 'cod_produto', 'cod_produto')
     ]);
     const error = produtosResult.error || origensResult.error || familiasResult.error || agrupamentosResult.error || historicoResult.error || opResult.error;
     if (error) return fail('Falha ao carregar o cadastro mestre de produtos.', { metodo: 'getProductMaster' }, error);

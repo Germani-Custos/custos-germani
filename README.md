@@ -1,5 +1,13 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-15 — CAD-OP-PAGE-01: Cadastro operacional completo
+
+`getProductMaster()` pagina `dicionario_produtos`, `historico_custos` e `apontamentos_op` em blocos de 500, com ordenação por código, contagem exata e recusa de leitura parcial. O aviso passa a dizer **código(s) importado(s) ausente(s) do cadastro operacional**. A tabela continua operacional; não usa nem sincroniza o Master ERP. O diagnóstico anterior confirmou Master ERP com 860 registros e operacional com 6.113: com as fontes completas, 501 códigos importados únicos e zero ausentes; os 407 eram efeito do corte em 1.000. [Contrato e validação](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
+Esta correção não reconstrói nem escreve dados, não muda schema/agrupamentos e não cria a visão Master ERP. `data_referencia` continua competência e `criado_em` importação. Os registros de 09/10 abaixo são históricos: a reconstrução foi concluída posteriormente, antes desta tarefa. Publicação desta correção ainda depende de deploy autorizado.
+
+Validação local: **432 testes/32 arquivos**, lint, typecheck, build com configuração pública sintética e diff check passaram. Sonda do método alterado, somente GETs reais: **6.113 produtos + 1.370 Custos + 704 OP → 501 códigos únicos/zero ausentes**. Sem escrita de produção, reconstrução, alteração de variável ou deploy. [Evidências e limites](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## Atualização 2026-10-09 — CAD-PAYLOAD-01: execução com dados do Preview
 
 O XLS/XLSX/XLSM original permanece necessário para o Preview. A execução web envia somente os campos ERP necessários já lidos pelo adapter, em representação compacta, decisões, hash do manifesto, confirmação e identificador da tentativa; não envia o binário original. Isso elimina o bloqueio do XLS de 24.307.397 bytes sem aumentar o antigo teto de 16 MiB. O servidor recalcula os mesmos filtros e o manifesto contra o contexto atual; o executor central repete a revalidação sob locks, mantendo snapshot, transação e rollback. [Payload, validação e limite de confiança](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).

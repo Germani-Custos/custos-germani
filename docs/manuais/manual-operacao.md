@@ -1,5 +1,11 @@
 # Manual de Operação — Kustos Germani
 
+## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
+
+A reconstrução ERP já havia sido concluída antes desta tarefa: diagnóstico confirmou 860 no Master ERP e 6.113 no operacional. A correção atual não executa reconstrução nem sincroniza bases; remove o truncamento das leituras usadas pela tabela/contador operacional. Após deploy autorizado, recarregar Cadastro e conferir que o aviso nomeia cadastro operacional; no contexto diagnosticado, 501 códigos únicos importados devem resultar em zero ausentes. A tabela pode continuar mostrando materiais de manutenção presentes no operacional.
+
+Se uma página falhar ou a contagem mudar, investigar o erro de carga e recarregar; não criar produtos ou repetir reconstrução para compensar um contador indisponível. Publicar/recarregar não faz parte dos testes de produção desta entrega. Sem mudanças de schema, agrupamentos, fatos ou dos eixos `data_referencia` (competência) e `criado_em` (importação). [Contrato](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## CAD-PAYLOAD-01 — publicar o contrato e conferir sem executar (09/10/2026)
 
 O transporte antigo bloqueou o XLS de 24.307.397 bytes no cliente antes do POST; CAD_UI local não criou lote ou snapshot. Última leitura registrada: Master 5.706, somente lote 1 da Fase 3.4, reconstrução pendente. A entrega substitui binário/base64/gzip por JSON dos campos ERP necessários, mantendo teto de 4 MiB, guardas, contexto/universo revalidados, snapshot/transação/rollback no mesmo executor. Não exige nova variável ou bucket/policy/schema. [Contrato e limite da proveniência](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).

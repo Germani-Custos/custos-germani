@@ -1,5 +1,11 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Cadastro operacional — paginação CAD-OP-PAGE-01 (15/10/2026)
+
+Somente `getProductMaster()` passa a ler integralmente as três fontes volumosas com `supabase.from().select(..., {count:'exact'}).order(...).range(inicio,inicio+499)`. Ordenação: `codigo_produto` em `dicionario_produtos`/`historico_custos` e `cod_produto` em `apontamentos_op`. Nos fatos, os empates têm o mesmo código projetado. A paginação termina no total exato (inclusive zero/múltiplo de 500), sem requisição vazia extra. Erro, ausência de count, página truncada ou contagem alterada interrompem o resultado; não calcular ausentes com dados parciais.
+
+As três leituras correm em paralelo, com páginas sequenciais em cada fonte; catálogos, contrato de retorno, normalização/deduplicação e classificação permanecem os existentes. Não há snapshot transacional entre os SELECTs; mudança de quantidade durante a leitura é detectada, mas não se promete visão atômica das três fontes. Sem SQL/RPC, escrita, nova fonte, sincronização ou mudança em `data_referencia`/`criado_em`. [Contrato e testes](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## CAD-PAYLOAD-01 — contrato compacto do Preview (09/10/2026)
 
 O adapter retorna `dadosExecucao` de versão `CADASTRO_MESTRE_DADOS_V1`, além de manifesto/revisão. Fonte contém arquivo/tipo/aba/colunas/linha de cabeçalho/hash local do original; tuplas de oito posições guardam linha/código/descrição/Tipo/Descr. Origem/origem/família/agrupamento ERP. Todas as linhas não vazias são mantidas, inclusive excluídas e inválidas; colunas presentes distinguem célula vazia de campo omitido. SHA-256 dos dados inteiros serializados deterministicamente integra `manifesto.fonte.hash_dados_sha256` antes da aprovação.

@@ -1,5 +1,14 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-OP-PAGE-01
+
+- [x] Paginar as três fontes do contador operacional, detectar leitura incompleta e explicitar seu nome no aviso. Sem sincronização Master → operacional, nova visão, schema ou escrita.
+- [x] Registrar estado posterior às entregas históricas de 09/10: reconstrução executada anteriormente; diagnóstico confirmou Master ERP 860 e operacional 6.113. Esta tarefa não executa reconstrução.
+- [x] Validar 23 regressões novas/432 testes totais, lint/typecheck/build/diff check; sonda real somente leitura do método alterado carregou 6.113/1.370/704 linhas e confirmou 501 únicos/zero ausentes, sem consultar Master ERP ou escrever.
+- [ ] Publicar esta correção somente após autorização e conferir a carga completa/contador na UI: contexto diagnosticado tem 501 códigos únicos importados e zero ausentes operacionais.
+
+[Contrato](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). `data_referencia` é competência e `criado_em` é importação, inalterados.
+
 ## Atualização 2026-10-09 — CAD-PAYLOAD-01
 
 - [x] Transporte web por representação compacta dos campos ERP necessários de todas as linhas, sem binário XLS/base64/gzip ou plano de DML fornecido pelo cliente.

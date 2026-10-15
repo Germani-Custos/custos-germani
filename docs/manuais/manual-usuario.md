@@ -1,5 +1,11 @@
 # Manual do Usuário — Custos Germani
 
+## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
+
+A tabela Cadastro permanece mostrando `dicionario_produtos`, a dimensão operacional de Custos/OP e da classificação Kustos. Ela pode conter materiais fora dos 860 produtos do Master ERP; a reconstrução não remove produtos operacionais. O aviso agora informa **código(s) importado(s) ausente(s) do cadastro operacional** e compara códigos únicos de Custos/OP com o cadastro operacional completo, sem depender da busca/filtros visuais.
+
+Após publicar esta correção, o contexto diagnosticado deve mostrar zero ausentes (501 códigos importados únicos, 6.113 produtos operacionais); o antigo 407 resultava de respostas truncadas. Em falha de página, o serviço retorna erro em vez de um total parcial como válido. Nenhuma nova visão ERP ou alteração de dados nesta etapa; competência `data_referencia` e importação `criado_em` permanecem intactas. [Detalhes](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## Execução sem enviar o XLS original — CAD-PAYLOAD-01 (09/10/2026)
 
 Escolha o XLS/XLSX/XLSM original normalmente no Preview. A execução web passa a enviar somente os campos necessários já lidos, vinculados à aprovação; o tamanho físico do XLS de 24.307.397 bytes não é mais o motivo de bloqueio do POST. O servidor refaz os filtros e a comparação com o Master atual; aprovação integral e segunda confirmação continuam obrigatórias. Se dados ou contexto mudaram, gere novo Preview e aprove novamente.

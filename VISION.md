@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-OP-PAGE-01
+
+Contadores investigativos devem considerar fontes completas, sem confundir Cadastro Operacional com Master ERP. A leitura paginada do Cadastro elimina ausências artificiais e mantém `dicionario_produtos` como dimensão do runtime/classificação Kustos. A visão Master ERP continua fora desta etapa. Nenhuma mudança de dados ou dos eixos `data_referencia`/`criado_em`. [Contrato](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+
 ## Atualização 2026-10-09 — CAD-PAYLOAD-01: executar o universo revisado
 
 O tamanho físico do arquivo ERP não deve impedir a execução de um universo já revisado. O original é lido no Preview; a execução transporta seus campos necessários, vinculados à aprovação, e o servidor recalcula filtros, universo e reconciliação sobre o contexto atual. Snapshot, aprovação integral e atomicidade continuam obrigatórios. O hash do arquivo preserva proveniência declarada pelo navegador; sem o binário, o servidor não comprova sozinho a origem ERP. [Contrato e limites](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto). Não muda fatos, classificação operacional, `data_referencia` ou `criado_em`.
