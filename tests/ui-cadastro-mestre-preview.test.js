@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arquivoCadastro, contexto, SheetJS } from './fixtures/cadastro-mestre-arquivo.js';
+import { arquivoFamilias } from './fixtures/cadastro-mestre-familias.js';
 
 vi.mock('../src/services/api.js', () => ({ api: {
   getProductMaster: vi.fn(), getCadastroMestrePreviewContext: vi.fn(),
@@ -147,6 +148,36 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
+  it('catálogo de famílias tem seção e decisões independentes; rejeição bloqueia execução', async () => {
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    Swal.fire.mockImplementation(async options => {
+      abrirModal(options);
+      expect(options.html).toContain('Catálogo de famílias ERP');
+      expect(options.html).toContain('Nova família — cadastrar');
+      expect(options.html).toContain('Divergência — atualizar descrição');
+      expect(options.html).toContain('2 produtos nas novas famílias');
+      const produtos = container.selects.filter(s => !/CADASTRAR_FAMILIA_ERP:|ATUALIZAR_ROTULO_FAMILIA_ERP:/.test(s.dataset.masterOperation));
+      const familias = container.selects.filter(s => /CADASTRAR_FAMILIA_ERP:|ATUALIZAR_ROTULO_FAMILIA_ERP:/.test(s.dataset.masterOperation));
+      expect(familias).toHaveLength(3);
+      for (const select of produtos) { select.value = 'APROVADO'; await container.emit('change', target(select)); }
+      expect(familias.every(s => s.value === 'PENDENTE')).toBe(true);
+      expect(executarButton.disabled).toBe(true);
+      for (const select of familias) { select.value = 'APROVADO'; await container.emit('change', target(select)); }
+      expect(executarButton.disabled).toBe(false);
+      familias[0].value = 'REJEITADO';
+      await container.emit('change', target(familias[0]));
+      expect(executarButton.disabled).toBe(true);
+      return { isConfirmed: true };
+    });
+    const { dom, controller, errors } = setup(await arquivoFamilias());
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(errors).toEqual([]);
+    const output = JSON.parse(await URL.createObjectURL.mock.calls[0][0].text());
+    expect(output.revisao.decisoes.some(d => d.status === 'REJEITADO' && d.id.startsWith('CADASTRAR_FAMILIA_ERP:'))).toBe(true);
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
+  });
+
   it('falha de SELECT não simula Master vazio e libera o seletor', async () => {
     api.getCadastroMestrePreviewContext.mockResolvedValue({ data: null, error: new Error('Sem acesso ao Master') });
     const { dom, controller, errors } = setup();
@@ -156,6 +187,30 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     expect(Swal.fire).not.toHaveBeenCalled();
     expect(dom.masterImportBtn.disabled).toBe(false);
     expect(dom.masterImportInput.value).toBe('');
+  });
+
+  it.each(['conflito', 'html'])('apresenta %s de família com bloqueio/escape sem escrita', async caso => {
+    const arquivo = await arquivoFamilias();
+    const wb = SheetJS.read(await arquivo.arrayBuffer(), { type: 'array' });
+    if (caso === 'conflito') {
+      wb.Sheets.Cadastro.F11 = { t: 's', v: 'F1' };
+      wb.Sheets.Cadastro.J11 = { t: 's', v: 'Conflitante' };
+    } else wb.Sheets.Cadastro.J4 = { t: 's', v: '<img src=x onerror=alert(1)>' };
+    const bytes = SheetJS.write(wb, { type: 'array', bookType: 'xls' });
+    api.getCadastroMestreExecutionAvailability.mockResolvedValue({ disponivel: true });
+    const { dom, controller, errors } = setup({ name: 'familias.xls', arrayBuffer: async () => bytes });
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    expect(errors).toEqual([]);
+    const html = Swal.fire.mock.calls[0][0].html;
+    if (caso === 'conflito') {
+      expect(html).toContain('Bloqueada — conflito de descrições');
+      expect(executarButton.disabled).toBe(true);
+    } else {
+      expect(html).toContain('&lt;img');
+      expect(html).not.toContain('<img');
+    }
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
   });
 
   it.each(['cadastro.csv', 'cadastro.xls'])('rejeita extensão inválida ou bytes inválidos (%s) sem importação', async name => {

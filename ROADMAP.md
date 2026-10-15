@@ -1,5 +1,13 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-FAM-01
+
+- [x] Integrar rótulo ERP ao adapter/transporte V2, catálogo puro por código/universo, Preview/decisões próprias e executor central com snapshot/provas/rollback conjuntos.
+- [x] Validar Preview real somente leitura: 81 famílias, 16 existentes, 65 novas, 693 produtos impactados; nenhuma escrita real.
+- [ ] Publicar UI/função compatíveis e executar somente em etapa futura explicitamente autorizada, após novo Preview/aprovação e diagnóstico administrativo. Esta entrega não habilita flag nem executa carga.
+
+[Contrato e limites](docs/arquitetura/cadastro-mestre-familias-erp.md). `data_referencia`/`criado_em` dos fatos intactos.
+
 ## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
 
 - [x] Remover somente a unicidade do rótulo de família, preservando código único, PK, descrição obrigatória e todos os dados; migration 20261015182351 aplicada e conferida, rollback não executado.

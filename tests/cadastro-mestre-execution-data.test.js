@@ -23,12 +23,12 @@ describe('Representação compacta — usa todas as linhas relevantes sem workbo
     const leituraOriginal = await lerArquivoCadastroMestre(arquivo, SheetJS);
     const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, SheetJS);
     const dados = preparado.dadosExecucao;
-    expect(dados.versao_transporte).toBe('CADASTRO_MESTRE_DADOS_V1');
+    expect(dados.versao_transporte).toBe('CADASTRO_MESTRE_DADOS_V2');
     expect(Object.keys(dados).sort()).toEqual(['fonte', 'linhas', 'versao_transporte']);
     expect(() => validarDadosExecucaoCadastroMestre(dados)).not.toThrow();
     expect(linhasDadosExecucaoCadastroMestre(dados)).toEqual(leituraOriginal.linhas);
     expect(dados.linhas).toHaveLength(8); // Inclusive D/origem inválida/inativo/EXLUIR.
-    expect(dados.linhas.every(r => r.length === 8)).toBe(true);
+    expect(dados.linhas.every(r => r.length === 9)).toBe(true);
     const servidor = await prepararAprovacaoDadosCadastroMestre(clone(dados), clone(contexto));
     expect(servidor.manifesto).toEqual(preparado.manifesto);
     expect(servidor.revisao).toEqual(preparado.revisao);

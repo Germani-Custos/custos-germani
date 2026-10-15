@@ -1,5 +1,11 @@
 # Manual do Usuário — Custos Germani
 
+## Famílias ERP no Preview — CAD-FAM-01 (15/10/2026)
+
+Em **Preview mestre**, confira a seção **Catálogo de famílias ERP**: código, rótulo oficial/atual, situação, produtos impactados e decisão própria. Código é identidade; rótulos iguais podem pertencer a códigos diferentes. Famílias já cadastradas sem mudança não exigem decisão; vazios preservam catálogo; conflitos bloqueiam até corrigir a fonte e gerar novo Preview.
+
+Aprovar produto não aprova família. Pendência/rejeição de qualquer proposta impede a execução inteira. Seleção, aprovação e download são locais, sem escrita; executar continua sendo ação administrativa separada com segunda confirmação. Rótulo compartilhado atualizado em execução autorizada não reclassifica produtos operacionais. Gerar novo Preview no contrato V2 após publicação compatível; `data_referencia`/`criado_em` dos fatos não mudam. [Detalhes](../arquitetura/cadastro-mestre-familias-erp.md).
+
 ## Duas visões do Cadastro — CAD-ERP-VIEW-01 (15/10/2026)
 
 Use **Cadastro Operacional** para a classificação Kustos consumida por Custos/OP. Use **Cadastro Mestre ERP** para consultar o universo oficial reconstruído do ERP. Os controles mostram seus totais reais, por exemplo 6.113 e 860, e preservam separadamente busca/filtros/página ao alternar. Materiais existentes somente no operacional não aparecem automaticamente no ERP.

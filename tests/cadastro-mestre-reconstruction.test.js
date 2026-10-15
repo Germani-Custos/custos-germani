@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { main, salvarSnapshotDuravel } from '../scripts/reconstruir-cadastro-mestre.mjs';
 import { criarCadastroMestreWebHandler } from '../scripts/lib/cadastro-mestre-web.mjs';
 import { ambienteWeb, respostaWeb, storageWeb } from './fixtures/cadastro-mestre-web.js';
+import { arquivoFamilias } from './fixtures/cadastro-mestre-familias.js';
 
 const aprovar = m => decidirOperacoesCadastroMestre(m, criarRevisaoCadastroMestre(m), m.operacoes.filter(o => o.aprovavel).map(o => o.id), 'APROVADO');
 describe('Contrato do universo — preparação pura', () => {
@@ -69,11 +70,11 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
         agrupamento_erp_importacao_id bigint REFERENCES log_importacao_cadastro_mestre(id),
         criado_em timestamptz DEFAULT now(),atualizado_em timestamptz DEFAULT now());
       CREATE TABLE categorias_origem (id text PRIMARY KEY,codigo text,descricao text);
-      CREATE TABLE categorias_familia (id text PRIMARY KEY,codigo text,descricao text);
+      CREATE TABLE categorias_familia (id text PRIMARY KEY DEFAULT gen_random_uuid(),codigo text UNIQUE,descricao text NOT NULL,criado_em timestamptz DEFAULT now());
       ${protegidas.map(t => `CREATE TABLE ${t} (codigo text PRIMARY KEY,conteudo jsonb); INSERT INTO ${t} VALUES ('003','{"fato":"intacto"}');`).join('\n')}`);
     for (const table of ['categorias_origem', 'categorias_familia']) {
       const rows = table === 'categorias_origem' ? contexto.origens : contexto.familias;
-      await db.query(`INSERT INTO ${table} SELECT * FROM jsonb_to_recordset($1::jsonb) AS x(id text,codigo text,descricao text)`, [JSON.stringify(rows)]);
+      await db.query(`INSERT INTO ${table} (id,codigo,descricao) SELECT * FROM jsonb_to_recordset($1::jsonb) AS x(id text,codigo text,descricao text)`, [JSON.stringify(rows)]);
     }
     for (const p of contexto.produtos) await db.query(`INSERT INTO dicionario_master_produtos
       (codigo_produto,descricao,origem_cod,familia_cod,agrupamento_erp_valor) VALUES ($1,$2,$3,$4,$5)`, [p.codigo_produto, p.descricao, p.origem_cod, p.familia_cod, p.agrupamento_erp_valor]);
@@ -93,8 +94,8 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     identificadorLote: 'TESTE_LOCAL', autor: 'Teste sintético', confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(evidencia.manifesto)}`,
     salvarSnapshot: snapshot, ...overrides });
 
-  async function chamadaWeb({ formato = 'xls', transform = p => p, storageOverride } = {}) {
-    const arquivo = arquivoCadastro(formato);
+  async function chamadaWeb({ formato = 'xls', arquivoOverride, transform = p => p, storageOverride } = {}) {
+    const arquivo = arquivoOverride || arquivoCadastro(formato);
     const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, before, SheetJS);
     const manifest = preparado.manifesto;
     const pedido = await transform({ dados_execucao: preparado.dadosExecucao,
@@ -194,7 +195,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(client.query.mock.calls.some(([sql]) => /^(INSERT INTO|UPDATE|DELETE FROM) public\./.test(sql))).toBe(false);
   });
 
-  it.each(['universo', 'patches', 'sql', 'arquivo_base64'])('HTTP não aceita campo %s como substituto do motor do servidor', async campo => {
+  it.each(['universo', 'patches', 'sql', 'arquivo_base64', 'familias', 'catalogo_familias'])('HTTP não aceita campo %s como substituto do motor do servidor', async campo => {
     const { res, storage } = await chamadaWeb({ transform: p => ({ ...p, [campo]: ['999'] }) });
     expect(res.code).toBe(400);
     expect(client.connect).not.toHaveBeenCalled();
@@ -401,6 +402,158 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toHaveLength(1);
     expect((await ctx()).produtos).toHaveLength(4);
   });
+
+  async function prepararFamilias() {
+    const arquivo = await arquivoFamilias();
+    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, before, SheetJS);
+    evidencia = { manifesto: preparado.manifesto, revisao: aprovar(preparado.manifesto) };
+    dadosExecucao = preparado.dadosExecucao;
+    return arquivo;
+  }
+  const familiasIntegrais = async () => (await db.query('SELECT to_jsonb(f) AS registro FROM categorias_familia f ORDER BY id')).rows.map(r => r.registro);
+
+  it('HTTP executa famílias e Master na mesma transação, com snapshot parcial do catálogo e auditoria', async () => {
+    await db.query("INSERT INTO categorias_familia(id,codigo,descricao) VALUES ('legado',NULL,'Sem código legado')");
+    before = await ctx();
+    const familiasAntes = await familiasIntegrais();
+    const original = client.query;
+    const storage = storageWeb();
+    client.query = vi.fn(async (sql, params) => {
+      if (/^(INSERT INTO|UPDATE) public.categorias_familia/.test(sql)) {
+        expect(storage.upload).toHaveBeenCalledOnce();
+        expect(storage.download).toHaveBeenCalledOnce();
+        expect(client.query.mock.calls.some(([s]) => s === 'SAVEPOINT reconstruir_master')).toBe(true);
+      }
+      return original(sql, params);
+    });
+    const { res, handler, pedido } = await chamadaWeb({ arquivoOverride: await prepararFamilias(), storageOverride: storage });
+    expect(res.code).toBe(200);
+    expect(res.body).toMatchObject({ depois: 4, familias: { inseridas: 2, atualizadas: 1 } });
+    const depois = await familiasIntegrais();
+    expect(depois.find(f => f.id === 'f')).toEqual({ ...familiasAntes.find(f => f.id === 'f'), descricao: 'Família atualizada' });
+    expect(depois.find(f => f.id === 'legado')).toEqual(familiasAntes.find(f => f.id === 'legado'));
+    expect(depois.filter(f => f.descricao === 'Mesmo rótulo').map(f => f.codigo).sort()).toEqual(['0002', 'F3']);
+    expect(depois.some(f => f.codigo === 'FORA')).toBe(false);
+    const log = (await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows[0];
+    expect(log.metadados_origem.snapshot_familias_afetadas).toEqual([
+      { codigo: '0002', anterior: null }, { codigo: 'F1', anterior: familiasAntes.find(f => f.id === 'f') }, { codigo: 'F3', anterior: null }
+    ]);
+    const snapshotDuravel = JSON.parse([...storage.arquivos.values()][0].toString());
+    expect(snapshotDuravel.snapshot_familias_afetadas).toEqual(log.metadados_origem.snapshot_familias_afetadas);
+    expect(snapshotDuravel.snapshot_master).toEqual(before.produtos);
+    expect(log.metadados_origem.catalogo_familias).toMatchObject({ registros_inseridos: 2, registros_atualizados: 1, rejeitadas: 0 });
+    expect(log.metadados_origem.catalogo_familias.operacoes.find(o => o.acao === 'UPDATE')).toMatchObject({
+      atual: { id: 'f', codigo: 'F1', descricao: 'Família teste' }, dados: { descricao: 'Família atualizada' }, quantidade_produtos: 2
+    });
+    expect(client.query.mock.calls.filter(([sql]) => sql === 'BEGIN')).toHaveLength(1);
+    expect(client.query.mock.calls.at(-1)[0]).toBe('COMMIT');
+    expect(client.query.mock.calls.some(([sql]) => /LOCK TABLE .*categorias_familia IN EXCLUSIVE MODE NOWAIT/.test(sql))).toBe(true);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    const consulta = respostaWeb();
+    await handler({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { lote: pedido.lote } }, consulta);
+    expect(consulta.body.resultado).toMatchObject({ familias_inseridas: 2, familias_atualizadas: 1 });
+  });
+
+  it.each(['INSERT INTO public.categorias_familia', 'UPDATE public.categorias_familia', "UPDATE public.log_importacao_cadastro_mestre SET status='concluido'"])(
+    'erro SQL em %s reverte Master e catálogo integralmente, preservando snapshot e lote falhou', async alvo => {
+      const arquivo = await prepararFamilias();
+      const familiasAntes = await familiasIntegrais();
+      const original = client.query;
+      let falhou = false;
+      client.query = vi.fn(async (sql, params) => {
+        if (!falhou && sql.startsWith(alvo)) { falhou = true; return db.query('SELECT 1/0'); }
+        return original(sql, params);
+      });
+      await expect(executar({ arquivo })).rejects.toThrow('revertida integralmente');
+      expect(falhou).toBe(true);
+      expect((await ctx()).produtos).toEqual(before.produtos);
+      expect(await familiasIntegrais()).toEqual(familiasAntes);
+      expect(snapshot.mock.calls[0][0].snapshot_familias_afetadas).toHaveLength(3);
+      const log = (await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows[0];
+      expect(log).toMatchObject({ status: 'falhou', registros_inseridos: 0, registros_atualizados: 0, registros_erro: 1 });
+      expect(log.metadados_origem.catalogo_familias).toMatchObject({ registros_inseridos: 0, registros_atualizados: 0 });
+      for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    });
+
+  it('constraint real em família aborta a reconstrução depois do DML do Master, sem estado parcial', async () => {
+    await db.exec("ALTER TABLE categorias_familia ADD CHECK (codigo IS DISTINCT FROM 'F3')");
+    const familiasAntes = await familiasIntegrais();
+    await expect(executar({ arquivo: await prepararFamilias() })).rejects.toThrow('revertida integralmente');
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect(await familiasIntegrais()).toEqual(familiasAntes);
+    expect((await db.query('SELECT erros FROM log_importacao_cadastro_mestre')).rows[0].erros[0].code).toBe('23514');
+  });
+
+  it.each(["criado_em=now()+interval '1 day'", "codigo='OUTRO'", "id='id-alterado'"])(
+    'prova integral recusa alteração não aprovada de família (%s) e restaura tudo', async setter => {
+      const arquivo = await prepararFamilias();
+      const familiasAntes = await familiasIntegrais();
+      const original = client.query;
+      client.query = vi.fn(async (sql, params) => {
+        const result = await original(sql, params);
+        if (sql.startsWith('UPDATE public.categorias_familia')) await db.query(`UPDATE categorias_familia SET ${setter} WHERE id='f'`);
+        return result;
+      });
+      await expect(executar({ arquivo })).rejects.toThrow('revertida integralmente');
+      expect((await ctx()).produtos).toEqual(before.produtos);
+      expect(await familiasIntegrais()).toEqual(familiasAntes);
+    });
+
+  it('alteração em família fora das propostas é detectada pela proteção própria do catálogo', async () => {
+    await db.query("INSERT INTO categorias_familia VALUES ('intocada','NAO_USADA','Intocada',now())");
+    before = await ctx();
+    const familiasAntes = await familiasIntegrais();
+    const arquivo = await prepararFamilias();
+    const original = client.query;
+    client.query = vi.fn(async (sql, params) => {
+      const result = await original(sql, params);
+      if (sql.startsWith('UPDATE public.categorias_familia')) await db.query("UPDATE categorias_familia SET descricao='Adulterada' WHERE id='intocada'");
+      return result;
+    });
+    await expect(executar({ arquivo })).rejects.toThrow('revertida integralmente');
+    expect(await familiasIntegrais()).toEqual(familiasAntes);
+  });
+
+  it.each(['rotulo', 'decisao', 'versao_antiga'])('HTTP rejeita %s de família adulterado/sem aprovação sem log ou snapshot', async caso => {
+    const familiasAntes = await familiasIntegrais();
+    const { res, storage } = await chamadaWeb({ arquivoOverride: await prepararFamilias(), transform: p => {
+      if (caso === 'rotulo') p.dados_execucao.linhas[0][8] = 'Não aprovado';
+      if (caso === 'decisao') p.decisoes = p.decisoes.filter(d => !d.id.startsWith('ATUALIZAR_ROTULO_FAMILIA_ERP:'));
+      if (caso === 'versao_antiga') p.dados_execucao.versao_transporte = 'CADASTRO_MESTRE_DADOS_V1';
+      return p;
+    } });
+    expect([400, 409]).toContain(res.code);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect(await familiasIntegrais()).toEqual(familiasAntes);
+  });
+
+  it('catálogo alterado após a leitura HTTP é revalidado novamente sob locks centrais', async () => {
+    const familiasAntes = await familiasIntegrais();
+    const original = client.query;
+    let injetada = false;
+    client.query = vi.fn(async (sql, params) => {
+      if (!injetada && sql.startsWith('LOCK TABLE')) {
+        injetada = true;
+        await db.query("UPDATE categorias_familia SET descricao='Mudou após HTTP' WHERE id='f'");
+      }
+      return original(sql, params);
+    });
+    const { res, storage } = await chamadaWeb({ arquivoOverride: await prepararFamilias() });
+    expect(res.code).toBe(409);
+    expect(storage.upload).not.toHaveBeenCalled();
+    expect(await familiasIntegrais()).toEqual(familiasAntes);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+  });
+
+  it('trigger no catálogo bloqueia execução antes de snapshot ou DML', async () => {
+    await db.exec(`CREATE FUNCTION familia_trigger() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END';
+      CREATE TRIGGER familia_trigger BEFORE UPDATE ON categorias_familia FOR EACH ROW EXECUTE FUNCTION familia_trigger();`);
+    await expect(executar({ arquivo: await prepararFamilias() })).rejects.toThrow('Dependências');
+    expect(snapshot).not.toHaveBeenCalled();
+    expect((await ctx()).produtos).toEqual(before.produtos);
+  });
 });
 
 describe('Comando administrativo e snapshot independente', () => {
@@ -408,7 +561,8 @@ describe('Comando administrativo e snapshot independente', () => {
     const dir = await mkdtemp(join(tmpdir(), 'kustos-rebuild-'));
     const file = join(dir, 'snapshot.json');
     try {
-      const value = { snapshot_master: contexto.produtos, lote_id: '1', snapshot_sha256: hashReconstrucao(contexto.produtos) };
+      const value = { snapshot_master: contexto.produtos, lote_id: '1', snapshot_sha256: hashReconstrucao(contexto.produtos),
+        snapshot_familias_afetadas: [{ codigo: 'F1', anterior: contexto.familias[0] }, { codigo: 'NOVA', anterior: null }] };
       await salvarSnapshotDuravel(file, value);
       expect(JSON.parse(await readFile(file, 'utf8'))).toEqual(value);
       await expect(salvarSnapshotDuravel(file, {})).rejects.toMatchObject({ code: 'EEXIST' });

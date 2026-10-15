@@ -1,5 +1,11 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-15 — CAD-FAM-01: famílias ERP no Preview aprovado
+
+O leitor existente transporta `Família` e `Descr. (Família)` no contrato V2. Preview separa operações de produtos e catálogo: código exato identifica família; nova categoria ou mudança de rótulo exige decisão própria. Servidor/executor regeneram manifesto/contexto sob locks; snapshot das famílias afetadas, transação e rollback abrangem catálogo e Master, com provas integrais de preservação. [Contrato e validação real](docs/arquitetura/cadastro-mestre-familias-erp.md).
+
+Leitura real: 860 produtos, 81 famílias, 16 existentes, 65 novas (693 produtos impactados), zero conflitos/rótulos ausentes; 65 propostas pendentes, nenhuma escrita. Publicar UI/função compatíveis e gerar nova revisão antes de execução futura autorizada. Não houve deploy, reconstrução, cadastro real, nova migration/env/flag ou commit; fatos e eixos temporais permanecem intactos.
+
 ## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01: identidade de família por código
 
 Migration estrutural aplicada remove somente a unicidade da descrição em `categorias_familia`, permitindo rótulos iguais para códigos diferentes. PK, código único, descrição obrigatória e os 38 registros foram preservados; nenhuma carga de famílias ou alteração do executor foi implementada. [SQL, rollback não executado e provas antes/depois](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Fatos e seus eixos de competência/importação permanecem intactos.

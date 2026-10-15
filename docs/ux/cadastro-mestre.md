@@ -1,5 +1,9 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+## CAD-FAM-01 — famílias ERP no Preview (15/10/2026)
+
+Preview possui seção própria **Catálogo de famílias ERP**, separada das propostas de produtos: código, rótulos ERP/atual, situação/proposta, impacto e decisão. Famílias novas/alterações exigem aprovação própria; códigos diferentes mantêm identidade mesmo com rótulos iguais. Conflito bloqueia carga; rótulo vazio preserva. Seleção/decisão/download não escrevem, e qualquer rejeição/pendência impede execução integral. [Contrato vigente e validação real somente leitura](../arquitetura/cadastro-mestre-familias-erp.md). Consulta operacional e visão ERP permanecem independentes; fatos/eixos temporais intactos.
+
 ## CAD-ERP-VIEW-01 — Duas visões no Cadastro (15/10/2026)
 
 A menor mudança na estrutura existente é um seletor de fonte dentro da tela Cadastro, com painéis **Cadastro Operacional — total** e **Cadastro Mestre ERP — total**. Totais dinâmicos, sem hardcode de 6.113/860. Operacional continua consultando/editando `dicionario_produtos` e conserva o contador de ausentes já corrigido; Master ERP consulta exclusivamente o universo persistido em `dicionario_master_produtos`. Não é aplicado novo filtro de negócio aos produtos do Master e não existe sincronização entre fontes.

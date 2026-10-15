@@ -1,5 +1,11 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Catálogo de famílias ERP — CAD-FAM-01 (15/10/2026)
+
+`familia_descricao_erp` entra pelo adapter existente e na nona posição do transporte `CADASTRO_MESTRE_DADOS_V2`. `proporCatalogoFamiliasCadastroMestre` usa códigos efetivos do universo e identifica no-op/nova/alteração/vazio/conflito; descrição não resolve identidade. Manifesto inclui catálogo e operações identificadas por tabela/código, com revisão independente. Operações do Master mantêm contagens e plano separados.
+
+Servidor regenera manifesto/decisões e executor repete sob locks, com INSERT/UPDATE somente de famílias aprovadas. Prova integral do catálogo protege registros não afetados e ID/código/criado_em; snapshot salva apenas famílias afetadas, junto ao Master completo. Falha reverte ambos e mantém auditoria/snapshot existentes. V1/revisões antigas exigem novo Preview; publicar UI/função compatíveis. Sem SQL/RPC frontend, schema/env/carga real ou mudança temporal dos fatos. [Contrato vigente](../arquitetura/cadastro-mestre-familias-erp.md). Seções de V1 abaixo são históricas.
+
 ## Consulta Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
 
 `createProductMasterController` coordena os dois painéis sem compartilhar filtros/datasets. `createCadastroMestreErpController` → `api.getCadastroMestreErp()` → `lerContextoCadastroMestrePreview(supabase)` reutiliza exclusivamente SELECTs de Master/origens/famílias com páginas de 500, ORDER BY e count exact. O leitor validado e os motores de Preview/aprovação/reconstrução não foram modificados. As duas fontes são carregadas independentemente ao inicializar Cadastro; alternar não refaz consultas. Atualização ERP é manual e somente leitura.

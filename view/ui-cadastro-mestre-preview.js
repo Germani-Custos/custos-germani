@@ -9,8 +9,17 @@ import { criarPlanoReconstrucaoCadastroMestre } from '../core/cadastro-mestre-re
 const DECISOES = { PENDENTE: 'Pendente', APROVADO: 'Aprovado', REJEITADO: 'Rejeitado' };
 const CAMPOS = { descricao: 'Descrição', origem_cod: 'Origem ERP', familia_cod: 'Família ERP', agrupamento_erp_valor: 'Agrup. Prod. (ERP)' };
 const CATEGORIAS = { NOVO_PRODUTO: 'Novo no Cadastro Mestre', ATUALIZAR_DESCRICAO: 'Atualizar descrição', ATUALIZAR_AGRUPAMENTO_ERP: 'Atualizar agrupamento ERP', ATUALIZAR_ORIGEM_ERP: 'Atualizar origem ERP', ATUALIZAR_FAMILIA_ERP: 'Atualizar família ERP', REMOVER_FORA_UNIVERSO: 'Remover do Cadastro Mestre' };
+const SITUACOES_FAMILIA = { EXISTENTE_SEM_ALTERACAO: 'Já cadastrada — nenhuma alteração', NOVA_FAMILIA: 'Nova família — cadastrar',
+  ALTERACAO_DESCRICAO: 'Divergência — atualizar descrição', DESCRICAO_VAZIA: 'Descrição ERP vazia — preservar catálogo',
+  CONFLITO: 'Bloqueada — conflito de descrições', CATALOGO_AMBIGUO: 'Bloqueada — código ambíguo no catálogo' };
 const valor = value => escapeHtml(value ?? '(vazio)');
 const tabela = (headers, rows) => `<div style="max-height:360px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+
+function seletorDecisao(operacao, decisoes, label) {
+  return `<select aria-label="Decisão para ${escapeHtml(label)}" data-master-operation="${escapeHtml(operacao.id)}">
+    ${Object.entries(DECISOES).map(([status, texto]) => `<option value="${status}" ${decisoes.get(operacao.id) === status ? 'selected' : ''} ${status === 'APROVADO' && !operacao.aprovavel ? 'disabled' : ''}>${texto}</option>`).join('')}
+  </select>`;
+}
 
 function detalhesOperacao(operacao) {
   if (operacao.acao === 'DELETE') return `<details><summary>Conferir remoção do Master</summary><p>${valor(operacao.atual?.descricao)} · ${operacao.motivo === 'AUSENTE_NO_ARQUIVO' ? 'Ausente do arquivo' : 'Fora dos filtros oficiais'}</p><p>Remover somente do Cadastro Mestre ERP após aprovação. Custos, OP, cadastro operacional e históricos permanecem intactos.</p></details>`;
@@ -33,18 +42,22 @@ function htmlPreview(manifesto, revisao) {
     ['Erros', r.erros]
   ];
   const decisoes = new Map(revisao.decisoes.map(d => [d.id, d.status]));
-  const operacoes = manifesto.operacoes.map(o => `<tr><td>${valor(o.codigo_produto)}</td><td>${valor(CATEGORIAS[o.categoria])}</td><td>${detalhesOperacao(o)}</td><td>
-    <select aria-label="Decisão para ${escapeHtml(o.codigo_produto)}: ${escapeHtml(CATEGORIAS[o.categoria])}" data-master-operation="${escapeHtml(o.id)}">
-      ${Object.entries(DECISOES).map(([status, label]) => `<option value="${status}" ${decisoes.get(o.id) === status ? 'selected' : ''} ${status === 'APROVADO' && !o.aprovavel ? 'disabled' : ''}>${label}</option>`).join('')}
-    </select></td></tr>`);
+  const operacoes = manifesto.operacoes.filter(o => o.tabela === 'dicionario_master_produtos').map(o => `<tr><td>${valor(o.codigo_produto)}</td><td>${valor(CATEGORIAS[o.categoria])}</td><td>${detalhesOperacao(o)}</td><td>${seletorDecisao(o, decisoes, `${o.codigo_produto}: ${CATEGORIAS[o.categoria]}`)}</td></tr>`);
+  const familias = manifesto.catalogo_familias;
+  const linhasFamilias = (familias?.familias || []).map(f => {
+    const operacao = manifesto.operacoes.find(o => o.tabela === 'categorias_familia' && o.codigo_familia === f.codigo);
+    return `<tr><td>${valor(f.codigo)}</td><td>${valor(f.descricoes_erp.join(' / ') || null)}</td><td>${valor(f.atual?.descricao || 'Não cadastrada')}</td><td>${valor(SITUACOES_FAMILIA[f.status])}</td><td>${f.quantidade_produtos}</td><td>${operacao ? seletorDecisao(operacao, decisoes, `família ERP ${f.codigo}: ${SITUACOES_FAMILIA[f.status]}`) : ['CONFLITO', 'CATALOGO_AMBIGUO'].includes(f.status) ? 'Bloqueada' : 'Não requer aprovação'}</td></tr>`;
+  });
   return `<p>${valor(manifesto.fonte.arquivo)} · ${valor(manifesto.fonte.tipo_arquivo)} · Aba ${valor(manifesto.fonte.aba)}</p>
     <p>Reconstrução do universo: o Cadastro Mestre deverá conter somente os produtos válidos do arquivo filtrado. Confira também as remoções antes de aprovar. Decisões e download são locais; a seleção do arquivo não executa a carga. Executar reconstrução irá MODIFICAR o Cadastro Mestre ERP.</p>
-    <p>A execução administrativa exige todas as propostas aprovadas, inclusive remoções. Qualquer proposta pendente ou rejeitada impede a reconstrução inteira.</p>
-    ${manifesto.reconstrucao_bloqueada ? '<p role="alert">Reconstrução bloqueada: existem erros no arquivo ou o universo filtrado está vazio. Corrija e gere novo Preview antes de aprovar.</p>' : ''}
+    <p>A execução administrativa exige todas as propostas aprovadas, inclusive remoções e alterações do catálogo de famílias. Famílias têm decisões próprias; aprovar um produto não aprova sua família. Qualquer proposta pendente ou rejeitada impede a reconstrução inteira.</p>
+    ${manifesto.reconstrucao_bloqueada ? '<p role="alert">Reconstrução bloqueada: existem erros no arquivo/catálogo ou o universo filtrado está vazio. Corrija e gere novo Preview antes de aprovar.</p>' : ''}
     ${tabela(['Resumo', 'Quantidade'], contagens.map(([label, count]) => `<tr><td>${escapeHtml(label)}</td><td>${count}</td></tr>`))}
     <p>Decisões: <span data-master-decisions></span></p>
     <div class="master-preview-actions">${Object.entries(DECISOES).map(([status, label]) => `<button type="button" class="btn-outline" data-master-decision="${status}">${label === 'Aprovado' ? 'Aprovar todas as permitidas' : label === 'Rejeitado' ? 'Rejeitar todas' : 'Voltar todas a pendente'}</button>`).join('')}</div>
+    <h3>Alterações de produtos no Cadastro Mestre</h3>
     ${tabela(['Produto', 'Proposta', 'Valores', 'Decisão'], operacoes)}
+    ${familias ? `<h3>Catálogo de famílias ERP</h3><p>${familias.resumo.total} famílias do universo · ${familias.resumo.existentes_sem_alteracao} já cadastradas · ${familias.resumo.novas} novas · ${familias.resumo.atualizacoes} alterações de descrição · ${familias.resumo.produtos_impactados_novas} produtos nas novas famílias · ${familias.resumo.conflitos} conflitos · ${familias.resumo.sem_descricao} sem descrição ERP.</p>${tabela(['Código', 'Descrição ERP', 'Descrição atual', 'Situação / proposta', 'Produtos impactados', 'Decisão da família'], linhasFamilias)}` : ''}
     <details><summary>Produtos válidos e valores após preservação (${manifesto.produtos.length})</summary>
       ${tabela(['Produto', 'Descrição', 'Origem ERP', 'Família ERP', 'Agrup. Prod. (ERP)'], manifesto.produtos.map(p =>
         `<tr><td>${valor(p.codigo_produto)}</td>${Object.keys(CAMPOS).map(c => `<td>${valor(p.calculado[c])}</td>`).join('')}</tr>`))}</details>
@@ -80,7 +93,8 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
       html: `<p>Esta ação irá MODIFICAR o Cadastro Mestre ERP.</p>
         <p>Atual: ${plano.resumo.antes} · Inserir: ${plano.resumo.inseridos} · Atualizar: ${plano.resumo.atualizados} · Remover: ${plano.resumo.removidos}.</p>
         <p>Resultado esperado: <strong>${plano.resumo.depois} produtos</strong>.</p>
-        <p>Somente dicionario_master_produtos será reconstruído. Custos, OP, cadastro operacional e mapa permanecem intactos. O servidor revalidará dados do Preview, universo e contexto e preservará snapshot antes da alteração.</p>
+        <p>Catálogo de famílias ERP: cadastrar ${manifesto.catalogo_familias.resumo.novas}; atualizar descrição de ${manifesto.catalogo_familias.resumo.atualizacoes}.</p>
+        <p>Serão alterados o Cadastro Mestre e somente as famílias aprovadas. Rótulos de famílias são compartilhados, sem reclassificar produtos. Custos, OP, cadastro operacional e mapa permanecem intactos. O servidor revalidará dados, universo e contexto, preservando snapshot do Master e das famílias afetadas antes da alteração, na mesma transação.</p>
         <p>Lote: ${escapeHtml(lote)}. Digite <strong>${escapeHtml(frase)}</strong> para confirmar.</p>`,
       input: 'text', inputPlaceholder: frase,
       inputValidator: value => value === frase ? undefined : 'Digite a confirmação exatamente como indicada.',
@@ -92,7 +106,7 @@ export function createCadastroMestrePreviewController({ dom, executeOperationalB
     try {
       const result = await api.executarReconstrucaoCadastroMestre({ dadosExecucao, manifesto, revisao, lote });
       await Swal.fire({ icon: 'success', title: 'Reconstrução concluída',
-        text: `Lote ${result.lote_id} (${lote}) concluído. Master: ${result.depois} produtos. Inseridos: ${result.inseridos}; atualizados: ${result.atualizados}; removidos: ${result.removidos}. Snapshot preservado. Custos, OP, cadastro operacional e mapa intactos.` });
+        text: `Lote ${result.lote_id} (${lote}) concluído. Master: ${result.depois} produtos. Inseridos: ${result.inseridos}; atualizados: ${result.atualizados}; removidos: ${result.removidos}. Famílias cadastradas: ${result.familias?.inseridas ?? 0}; rótulos atualizados: ${result.familias?.atualizadas ?? 0}. Snapshot preservado. Custos, OP, cadastro operacional e mapa intactos.` });
     } catch (error) {
       const resposta = await Swal.fire({ icon: 'error', title: 'Reconstrução não confirmada',
         text: `${error.message} Lote: ${lote}. Não repetir automaticamente. Consulte o resultado antes de qualquer nova tentativa.`,

@@ -1,5 +1,7 @@
 # CAD-EXEC-WEB-01 — Execução explícita do Cadastro Mestre (09/10/2026)
 
+Contrato vigente **CAD-FAM-01 (15/10/2026)**: famílias entram na aprovação/revalidação e na mesma transação/snapshot do Master, com proteção específica. Transporte V2 exige novo Preview e publicação compatível de UI/função. Implementação/validação sem escrita de produção ou deploy. [Decisões, guardas e provas](./cadastro-mestre-familias-erp.md). Referências abaixo à ausência de DML em categorias descrevem a fase anterior.
+
 Preparação posterior **CAD-ENV-01**: build público isolado em dist e GET verificar=1 autenticado disponível com flag false. Sem execução/novo parser; guardas de dependência compartilhadas com executor. Revisão final de 09/10: Production READY main `04a2412`, flag false e usuário informou `DIAGNOSTICO_OK`; deploy/configuração/bucket não estão mais pendentes. Quantidade final depende do novo universo aprovado, sem valor 860 fixo no código. [Evidência atual, limites, ambiente e execução passo a passo](./cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026). As menções abaixo à ausência de deploy/carga descrevem a entrega original.
 
 ## Arquitetura e alcance
@@ -45,19 +47,19 @@ Bucket previamente existente e privado, sem policies públicas de leitura/escrit
 
 O contrato anterior enviava o original em base64, eventualmente compactado, e rejeitava arquivos maiores que 16 MiB antes da compactação. O XLS informado (`cadastro mestre 8_10(1).xls`, 24.307.397 bytes) passou pelo Preview, mas foi bloqueado no cliente antes do POST: o identificador `CAD_UI` não chegou ao log ou ao Storage. O contrato abaixo substitui esse transporte na web sem alterar filtros/reconciliação ou simplesmente aumentar o limite do binário.
 
-O adapter de Preview mantém os valores dos campos ERP necessários de **todas** as linhas não vazias, inclusive excluídas e inválidas. A representação compacta usa o contrato `CADASTRO_MESTRE_DADOS_V1`:
+O adapter de Preview mantém os valores dos campos ERP necessários de **todas** as linhas não vazias, inclusive excluídas e inválidas. A representação compacta usa o contrato `CADASTRO_MESTRE_DADOS_V2`:
 
 ```js
 {
   dados_execucao: {
-    versao_transporte: 'CADASTRO_MESTRE_DADOS_V1',
+    versao_transporte: 'CADASTRO_MESTRE_DADOS_V2',
     fonte: {
       arquivo, tipo_arquivo, aba, colunas, linha_cabecalho,
       hash_arquivo_sha256
     },
     linhas: [
       [linha, codigo_produto, descricao, tipo, descr_origem,
-       origem_cod, familia_cod, agrupamento_erp_valor]
+       origem_cod, familia_cod, agrupamento_erp_valor, familia_descricao_erp]
     ]
   },
   decisoes,
@@ -79,7 +81,7 @@ O executor central repete a regeneração com os mesmos dados contra o contexto 
 
 ## Snapshot e atomicidade
 
-Executor mantém BEGIN, locks Master/log e sete tabelas protegidas, guardas de dependência/repetição, snapshot integral/hash no JSONB, SAVEPOINT, DML somente Master/log, provas finais e COMMIT. Vazios ERP de pertencentes preservam valores; filtros não mudaram.
+Executor mantém BEGIN, locks exclusivos Master/log/famílias e SHARE nas seis tabelas imutáveis, guardas de dependência/repetição, snapshot/hash no JSONB, SAVEPOINT, DML Master/log e somente famílias aprovadas, provas finais e COMMIT. Catálogo tem prova integral própria; snapshot inclui imagens anteriores apenas das famílias afetadas. Vazios ERP de pertencentes preservam valores; filtros não mudaram.
 
 Callback web grava JSON privado em `<lote>/<hash_manifesto>.json`, com `upsert:false`; baixa e confere SHA256. Só então pode haver alteração de produtos. Referência `storage://<bucket>/<objeto>` fica no log existente. `/tmp` não é cópia durável na Vercel. CLI mantém `wx`/`fsync`; única extensão do executor registra a referência opcional do callback antes do SAVEPOINT.
 

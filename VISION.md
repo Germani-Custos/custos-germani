@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-FAM-01
+
+Família ERP deve ser identificada por código, com rótulo oficial e decisão explícita para cadastro/alteração. O Preview mostra lacunas sem preencher o operacional ou reclassificar produtos; aprovação, revalidação e transação compartilhada mantêm a carga auditável. Implementação local, sem carga real; competência/importação dos fatos intactas. [Contrato](docs/arquitetura/cadastro-mestre-familias-erp.md).
+
 ## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
 
 Código identifica a família; descrição é rótulo e pode repetir em códigos diferentes. A migration estrutural apenas permite essa representação no catálogo, preservando dados, vínculos e separação entre ERP e operacional. Cadastro automático não foi implementado. [Registro](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Eixos `data_referencia`/`criado_em` intactos.

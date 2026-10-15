@@ -2,6 +2,7 @@
 /* CAD-APPROVAL-01: propostas e decisões locais. Sem I/O, executor ou ponte ERP → Kustos. */
 import { criarPreviewCadastroMestre, textoCadastro } from './cadastro-mestre-preview-engine.js';
 import { normalizeCodigoProduto } from './spreadsheet-engine.js';
+import { proporCatalogoFamiliasCadastroMestre } from './cadastro-mestre-familias-engine.js';
 
 const comparar = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const copiar = value => JSON.parse(JSON.stringify(value));
@@ -24,7 +25,10 @@ export function serializarDeterministico(value) {
 export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
   const preview = criarPreviewCadastroMestre(linhas, contexto);
   const reconstruir = fonte.modo === 'RECONSTRUCAO_UNIVERSO';
-  const bloqueado = reconstruir && (preview.status !== 'OK' || !preview.produtos.length);
+  const catalogo = proporCatalogoFamiliasCadastroMestre(reconstruir ? linhas : [], reconstruir ? preview.produtos : [], contexto.familias);
+  const errosFamilias = catalogo.familias.filter(f => ['CONFLITO', 'CATALOGO_AMBIGUO'].includes(f.status))
+    .map(f => ({ linha: null, codigo_produto: null, codigo_familia: f.codigo, motivo: `Família ${f.codigo}: ${f.status}. Corrija a fonte/catálogo e gere novo Preview.` }));
+  const bloqueado = reconstruir && (preview.status !== 'OK' || !preview.produtos.length || errosFamilias.length > 0);
   const operacoes = [];
   const preservacoes = [];
   const pendencias = [];
@@ -100,21 +104,33 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
     motivo: produto.motivo, aprovavel: !bloqueado, bloqueios: [],
     precondicao: { produto_deve_existir: true, imagem_anterior: produto.atual }, campos_lote_na_execucao: []
   });
-  operacoes.sort((a, b) => comparar(a.codigo_produto, b.codigo_produto) || comparar(a.categoria, b.categoria));
+  for (const familia of catalogo.familias) {
+    if (!['NOVA_FAMILIA', 'ALTERACAO_DESCRICAO'].includes(familia.status)) continue;
+    const nova = familia.status === 'NOVA_FAMILIA';
+    const categoria = nova ? 'CADASTRAR_FAMILIA_ERP' : 'ATUALIZAR_ROTULO_FAMILIA_ERP';
+    operacoes.push({ id: `${categoria}:${encodeURIComponent(familia.codigo)}`, categoria,
+      tabela: 'categorias_familia', acao: nova ? 'INSERT' : 'UPDATE', codigo_familia: familia.codigo,
+      dados: nova ? { codigo: familia.codigo, descricao: familia.descricao_erp } : { descricao: familia.descricao_erp },
+      atual: familia.atual, recebido: { descricao: familia.descricao_erp }, quantidade_produtos: familia.quantidade_produtos,
+      aprovavel: !bloqueado, bloqueios: [], precondicao: { codigo: familia.codigo, atual: familia.atual } });
+  }
+  operacoes.sort((a, b) => comparar(a.codigo_produto ?? a.codigo_familia, b.codigo_produto ?? b.codigo_familia) || comparar(a.categoria, b.categoria));
   const existentes = preview.produtos.filter(p => p.atual !== null);
   const alteradosBase = existentes.filter(p => p.diferencas.some(d => d.campo !== 'agrupamento_erp_valor' && d.tipo === 'ALTERACAO_POTENCIAL')).length;
-  const inserts = operacoes.filter(o => o.acao === 'INSERT');
-  const updates = operacoes.filter(o => o.acao === 'UPDATE');
+  const inserts = operacoes.filter(o => o.tabela === 'dicionario_master_produtos' && o.acao === 'INSERT');
+  const updates = operacoes.filter(o => o.tabela === 'dicionario_master_produtos' && o.acao === 'UPDATE');
   return {
     versao_contrato: reconstruir ? 'RECONSTRUCAO_UNIVERSO_V1' : 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
     modo: reconstruir ? 'RECONSTRUCAO_UNIVERSO' : 'INCREMENTAL', reconstrucao_bloqueada: bloqueado,
     universo: reconstruir ? [...elegiveis].sort(comparar) : [],
-    fonte: copiar(fonte), status: preview.status,
+    fonte: copiar(fonte), status: errosFamilias.length ? 'COM_ERROS' : preview.status,
+    ...(reconstruir ? { catalogo_familias: catalogo } : {}),
     resumo_base: { produtos: preview.produtos.length, existentes: existentes.length, novos: inserts.length,
       existentes_sem_alteracao: existentes.length - alteradosBase, existentes_com_alteracao: alteradosBase,
       alteracoes_descricao: operacoes.filter(o => o.categoria === 'ATUALIZAR_DESCRICAO').length },
     resumo: {
       ...preview.resumo, inserts_propostos: inserts.length, updates_propostos: updates.length,
+      erros: preview.resumo.erros + errosFamilias.length,
       produtos_existentes_com_update: new Set(updates.map(o => o.codigo_produto)).size,
       operacoes_propostas: operacoes.length, operacoes_bloqueadas: operacoes.filter(o => !o.aprovavel).length,
       existentes_sem_operacao: semAlteracao.length, produtos_fora_conjunto_preservados: reconstruir ? 0 : preservados.length,
@@ -129,7 +145,7 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
     },
     distribuicao_agrupamento: [...porValor.values()].sort((a, b) => comparar(a.valor, b.valor)),
     operacoes, preservacoes, preservados: reconstruir ? [] : preservados, remocoes, sem_alteracao: semAlteracao,
-    pendencias, produtos: preview.produtos, erros: preview.erros
+    pendencias, produtos: preview.produtos, erros: [...preview.erros, ...errosFamilias]
   };
 }
 

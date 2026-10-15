@@ -88,7 +88,7 @@ describe('Fronteira administrativa HTTP — sem conexão real', () => {
 });
 
 describe('Diagnóstico autenticado somente leitura com execução desabilitada', () => {
-  function setup({ publico = false, policies = 0, autorizado = true, permissao = true, dependencia = false,
+  function setup({ publico = false, policies = 0, autorizado = true, permissao = true, permissaoFamilia = true, dependencia = false,
     connectError, bucketError, queryError, rollbackError, env = {}, authError } = {}) {
     const storage = storageWeb();
     storage.storage.getBucket.mockResolvedValue({ data: { public: publico }, error: bucketError || null });
@@ -96,7 +96,7 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
       if (sql === 'ROLLBACK' && rollbackError) throw rollbackError;
       if (sql.includes('FROM pg_trigger') && queryError) throw queryError;
       if (sql.includes('FROM pg_trigger')) return { rows: [{ triggers: dependencia }] };
-      if (sql.includes('FROM unnest')) return { rows: params[0].map(tabela => ({ tabela, leitura: permissao, lock: true, escrita_exigida: true })) };
+      if (sql.includes('FROM unnest')) return { rows: params[0].map(tabela => ({ tabela, leitura: permissao, lock: true, escrita_exigida: tabela !== 'categorias_familia' || permissaoFamilia })) };
       if (sql.includes('has_sequence_privilege')) return { rows: [{ permitida: permissao }] };
       if (sql.includes('FROM pg_policies')) return { rows: [{ quantidade: policies }] };
       if (sql.includes('FROM public.dicionario_master_produtos')) return { rows: [{ registro: { codigo_produto: '001' } }] };
@@ -128,7 +128,7 @@ describe('Diagnóstico autenticado somente leitura com execução desabilitada',
       expect(res.body.diagnostico.etapas[etapa]).toBe('OK');
     }
   });
-  it.each([{ publico: true }, { policies: 1 }, { permissao: false }, { dependencia: true }])('recusa bucket/policies/permissões/dependências inválidos (%j)', async input => {
+  it.each([{ publico: true }, { policies: 1 }, { permissao: false }, { permissaoFamilia: false }, { dependencia: true }])('recusa bucket/policies/permissões/dependências inválidos (%j)', async input => {
     const { client, storage, handler } = setup(input);
     const res = respostaWeb();
     await handler(req({ query: { verificar: '1' } }), res);

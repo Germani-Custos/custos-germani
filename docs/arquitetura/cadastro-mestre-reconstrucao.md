@@ -1,5 +1,7 @@
 # CAD-REBUILD-01 — Reconstrução do universo ERP (09/10/2026)
 
+Extensão vigente **CAD-FAM-01 (15/10/2026)**: famílias do universo têm propostas/decisões próprias, revalidação, snapshot parcial de catálogo e DML na mesma transação do Master. Proteção genérica de famílias substituída por comparação integral do catálogo esperado, sem permitir outras mudanças. Aprovação integral mantida. [Contrato, regras e validação](./cadastro-mestre-familias-erp.md). Menções históricas abaixo a categorias imutáveis/ausência de execução web descrevem as fases anteriores.
+
 ## CAD-PAYLOAD-01 — entrada compacta na execução web (09/10/2026)
 
 Na web, o XLS/XLSX/XLSM original é lido somente para o Preview. O POST passa a entregar os campos canônicos necessários de todas as linhas em tuplas compactas, metadados da fonte, decisões, hash do manifesto, confirmação e lote. O servidor regenera filtros/manifesto/contexto e o executor central repete essa revalidação sob locks, mantendo este plano, snapshot e transação. Não aceitar plano de DML do cliente nem conjunto previamente filtrado como substituto da evidência das linhas. [Contrato completo, teto JSON e limite da proveniência do arquivo](./cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).

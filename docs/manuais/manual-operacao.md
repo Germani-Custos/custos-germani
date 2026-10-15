@@ -1,5 +1,11 @@
 # Manual de Operação — Kustos Germani
 
+## Conferência de famílias ERP — CAD-FAM-01 (15/10/2026)
+
+Publicação futura deve manter UI e função no contrato V2; gerar novo Preview/revisão, conferindo famílias e produtos separadamente. No XLS validado: 860 produtos, 81 famílias, 16 existentes e 65 novas para 693 produtos, sem conflitos; todas as 65 propostas continuam pendentes nesta entrega. Manter flag desabilitada durante conferência; não cadastrar famílias manualmente ou executar reconstrução como teste.
+
+Após autorização própria, diagnóstico deve conferir também INSERT/UPDATE no catálogo; execução exige aprovação integral e confirmação. Snapshot inclui imagens anteriores das famílias afetadas e Master; falha reverte ambos. Consultar lote após resposta incerta e não repetir automaticamente. Catálogo compartilhado muda somente rótulos aprovados, sem vínculo/classificação operacional ou fatos; competência/importação permanecem intactas. [Procedimento e limites](../arquitetura/cadastro-mestre-familias-erp.md).
+
 ## Consulta do Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
 
 Após publicação autorizada, abrir Cadastro e conferir totais por fonte: no estado informado, Operacional 6.113 e Mestre ERP 860. Alternar para Master ERP e verificar código/descrição, origem/família do catálogo, agrupamento ERP e navegação de páginas. Editar/cadastrar/classificar permanece exclusivamente operacional. Preview segue disponível como fluxo separado; não enviar arquivo nem executar reconstrução para testar esta consulta.

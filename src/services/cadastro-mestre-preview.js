@@ -15,6 +15,7 @@ const ALIASES = {
   descr_origem: ['descr origem', 'descricao origem'],
   origem_cod: ['origem', 'origem cod', 'codigo origem', 'cod origem'],
   familia_cod: ['familia', 'familia cod', 'codigo familia', 'cod familia'],
+  familia_descricao_erp: ['descr familia', 'descricao familia'],
   // Decisão de negócio Fase 3.3: alias explícito, nunca equivalência Pxxx → Mxxx.
   agrupamento_erp_valor: ['agrupamento', 'agrupamento erp', 'agrupamento erp valor', 'agrup prod']
 };

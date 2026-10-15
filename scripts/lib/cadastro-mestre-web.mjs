@@ -122,6 +122,8 @@ async function verificarAmbiente(client, storage, cfg, habilitada, diagnostico) 
         has_table_privilege('public.' || t,'INSERT') AND has_table_privilege('public.' || t,'UPDATE') AND has_table_privilege('public.' || t,'DELETE')
       WHEN t='log_importacao_cadastro_mestre' THEN
         has_table_privilege('public.' || t,'INSERT') AND has_table_privilege('public.' || t,'UPDATE')
+      WHEN t='categorias_familia' THEN
+        has_table_privilege('public.' || t,'INSERT') AND has_table_privilege('public.' || t,'UPDATE')
       ELSE true END AS escrita_exigida FROM unnest($1::text[]) t`, [tabelas]);
     const sequence = await client.query(`SELECT has_sequence_privilege(
       pg_get_serial_sequence('public.log_importacao_cadastro_mestre','id'),'USAGE') AS permitida`);
@@ -197,7 +199,9 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
       if (req.method === 'GET') {
         const { rows } = await client.query(`SELECT id::text AS lote_id,status,registros_inseridos AS inseridos,registros_atualizados AS atualizados,
           metadados_origem->'registros_removidos' AS removidos,metadados_origem->'master_depois' AS depois,
-          metadados_origem->>'snapshot_referencia' AS snapshot_referencia FROM public.log_importacao_cadastro_mestre
+          metadados_origem->>'snapshot_referencia' AS snapshot_referencia,
+          metadados_origem->'catalogo_familias'->'registros_inseridos' AS familias_inseridas,
+          metadados_origem->'catalogo_familias'->'registros_atualizados' AS familias_atualizadas FROM public.log_importacao_cadastro_mestre
           WHERE identificador_lote=$1 AND metadados_origem->>'contrato'='RECONSTRUCAO_UNIVERSO_V1'`, [loteConsulta]);
         return res.status(200).json({ identificador_lote: loteConsulta, resultado: rows[0] || null });
       }

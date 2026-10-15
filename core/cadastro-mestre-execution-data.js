@@ -1,8 +1,8 @@
 // @ts-check
 /* Entrada compacta do adapter; nunca aceita patches, universo ou SQL do cliente. */
-export const VERSAO_DADOS_EXECUCAO_CADASTRO_MESTRE = 'CADASTRO_MESTRE_DADOS_V1';
+export const VERSAO_DADOS_EXECUCAO_CADASTRO_MESTRE = 'CADASTRO_MESTRE_DADOS_V2';
 export const CAMPOS_DADOS_EXECUCAO_CADASTRO_MESTRE = Object.freeze([
-  'codigo_produto', 'descricao', 'tipo', 'descr_origem', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor'
+  'codigo_produto', 'descricao', 'tipo', 'descr_origem', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'familia_descricao_erp'
 ]);
 const obrigatorios = CAMPOS_DADOS_EXECUCAO_CADASTRO_MESTRE.slice(0, 4);
 const shaValido = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
@@ -39,7 +39,7 @@ export function validarDadosExecucaoCadastroMestre(dados) {
       new Set(Object.values(fonte.colunas)).size !== campos.length || !Array.isArray(dados.linhas) || dados.linhas.length > 100000) falhar();
   let anterior = fonte.linha_cabecalho;
   for (const row of dados.linhas) {
-    if (!Array.isArray(row) || row.length !== 8 || !Number.isSafeInteger(row[0]) || row[0] <= anterior || row[0] > 1048576) falhar();
+    if (!Array.isArray(row) || row.length !== CAMPOS_DADOS_EXECUCAO_CADASTRO_MESTRE.length + 1 || !Number.isSafeInteger(row[0]) || row[0] <= anterior || row[0] > 1048576) falhar();
     anterior = row[0];
     for (let index = 1; index < row.length; index++) {
       const value = row[index];
