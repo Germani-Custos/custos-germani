@@ -1,5 +1,13 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-15 — CAD-ERP-VIEW-01: duas fontes no Cadastro
+
+Cadastro agora oferece **Cadastro Operacional** (`dicionario_produtos`, classificação Kustos/runtime) e **Cadastro Mestre ERP** (`dicionario_master_produtos`, universo oficial, somente consulta). Totais vêm dos dados carregados, sem fixar 6.113/860 no código. A visão ERP permite busca por código/descrição, filtros por origem/família, agrupamento ERP bruto e páginas visuais de 50; leitura Supabase em páginas de 500 com contagem exata, reutilizando o leitor existente. Origem/família resolvem exclusivamente por código ERP exato nos catálogos. [Fluxo, limites e validação](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
+Preview continua separado e acessível em ambas as visões; cadastro/edição/classificação permanecem no painel operacional. A nova visão não sincroniza nem altera dados/schema e não executa reconstrução. `data_referencia` e `criado_em` dos fatos permanecem intactos. Esta implementação ainda depende de publicação autorizada; registros anteriores abaixo são históricos.
+
+Validação CAD-ERP-VIEW-01: **463 testes/35 arquivos passaram**, com 31 regressões novas; reexecução com dois workers após timeout inicial em teste volumoso preexistente, sem alterar timeout. Sonda real restrita a GET confirmou 860 produtos/50 por página/18 páginas, sem consultar operacional ou escrever. Interface conferida localmente com dados sintéticos; [evidências e limites](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Atualização 2026-10-15 — CAD-OP-PAGE-01: Cadastro operacional completo
 
 `getProductMaster()` pagina `dicionario_produtos`, `historico_custos` e `apontamentos_op` em blocos de 500, com ordenação por código, contagem exata e recusa de leitura parcial. O aviso passa a dizer **código(s) importado(s) ausente(s) do cadastro operacional**. A tabela continua operacional; não usa nem sincroniza o Master ERP. O diagnóstico anterior confirmou Master ERP com 860 registros e operacional com 6.113: com as fontes completas, 501 códigos importados únicos e zero ausentes; os 407 eram efeito do corte em 1.000. [Contrato e validação](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).

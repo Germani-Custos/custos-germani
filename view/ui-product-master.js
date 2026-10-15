@@ -1,4 +1,5 @@
 import { createCadastroMestrePreviewController } from './ui-cadastro-mestre-preview.js';
+import { createCadastroMestreErpController } from './ui-cadastro-mestre-erp.js';
 import { api } from '../src/services/api.js';
 import { escapeHtml, fillSelect, showToast } from './ui-utils.js';
 
@@ -6,6 +7,15 @@ const TODOS = 'TODOS';
 
 export function createProductMasterController({ dom, executeOperationalBoundary, onChanged }) {
   let cadastro = { produtos: [], origens: [], familias: [], agrupamentos: [], ausentes: [] };
+  const erp = dom.erpTableBody ? createCadastroMestreErpController({ dom, executeOperationalBoundary }) : null;
+
+  function selecionarVisao(visao) {
+    const mestre = visao === 'erp';
+    if (dom.masterOperationalPanel) dom.masterOperationalPanel.classList[mestre ? 'add' : 'remove']('hidden');
+    if (dom.erpPanel) dom.erpPanel.classList[mestre ? 'remove' : 'add']('hidden');
+    dom.masterOperationalTab?.setAttribute('aria-pressed', String(!mestre));
+    dom.erpTab?.setAttribute('aria-pressed', String(mestre));
+  }
 
   function labelById(rows, id) { return rows.find(row => String(row.id) === String(id))?.descricao || '-'; }
   function status(produto) { return produto.origem_id && produto.familia_id ? 'Classificado' : 'Produto sem classificação'; }
@@ -20,6 +30,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
       (familia === TODOS || String(produto.familia_id) === familia)
     );
     dom.masterMissingCount.textContent = String(cadastro.ausentes.length);
+    if (dom.masterOperationalCount) dom.masterOperationalCount.textContent = cadastro.produtos.length.toLocaleString('pt-BR');
     dom.masterTableBody.innerHTML = rows.length ? rows.map(produto => `
       <tr><td>${escapeHtml(produto.codigo_produto)}</td><td>${escapeHtml(produto.descricao || '-')}</td>
       <td>${escapeHtml(labelById(cadastro.origens, produto.origem_id))}</td><td>${escapeHtml(labelById(cadastro.familias, produto.familia_id))}</td><td>${escapeHtml(produto.agrupamento_cod ? labelById(cadastro.agrupamentos, produto.agrupamento_cod) : 'Sem agrupamento')}</td>
@@ -28,6 +39,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
   }
 
   function openEditor(codigo = '', descricao = '') {
+    selecionarVisao('operacional');
     const produto = cadastro.produtos.find(item => item.codigo_produto === codigo) || {};
     dom.masterCode.value = produto.codigo_produto || '';
     dom.masterCode.disabled = Boolean(produto.codigo_produto);
@@ -54,6 +66,9 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     dom.masterFamiliaFilter.addEventListener('change', render);
     dom.masterNewBtn.addEventListener('click', () => openEditor());
     createCadastroMestrePreviewController({ dom, executeOperationalBoundary }).bind();
+    dom.masterOperationalTab?.addEventListener('click', () => selecionarVisao('operacional'));
+    dom.erpTab?.addEventListener('click', () => selecionarVisao('erp'));
+    selecionarVisao('operacional');
     dom.masterCancelBtn.addEventListener('click', () => dom.masterForm.classList.add('hidden'));
     dom.masterTableBody.addEventListener('click', event => { const code = event.target.closest('[data-master-code]')?.dataset.masterCode; if (code) openEditor(code); });
     dom.masterForm.addEventListener('submit', event => executeOperationalBoundary('salvar cadastro mestre de produto', async () => {
@@ -65,7 +80,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
       await onChanged?.();
       showToast('success', 'Cadastro mestre atualizado. Custos e OP passam a consultar esta classificação.');
     }, { message: 'Não foi possível salvar o cadastro mestre do produto.' }));
-    return reload();
+    return Promise.all([reload(), erp?.bind()]);
   }
   return { bind, reload, openEditor };
 }

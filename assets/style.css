@@ -198,6 +198,14 @@ input, select {
 /* Tabela principal */
 .chart-panel { height: 320px; }
 .table-panel { overflow-x: auto; }
+.cadastro-source-bar, .cadastro-view-switch, .cadastro-erp-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cadastro-source-bar { justify-content: space-between; }
+.cadastro-view-switch [aria-pressed="true"] { border-color: var(--primary); background: var(--danger-soft); color: var(--text); }
+#view-products .cadastro-erp-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cadastro-erp-summary { flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.cadastro-erp-pagination { justify-content: flex-end; margin: 12px 0; }
+#master-erp-panel h3, #master-operational-panel h3 { margin: 8px 0; }
+@media (max-width: 700px) { #view-products .cadastro-erp-filters { grid-template-columns: 1fr; } .cadastro-view-switch { width: 100%; } .cadastro-view-switch button { flex: 1 1 200px; } }
 /* Um único contêiner mantém a barra horizontal acessível durante a rolagem das linhas. */
 #view-products .master-table-scroll {
   max-height: 60vh;

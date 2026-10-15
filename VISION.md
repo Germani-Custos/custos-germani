@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-ERP-VIEW-01
+
+Consultar o universo oficial ERP deve ser possível sem confundi-lo com a dimensão operacional usada na investigação de Custos/OP. Duas visões no Cadastro explicitam fonte e total, mantendo classificação Kustos no operacional e Master ERP somente leitura. Sem sincronização, nova fonte de verdade, mudança de fatos ou dos eixos `data_referencia`/`criado_em`. [Contrato UX](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Atualização 2026-10-15 — CAD-OP-PAGE-01
 
 Contadores investigativos devem considerar fontes completas, sem confundir Cadastro Operacional com Master ERP. A leitura paginada do Cadastro elimina ausências artificiais e mantém `dicionario_produtos` como dimensão do runtime/classificação Kustos. A visão Master ERP continua fora desta etapa. Nenhuma mudança de dados ou dos eixos `data_referencia`/`criado_em`. [Contrato](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).

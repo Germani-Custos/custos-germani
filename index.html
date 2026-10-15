@@ -366,17 +366,41 @@
 
       <!-- ===== VIEW: CADASTRO MESTRE ===== -->
       <section id="view-products" class="view hidden">
-        <header class="view-header"><h2>Cadastro</h2><p>Consulte a classificação de produtos usada por Custos e OP. Use Preview mestre para conferir o arquivo ERP e preparar decisões locais antes de uma carga.</p></header>
+        <header class="view-header"><h2>Cadastro</h2><p>Consulte separadamente a classificação operacional de Custos/OP e o universo oficial do Master ERP.</p></header>
+        <div class="panel cadastro-source-bar">
+          <div class="cadastro-view-switch" role="group" aria-label="Fonte do cadastro">
+            <button type="button" id="master-operational-tab" class="btn-outline" aria-pressed="true" aria-controls="master-operational-panel">Cadastro Operacional — <span id="master-operational-count">…</span></button>
+            <button type="button" id="master-erp-tab" class="btn-outline" aria-pressed="false" aria-controls="master-erp-panel">Cadastro Mestre ERP — <span id="master-erp-count">…</span></button>
+          </div>
+          <div><input id="master-import-input" class="hidden" type="file" accept=".xlsm,.xlsx,.xls,.XLSM,.XLSX,.XLS" /><button type="button" id="master-import-btn" class="btn-outline">Preview mestre (XLSM / XLSX / XLS)</button></div>
+        </div>
+        <div id="master-operational-panel" role="region" aria-labelledby="master-operational-tab">
+        <h3>Cadastro Operacional</h3><p class="help-text">Dimensão usada por Custos e OP. A classificação Kustos é mantida nesta visão.</p>
         <div class="panel"><div class="filters-grid">
           <div class="field"><label for="master-search">Código ou descrição</label><input id="master-search" type="search" placeholder="Pesquisar produto" /></div>
           <div class="field"><label for="master-origem-filter">Origem</label><select id="master-origem-filter"><option value="TODOS">Todas as origens</option></select></div>
           <div class="field"><label for="master-familia-filter">Família</label><select id="master-familia-filter"><option value="TODOS">Todas as famílias</option></select></div>
-        </div><div class="actions-row"><span class="help-text"><strong id="master-missing-count">0</strong> código(s) importado(s) ausente(s) do cadastro operacional.</span><input id="master-import-input" class="hidden" type="file" accept=".xlsm,.xlsx,.xls,.XLSM,.XLSX,.XLS" /><button id="master-import-btn" class="btn-outline">Preview mestre (XLSM / XLSX / XLS)</button><button id="master-new-btn" class="btn-primary">Cadastrar produto</button></div></div>
+        </div><div class="actions-row"><span class="help-text"><strong id="master-missing-count">0</strong> código(s) importado(s) ausente(s) do cadastro operacional.</span><button id="master-new-btn" class="btn-primary">Cadastrar produto</button></div></div>
         <form id="master-form" class="panel hidden"><div class="filters-grid">
           <div class="field"><label for="master-code">Código</label><input id="master-code" required /></div><div class="field"><label for="master-description">Descrição</label><input id="master-description" required /></div>
           <div class="field"><label for="master-origem">Origem</label><select id="master-origem"></select></div><div class="field"><label for="master-familia">Família</label><select id="master-familia"></select></div><div class="field"><label for="master-agrupamento">Agrupamento investigativo</label><select id="master-agrupamento"></select></div>
         </div><div class="actions-row"><button type="button" id="master-cancel-btn" class="btn-outline">Cancelar</button><button class="btn-primary">Salvar classificação</button></div></form>
         <div class="panel table-panel master-table-scroll" role="region" aria-label="Produtos cadastrados: rolagem horizontal e vertical" tabindex="0"><table><thead><tr><th>Código</th><th>Descrição</th><th>Origem</th><th>Família</th><th>Agrupamento</th><th>Status</th><th>Ação</th></tr></thead><tbody id="master-table-body"></tbody></table></div>
+        </div>
+        <div id="master-erp-panel" class="hidden" role="region" aria-labelledby="master-erp-tab">
+          <h3>Cadastro Mestre ERP — somente consulta</h3>
+          <p class="help-text">Universo oficial do ERP. Esta consulta não altera produtos nem a classificação operacional.</p>
+          <div class="panel">
+            <div class="filters-grid cadastro-erp-filters">
+              <div class="field"><label for="erp-search">Código ou descrição ERP</label><input id="erp-search" type="search" placeholder="Pesquisar no Master ERP" /></div>
+              <div class="field"><label for="erp-origem-filter">Origem ERP</label><select id="erp-origem-filter"><option value="">Todas as origens ERP</option></select></div>
+              <div class="field"><label for="erp-familia-filter">Família ERP</label><select id="erp-familia-filter"><option value="">Todas as famílias ERP</option></select></div>
+            </div>
+            <div class="actions-row cadastro-erp-summary"><span id="erp-summary" class="help-text" role="status" aria-live="polite">Carregando Cadastro Mestre ERP…</span><button type="button" id="erp-refresh-btn" class="btn-outline">Atualizar consulta</button></div>
+          </div>
+          <div class="panel table-panel master-table-scroll" role="region" aria-label="Produtos do Cadastro Mestre ERP" tabindex="0"><table><thead><tr><th>Código</th><th>Descrição</th><th>Origem</th><th>Família</th><th>Agrupamento ERP</th></tr></thead><tbody id="erp-table-body"></tbody></table></div>
+          <div class="cadastro-erp-pagination" aria-label="Paginação do Master ERP"><button type="button" id="erp-previous-btn" class="btn-outline" disabled>Anterior</button><span id="erp-page-info" class="help-text" role="status" aria-live="polite"></span><button type="button" id="erp-next-btn" class="btn-outline" disabled>Próxima</button></div>
+        </div>
       </section>
 
       <!-- ===== VIEW: DOCUMENTAÇÃO ===== -->

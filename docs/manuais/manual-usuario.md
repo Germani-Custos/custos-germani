@@ -1,5 +1,13 @@
 # Manual do Usuário — Custos Germani
 
+## Duas visões do Cadastro — CAD-ERP-VIEW-01 (15/10/2026)
+
+Use **Cadastro Operacional** para a classificação Kustos consumida por Custos/OP. Use **Cadastro Mestre ERP** para consultar o universo oficial reconstruído do ERP. Os controles mostram seus totais reais, por exemplo 6.113 e 860, e preservam separadamente busca/filtros/página ao alternar. Materiais existentes somente no operacional não aparecem automaticamente no ERP.
+
+No Master ERP, pesquise código/descrição, filtre origem/família e navegue em páginas de 50; a quantidade encontrada considera todo o universo carregado. Origem/família mostram descrição do catálogo por código ERP exato, ou pendência explícita. **Agrupamento ERP** mostra apenas o valor bruto do Master; não é a classificação operacional. **Atualizar consulta** relê o Master e reinicia a página, mantendo os filtros válidos; não sincroniza nem grava.
+
+Master ERP não oferece editar/excluir/cadastrar/classificar. **Cadastrar produto** permanece no painel operacional. **Preview mestre (XLSM / XLSX / XLS)** continua como fluxo separado de conferência/aprovação; consultar/trocar visões não executa reconstrução. Esta entrega não muda fatos, competência `data_referencia` ou evento `criado_em`. [Contrato](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
 
 A tabela Cadastro permanece mostrando `dicionario_produtos`, a dimensão operacional de Custos/OP e da classificação Kustos. Ela pode conter materiais fora dos 860 produtos do Master ERP; a reconstrução não remove produtos operacionais. O aviso agora informa **código(s) importado(s) ausente(s) do cadastro operacional** e compara códigos únicos de Custos/OP com o cadastro operacional completo, sem depender da busca/filtros visuais.

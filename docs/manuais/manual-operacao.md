@@ -1,5 +1,11 @@
 # Manual de Operação — Kustos Germani
 
+## Consulta do Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
+
+Após publicação autorizada, abrir Cadastro e conferir totais por fonte: no estado informado, Operacional 6.113 e Mestre ERP 860. Alternar para Master ERP e verificar código/descrição, origem/família do catálogo, agrupamento ERP e navegação de páginas. Editar/cadastrar/classificar permanece exclusivamente operacional. Preview segue disponível como fluxo separado; não enviar arquivo nem executar reconstrução para testar esta consulta.
+
+Erro/truncamento na leitura ERP deve aparecer como **indisponível**, nunca zero ou fallback operacional. **Atualizar consulta** permite nova leitura após recuperação ou reconstrução previamente autorizada; filtros válidos são preservados e página volta à primeira. Totais respeitam visibilidade/RLS do cliente; a leitura paginada não é snapshot transacional entre requisições. Sem grant/policy/migration/env/dados novos. `data_referencia` é competência e `criado_em` é importação, intactos. [Contrato e validação](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
 
 A reconstrução ERP já havia sido concluída antes desta tarefa: diagnóstico confirmou 860 no Master ERP e 6.113 no operacional. A correção atual não executa reconstrução nem sincroniza bases; remove o truncamento das leituras usadas pela tabela/contador operacional. Após deploy autorizado, recarregar Cadastro e conferir que o aviso nomeia cadastro operacional; no contexto diagnosticado, 501 códigos únicos importados devem resultar em zero ausentes. A tabela pode continuar mostrando materiais de manutenção presentes no operacional.

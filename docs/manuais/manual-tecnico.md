@@ -1,5 +1,11 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Consulta Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
+
+`createProductMasterController` coordena os dois painéis sem compartilhar filtros/datasets. `createCadastroMestreErpController` → `api.getCadastroMestreErp()` → `lerContextoCadastroMestrePreview(supabase)` reutiliza exclusivamente SELECTs de Master/origens/famílias com páginas de 500, ORDER BY e count exact. O leitor validado e os motores de Preview/aprovação/reconstrução não foram modificados. As duas fontes são carregadas independentemente ao inicializar Cadastro; alternar não refaz consultas. Atualização ERP é manual e somente leitura.
+
+`core/cadastro-mestre-erp-engine.js` prepara apresentação, resolve categorias pelo helper `resolverCodigoExato` e calcula busca/filtros/páginas de 50 em memória. Reutiliza `normalizeCodigoProduto`, `normalizeText` e `textoCadastro`. Códigos ERP (não UUIDs operacionais) são valores dos filtros. Vazio, inexistente e ambíguo recebem rótulos próprios; não escolher primeiro duplicado nem inferir por descrição. `agrupamento_cod` é ignorado. Nenhuma nova consulta SQL/RPC, tabela, sincronização, escrita ou mudança de `data_referencia`/`criado_em`. [Detalhes e limites](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Cadastro operacional — paginação CAD-OP-PAGE-01 (15/10/2026)
 
 Somente `getProductMaster()` passa a ler integralmente as três fontes volumosas com `supabase.from().select(..., {count:'exact'}).order(...).range(inicio,inicio+499)`. Ordenação: `codigo_produto` em `dicionario_produtos`/`historico_custos` e `cod_produto` em `apontamentos_op`. Nos fatos, os empates têm o mesmo código projetado. A paginação termina no total exato (inclusive zero/múltiplo de 500), sem requisição vazia extra. Erro, ausência de count, página truncada ou contagem alterada interrompem o resultado; não calcular ausentes com dados parciais.

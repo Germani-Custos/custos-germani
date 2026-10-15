@@ -563,6 +563,15 @@ export const api = {
     }
   },
 
+  /** Consulta ERP somente leitura; reutiliza paginação integral do Master e catálogos. */
+  async getCadastroMestreErp() {
+    try {
+      return ok(await lerContextoCadastroMestrePreview(supabase));
+    } catch (error) {
+      return fail('Falha ao carregar o Cadastro Mestre ERP.', { metodo: 'getCadastroMestreErp' }, error);
+    }
+  },
+
   /** Cadastro legado: a mesma dimensão consultada por Custos e OP. */
   async getProductMaster() {
     const lerCompleto = async (table, fields, key) => {

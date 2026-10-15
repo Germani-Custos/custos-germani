@@ -1,5 +1,14 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-15 — CAD-ERP-VIEW-01
+
+- [x] Disponibilizar consulta do Master ERP dentro de Cadastro, com fonte/total explícitos e estado separado do operacional.
+- [x] Reutilizar paginação integral existente e resolução por código ERP; busca/filtros locais, páginas visuais de 50 e agrupamento somente `agrupamento_erp_valor`.
+- [x] Manter Preview comum e edição/cadastro operacional no seu painel; sem escrita, schema, sincronização ou reconstrução.
+- [ ] Publicar após revisão/autorização e conferir as duas visões com a sessão de produção. Não fazer carga para validar consulta.
+
+[Contrato e testes](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026). Registros anteriores sobre ausência de visão ERP são históricos. `data_referencia`/`criado_em` intactos.
+
 ## Atualização 2026-10-15 — CAD-OP-PAGE-01
 
 - [x] Paginar as três fontes do contador operacional, detectar leitura incompleta e explicitar seu nome no aviso. Sem sincronização Master → operacional, nova visão, schema ou escrita.

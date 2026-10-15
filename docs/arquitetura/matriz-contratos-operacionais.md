@@ -1,5 +1,9 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## Consulta separada ERP — CAD-ERP-VIEW-01 (15/10/2026)
+
+Cadastro → seleção Operacional/ERP → `createCadastroMestreErpController` → `api.getCadastroMestreErp()` → leitor integral existente via `supabase.from()` (`dicionario_master_produtos`, `categorias_origem`, `categorias_familia`, páginas de 500/count exact/ORDER BY) → núcleo puro de consulta → busca/filtros/páginas locais de 50/total encontrado. Sem operacional, fatos ou mapa nessa API. Origem/família resolvem por código exato; agrupamento é `agrupamento_erp_valor`. Estados independentes; cadastro/edição operacional e Preview existentes mantidos. Nenhum acesso de escrita, reconstrução, SQL/RPC ou alteração de eixos temporais. [Contrato UX](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+
 ## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
 
 UI `createProductMasterController.reload` → `getProductMaster()` → SELECTs paginados de `dicionario_produtos`, códigos de `historico_custos` e de `apontamentos_op`, 500 linhas/count exact/ORDER BY código → normalização/deduplicação existentes → tabela operacional e contador global. Catálogos de origem/família/agrupamento continuam auxiliares. Falha/truncamento/contagem alterada retorna erro, não total parcial. Aviso nomeia cadastro operacional. Contrato de retorno e edição operacional mantidos; não consultar/sincronizar Master ERP nesta carga, nem alterar fatos, classificação ou `data_referencia`/`criado_em`. [Contrato e regressões](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
