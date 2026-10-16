@@ -1,5 +1,7 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+**Escopo documental:** as primeiras seções registram os contratos atuais de famílias/consulta ERP/leitura operacional; as seções posteriores preservam entrega, causa, testes e limites de cada etapa. “Sem visão ERP”, “sem botão” e “ausentes preservados” são afirmações históricas explicitamente sucedidas. Uso atual sem cronologia: [Manual do Usuário](../manuais/manual-usuario.md). Não houve nova publicação ou consulta real nesta reorganização.
+
 ## CAD-FAM-01 — famílias ERP no Preview (15/10/2026)
 
 Preview possui seção própria **Catálogo de famílias ERP**, separada das propostas de produtos: código, rótulos ERP/atual, situação/proposta, impacto e decisão. Famílias novas/alterações exigem aprovação própria; códigos diferentes mantêm identidade mesmo com rótulos iguais. Conflito bloqueia carga; rótulo vazio preserva. Seleção/decisão/download não escrevem, e qualquer rejeição/pendência impede execução integral. [Contrato vigente e validação real somente leitura](../arquitetura/cadastro-mestre-familias-erp.md). Consulta operacional e visão ERP permanecem independentes; fatos/eixos temporais intactos.

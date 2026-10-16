@@ -13,8 +13,8 @@
 - **Regime ESTÁVEL / OSCILANDO / MUITO INSTÁVEL** — `LIMIAR_ESTAVEL` (3) e `LIMIAR_OSCILANDO` (8) em `core/report-engine.js`: classificam a média histórica de variação percentual de um produto (`calcInstabilityScore`). Independentes do alerta crítico acima — um mede variação pontual entre 2 importações, o outro a média histórica.
 - **Mínimo de pontos para mudança de regime** — `MIN_PONTOS_REGIME` (4) em `core/report-engine.js`: quantidade mínima de importações de um produto para comparar a 1ª metade do histórico com a 2ª e sinalizar `mudouRegime`.
 - **Tamanho de lote de importação** — `IMPORT_CHUNK_SIZE` (400) em `src/services/api.js`: valor operacional (não regra de negócio) para o upsert em `historico_custos` em lotes.
-- **Teto de comparação entre importações** — `IMPORT_COMPARISON_LOOKBACK_LIMIT` (1000) em `src/services/api.js`: quantidade de linhas (só `criado_em`) lidas para achar as 2 últimas importações distintas. Risco conhecido de truncamento se a tabela crescer muito com poucas importações recentes; ver comentário no código.
-- **Limite de exibição do preview de importação** — `IMPORT_PREVIEW_DISPLAY_LIMIT` (20) em `view/ui-controller.js`: só limita quantas linhas aparecem na tabela do modal de preview; não afeta o que é validado/importado.
+- **Leitura de comparação entre importações** — o antigo teto `IMPORT_COMPARISON_LOOKBACK_LIMIT` (1000) pertence ao registro histórico MNT-07. CUSTOS-PAGE-01 passou a paginar timestamps/fatos sem teto total, preservando a escolha dos dois `criado_em` distintos. Isso não resolve LOG-02 (chunks do mesmo lote). [Contrato vigente](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+- **Limite de exibição do preview de importação** — `IMPORT_PREVIEW_DISPLAY_LIMIT` (20) em `view/ui-import.js`: só limita quantas linhas aparecem na tabela do modal de preview; não afeta o que é validado/importado.
 
 ## Motor investigativo de OP (MNT-OP-02 / MNT-OP-03)
 

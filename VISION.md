@@ -1,285 +1,32 @@
 # Visão do Produto — Kustos Germani
 
-## Atualização 2026-10-16 — CUSTOS-PAGE-01
+## Identidade e missão
 
-A investigação de Custos deve carregar o conjunto completo antes de construir filtros ou analisar fatos. Paginação sem teto total e falha explícita evitam hierarquia vazia e análises silenciosamente incompletas; não criam classificação nem sincronizam o Master ERP. Competência (`data_referencia`) e importação (`criado_em`) mantêm seus contratos. [Leituras e validação](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+O Kustos Germani é um **motor de investigação operacional de custos** e uma camada analítica sobre evidências ERP/SAP. Sua missão é tornar a auditoria rápida, contextual e orientada por anomalias: o investigador deve encontrar o problema em segundos, entender por que merece atenção e decidir o próximo passo.
 
-## Atualização 2026-10-15 — CAD-FAM-01
+O produto não deve se tornar ERP genérico, CRUD administrativo complexo, dashboard decorativo, sistema burocrático ou réplica de Power BI/Metabase.
 
-Família ERP deve ser identificada por código, com rótulo oficial e decisão explícita para cadastro/alteração. O Preview mostra lacunas sem preencher o operacional ou reclassificar produtos; aprovação, revalidação e transação compartilhada mantêm a carga auditável. Implementação local, sem carga real; competência/importação dos fatos intactas. [Contrato](docs/arquitetura/cadastro-mestre-familias-erp.md).
+## Princípios
 
-## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
+1. **Velocidade de investigação acima de tudo.** Toda mudança deve ajudar a encontrar problemas mais rápido; caso contrário, simplificar ou não implementar.
+2. **Contexto antes de navegação.** Busca direta e contexto por linha reduzem cliques e interpretação manual. A fila deve apontar o que merece atenção.
+3. **Explicar os eventos.** Mostrar quando o custo mudou, entre quais importações, de qual valor para qual valor e com quais evidências.
+4. **Priorizar mudanças de comportamento.** Ruptura de estabilidade merece atenção especial; variação isolada não substitui a leitura do histórico.
+5. **Decisão operacional explicável.** Na OP, produção, tempo, KG/Hora e paradas sustentam a decisão conjunta. Nenhum indicador isolado define criticidade. Fatos ERP e interpretação Kustos permanecem separados.
+6. **Temporalidade explícita.** `data_referencia` é competência; `criado_em` é evento de importação. O mesmo recorte deve acompanhar fila, indicadores e drill-through.
+7. **Robustez e confiança.** Importação de fatos tolera erros por linha e colunas extras; falhas operacionais precisam aparecer sem mascarar indisponibilidade como ausência de problemas. Leituras completas e contratos verificáveis sustentam a investigação.
+8. **Identidade por código.** Descrição é rótulo. Classificação depende do dicionário/códigos/FKs; agrupamento ERP não implica classificação Kustos. Cadastro apoia a investigação e preserva os fatos históricos.
+9. **Revisar antes de executar.** Consultar, aprovar e executar são ações distintas. Reconstrução administrativa exige aprovação integral, revalidação, snapshot, atomicidade e evidências auditáveis. A resiliência por linha da importação de fatos não autoriza reconstrução cadastral parcial.
+10. **Exportar contexto para ação.** A exportação deve conservar a fila priorizada, os campos escolhidos e a rastreabilidade de competência e importação.
 
-Código identifica a família; descrição é rótulo e pode repetir em códigos diferentes. A migration estrutural apenas permite essa representação no catálogo, preservando dados, vínculos e separação entre ERP e operacional. Cadastro automático não foi implementado. [Registro](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Eixos `data_referencia`/`criado_em` intactos.
+## Direção estratégica
 
-## Atualização 2026-10-15 — CAD-ERP-VIEW-01
+Evoluir de investigação contextual para memória comportamental por produto: reincidência de alertas, trajetória de regime e comparação de períodos equivalentes. A inteligência operacional deve distinguir sazonalidade de ruptura, priorizar risco e sugerir próximos focos com explicação verificável.
 
-Consultar o universo oficial ERP deve ser possível sem confundi-lo com a dimensão operacional usada na investigação de Custos/OP. Duas visões no Cadastro explicitam fonte e total, mantendo classificação Kustos no operacional e Master ERP somente leitura. Sem sincronização, nova fonte de verdade, mudança de fatos ou dos eixos `data_referencia`/`criado_em`. [Contrato UX](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+Previsão de tendência e integração direta ERP/SAP são possibilidades de longo prazo. Eventual sugestão de classificação depende de código de negócio, revisão explícita e contrato aprovado; texto livre não se torna regra de categorização.
 
-## Atualização 2026-10-15 — CAD-OP-PAGE-01
+Segurança de acesso, configuração verificável e rede de qualidade são condições para sustentar essa evolução. A arquitetura deve permanecer proporcional ao problema e favorecer dados já carregados, motores puros e contratos claros entre camadas.
 
-Contadores investigativos devem considerar fontes completas, sem confundir Cadastro Operacional com Master ERP. A leitura paginada do Cadastro elimina ausências artificiais e mantém `dicionario_produtos` como dimensão do runtime/classificação Kustos. A visão Master ERP continua fora desta etapa. Nenhuma mudança de dados ou dos eixos `data_referencia`/`criado_em`. [Contrato](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+## Onde consultar cada assunto
 
-## Atualização 2026-10-09 — CAD-PAYLOAD-01: executar o universo revisado
-
-O tamanho físico do arquivo ERP não deve impedir a execução de um universo já revisado. O original é lido no Preview; a execução transporta seus campos necessários, vinculados à aprovação, e o servidor recalcula filtros, universo e reconciliação sobre o contexto atual. Snapshot, aprovação integral e atomicidade continuam obrigatórios. O hash do arquivo preserva proveniência declarada pelo navegador; sem o binário, o servidor não comprova sozinho a origem ERP. [Contrato e limites](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto). Não muda fatos, classificação operacional, `data_referencia` ou `criado_em`.
-
-## Atualização 2026-10-09 — observabilidade TLS administrativa
-
-CAD-DIAG-TLS-01 permite comparar a identidade da CA por fingerprint sem divulgar certificado ou credenciais. Inspeção restrita ao GET administrativo autorizado; não muda reconstrução, fatos ou eixos temporais. [Limites](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
-
-## Atualização 2026-10-09 — diagnóstico administrativo seguro
-
-CAD-DIAG-01 torna falhas de infraestrutura distinguíveis por etapa/código sanitizado no GET de leitura, sem habilitar execução nem expor segredos. Não muda filtros, fatos, competência (`data_referencia`) ou importação (`criado_em`). [Procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
-
-## Atualização 2026-10-09 — preparação verificável
-
-O administrador pode conferir os requisitos de execução por diagnóstico autenticado somente leitura, mantendo reconstrução desabilitada. Publicação por allowlist separa código/segredos administrativos do frontend; aprovação e executor permanecem únicos. [CAD-ENV-01](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Ambiente real ainda pendente; nenhuma reconstrução ou mudança em fatos/competência/importação.
-
-## Atualização 2026-10-09 — aprovação e execução distinguíveis
-
-O investigador pode solicitar reconstrução pela aplicação após revisão integral e confirmação explícita, separadas da aprovação/download. O servidor preserva snapshot, revalida contexto e confirma lote; fatos e classificação operacional ficam intactos. Nenhuma carga automática. [CAD-EXEC-WEB-01](docs/arquitetura/cadastro-mestre-execucao-web.md). Competência `data_referencia` e evento `criado_em` dos fatos permanecem iguais.
-
-## Atualização 2026-10-09 — universo mestre auditável
-
-O Master ERP representa o universo atual filtrado do arquivo, permitindo revisar claramente quem pertence e quem será removido. A reconstrução exige aprovação integral e execução administrativa atômica com snapshot auditável. Preservação de campos vazios vale para produtos que continuam no universo; fatos históricos e classificação operacional de Custos/OP permanecem intactos. Esta decisão sucede a preservação de ausentes no Master descrita nas entregas históricas abaixo. [Contrato CAD-REBUILD-01](docs/arquitetura/cadastro-mestre-reconstrucao.md). `data_referencia` permanece competência e `criado_em` proveniência de importação.
-
-## Atualização 2026-10-08 — arquivo ERP direto no Preview
-
-O Cadastro aceita XLS, XLSX e XLSM diretamente no navegador para revisar o Master ERP. O formato não muda os filtros ou a preservação. Aprovar prepara decisões locais antes de eventual execução futura; o Preview não altera a classificação usada por Custos/OP.
-
-## Atualização 2026-10-08 — CAD-UX-01
-
-O Cadastro permite navegar por listas extensas mantendo acesso à rolagem horizontal e ao cabeçalho. A intenção manual **Sem agrupamento** remove a classificação investigativa; células ERP vazias continuam preservando dados. A melhoria acelera a revisão sem mudar a arquitetura do Master ou a importação.
-
-## Atualização 2026-10-08 — carga mestre com proveniência
-
-A primeira carga ERP autorizada foi revalidada contra o manifesto e registrada em lote, sem mudar classificações operacionais ou fatos. O Master preserva códigos ERP e proveniência; resolução Kustos continua uma decisão separada. A carga pontual da [Fase 3.4](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md) não ativa o importer legado nem cria ponte por descrição.
-
-## Atualização 2026-10-08 — aprovação explícita do Cadastro Mestre
-
-A evidência ERP passa por manifesto revisável antes de qualquer execução. `Agrup. Prod.` é o agrupamento ERP oficial, mas não é categoria Kustos: códigos Pxxx são preservados sem conversão para Mxxx. A revisão local não grava dados nem transforma pendência de família em classificação. A dimensão operacional e fatos de Custos/OP permanecem fora deste fluxo.
-
-## Missão
-
-Transformar auditoria de custos em um processo rápido, investigativo, contextual e orientado por anomalias.
-
-O investigador deve encontrar o problema em segundos, não em minutos.
-
----
-
-## Atualizacao 2026-08-10 — contexto OP atual
-
-O cockpit acompanha a base disponivel e o recorte investigativo escolhido. Apos importacao, a carga local e atualizada; filtros e competencia recalculam contexto sem consultas repetidas. Competencia usa `data_referencia`; `criado_em` registra somente a entrada do apontamento.
-
-## Identidade do Produto
-
-O Kustos Germani é um **motor de investigação operacional de custos**, não um dashboard.
-
-### O que isso significa na prática:
-
-| Dashboard | Motor de Investigação |
-|---|---|
-| Mostra o estado atual | Responde por que o custo mudou |
-| Exige navegação hierárquica | Busca direta por produto/código |
-| Exibe variação | Mostra quando e em qual import ocorreu |
-| Lista os mais instáveis | Detecta quem mudou de comportamento |
-
----
-
-## Princípios Inegociáveis
-
-### 1. Velocidade de investigação acima de tudo
-
-Toda decisão arquitetural e de UX deve responder:
-> "isso ajuda a encontrar o problema mais rápido?"
-
-Se não ajudar: não implemente, simplifique ou remova.
-
-### 2. Contexto antes de navegação
-
-O investigador não deve precisar montar contexto manualmente.
-O sistema deve apresentar o que merece atenção.
-
-### 3. Explicação de eventos, não apenas exibição de dados
-
-Não basta mostrar "variou 12%".
-O sistema deve mostrar: quando, entre quais imports, qual foi o valor antes e depois.
-
-### 4. Mudança de comportamento é mais importante que variação pontual
-
-Um produto que sempre oscilou e oscilou de novo não é anomalia.
-Um produto que era ESTÁVEL e ficou INSTÁVEL é sinal de ruptura.
-Prioridade operacional: detectar mudança de regime.
-
-### 5. Robustez operacional
-
-O sistema deve tolerar planilhas imperfeitas, colunas extras e inconsistências parciais.
-Falha de linha não derruba lote inteiro.
-
-### 6. Temporalidade é central e deve ser clara
-
-Dois eixos de tempo sempre presentes:
-- `data_referencia`: competência operacional (quando o custo é válido)
-- `criado_em`: evento de importação (quando o dado entrou no sistema)
-
-Esses dois conceitos são distintos e não devem ser confundidos na UI.
-
-### 7. Contratos entre camadas são parte do produto
-
-Confiabilidade investigativa depende de contrato explícito entre UI, API, banco e engine analítica.
-Método fantasma, coluna presumida ou payload implícito é defeito de produto, não detalhe técnico.
-
----
-
-## Capacidades Investigativas (estado atual)
-
-### Busca direta por produto
-O investigador pode digitar código ou descrição e chegar diretamente à análise do produto — sem navegar pela hierarquia Origem → Família → Agrupamento.
-
-### Drill-through de eventos de custo
-Clicar em qualquer produto na tabela abre o histórico completo de importações:
-- Competência (data_referencia): período de vigência do custo
-- Importado em (criado_em): quando o dado entrou no sistema
-- Delta monetário e percentual vs. registro anterior
-- O painel respeita exatamente as competências escolhidas no recorte; não introduz meses intermediários.
-
-### Seleção temporal investigativa
-
-O investigador escolhe entre **Intervalo**, para analisar todas as competências entre início e fim, e **Comparação**, para isolar exatamente duas competências não consecutivas. Fila, indicadores e drill-through compartilham o mesmo conjunto de `data_referencia`; `criado_em` permanece a rastreabilidade da importação.
-- Destaque visual para variações absolutas ≥ 5% pela regra canônica de alerta
-
-### Fila investigativa com baixa carga cognitiva
-A tabela principal prioriza leitura operacional com hierarquia clara:
-- principal: produto, criticidade, variação e mudança de regime
-- contextual: resumo investigativo automático por linha
-- secundário: detalhes completos em expansão sob demanda
-
-O objetivo é reduzir leitura horizontal e manter o comportamento de cockpit investigativo, não de planilha ERP.
-
-### Detecção de mudança de regime
-Produto classificado como `ESTÁVEL` na primeira metade do período e `OSCILANDO` ou `MUITO INSTÁVEL` na segunda metade → marcado como "Mudança de Regime".
-Disponível como KPI clicável e como coluna na tabela.
-
-### Score de instabilidade e classificação automática
-- `ESTÁVEL`: score < 3%
-- `OSCILANDO`: score 3–8%
-- `MUITO INSTÁVEL`: score ≥ 8%
-
-### Export para Excel
-O relatório atual pode ser exportado como `.xlsx` com os campos analíticos que o investigador selecionar, incluindo classificação de regime. A seleção começa completa e preserva a ordem investigativa das colunas.
-
-### Alerta de produtos sem categoria
-Banner visível na tela de importação quando há produtos sem categorização completa no dicionário. Quando o diagnóstico de órfãos está indisponível, o sistema deve avisar explicitamente que não foi possível validar produtos sem agrupamento, diferenciando falha operacional de ausência real de órfãos.
-
-### Auditoria de apontamentos de OP
-A aba OP recebe o relatório de apontamentos de chão de fábrica como dado operacional complementar. O número de OP é obrigatório no dado persistido; quando o relatório o apresenta com ponto de milhar, o parser o normaliza para inteiro antes da gravação. A competência (`data_referencia`) e o instante de importação (`criado_em`) continuam rastreáveis no lote.
-
-O ERP fornece fatos imutáveis; o Kustos produz a interpretação investigativa. Cada OP recebe indicadores calculados de atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas, então é apresentada por **motivo da investigação** e provável causa — nunca por uma parada ou percentual isolado. O `% Tempo (ERP)` permanece visível como conferência do fato de origem, sem substituir a métrica consistente calculada pelo motor.
-
----
-
-## O que o Sistema NÃO deve virar
-
-- ERP genérico
-- CRUD administrativo
-- Dashboard decorativo com gráficos sem valor operacional
-- Sistema burocrático com navegação excessiva
-- Réplica de Power BI ou Metabase
-
----
-
-## Evolução Esperada
-
-### Próximos passos (alta prioridade operacional)
-
-- Busca com autocomplete avançado (by código + descrição simultâneos)
-- Filtro "produtos que mudaram de regime" persistente por período
-- Comparação entre períodos (ex: este mês vs. mesmo mês do ano anterior)
-- Exportação do drill-through individual por produto
-
-### Médio prazo
-
-- Priorização automática de investigação (ranking de risco)
-- Memória comportamental: histórico de alertas por produto (reutilizando a semântica canônica de alerta ≥5% por `criado_em`)
-- Detecção de sazonalidade vs. ruptura
-- Insights operacionais textuais ("produto X oscilou 3 meses seguidos")
-
-### Longo prazo
-
-- Previsão de tendência baseada em série histórica
-- Integração direta com ERP/SAP para importação automatizada
-- Categorização automática de novos produtos via código de negócio
-
-- Segurança operacional mínima (config por ambiente + autenticação real) é pré-requisito para escala do motor investigativo.
-
-- Configuração de frontend com prioridade para `import.meta.env`, fallback seguro para `window.__ENV__`/`window.__RUNTIME_CONFIG__` e fallback final via `<meta name="VITE_*">`, evitando falhas de bootstrap em runtimes sem Vite.
-
-- Confiabilidade de bootstrap em runtime estático é tratada como requisito investigativo: sem `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` válidas, o deploy deve falhar antes de publicar.
-
-
-### Export é instrumento de investigação (Atualização 2026-05-21)
-
-Exportação não é mais planilha administrativa. Deve funcionar como relatório operacional de decisão:
-- topo do relatório = itens com maior urgência investigativa;
-- contexto automático por linha para acelerar triagem;
-- rastreabilidade temporal explícita (`data_referencia` x `criado_em`) sem ambiguidade semântica.
-
-
-## Atualização 2026-05-25 — Saneamento operacional de dados
-
-- Contrato investigativo reforçado: todo produto deve permanecer investigável mesmo sem categorização completa, usando fallback explícito `SEM_AGRUPAMENTO` e auditoria ativa de órfãos.
-
-## Atualização 2026-05-28 — robustez como velocidade investigativa
-
-A execução do **ERR-01** reforça que falhas de rede, Supabase ou bibliotecas auxiliares não podem interromper silenciosamente a investigação. O produto deve preservar o contexto operacional, explicar a falha em linguagem de uso e emitir diagnóstico técnico apenas em modo debug.
-
-
-## Atualização 2026-05-28 — identidade operacional de produto
-
-A execução do **VAL-01** reforça que `codigo_produto` é chave investigativa, não dado visual de planilha. O mesmo produto deve atravessar preview, importação, relatório, drill-through e exportação com a mesma chave canônica, mesmo quando o Excel apresentar notação científica ou formatações mistas. A mudança preserva a separação temporal: `data_referencia` é competência; `criado_em` é importação.
-
-
-## Atualização 2026-05-28 — LOG-01 e confiança operacional dos alertas
-
-A execução do **LOG-01** transforma o alerta investigativo em contrato explícito: KPI, filtro rápido, fila, drill-through e exportação usam a mesma função canônica. Alerta significa variação absoluta ≥ 5% entre a última e a penúltima importação (`criado_em`), sem arredondamento prévio e incluindo altas e quedas. O recorte temporal do relatório segue sendo `data_referencia`; a regra de alerta apenas qualifica a mudança observada entre eventos de importação.
-
-## Atualização contínua — 25/06/2026 (rede de segurança técnica)
-
-A Onda 2 reforça a visão de motor investigativo ao reduzir risco de regressão antes das próximas refatorações. ESLint, type checking leve, Vitest e CI foram adicionados exclusivamente como ferramentas de desenvolvimento, preservando a arquitetura estática/CDN e evitando dependências de produção. A prioridade permanece velocidade de investigação: a rede de segurança existe para permitir evoluções futuras com menor risco sobre contratos críticos como VAL-01, LOG-01 e a separação temporal `data_referencia` × `criado_em`.
-
-
-## Atualização 2026-07-20 — documentação alinhada aos PRs recentes
-
-Engineering Freeze v1.0 conclui o fatiamento MNT-01 sem mudar comportamento visível: a fila/tabela e a apresentação investigativa foram isoladas em `view/ui-table.js`, preservando a direção de arquitetura modular e reduzindo risco de regressão para futuras melhorias de investigação.
-
-## Atualização 2026-07-27 — integridade da Auditoria de OP
-
-O produto passa a interpretar corretamente OPs numéricas formatadas com separador de milhar pela origem. A robustez da persistência evita que uma formatação válida do relatório descarte um lote inteiro e torna a investigação de falhas de banco rápida, com diagnóstico completo do Supabase.
-
-## Atualização 2026-07-30 — princípio investigativo da OP
-
-**Nenhum indicador isolado define criticidade.** Tempo alto, parada alta ou baixa produção só se tornam investigáveis pelo contexto dos demais fatos. A experiência da OP deixa de responder “qual número variou?” e passa a responder “qual o motivo de investigar esta execução?”.
-
-## Atualização 2026-08-03 — decisão operacional explicável
-
-A Auditoria de OP agora responde também **“esta operação merece investigação?”**. A resposta vem acompanhada de prioridade, motivo, provável causa e evidências combinadas, sem transformar um número isolado em incidente. Assim, tempo maior com produtividade preservada e aumento correspondente de produção é execução justificada; parada alta sem efeito em entrega, tempo ou produtividade é registro; já parada, atraso, queda de KG/Hora e déficit de produção juntos recebem prioridade máxima.
-## Atualização 2026-08-13 — base mestre operacional
-
-Cadastro é apoio à investigação, não ERP administrativo: resolve produtos de Custos e OP na mesma dimensão mestre e preserva fatos ERP como evidência histórica.
-
-## Atualização 2026-09-28 — velocidade da fila investigativa
-
-Para manter a investigação responsiva em bases ERP grandes, a fila mostra a janela dos 200 itens já mais prioritários e orienta o refinamento do recorte quando houver excedente. A priorização recebida, os indicadores e o contrato temporal permanecem inalterados; a interação por linha usa delegação de eventos, sem custo proporcional à quantidade de itens.
-
-## Atualização 2026-10-01 — proveniência do Cadastro Mestre
-
-O Cadastro Mestre ERP passa a ter base auditável de proveniência por lote, sem antecipar a reconciliação da dimensão operacional nem inventar classificações. A investigação atual permanece apoiada em `dicionario_produtos`.
-
-## Atualização 2026-10-05 — agrupamento ERP sem inferência
-
-O valor de agrupamento recebido do ERP será preservado como proveniência cadastral, separado da classificação efetiva do Kustos e de eventual override manual. Sem ponte empresarial aprovada, nenhum valor ERP é convertido em agrupamento investigativo.
-
-## Atualização 2026-10-08 — conferir antes de importar
-
-O Preview do Cadastro Mestre separa evidência ERP, mudanças potenciais e pendências de classificação antes de qualquer escrita. O núcleo não transforma descrição em regra de negócio e não converte agrupamento ERP sem ponte oficial; a investigação atual continua consumindo a dimensão operacional, sem mudança de Custos/OP.
+Capacidades e estrutura atuais ficam no [README](README.md); fases, prioridades e propostas ficam no [ROADMAP](ROADMAP.md). Contratos obrigatórios estão em [AGENTS.md](AGENTS.md), o processo nas [Regras Gerais](docs/regras-gerais.md), e decisões e aprendizados na [História do Projeto](docs/HISTORIA_DO_PROJETO_KUSTOS.md). Esta visão não registra entregas ou commits.

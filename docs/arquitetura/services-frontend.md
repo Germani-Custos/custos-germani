@@ -1,13 +1,9 @@
-# Capítulo 12 — Services Frontend
+# Services Frontend
 
-`src/services/api.js` é a camada única de acesso ao Supabase.
+`src/services/api.js` é a fachada única Supabase do frontend; `services/api.js` reexporta por compatibilidade. Integra tabelas via `supabase.from()` e Auth via SDK existente; sem SQL bruto/RPC no browser.
 
-CAD-REBUILD-01 (09/10/2026): o Preview do Master lê contexto completo via `supabase.from()` e calcula localmente propostas, inclusive remoções. O frontend não executa DELETE, SQL ou RPC. A reconstrução transacional aprovada usa um comando administrativo Node separado, sem endpoint na UI; [contrato e limites](./cadastro-mestre-reconstrucao.md).
+Responsabilidades: masters/hierarquia e diagnóstico, histórico/recortes/comparações/drill-through, importação validada com logs, Custos/OP e Cadastro operacional. Leituras de Custos/Cadastro usam paginação integral nos escopos da [matriz](matriz-contratos-operacionais.md), sem resultados parciais de fontes essenciais.
 
-## Responsabilidades principais
-- Carregar dados mestres com recorte por produtos que têm custo.
-- Garantir produto no dicionário antes da gravação de custo.
-- Importar histórico com validação e log.
-- Importar e consultar apontamentos de OP (`importarApontamentosOp`/`getApontamentosOp`) usando somente `supabase.from()`.
-- Diagnosticar falhas de chunks de OP com resposta Supabase completa e registros associados a uma coluna `NOT NULL`.
-- Buscar histórico por período/filtros e tendência temporal.
+Consulta ERP/Preview usam Master/catálogos completos; adapter fica em `src/services/cadastro-mestre-preview.js` e motores puros em `core/`. Consulta ERP não refiltra arquivo nem sincroniza o operacional. Aprovação/download são locais.
+
+A fachada delega o HTTP administrativo a `src/services/cadastro-mestre-execution.js`. Função Vercel autentica/autoriza e chama o executor central, compartilhado com CLI. A antiga exclusividade CLI foi sucedida pelo [contrato web](cadastro-mestre-execucao-web.md), estendido por [CAD-FAM-01](cadastro-mestre-familias-erp.md). Não importar `pg`/conexão administrativa no browser.

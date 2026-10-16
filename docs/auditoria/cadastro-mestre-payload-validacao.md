@@ -1,5 +1,7 @@
 # CAD-PAYLOAD-01 — Validação do transporte compacto (09/10/2026)
 
+**Evidência histórica de 09/10:** a tentativa bloqueada e a medição local abaixo precedem a reconstrução posterior confirmada em [15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). Não substituir estas contagens por valores atuais; equivalência/tamanho de V1 não comprovam execução de V2. [Contrato de famílias vigente](../arquitetura/cadastro-mestre-familias-erp.md). Nenhuma nova medição ou consulta nesta revisão.
+
 ## Escopo e fonte
 
 O original informado pelo usuário, `cadastro mestre 8_10(1).xls`, tinha 24.307.397 bytes e foi bloqueado pelo antigo cliente antes do POST. Nesta validação foi lida a cópia local `cadastro mestre 8_10.xls`, também com **24.307.397 bytes**, mas sem `(1)` no nome. O tamanho igual não comprova identidade byte a byte entre os dois arquivos; não foi alegada essa comparação.

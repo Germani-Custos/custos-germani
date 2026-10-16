@@ -1,5 +1,7 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
+**Registro de fase e núcleo de Preview.** Relatos de ausência de UI/executor e Master “atual” de 5.706 abaixo pertencem à entrega original. Fluxo completo vigente: [reconstrução](cadastro-mestre-reconstrucao.md), [execução web](cadastro-mestre-execucao-web.md), [famílias V2](cadastro-mestre-familias-erp.md) e [consulta ERP](../ux/cadastro-mestre.md). Não usar contagens históricas como pré-condição atual.
+
 ## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01
 
 O motor puro de filtros deste documento permanece intacto. A camada de manifesto/aprovação passa a interpretar produtos fora do conjunto ou ausentes como remoções do Master, conforme [reconstrução do universo](./cadastro-mestre-reconstrucao.md), substituindo a preservação histórica de produtos ausentes descrita abaixo. Campos vazios de produtos que permanecem continuam preservados. O contexto SELECT passa a incluir a imagem completa do Master. Nenhuma mudança de competência `data_referencia` ou evento `criado_em` dos fatos.

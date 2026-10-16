@@ -1,5 +1,7 @@
 # CAD-ENV-01 — Evidências da preparação (09/10/2026)
 
+**Evidência histórica da preparação inicial de 09/10.** O 404, ausência de bucket e Master 5.706 abaixo não são estado remoto atual: a [revisão posterior](../arquitetura/cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026) registra diagnóstico OK, e a [leitura de 15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026) registra Master 860. Conteúdo probatório preservado; não houve nova verificação remota nesta reorganização.
+
 [Procedimento completo](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Nenhuma reconstrução, snapshot/lote/bucket novo, escrita de produção, RPC, migration, commit ou deploy nesta tarefa.
 
 ## Evidências remotas por leitura

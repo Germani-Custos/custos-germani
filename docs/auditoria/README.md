@@ -1,5 +1,15 @@
 # Auditoria Técnica — Kustos Germani
 
+## Escopo e navegação atuais
+
+Este conjunto preserva achados e evidências da base analisada em cada data. Não é declaração de que todos os defeitos originais permanecem ativos, nem nova inspeção de produção. Para estados/resoluções, consultar o [backlog](backlog-priorizado.md); para contratos em vigor, a [matriz operacional](../arquitetura/matriz-contratos-operacionais.md).
+
+- [DOC-ORG-01 — auditoria e reorganização documental](reorganizacao-documental.md): inventário completo, responsabilidades, movimentos, redundâncias, divergências e validação.
+- Evidências de Cadastro: [reconstrução](cadastro-mestre-reconstrucao-validacao.md), [execução web](cadastro-mestre-execucao-web-validacao.md), [preparação](cadastro-mestre-preparacao-ambiente-validacao.md) e [transporte compacto](cadastro-mestre-payload-validacao.md). Estados remotos pertencem à data de cada prova.
+- [História do Projeto](../HISTORIA_DO_PROJETO_KUSTOS.md): decisões e marcos, separados dos procedimentos atuais.
+
+O relato original a seguir é de 25/05. Ausência de testes, XSS de fillSelect, acesso público e dependências sem versão descrevem aquela base; não reaplicar recomendações já concluídas sem verificar código/backlog. Divergências de SRI, RLS e FKs ficam explícitas na auditoria documental, sem saneamento de código/banco.
+
 > Análise técnica de fragilidades, melhorias e otimização do código **em produção**.
 > Destinada a ser **executada por um agente de IA de desenvolvimento** (não pelo Claude Code que a redigiu). Por isso cada achado é o mais explícito e acionável possível.
 

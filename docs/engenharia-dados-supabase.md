@@ -1,6 +1,6 @@
 # Engenharia de Dados — Supabase (Estado Atual)
 
-Este documento descreve o modelo efetivamente usado pelo sistema no código atual.
+Este documento é uma visão temática do fluxo de Custos; modelo completo e FKs ficam em [Banco de Dados](arquitetura/banco-de-dados.md). OP, Master ERP, proveniência, famílias V2 e leituras integrais estão na [matriz de contratos](arquitetura/matriz-contratos-operacionais.md). Não interpretar a lista resumida como inventário completo de tabelas.
 
 ## 1) Modelo de dados principal
 
@@ -33,9 +33,10 @@ Tabela fato de custos:
 - `custo_variavel`
 - `custo_direto_fixo`
 - `custo_total`
-- `data_referencia`
+- `data_referencia` (competência operacional)
+- `criado_em` (evento de importação)
 
-Regra operacional recomendada: `UNIQUE (codigo_produto, data_referencia)`.
+Constraint documentada no modelo especializado: `unique_produto_data`, UNIQUE (`codigo_produto`, `data_referencia`); não é apenas recomendação pendente.
 
 ---
 

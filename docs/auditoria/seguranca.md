@@ -1,5 +1,9 @@
 # Auditoria — Segurança
 
+**Escopo histórico:** evidências e recomendações abaixo descrevem a auditoria de 25/05. O [backlog](backlog-priorizado.md) registra resoluções de SEC-01/04/05 e a decisão SEC-03; o checkout de 16/10 já contém fillSelect por DOM, sanitização de exportação e login no fluxo principal. O handler documental continua fronteira separada sem validação de sessão. SEC-05 tem divergência de critério (versões fixadas no HTML, mas sem SRI e cliente Supabase CDN somente major), preservada em [DOC-DIV-01](reorganizacao-documental.md#contradições-e-tratamento). RLS remoto não foi revalidado. Não tratar o corpo como lista automática de vulnerabilidades atuais.
+
+O arquivo core/text-utils.js citado na sugestão SEC-01 não existe: era exemplo de destino, não contrato implementado. O helper seguro atual está em view/ui-utils.js; a sugestão histórica foi preservada como evidência.
+
 Ver legenda e formato em [`README.md`](./README.md). Foco: o que é explorável **de fato**.
 
 ---

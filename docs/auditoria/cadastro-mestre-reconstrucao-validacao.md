@@ -1,5 +1,7 @@
 # CAD-REBUILD-01 — Entrega e validação (09/10/2026)
 
+**Registro de validação da entrega original**, não estado atual de operação. A exclusividade CLI foi sucedida pelo contrato web e o alcance de famílias pelo V2; [manuais atuais](../manuais/manual-operacao.md) e [História](../HISTORIA_DO_PROJETO_KUSTOS.md) situam a evolução. As contagens/testes/provas abaixo permanecem intactos e datados.
+
 Implementação concluída localmente, **sem commit e sem carga real**. [Contrato exato e execução futura](../arquitetura/cadastro-mestre-reconstrucao.md). O comando administrativo não está conectado ao navegador; seleção/aprovação/download permanecem locais.
 
 ## Resultado funcional

@@ -1,5 +1,7 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+Leitura vigente em 16/10/2026: CUSTOS-PAGE-01 governa completude de Custos; CAD-ERP-VIEW-01 separa consulta ERP; [CAD-FAM-01](cadastro-mestre-familias-erp.md) estende executor/web com transporte V2, decisões de famílias e DML aprovado de catálogo na mesma transação. Menções a “somente Master/log” abaixo preservam o alcance anterior. Evidências numéricas são datadas, sem nova verificação de produção nesta revisão documental.
+
 ## CUSTOS-PAGE-01 — leituras integrais da Auditoria de Custos (16/10/2026)
 
 O leitor paginado já existente no Cadastro foi movido para `lerCompleto` na mesma API, sem novo módulo ou fonte de verdade. As consultas continuam exclusivamente em `supabase.from()`, sem RPC/SQL no browser. Páginas de 500 usam `count:'exact'`; tamanho esperado, total invariável e erros são conferidos antes de liberar o conjunto. Não existe teto total nem retorno parcial de uma leitura com falha. A paginação não é snapshot transacional; mutações concorrentes que mantenham a mesma contagem não são necessariamente detectadas.
@@ -42,9 +44,9 @@ UI → `getCadastroMestrePreviewContext()` (SELECT `*` paginado do Master e cat�
 
 Comando administrativo → mesmo adapter/contexto sob locks → revisão integral idêntica → snapshot em arquivo e JSONB do log → transação PostgreSQL dedicada → INSERT/UPDATE/DELETE somente Master e DML de auditoria no log → provas finais/COMMIT. Erro reverte Master inteiro; lote falhou mantém snapshot, resposta de COMMIT incerta não é repetida automaticamente. [Contrato completo](./cadastro-mestre-reconstrucao.md). Sem schema/migration/RLS, alteração operacional ou mudança nos eixos `data_referencia` (competência) e `criado_em` (importação).
 
-Os contratos de fases abaixo são históricos quando conflitarem com este. A antiga ausência de executor refere-se à primeira entrega da tela; o executor atual é administrativo e não está conectado ao navegador.
+Os contratos de fases abaixo são históricos nos pontos explicitamente sucedidos. A antiga ausência de executor/conexão ao navegador refere-se às primeiras entregas; a execução atual da UI usa função Node autorizada e o mesmo executor central, conforme CAD-EXEC-WEB-01/CAD-FAM-01. O executor não é importado no browser.
 
-Atualizado em: **2026-10-08**.
+Matrizes-base e relatos de fases abaixo: origem em maio/outubro, com atualizações contratuais indicadas no topo. Revisão de organização: **2026-10-16**, sem alteração do contrato de runtime.
 
 ## Contrato atual — CAD-XLS-01 / seletor do Cadastro
 
@@ -90,6 +92,9 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
 | UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` como fonte única de Origem/Família | Sim | ✅ (TAREFA-3) |
 | UI → API | `api.getCadastroMestrePreviewContext()` | SELECT integral/paginado do Master ERP/categorias para XLSM/XLSX/XLS, sem escrita ou fallback vazio | Sim | ✅ (CAD-XLS-01) |
+| UI → API | `api.getCadastroMestreErp()` | Consulta integral Master/origens/famílias, sem operacional/fatos/mapa; estado ERP independente | Sim | ✅ (CAD-ERP-VIEW-01) |
+| UI → HTTP | `api.getCadastroMestreExecutionAvailability()` / `api.verificarAmbienteReconstrucaoCadastroMestre()` | GET autorizado; disponibilidade sem conectar ao PostgreSQL e diagnóstico somente leitura | Sim | Contratos web/diagnóstico acima |
+| UI → HTTP | `api.executarReconstrucaoCadastroMestre(...)` / `api.consultarReconstrucaoCadastroMestre(lote)` | POST explícito V2 após aprovação/confirmação; GET de resultado, sem retry | Sim | CAD-EXEC-WEB-01 / CAD-FAM-01 |
 
 ## 2) Matriz API → Banco
 
@@ -187,7 +192,7 @@ Formato mínimo esperado em todos os métodos API:
 - [ ] Todo método UI→API deve estar listado e testado após mudança de assinatura.
 - [ ] Todo payload de escrita deve ser validado por whitelist de colunas da tabela alvo.
 - [ ] Todo novo fluxo com `codigo_produto` deve chamar `normalizeCodigoProduto()` e falhar explicitamente se o retorno for vazio.
-- [ ] Toda mudança de contrato deve atualizar `README.md`, `VISION.md`, `ROADMAP.md` e esta matriz.
+- [ ] Toda mudança de contrato deve revisar `README.md`, `VISION.md`, `ROADMAP.md` e esta matriz, atualizando cada documento afetado conforme sua função, sem repetir changelog. Ver [governança](../regras-gerais.md).
 
 
 ## 6) Saneamento de schema Supabase (2026-05-25)

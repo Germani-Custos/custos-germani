@@ -1,298 +1,112 @@
-# Manual do Usuário — Custos Germani
+# Manual do Usuário — Kustos Germani
 
-## Auditoria de Custos — leitura completa (16/10/2026, CUSTOS-PAGE-01)
+Guia do comportamento implementado no checkout, revisado em **16/10/2026**. Publicação das entregas recentes é acompanhada no [ROADMAP](../../ROADMAP.md); este manual não confirma o estado do ambiente remoto. Instalação: [Manual Técnico](manual-tecnico.md). Rotina e recuperação: [Manual de Operação](manual-operacao.md).
 
-Após publicação desta correção, Origem/Família/Agrupamento serão montados sobre todos os produtos operacionais com Custos, mesmo com mais de 1.000 registros. Famílias e agrupamentos não são preenchidos automaticamente: no estado conferido há 437 produtos com origem, 151 com família e nenhum com agrupamento. A leitura completa não torna essas classificações completas. Erro de carga deve ser investigado/recarregado, nunca compensado por nova importação ou reconstrução. O período continua sendo a competência (`data_referencia`); importação (`criado_em`) mantém seu significado. [Contrato](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+## 1. Acesso e áreas da aplicação
 
-## Famílias ERP no Preview — CAD-FAM-01 (15/10/2026)
+Sem sessão ativa, o fluxo principal de Custos/OP apresenta login antes da carga de masters/metadados e apontamentos. Depois da entrada, o cabeçalho identifica o usuário e oferece saída. A aplicação tem cinco áreas:
 
-Em **Preview mestre**, confira a seção **Catálogo de famílias ERP**: código, rótulo oficial/atual, situação, produtos impactados e decisão própria. Código é identidade; rótulos iguais podem pertencer a códigos diferentes. Famílias já cadastradas sem mudança não exigem decisão; vazios preservam catálogo; conflitos bloqueiam até corrigir a fonte e gerar novo Preview.
+- **Importação:** carregar custos por competência.
+- **Custos:** investigar variações, regime e histórico por produto.
+- **OP:** importar MCAP105 e investigar apontamentos.
+- **Cadastro:** manter classificação operacional e consultar Master ERP.
+- **Documentação:** consultar/editar os documentos disponibilizados no seletor.
 
-Aprovar produto não aprova família. Pendência/rejeição de qualquer proposta impede a execução inteira. Seleção, aprovação e download são locais, sem escrita; executar continua sendo ação administrativa separada com segunda confirmação. Rótulo compartilhado atualizado em execução autorizada não reclassifica produtos operacionais. Gerar novo Preview no contrato V2 após publicação compatível; `data_referencia`/`criado_em` dos fatos não mudam. [Detalhes](../arquitetura/cadastro-mestre-familias-erp.md).
+## 2. Competência e importação
 
-## Duas visões do Cadastro — CAD-ERP-VIEW-01 (15/10/2026)
+**Competência (`data_referencia`)** é o mês/período a que o dado pertence no ERP. **Importação (`criado_em`)** é quando ele entrou no sistema. Uma planilha de março enviada em maio continua sendo da competência março; o evento de entrada é maio. As telas identificam os dois eixos separadamente.
 
-Use **Cadastro Operacional** para a classificação Kustos consumida por Custos/OP. Use **Cadastro Mestre ERP** para consultar o universo oficial reconstruído do ERP. Os controles mostram seus totais reais, por exemplo 6.113 e 860, e preservam separadamente busca/filtros/página ao alternar. Materiais existentes somente no operacional não aparecem automaticamente no ERP.
+Em Custos, **Intervalo** inclui todas as competências entre início e fim. **Comparação** usa somente as duas informadas: Junho + Agosto não inclui Julho. Fila, KPIs, gráficos e drill-through respeitam o mesmo recorte.
 
-No Master ERP, pesquise código/descrição, filtre origem/família e navegue em páginas de 50; a quantidade encontrada considera todo o universo carregado. Origem/família mostram descrição do catálogo por código ERP exato, ou pendência explícita. **Agrupamento ERP** mostra apenas o valor bruto do Master; não é a classificação operacional. **Atualizar consulta** relê o Master e reinicia a página, mantendo os filtros válidos; não sincroniza nem grava.
+## 3. Importar custos
 
-Master ERP não oferece editar/excluir/cadastrar/classificar. **Cadastrar produto** permanece no painel operacional. **Preview mestre (XLSM / XLSX / XLS)** continua como fluxo separado de conferência/aprovação; consultar/trocar visões não executa reconstrução. Esta entrega não muda fatos, competência `data_referencia` ou evento `criado_em`. [Contrato](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+1. Abra **Importação** e escolha a **Data de Referência (Competência)** antes do arquivo.
+2. Arraste ou selecione o `.xlsx`. Colunas extras podem permanecer.
+3. Confira as cinco colunas obrigatórias: Produto, Descrição, Custo Variável, Custo Direto Fixo e Custo Total. Se o reconhecimento automático falhar, associe cada campo à coluna correta na janela de mapeamento.
+4. Revise o preview: válida será gravada; atenção exige conferência, mas pode ser gravada; erro bloqueia a linha. A amostra mostra as primeiras 20 linhas; todas as linhas do arquivo são validadas.
+5. Confirme a importação e confira Total / Importadas / Falhas. Código inválido ou ambíguo é erro de linha; não é substituído por um código aproximado.
 
-## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
+A normalização trata espaços, caracteres invisíveis e notação científica; preserva zeros à esquerda quando a origem textual permite. Valores monetários brasileiros são convertidos com precisão de até quatro casas decimais.
 
-A tabela Cadastro permanece mostrando `dicionario_produtos`, a dimensão operacional de Custos/OP e da classificação Kustos. Ela pode conter materiais fora dos 860 produtos do Master ERP; a reconstrução não remove produtos operacionais. O aviso agora informa **código(s) importado(s) ausente(s) do cadastro operacional** e compara códigos únicos de Custos/OP com o cadastro operacional completo, sem depender da busca/filtros visuais.
+Reimportar produto/competência atualiza o registro, em vez de duplicá-lo. O banner sinaliza produtos sem classificação; não invente categoria para eliminá-lo. **“Não foi possível validar produtos sem agrupamento.”** significa diagnóstico indisponível, e não ausência de pendências.
 
-Após publicar esta correção, o contexto diagnosticado deve mostrar zero ausentes (501 códigos importados únicos, 6.113 produtos operacionais); o antigo 407 resultava de respostas truncadas. Em falha de página, o serviço retorna erro em vez de um total parcial como válido. Nenhuma nova visão ERP ou alteração de dados nesta etapa; competência `data_referencia` e importação `criado_em` permanecem intactas. [Detalhes](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+## 4. Investigar custos
 
-## Execução sem enviar o XLS original — CAD-PAYLOAD-01 (09/10/2026)
+### Chegar ao produto
 
-Escolha o XLS/XLSX/XLSM original normalmente no Preview. A execução web passa a enviar somente os campos necessários já lidos, vinculados à aprovação; o tamanho físico do XLS de 24.307.397 bytes não é mais o motivo de bloqueio do POST. O servidor refaz os filtros e a comparação com o Master atual; aprovação integral e segunda confirmação continuam obrigatórias. Se dados ou contexto mudaram, gere novo Preview e aprove novamente.
+Na área **Custos**, digite código ou descrição na busca rápida e escolha a sugestão, ou defina o período e refine Origem → Família → Agrupamento → Produto. A cascata mostra apenas dados existentes e remove seleções dependentes quando o filtro anterior muda. Depois da primeira análise, alterações de filtros atualizam o relatório; **Analisar** permite solicitar a execução. Chips mostram filtros ativos e podem ser removidos pelo x.
 
-Confira 6.230 linhas, 860 válidos, 4.853 remoções e 517 preservações de campos antes de confirmar. Essas contagens, dez UPDATEs e zero erros foram reproduzidos lendo a cópia local `cadastro mestre 8_10.xls`; ela possui o mesmo tamanho informado, mas não foi comparada byte a byte com o nome que inclui `(1)`. Última leitura de produção encontrou 5.706 produtos; 860 é a expectativa da futura execução. A tentativa anterior não enviou o arquivo ao servidor, não criou lote/snapshot e não reconstruiu o Master. O código `CAD_UI` nasce no navegador; sua presença na mensagem não comprova registro no banco. Não repetir automaticamente após erro ou resposta perdida. [Procedimento e limites](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+### Ler a fila
 
-Guardar original e revisão para auditoria. Esta mudança não executa carga nem habilita a função; Custos/OP, operacional e mapa ficam intactos. `data_referencia` continua competência e `criado_em` importação nos fatos.
+Os quatro KPIs são clicáveis: Itens analisados, Alertas (>5%), Mudanças de Regime e Média de variação. O filtro de média mostra variações positivas. Apesar do rótulo **Alertas (>5%)**, o critério é variação absoluta **≥ 5%**, incluindo quedas, entre última e penúltima importação (`criado_em`) no recorte de competência. Sem comparativo anterior, o delta não representa o custo inteiro.
 
-## Diagnóstico da CA — CAD-DIAG-TLS-01 (09/10/2026)
+A fila mostra produto, variação, prioridade, regime e contexto automático; **Detalhes** expande custos, datas e score. Sem ordenação manual, a prioridade orienta a investigação; clicar no cabeçalho muda a ordenação. A janela visual mostra até 200 itens na ordem ativa e informa o excedente. Refine filtros/período para trazer outros itens; KPIs e exportação continuam considerando o relatório completo.
 
-O administrador autorizado pode conferir formato e fingerprint da CA pelo GET de diagnóstico, com execução desabilitada. Isso não reconstrói produtos nem libera o botão. O certificado e as credenciais não aparecem na resposta. [Procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+Instabilidade é a média das variações percentuais absolutas consecutivas: ESTÁVEL abaixo de 3%, OSCILANDO de 3% até menos de 8%, MUITO INSTÁVEL a partir de 8%. Com pelo menos quatro pontos, estabilidade na primeira metade e instabilidade na segunda sinalizam mudança de regime.
 
-## Diagnóstico sem reconstrução — CAD-DIAG-01 (09/10/2026)
+### Histórico e gráficos
 
-Com execução desabilitada, o botão continua indisponível. O administrador pode consultar separadamente o GET de diagnóstico para identificar falhas por etapa, sem importar produtos. HTTP 409 nesse GET não indica execução/COMMIT. [Procedimento de leitura](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+Clique na linha do produto para abrir o drill-through: competências selecionadas, importações, custos variável/fixo/total e Δ/Δ% em relação ao registro anterior desse recorte. Variações absolutas ≥ 5% recebem destaque. Meses intermediários não entram na Comparação.
 
-## Ambiente de execução — CAD-ENV-01 (09/10/2026)
+O gráfico temporal usa competência: custo unitário do produto selecionado ou média agregada quando não há produto, com média histórica e tendência. `criado_em` escolhe o registro mais recente por produto/competência. Comparação e TOP variações usam os últimos timestamps de importação; existe a [ressalva LOG-02](../auditoria/robustez-erros-validacao.md), pois chunks podem pertencer ao mesmo lote lógico.
 
-Enquanto o administrador prepara o deploy, a execução permanece desabilitada. Aprovar Preview não reconstrói o banco. Só o usuário explicitamente autorizado terá acesso após configuração e verificação. [Procedimento administrativo](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Master real ainda 5.706 nesta preparação; resultado 860 é expectativa futura, sem alteração de Custos/OP ou dos fatos.
+### Exportar
 
-## Executar reconstrução — CAD-EXEC-WEB-01 (09/10/2026)
+Rode a análise e clique **Exportar**. Todos os campos começam marcados; desmarque os indesejados e confirme. Cancelar não gera arquivo. O XLSX conserva a ordem canônica das colunas e tem abas **Contexto** e **Fila Investigativa**. Respeita filtros, fila rápida e ordenação ativa; sem ordenação manual, usa criticidade → regime → magnitude → reincidência → instabilidade. O nome inclui o período analisado.
 
-No Preview XLS/XLSX/XLSM, confira Master atual, válidos, novos, alterações e remoções. **Aprovar** decide propostas; **Baixar revisão (sem gravar)** apenas salva JSON. Após aprovação integral e autorização administrativa, **Executar reconstrução…** fica habilitado. Ele irá MODIFICAR o Master ERP: revise as contagens na segunda janela e digite `RECONSTRUIR <quantidade final>` para confirmar. Cancelar não executa.
+## 5. Importar e investigar OP
 
-Se execução estiver indisponível, solicite configuração/autorização ao administrador. Aguarde o resultado: sucesso informa lote, quantidade final e operações; erro/resposta perdida oferece consulta do lote, sem repetição automática. Guarde o identificador; lote ausente não autoriza nova tentativa enquanto puder haver execução em curso. Tabela/edição manual operacional continuam independentes. Nenhuma carga real foi feita nesta entrega. Custos/OP mantêm competência `data_referencia` e evento `criado_em`. [Procedimento completo](../arquitetura/cadastro-mestre-execucao-web.md). As restrições de UI das entregas abaixo são históricas.
+Na área **OP**, selecione o CSV MCAP105, confira a amostra, informe competência e confirme. OP formatada como `2.081` é gravada como inteiro `2081`. Após importar, a carga local é renovada e fila/dossiê incorporam os novos apontamentos.
 
-## Cadastro Mestre — reconstrução do universo (09/10/2026, CAD-REBUILD-01)
+Filtre Estágio, Origem, OP, Produto, competência e Motivo da investigação. Depois da primeira análise, mudar filtros atualiza a fila. A coluna **Decisão** informa se merece investigação e a prioridade, cruzando produção, tempo, KG/Hora e paradas:
 
-1. Abra **Preview mestre (XLSM / XLSX / XLS)** com o original ERP e confira produtos válidos, novos, existentes com alterações e **produtos a remover do Cadastro Mestre**. Expanda os detalhes das remoções para conferir código, descrição e motivo.
-2. Campos ERP vazios preservam o existente de quem continua no universo. Produtos ausentes ou fora dos filtros deixam de ser preservados no Master; Tipo P/C, Produzido/Revenda e exclusões inativo/EXLUIR continuam iguais.
-3. Revise e aprove todas as propostas. Qualquer pendente/rejeitada impede a reconstrução inteira; arquivo com erros ou universo vazio fica bloqueado.
-4. Baixe a revisão para a execução administrativa explícita. Selecionar, aprovar ou baixar na tela não grava nem apaga dados; fechar descarta a revisão local.
+- **Gargalo de produtividade:** tempo alto e produtividade baixa sem parada material que explique o resultado; conferir processo, padrão, matéria-prima ou apontamento.
+- **Desperdício operacional:** entrega com tempo alto, KG/Hora baixo e parada material; prioridade alta.
+- **Paradas com impacto:** parada material, atraso, déficit de produção e queda/não melhoria de produtividade; prioridade máxima.
+- **Baixa produção:** volume abaixo do plano sem redução correspondente de tempo; investigar perdas, disponibilidade, programação, material ou encerramento.
+- **Tempo justificado pelo volume:** produção adicional explica o tempo e a produtividade permanece praticamente estável; sem alerta.
+- **Parada sem impacto:** registrar sem priorizar quando entrega, tempo e produtividade permanecem normais.
+- **Alta eficiência:** referência positiva; ausência de base prevista suficiente impede concluir eficiência.
 
-O exemplo informado pelo usuário tem 6.230 linhas, 860 válidos (853 existentes e 7 novos) e 4.853 remoções, resultando em 860 no Master após execução aprovada. A operação guarda snapshot anterior e lote, sem apagar Custos, OP ou produtos operacionais. A tabela/edição manual do Cadastro continua mostrando a dimensão operacional, independente dessa contagem. `data_referencia` é competência e `criado_em` importação nos fatos, intactos. [Contrato atual](../arquitetura/cadastro-mestre-reconstrucao.md). As preservações de ausentes descritas abaixo são históricas para o Master ERP.
+Abra **Ver dossiê** para conferir decisão e evidências. **Dados do ERP (imutáveis)** ficam separados de **Indicadores calculados pelo Kustos**. `% Tempo (ERP)` é conferência, nunca sentença isolada. Competência e importação são rastreabilidade, sem entrar nas fórmulas de execução.
 
-## Cadastro — Preview de XLS, XLSX e XLSM (08/10/2026, CAD-XLS-01)
+## 6. Cadastro
 
-1. Clique **Preview mestre (XLSM / XLSX / XLS)** e escolha o arquivo ERP original. XLS é lido no navegador, sem conversão.
-2. Confira linhas lidas/após filtros/excluídas, produtos válidos/existentes/novos, alterações e preservações. Expanda os detalhes para comparar atual, ERP e proposto.
-3. Escolha **Aprovado**, **Rejeitado** ou **Pendente** por proposta ou use as ações globais. Descrição e agrupamento de um existente são independentes; novo produto tem uma proposta indivisível somente para o Master ERP. Bloqueios não podem ser aprovados.
-4. **Baixar revisão (sem gravar)** salva JSON com manifesto, decisões e propostas aprovadas. **Fechar** descarta a revisão local. A tela não possui executor nem grava esse lote.
+### Cadastro Operacional
 
-Filtros permanecem P/C (D excluído), Descr. (Origem) contendo Produzido/Revenda e descrição sem inativo/EXLUIR. Vazios e ausentes preservam o Master. **Agrup. Prod.** é ERP, separado da classificação investigativa. Tabela/edição manual continuam na classificação usada por Custos/OP.
+Pesquisa, edição e **Cadastrar produto** mantêm a classificação Kustos consumida por Custos/OP. A dimensão operacional pode conter materiais fora do universo Master ERP. Produto não resolvido aparece como **Produto sem classificação**; não invente Origem/Família.
 
-Esta integração substitui a chamada direta do seletor ao legado; referências abaixo às Fases 3.1/3.3 descrevem o estado histórico anterior. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+Para remover um agrupamento, **Editar → Sem agrupamento → Salvar classificação**. Cancelar preserva o cadastro. Essa intenção manual é diferente de célula ERP vazia, que preserva valores no fluxo de importação correspondente. A lista rola nos dois eixos dentro de uma área limitada à janela, com cabeçalho fixo e barra horizontal acessível.
 
-## Cadastro — rolagem e remoção de agrupamento (08/10/2026, CAD-UX-01)
+O aviso **código(s) importado(s) ausente(s) do cadastro operacional** compara códigos únicos importados com o operacional completo, independentemente dos filtros visuais. Erro de leitura deve ser tratado como indisponibilidade, sem cadastrar ou reconstruir para compensá-lo.
 
-A lista de produtos fica em uma área com altura limitada à janela. Role as linhas dentro dela; a barra horizontal permanece no rodapé da área, acessível sem ir até o último produto. O cabeçalho acompanha a navegação vertical, inclusive em janela estreita.
+### Cadastro Mestre ERP
 
-Para remover um agrupamento, clique **Editar**, selecione **Sem agrupamento** e **Salvar classificação**. A tabela passa a mostrar **Sem agrupamento** e reabrir o editor mantém essa seleção. Cancelar não altera o cadastro. Células vazias na importação continuam preservando valores existentes. Esta edição mantém a classificação atual na dimensão operacional, sem editar o Master ERP ou os fatos.
+Consulta independente do universo ERP, sem editar/excluir/cadastrar/classificar. Totais são dinâmicos; busca por código/descrição, origem/família e páginas de 50 consideram todo o universo carregado. Alternar fontes preserva seus filtros/página. **Atualizar consulta** relê os dados, conserva filtros válidos e retorna à primeira página; não sincroniza bases.
 
-## Cadastro Mestre — primeira carga concluída (08/10/2026)
+Origem/família usam códigos ERP exatos e mostram descrição ou pendência explícita. **Agrupamento ERP** é valor bruto, separado da classificação operacional. Falha de carga não vira zero nem usa o operacional como substituto.
 
-A Fase 3.4 autorizou e concluiu um lote específico depois de reconferir as 423 propostas. O Master passou para 5.706 produtos; nenhuma classificação de Custos/OP foi alterada. A tela legada e os controles locais de revisão continuam com o comportamento anterior e não executam esse novo fluxo. Agrupamento ERP continua separado do agrupamento Kustos. [Resultado e limites](../arquitetura/cadastro-mestre-execucao-fase3-4.md).
+### Preview, aprovação e execução
 
-## Cadastro Mestre — revisão local (Fase 3.3, 08/10/2026)
+1. Use **Preview mestre (XLSM / XLSX / XLS)** com o original ERP; não é necessária conversão do XLS.
+2. Confira linhas, produtos válidos, novos, alterações, preservações de campos e **remoções do Master**. Filtros: Tipo P/C → Descr. (Origem) contendo Produzido/Revenda → excluir descrição com inativo/EXLUIR. Produtos fora do universo são removíveis somente do Master; vazios de quem permanece preservam o existente.
+3. Confira separadamente **Catálogo de famílias ERP**: código, rótulo, situação, impacto e decisão. Rótulos iguais podem identificar códigos diferentes; conflitos bloqueiam e exigem corrigir a fonte e gerar novo Preview.
+4. Escolha Aprovado/Rejeitado/Pendente por proposta ou ações globais. Aprovar produto não aprova família. Descrição/agrupamento de existente têm decisões próprias; novo produto é indivisível. Qualquer proposta pendente/rejeitada impede a execução inteira.
+5. **Baixar revisão (sem gravar)** salva evidência local. **Fechar** descarta a revisão. Seleção, decisão e download não escrevem.
+6. Com aprovação integral e disponibilidade administrativa, **Executar reconstrução…** abre outra confirmação. Confira as contagens atuais e digite `RECONSTRUIR <quantidade final>`. Cancelar não envia execução.
 
-O manifesto entregue separa novos produtos, descrições alteradas, agrupamento ERP e pendências. Abra Detalhes para conferir atual/recebido/proposto; os controles permitem aprovar/rejeitar uma operação ou todas, e voltar a pendente. Descrição e agrupamento do mesmo existente têm decisões independentes; novo produto é uma única proposta. A busca/paginação não limita as ações globais.
+A execução web transporta dados canônicos compactos, não o binário original. Mudança de arquivo/contexto ou revisão incompatível exige novo Preview/aprovação. Sucesso informa lote e contagens; erro/resposta perdida exige **consultar o lote**, sem repetir automaticamente. `CAD_UI` nasce localmente e sozinho não prova persistência; lote ausente pode representar execução em curso. Guarde original, revisão e identificador. [Contrato e limites](../arquitetura/cadastro-mestre-execucao-web.md).
 
-`Agrup. Prod.` é o agrupamento ERP oficial, sem conversão para categoria Kustos. Aprovar no relatório apenas prepara decisões locais, não grava no banco. Download entrega o conjunto explícito aprovado para uma etapa futura. O lote foi entregue sem aprovação aplicada. A tela Cadastro legada, Custos e OP não mudaram. [Contrato e limites](../arquitetura/cadastro-mestre-aprovacao.md).
+## 7. Documentação
 
-Guia de uso para quem **opera** o sistema no dia a dia (analistas, controladoria). Linguagem direta, sem jargão técnico. Para dúvidas de instalação/infra veja o [Manual Técnico](./manual-tecnico.md); para rotina e problemas veja o [Manual de Operação](./manual-operacao.md).
+Selecione documentos agrupados em Manuais, Regras e Auditoria técnica. **Editar** abre Markdown e prévia sanitizada; **Salvar** solicita commit no GitHub, e **Cancelar** descarta. A publicação depende do redeploy; não há prazo garantido nesta revisão.
 
-> **O que é o Kustos Germani?** Uma ferramenta para **investigar variações de custo** de produtos a partir das planilhas do ERP. O objetivo é simples: **achar o que mudou de preço, quanto e quando — em segundos.**
+O login da aplicação e a autorização da função de gravação são fronteiras distintas: a função `api/save-doc.js` não valida sessão no código atual, conforme o [Manual Técnico](manual-tecnico.md). Edições valem para todos. Esta reorganização não adiciona documentos ao seletor nem muda a allowlist.
 
----
+## 8. Problemas comuns e glossário
 
-## Atualizacao 2026-08-10 — contexto de OP
+Sem competência, selecione-a antes de importar. Colunas não reconhecidas pedem mapeamento; linhas com erro pedem correção na planilha. Produto ausente da cascata pode precisar de classificação ou de outro recorte. Falha de ambiente/carga exige conferir conexão e acionar operação, não interpretar o resultado como vazio.
 
-Apos importar apontamentos de OP, a fila e o dossie incorporam os dados novos automaticamente. Mudar filtros ou competencia atualiza o contexto ao recorte escolhido; competencia e `data_referencia`, enquanto `criado_em` aparece apenas como data de importacao.
+Falhas de rede, gráficos ou exportação devem apresentar mensagem operacional e preservar contexto quando possível. O [Manual de Operação](manual-operacao.md) descreve diagnóstico e logs controlados.
 
-## 1. Visão geral da tela
-
-A aplicação tem um **menu à esquerda** com quatro áreas principais:
-
-| Menu | Para quê |
-|---|---|
-| **Importação** | Carregar a planilha de custos do mês (competência). |
-| **Custos** | Investigar variações, anomalias e histórico de cada produto. |
-| **OP** | Importar e consultar apontamentos operacionais por estágio, origem, OP e produto. |
-| **Documentação** | Consultar os manuais, regras e registros de auditoria técnica. |
-
-No alto à esquerda aparece o usuário (atualmente **"acesso público"**).
-
----
-
-## 2. Dois "tempos" que você precisa entender
-
-O sistema trabalha com **duas datas diferentes**. Não confunda — elas respondem a perguntas diferentes:
-
-| Termo | O que significa | Pergunta que responde |
-|---|---|---|
-| **Competência** (`data_referencia`) | O mês a que o custo se refere no ERP. | "Esse custo vale para **qual mês**?" |
-| **Importação** (`criado_em`) | Quando você subiu a planilha no sistema. | "**Quando** esse dado entrou aqui?" |
-
-Exemplo: em 25/05 você importa a planilha de **março/2026**. A competência é março; a importação é 25/05. As telas sempre dizem qual das duas estão mostrando.
-
----
-
-## 3. Importar uma planilha (passo a passo)
-
-1. Clique em **Importação** no menu.
-2. Em **"Data de Referência (Competência)"**, escolha o mês a que a planilha se refere. **Obrigatório** — sem isso a importação não começa.
-3. **Arraste o arquivo `.xlsx`** para a área pontilhada, ou clique nela para escolher. (Só `.xlsx`.)
-4. O sistema lê os cabeçalhos e tenta **reconhecer as colunas** sozinho. Ele precisa de **5 colunas obrigatórias**:
-   - **Produto** (código)
-   - **Descrição**
-   - **Custo Variável**
-   - **Custo Direto Fixo**
-   - **Custo Total**
-5. **Se ele não reconhecer alguma coluna**, aparece uma janela de **mapeamento**: para cada campo, escolha qual coluna da sua planilha corresponde. Confirme. (Os 5 campos precisam estar preenchidos.)
-6. Aparece o **Preview**: uma amostra das primeiras linhas com um status:
-   - 🟢 **válida** — será gravada.
-   - 🟡 **atenção** — será gravada, mas confira (ex.: "produto não encontrado no cadastro", "valor negativo", "custo total zerado").
-   - 🔴 **erro** — **não** será gravada (ex.: produto ou descrição em branco).
-   > O preview mostra as primeiras 20 linhas, mas a importação grava **todas** as linhas sem erro do arquivo.
-   > O código do produto é normalizado automaticamente no preview e na gravação: espaços, caracteres invisíveis e notação científica do Excel são tratados para evitar histórico quebrado. Se o código ficar ambíguo/inválido, a linha aparece como 🔴 erro e não é gravada.
-7. Clique em **"Confirmar importação"**. Ao final, um resumo mostra **Total de linhas / Importadas / Falhas**.
-
-### Banner de produtos sem categoria ("órfãos")
-Se entrarem produtos novos **sem Origem/Família/Agrupamento**, aparece um aviso amarelo na Importação. Esses produtos existem, mas **não aparecem direito nos filtros** até serem categorizados. Avise quem cuida do cadastro (ver [Manual de Operação](./manual-operacao.md)). Se o aviso disser **“Não foi possível validar produtos sem agrupamento.”**, trate como diagnóstico indisponível: não significa que não existem órfãos, significa que o sistema não conseguiu validar a categoria.
-
-> **Reimportar o mesmo mês é seguro:** o sistema atualiza o registro daquele produto/competência em vez de duplicar.
-
-### Importar apontamentos de OP
-
-1. Clique em **OP** e envie o arquivo `.csv` do relatório de apontamentos.
-2. Confira a amostra e informe a competência do relatório.
-3. Confirme a importação. O aviso final informa a quantidade de apontamentos gravados.
-
-O relatório pode exibir a OP com ponto de milhar, como `2.081`; a importação a grava como o inteiro `2081`. A competência é `data_referencia`; o momento em que o arquivo entrou é `criado_em`.
-
-### Investigar uma OP
-
-Depois de importar, escolha os filtros de Estágio, Origem, OP, Produto, competência ou **Motivo da investigação**. Após a primeira análise, qualquer alteração de filtro atualiza a fila automaticamente.
-
-A fila não rotula uma OP apenas como “crítica”: ela responde **se merece investigação**, com prioridade, motivo, provável causa e evidências combinadas.
-
-| Motivo | Como ler |
-|---|---|
-| 🟥 Gargalo de produtividade | Tempo acima e KG/Hora abaixo do plano, sem parada material que explique o resultado. Investigue processo, padrão, matéria-prima ou apontamento. |
-| 🟧 Desperdício operacional | O volume foi entregue, porém tempo subiu, KG/Hora caiu e as paradas foram materiais. A prioridade é alta porque houve perda de produtividade mesmo com a entrega. |
-| 🟦 Paradas operacionais | Parada material com atraso, queda/não melhoria de KG/Hora e produção abaixo do plano. É prioridade máxima: valide motivo, frequência e duração das interrupções. |
-| 🟨 Baixa produção | Volume abaixo do plano sem redução correspondente de tempo. Investigue perdas, disponibilidade, programação, material ou encerramento da OP. |
-| 🟢 Tempo justificado pelo volume | Tempo maior, KG/Hora praticamente estável e aumento de produção compatível. Não é alerta: o volume explica o tempo adicional. |
-| 🔵 Parada sem impacto relevante | Parada material registrada, mas entrega, tempo e KG/Hora permaneceram normais. Registrar, sem priorizar investigação. |
-| 🟩 Alta eficiência | Produção atingida, tempo menor e produtividade maior. É referência positiva; não requer investigação. |
-
-Clique em **Ver dossiê**. O topo responde “Merece investigação?” e lista as evidências combinadas; a parte “Dados do ERP (imutáveis)” mostra os valores recebidos; “Indicadores calculados pelo Kustos” mostra a interpretação. `% Tempo (ERP)` continua disponível apenas para conferência, nunca como sentença isolada. A competência (`data_referencia`) e a importação (`criado_em`) aparecem explicitamente no dossiê.
-
----
-
-## 4. Investigar custos (tela de Auditoria)
-
-Há **dois caminhos** para chegar a um produto. Use o que for mais rápido.
-
-### Caminho A — Busca rápida (recomendado quando você já sabe o produto)
-1. Clique em **Auditoria**.
-2. No campo de busca no topo, digite o **código** ou a **descrição**. Sugestões aparecem enquanto você digita.
-3. Escolha o produto. O sistema já abre a análise dele.
-
-### Caminho B — Filtros em cascata (quando você está explorando)
-1. Defina o modo temporal e as competências: **Intervalo** inclui todos os meses entre **Início** e **Fim**; **Comparação** considera somente as duas competências informadas. Por exemplo, Junho + Agosto em Comparação não inclui Julho.
-2. Refine com os filtros, nesta ordem: **Origem → Família → Agrupamento → Item/Produto**. Cada filtro mostra só o que existe dentro do anterior.
-3. O relatório **atualiza sozinho** assim que há período + filtro. Se precisar, clique em **"Analisar"**.
-
-> Os filtros ativos aparecem como **etiquetas** logo abaixo. Clique no **x** de uma etiqueta para removê-la.
-
----
-
-## 5. Lendo o relatório
-
-### Os 4 indicadores (KPIs) no topo
-São **clicáveis** — clicar filtra a tabela:
-
-| Indicador | O que mostra |
-|---|---|
-| **Itens analisados** | Quantos produtos entraram no recorte. |
-| **Alertas (>5%)** | Produtos com variação absoluta ≥ 5% entre as duas últimas importações (`criado_em`); o número do card é o mesmo conjunto do filtro rápido e da exportação. |
-| **Mudanças de Regime** | Produtos que eram **estáveis** e ficaram **instáveis** — a anomalia mais importante. |
-| **Média de variação** | Variação média do período (clicar mostra os de variação positiva). |
-
-### A tabela (fila de investigação)
-As linhas vêm **ordenadas por prioridade** (o mais crítico primeiro). Colunas:
-
-- **Produto** — código e descrição.
-- **Variação** — diferença em R$ e %, comparando as duas últimas importações e o período.
-- **Prioridade** — 🔴 Crítico · 🟠 Atenção · 🟡 Monitorar · 🟢 Estável. Passe o mouse para ver o motivo.
-- **Regime** — "⚡ Mudança de regime" ou a classificação de estabilidade (ESTÁVEL / OSCILANDO / MUITO INSTÁVEL).
-- **Contexto Investigativo** — uma frase explicando o que chamou atenção naquele item.
-- **Detalhes** — botão que expande custos (último, penúltimo, inicial, final, datas, score).
-
-Você pode **ordenar** clicando no cabeçalho de uma coluna.
-
-### Drill-through (histórico completo do produto)
-**Clique em qualquer linha** para abrir o **histórico de importações** daquele produto: somente as competências escolhidas no recorte, quando foram importadas, os custos (variável, fixo, total) e a **variação (Δ e Δ%)** em relação ao registro anterior. Por exemplo, ao escolher Junho e Agosto, o painel compara esses dois meses sem incluir Julho. Variações ≥ 5% ficam destacadas.
-
-### Gráficos
-- **Comparação entre as 2 últimas importações** (barras): custo médio de cada uma e a variação.
-- **Evolução temporal** (linha): custo ao longo das competências, com a **média histórica** tracejada e um selo de tendência (🔺 alta / 🔻 queda / 🟢 estável).
-
----
-
-## 6. Exportar para Excel
-
-Na Auditoria, clique em **"Exportar"** (rode a análise antes). No popup, todos os campos começam marcados: desmarque os que não deseja levar e confirme; cancelar não gera arquivo. A ordem das colunas segue a lista do popup. O arquivo gera duas abas:
-- **Contexto** — período, filtros aplicados, ordenação e total de itens.
-- **Fila Investigativa** — a lista priorizada com criticidade, regime, variações, contexto e custos.
-
-O nome do arquivo já vem com o período analisado (ex.: `auditoria_criticos_2026-03-01_a_2026-03-31_20260525.xlsx`).
-
----
-
-## 7. Tela de Documentação (consultar e editar)
-
-No menu **Documentação** você consulta e edita os próprios manuais, sem sair do sistema:
-1. Escolha o documento no seletor, agrupado em **Manuais**, **Regras** e **Auditoria técnica** (segurança, robustez, performance, backlog etc.).
-2. O conteúdo aparece formatado.
-3. Para alterar, clique em **Editar**: surge o texto em **Markdown** à esquerda e a **pré-visualização** à direita, atualizada enquanto você digita.
-4. Clique em **Salvar** para gravar, ou **Cancelar** para descartar.
-
-> Ao salvar, a alteração é registrada no repositório (um commit) e **publicada após o redeploy** (cerca de 30 a 60 segundos) — por isso a versão publicada não muda instantaneamente.
-> **Atenção:** a edição é **aberta** (sem senha). Edite com cuidado, pois a mudança vale para todos.
-
-## 8. Glossário rápido
-
-- **Competência** — mês ao qual o custo pertence (`data_referencia`).
-- **Importação** — quando a planilha entrou no sistema (`criado_em`).
-- **Variação** — quanto o custo mudou (em R$ e %).
-- **Mudança de regime** — produto estável que passou a oscilar; sinal de anomalia prioritária.
-- **Instabilidade** — o quanto o custo de um produto "balança" ao longo do tempo (ESTÁVEL / OSCILANDO / MUITO INSTÁVEL).
-- **Órfão** — produto sem categorização completa (Origem/Família/Agrupamento).
-
----
-
-## 9. Problemas comuns
-
-| Situação | O que fazer |
-|---|---|
-| "Selecione a data de referência" | Escolha a competência **antes** de subir o arquivo. |
-| Colunas não reconhecidas | Use a janela de **mapeamento** para indicar a coluna de cada campo. |
-| Linhas 🔴 não importaram | Produto ou descrição em branco — corrija na planilha e reimporte. |
-| Produto não aparece nos filtros | Pode ser **órfão** (sem categoria) — ver banner e [Manual de Operação](./manual-operacao.md). |
-| "Sem dados para os filtros" | Amplie o período ou afrouxe os filtros. |
-| Tela de "Configuração do ambiente não encontrada" | É problema técnico de configuração — acione o responsável ([Manual de Operação](./manual-operacao.md)). |
-
-> Esta documentação é viva. Se algo na tela não corresponder a este manual, **atualize o manual** (ou avise quem mantém) — ver [Regras Gerais](../regras-gerais.md).
-
-## Atualização 2026-05-28 — mensagens de falha operacional
-
-Quando ocorrer instabilidade de rede, Supabase indisponível ou falha em gráficos/exportação, a tela deve mostrar uma mensagem amigável e preservar os filtros e resultados já carregados sempre que possível. Se o relatório principal não puder ser consultado, corrija a conexão/ambiente e rode a análise novamente; os conceitos temporais exibidos continuam os mesmos: `data_referencia` é competência operacional e `criado_em` é evento de importação.
-
-
-## Atualização 2026-07-20 — sem mudança de uso
-
-A revisão dos PRs recentes apenas alinhou documentação ao estado do sistema. O uso da Auditoria permanece igual: filtros em cascata, KPIs clicáveis, chips removíveis, drill-through e exportação XLSX continuam com o mesmo comportamento visível.
-
-## Atualização 2026-07-30 — Auditoria de OP investigativa
-
-A aba OP agora organiza os apontamentos por motivo e provável causa, em vez de reproduzir a tabela do ERP. Parada alta sozinha não é problema: o Kustos só a interpreta juntamente com tempo, produtividade e atendimento da produção.
-
-## Atualização 2026-08-03 — decisão de investigação da OP
-
-A tabela ganhou a coluna **Decisão**. Ela informa se a OP merece investigação e a prioridade; ao abrir o dossiê, as evidências mostram o cruzamento de produção, tempo, KG/Hora e paradas que levou à conclusão. Competência (`data_referencia`) e importação (`criado_em`) seguem apenas como rastreabilidade do apontamento.
-## Atualização 2026-08-13 — Cadastro
-
-Use **Cadastro** para pesquisar, editar ou cadastrar produtos e preencher o Agrupamento investigativo. O XLSM mestre atualiza apenas dados preenchidos; células vazias e produtos fora do arquivo não apagam o cadastro. Para **Produto sem classificação**, escolha **Cadastrar produto** e não invente Origem ou Família.
-
-## Atualização 2026-09-28 — limite da fila de Custos
-
-Quando o relatório tiver mais de 200 itens, a Fila Investigativa mostra os 200 mais prioritários e informa o total. Para acessar itens fora dessa janela, refine os filtros ou o recorte temporal; itens que entrarem na lista mantêm os botões **Detalhes** e o drill-through normalmente.
+Competência é validade ERP; importação é entrada do dado; variação é diferença em R$/%; mudança de regime é ruptura de estabilidade; órfão é produto com classificação incompleta. Se a tela divergir deste manual, registre a evidência e atualize a documentação conforme as [Regras Gerais](../regras-gerais.md).

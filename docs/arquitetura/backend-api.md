@@ -1,11 +1,12 @@
-# Capítulo 4 — Backend e API
+# Backend e API
 
-## Estado atual
-- Não há servidor Node/Express no repositório.
-- O frontend consome Supabase diretamente via `src/services/api.js`.
+## Fronteiras atuais
 
-## Principais operações
-- `getMasters`: carrega filtros dinâmicos baseados em dados reais.
-- `importarHistoricoCustosComLog`: valida/grava histórico com log.
-- `getHistorico`: consulta por período + filtros em cascata.
-- `getTrendsByProduct`: tendência dos últimos 6 meses por produto.
+O frontend consome Supabase pela fachada `src/services/api.js`, com shim `services/api.js`. Não há servidor Express persistente; há funções Vercel em `/api`:
+
+- `api/save-doc.js`: grava documentos permitidos por commit via GitHub Contents API.
+- `api/reconstruir-cadastro-mestre.js`: disponibilidade, diagnóstico e consulta por GET; reconstrução por POST autenticado/autorizado, reutilizando executor central.
+
+O executor PostgreSQL e credenciais administrativas ficam somente no servidor/CLI. O frontend usa `supabase.from()` para tabelas e HTTP para a função administrativa, sem SQL/RPC. [Mapa HTTP](mapa-endpoints.md), [matriz de contratos](matriz-contratos-operacionais.md) e [execução web](cadastro-mestre-execucao-web.md).
+
+Operações investigativas incluem masters, histórico/recortes, drill-through, comparação/TOP variações, importações/logs Custos/OP e Cadastro operacional/ERP. A série temporal atual usa o dataset carregado; `getTrendsByProduct()` não é chamado pela UI atual.

@@ -1,5 +1,9 @@
 # Auditoria — Manutenibilidade
 
+**Escopo:** evidências originais e progresso preservados por ID. MNT-01/05/06/07 estão concluídos; fluxo vivo de importação está em `view/ui-import.js`. MNT-03 é parcial; MNT-02/MNT-08 seguem abertos no [backlog](backlog-priorizado.md). O teto de 1.000 descrito no registro MNT-07 foi sucedido por CUSTOS-PAGE-01; isso não reabre a documentação histórica dos limiares nem resolve LOG-02. Presenter atual está em `view/ui-table.js`, com injeção na exportação ainda vigente.
+
+Nomes de módulos sugeridos no corpo são propostas históricas, não arquivos existentes: import-controller/report-controller/drill-controller/charts/export-controller em view e supabase-client/validation/enrichment em src/services. A proposta futura investigation-presenter também não foi implementada. O mapa atual está no Manual Técnico; não criar arquivos só para satisfazer essas referências.
+
 Ver legenda e formato em [`README.md`](./README.md). Objetivo: reduzir o custo de mudança e o risco de regressão para o **próximo agente**.
 
 ---

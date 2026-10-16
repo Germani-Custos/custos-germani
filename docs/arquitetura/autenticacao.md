@@ -1,21 +1,21 @@
 # Autenticação e Gate Operacional
 
-## Situação atual (maio/2026)
+## Estado do checkout — 16/10/2026
 
-- Não existe mais `autoAuthenticate`.
-- Em 14/05/2026 o login obrigatório foi temporariamente removido para acesso aberto de investigação.
-- O bootstrap define sessão visual como `acesso público` e libera carregamento sem prompt.
+`view/ui-controller.js` chama `requireLogin()` antes de carregar masters/metadados e OP. Esta é a ordem específica desse fluxo; não constitui prova de que todo I/O de outros controllers aguarda o gate. Sessão existente identifica o usuário; sem usuário, a sobreposição de login solicita credenciais e chama `api.signIn`, que usa `supabase.auth.signInWithPassword`. Logout encerra sessão e volta ao gate. Não existe `autoAuthenticate`.
 
-## Configuração
+A janela de acesso público registrada em 14/05 é [histórica](../HISTORIA_DO_PROJETO_KUSTOS.md). A data de reativação não foi determinada nesta revisão; login no checkout não comprova políticas RLS nem publicação remota.
 
-As credenciais de conexão não ficam no código-fonte dos módulos de serviço.
+## Configuração e administração
 
-- `src/config/app-config.js` centraliza leitura de `import.meta.env`
-- `.env` e `.env.example` definem contrato de variáveis por ambiente (`VITE_*`)
-- bootstrap captura falha de configuração e mostra tela operacional amigável
+`src/config/app-config.js` resolve runtime-config (`window.__ENV__`/`window.__RUNTIME_CONFIG__`), depois `import.meta.env` e meta tags. URL/chave públicas são obrigatórias; credenciais nunca ficam nos módulos. [Setup](../../README_SETUP.md).
 
-## Compatibilidade com RLS
+`scripts/create-master-user.mjs` permite criação administrativa separada: recebe `--login`/`--password`, usa URL do projeto e `SUPABASE_SERVICE_ROLE_KEY` exclusivamente no processo autorizado, verifica usuário existente e converte login sem @ para `<login>@master.local`. Não há senha padrão a copiar da documentação. Não executar para testar esta revisão.
 
-A aplicação usa somente `supabase.from()` para I/O. Isso mantém compatibilidade direta com políticas RLS sem SQL bruto no frontend.
+## Fronteiras de autorização
 
-Ao habilitar RLS no Supabase, as permissões passam a ser controladas por usuário/sessão sem refatoração estrutural da camada de acesso.
+- O login controla o fluxo do frontend; RLS/permissões do banco precisam de verificação própria conforme modelo de acesso aprovado. Não presumir isolamento por usuário/tenant.
+- Reconstrução usa função Node com Auth `getUser`, allowlist UUID, origem exata e flag server-side. [Contrato](cadastro-mestre-execucao-web.md).
+- `api/save-doc.js` não valida sessão no handler atual; allowlist de arquivos/limite de tamanho não equivalem à autorização da reconstrução. Não mudar essa decisão por reorganização documental.
+
+Acesso a tabelas no frontend continua por `supabase.from()`, sem RPC/SQL bruto; operações Auth usam o SDK Auth existente. Nenhuma política ou configuração remota foi consultada/alterada nesta revisão.

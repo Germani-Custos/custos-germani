@@ -1,5 +1,7 @@
 # CAD-EXEC-WEB-01 — Entrega e validação (09/10/2026)
 
+**Registro histórico da implementação web original.** O transporte bruto foi sucedido por CAD-PAYLOAD-01 e depois V2 de famílias; referências a deploy/carga pendentes valem para esta entrega. [Evidência de 15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026) confirma reconstrução posterior, sem comprovar publicação/execução de famílias V2. Provas abaixo preservadas, sem nova consulta nesta revisão.
+
 Etapa posterior: [CAD-ENV-01 — preparação e evidências](./cadastro-mestre-preparacao-ambiente-validacao.md) registra isolamento em dist, diagnóstico READ ONLY e validações adicionais. Os 323 testes abaixo são o resultado histórico da implementação web anterior. Deploy/reconstrução reais continuam pendentes.
 
 Implementação local, sem commit/deploy/habilitação/carga real. [Arquitetura e procedimento](../arquitetura/cadastro-mestre-execucao-web.md). Nenhuma escrita, lote, snapshot ou bucket em Supabase de produção. A divergência de fingerprint operacional não foi alterada.

@@ -1,375 +1,125 @@
-# Manual de Uso Técnico — Kustos Germani
+# Manual Técnico — Kustos Germani
 
-## Leituras completas de Custos — CUSTOS-PAGE-01 (16/10/2026)
+Guia de desenvolvimento e contratos implementados no checkout, revisado em **16/10/2026**. Antes de mudar, leia [AGENTS.md](../../AGENTS.md), [Regras Gerais](../regras-gerais.md) e [auditoria/backlog](../auditoria/README.md). Evidências de entregas e contagens de testes ficam nos documentos especializados e na [História](../HISTORIA_DO_PROJETO_KUSTOS.md), sem funcionar como instruções atuais.
 
-`lerCompleto` foi extraído do leitor existente em `getProductMaster()` para a API compartilhá-lo com Custos. Recria cada SELECT com `count:'exact'`, filtros originais, ORDER BY total e `range` de 500; confere total invariável e tamanho exato esperado em cada página, inclusive a última. Não há limite total. `getMasters()`/diagnóstico ordenam fatos por código+id; histórico por competência+id; drill-through por competência+importação+id. Catálogos usam descrição+id ou id. Dimensão filtrada por IN é lida em blocos de até 500 códigos, todos percorridos.
+## 1. Stack e fronteiras
 
-`getLatestImportComparison()`/`getTopVariacoesImportacao()` também paginam a descoberta de `criado_em` e os fatos das duas importações escolhidas; removido o teto de 1.000, sem mudar definição de importação ou fórmulas. LOG-02 (chunks com timestamps distintos) permanece pendente. Falha em fonte da hierarquia agora retorna `error`, em vez de dimensão vazia silenciosa; falha isolada do diagnóstico continua `indisponivel`. Leitura por várias requisições não é snapshot transacional: alteração concorrente com mesma contagem pode não ser detectada. `data_referencia` permanece competência, `criado_em` importação. [Escopo, testes e validação](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+Frontend HTML/CSS/JavaScript ES Modules nativo, sem bundler de aplicação. Bibliotecas CDN são declaradas em `index.html`; Supabase fornece PostgreSQL, Auth e Realtime. O frontend estático é publicado em `dist`; funções Node Vercel em `api/` são empacotadas separadamente.
 
-## Catálogo de famílias ERP — CAD-FAM-01 (15/10/2026)
+Node >=22 é necessário para ferramentas/funções. `package.json` tem scripts de qualidade/build, devDependencies e dependencies de servidor: `pg` 8.16.3, `@supabase/supabase-js` 2.117.3 e SheetJS 0.20.3. PGlite 0.3.14 é exclusivo dos testes locais. Essas dependências não introduzem bundler nem cliente administrativo no browser.
 
-`familia_descricao_erp` entra pelo adapter existente e na nona posição do transporte `CADASTRO_MESTRE_DADOS_V2`. `proporCatalogoFamiliasCadastroMestre` usa códigos efetivos do universo e identifica no-op/nova/alteração/vazio/conflito; descrição não resolve identidade. Manifesto inclui catálogo e operações identificadas por tabela/código, com revisão independente. Operações do Master mantêm contagens e plano separados.
+## 2. Módulos e responsabilidades
 
-Servidor regenera manifesto/decisões e executor repete sob locks, com INSERT/UPDATE somente de famílias aprovadas. Prova integral do catálogo protege registros não afetados e ID/código/criado_em; snapshot salva apenas famílias afetadas, junto ao Master completo. Falha reverte ambos e mantém auditoria/snapshot existentes. V1/revisões antigas exigem novo Preview; publicar UI/função compatíveis. Sem SQL/RPC frontend, schema/env/carga real ou mudança temporal dos fatos. [Contrato vigente](../arquitetura/cadastro-mestre-familias-erp.md). Seções de V1 abaixo são históricas.
+- `index.html`, `assets/style.css`: shell, navegação, dependências CDN e estilos.
+- `view/ui-controller.js`: bootstrap, sessão e orquestração.
+- `view/ui-charts.js`: comparação/TOP variações/temporal e layout, instâncias em `state.chart`/`state.trendChart`.
+- `view/ui-import.js`: upload, mapeamento, preview e importação de Custos.
+- `view/ui-filters.js`: cascata, KPIs, chips, ordenação e realtime com debounce.
+- `view/ui-table.js`: fila, detalhe e presenter compartilhado com exportação.
+- `view/ui-drill-through.js`: histórico do produto no recorte ativo.
+- `view/ui-export.js`: seleção de colunas, contexto XLSX, ordenação e sanitização anti-fórmula.
+- `view/ui-op.js` / `view/ui-import-op.js`: carga/fila/dossiê de OP e importação MCAP105.
+- `view/ui-product-master.js` / `view/ui-cadastro-mestre-erp.js` / `view/ui-cadastro-mestre-preview.js`: operacional, consulta ERP e Preview/aprovação/execução explícita.
+- `view/ui-state.js`, `view/ui-dom.js`, `view/ui-utils.js`: estado, referências DOM, formatadores, debounce, escape e `fillSelect` seguro por DOM.
+- `view/documentation-controller.js`: leitura/edição dos documentos permitidos.
+- `core/spreadsheet-engine.js`: parsing, detecção de colunas e normalização canônica.
+- `core/report-engine.js`: cálculos de Custos, cascata, alerta, instabilidade e regime.
+- `core/op-investigation-engine.js`: indicadores e decisão combinada de OP.
+- `core/product-master-engine.js`: normalização/reconciliação operacional e payload manual.
+- `core/cadastro-mestre-*.js`: consulta ERP, Preview, catálogo de famílias, manifesto/revisão, transporte e plano de reconstrução; motores sem I/O.
+- `core/heuristic-engine.js`: guardrail somente documental, sem funções exportadas ou sugestão por texto.
+- `src/services/api.js`: fachada única Supabase; `services/api.js` reexporta por compatibilidade.
+- `src/services/cadastro-mestre-preview.js`: adapter único de arquivo; `cadastro-mestre-execution.js`: HTTP autenticado.
+- `api/reconstruir-cadastro-mestre.js`, `scripts/lib/cadastro-mestre-web.mjs` e `scripts/lib/cadastro-mestre-reconstruction.mjs`: handler, autorização e executor administrativo central compartilhado com CLI.
+- `scripts/build-web.mjs` / `scripts/generate-runtime-config.mjs`: artefato público por allowlist e configuração pública gerada.
+- `sql/`, `tests/`, `types/`, `docs/`: migrations/evidências estruturais, regressões, tipos e documentação.
 
-## Consulta Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
+Novos fluxos UI seguem `create<Fluxo>Controller(deps)`. Manter `ui-controller.js` como orquestrador; a injeção do presenter de exportação permanece o contrato atual (MNT-08 aberto).
 
-`createProductMasterController` coordena os dois painéis sem compartilhar filtros/datasets. `createCadastroMestreErpController` → `api.getCadastroMestreErp()` → `lerContextoCadastroMestrePreview(supabase)` reutiliza exclusivamente SELECTs de Master/origens/famílias com páginas de 500, ORDER BY e count exact. O leitor validado e os motores de Preview/aprovação/reconstrução não foram modificados. As duas fontes são carregadas independentemente ao inicializar Cadastro; alternar não refaz consultas. Atualização ERP é manual e somente leitura.
+## 3. Dados, identidade e temporalidade
 
-`core/cadastro-mestre-erp-engine.js` prepara apresentação, resolve categorias pelo helper `resolverCodigoExato` e calcula busca/filtros/páginas de 50 em memória. Reutiliza `normalizeCodigoProduto`, `normalizeText` e `textoCadastro`. Códigos ERP (não UUIDs operacionais) são valores dos filtros. Vazio, inexistente e ambíguo recebem rótulos próprios; não escolher primeiro duplicado nem inferir por descrição. `agrupamento_cod` é ignorado. Nenhuma nova consulta SQL/RPC, tabela, sincronização, escrita ou mudança de `data_referencia`/`criado_em`. [Detalhes e limites](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+Fato `historico_custos`: código, descrição snapshot, custos NUMERIC(18,4), competência DATE e importação TIMESTAMPTZ; chave `codigo_produto + data_referencia` (`unique_produto_data`). `dicionario_produtos` e `categorias_*` fornecem classificação atual. `apontamentos_op` preserva fatos MCAP105 e `log_importacao_op` rastreia lotes. Master ERP e `log_importacao_cadastro_mestre` são separados do operacional. [Modelo detalhado](../arquitetura/banco-de-dados.md).
 
-## Cadastro operacional — paginação CAD-OP-PAGE-01 (15/10/2026)
+`data_referencia` filtra competência e sustenta a série temporal. `criado_em` identifica proveniência e os timestamps usados em comparações de importação. Em Intervalo usar faixa; em Comparação passar conjunto explícito, sem preencher meses intermediários. `getProductHistory(codigo, temporalFilters)` recebe o mesmo recorte do relatório; calcula deltas após leitura completa. Série temporal escolhe o registro mais recente por produto/competência e não soma importações da mesma competência.
 
-Somente `getProductMaster()` passa a ler integralmente as três fontes volumosas com `supabase.from().select(..., {count:'exact'}).order(...).range(inicio,inicio+499)`. Ordenação: `codigo_produto` em `dicionario_produtos`/`historico_custos` e `cod_produto` em `apontamentos_op`. Nos fatos, os empates têm o mesmo código projetado. A paginação termina no total exato (inclusive zero/múltiplo de 500), sem requisição vazia extra. Erro, ausência de count, página truncada ou contagem alterada interrompem o resultado; não calcular ausentes com dados parciais.
+**LOG-02 permanece:** upserts em chunks de 400 podem produzir vários `criado_em` para um mesmo lote; dois timestamps distintos não garantem dois lotes reais. Não mudar esse contrato por reorganização documental. [Dívida e opções](../auditoria/robustez-erros-validacao.md).
 
-As três leituras correm em paralelo, com páginas sequenciais em cada fonte; catálogos, contrato de retorno, normalização/deduplicação e classificação permanecem os existentes. Não há snapshot transacional entre os SELECTs; mudança de quantidade durante a leitura é detectada, mas não se promete visão atômica das três fontes. Sem SQL/RPC, escrita, nova fonte, sincronização ou mudança em `data_referencia`/`criado_em`. [Contrato e testes](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+Descrição é exibição, código/FK define relacionamento e UUID é chave técnica. A regra de agrupamento está no modelo especializado; o diagnóstico tolera chave `codigo`/`id`/`cod`. Nunca deduzir categoria pelo texto.
 
-## CAD-PAYLOAD-01 — contrato compacto do Preview (09/10/2026)
+## 4. Contratos da fachada e leituras completas
 
-O adapter retorna `dadosExecucao` de versão `CADASTRO_MESTRE_DADOS_V1`, além de manifesto/revisão. Fonte contém arquivo/tipo/aba/colunas/linha de cabeçalho/hash local do original; tuplas de oito posições guardam linha/código/descrição/Tipo/Descr. Origem/origem/família/agrupamento ERP. Todas as linhas não vazias são mantidas, inclusive excluídas e inválidas; colunas presentes distinguem célula vazia de campo omitido. SHA-256 dos dados inteiros serializados deterministicamente integra `manifesto.fonte.hash_dados_sha256` antes da aprovação.
+`getMasters()` tem retorno próprio de dimensões/hierarquia/diagnóstico e `error`; os métodos de dados documentados na [matriz operacional](../arquitetura/matriz-contratos-operacionais.md) usam seus contratos explícitos, em geral `{data,error}`. Não presumir um único formato para todos os métodos.
 
-Cliente envia somente `{dados_execucao,decisoes,hash_manifesto,confirmacao,lote}` em JSON até 4 MiB, sem ler novamente o arquivo ou enviar binário/base64/gzip/manifesto/contexto. Servidor valida esquema/valores/hash, relê contexto integral e regenera filtros/universo/manifesto pelos motores existentes; exige hash aprovado e decisões integrais. Executor central repete a validação sob locks, mantendo snapshot, SAVEPOINT, DML somente Master/log, provas e rollback. CLI conserva leitura dos bytes; revisões anteriores exigem novo Preview no contrato atualizado.
+- `getHistorico(filters)`: fatos com recorte temporal, enriquecidos antes da cascata.
+- `getLatestImportComparison(filters)` / `getTopVariacoesImportacao(filters)`: dois timestamps de importação, filtros e dimensão, sujeitos a LOG-02.
+- `getProductHistory(codigo, temporalFilters)`: bloqueia código vazio e aplica o recorte recebido da UI; sem recorte fornecido, o método permite histórico integral. A UI passa o mesmo intervalo/competências do relatório.
+- `importarHistoricoCustosComLog(payload,{dataReferencia})`: validação por linha, garantia de dicionário em lote, chunking e log.
+- `importarApontamentosOp({rows,dataReferencia,arquivoNome})` / `getApontamentosOp(filters)`: gravação com log e consulta de fatos OP; interpretação local.
+- `getProductMaster()` / `upsertProductMaster(payload)`: cadastro operacional e edição explícita.
+- `getCadastroMestreErp()` / `getCadastroMestrePreviewContext()`: leitura integral ERP/catálogos, sem operacional/fatos/mapa nesses métodos.
+- `getCadastroMestreExecutionAvailability()`, `verificarAmbienteReconstrucaoCadastroMestre()`, `executarReconstrucaoCadastroMestre(...)`, `consultarReconstrucaoCadastroMestre(lote)`: HTTP administrativo; diagnósticos e consulta são GET, execução é POST explícito.
 
-O hash do XLS na web é proveniência declarada pelo navegador: sem o original, o servidor não pode provar sozinho seus bytes/origem ERP. Hashes asseguram consistência com revisão/contexto, não assinatura ERP ou proteção contra substituição conjunta por administrador autorizado. Não confiar em plano SQL/patches ou contagens do cliente. Nenhum parser paralelo, nova dependência, schema, variável ou carga de produção; `data_referencia`/`criado_em` dos fatos intactos. [Formato, revalidação e limites](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+`lerCompleto` usa páginas de 500, count exact e ordem determinística; total alterado, página curta, count ausente ou erro bloqueiam resultado parcial. Cadastro operacional compara códigos somente depois de ler integralmente operacional/Custos/OP. Custos pagina hierarquia, catálogos, diagnóstico, histórico, descoberta dos timestamps, comparações e drill-through. Blocos IN de dimensão percorrem todos os códigos; enriquecer antes da cascata. Falha de fonte da hierarquia é erro explícito; diagnóstico isolado continua `indisponivel`. Não é snapshot transacional entre páginas; mutações com mesma contagem podem não ser detectadas. [CUSTOS-PAGE-01](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
 
-## CAD-DIAG-TLS-01 — metadados da CA (09/10/2026)
+`getTrendsByProduct()` não é usado pela UI atual; a série usa dados já carregados. Paginação de Custos não altera `getApontamentosOp()` nem os motores puros.
 
-Após autenticação/allowlist, o GET inspeciona a variável CA sem repará-la e os `connectionParameters` efetivos do pg antes de conectar. X509Certificate valida parsing de todos os blocos; SHA-256 usa DER e não texto PEM. Erros de parsing nunca são serializados. Certificado parseável não prova confiança no endpoint ou validade temporal. Endpoint/usuário são sanitizados, e POST/executor/TLS verificado permanecem intactos. [Contrato dos campos](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
+## 5. Contratos de cálculo, validação e erro
 
-## CAD-DIAG-01 — erros sanitizados do GET (09/10/2026)
+`normalizeCodigoProduto()` é a única normalização canônica; não substituir por `Number`, `parseFloat` ou trim isolado. Trata notação científica, espaços invisíveis e zeros preserváveis; identidade inválida/ambígua bloqueia a linha.
 
-`cadastro-mestre-diagnostic.mjs` é catálogo de diagnóstico, não executor/importador. Handler rastreia sete etapas de infraestrutura e as guardas centrais. Código original só é retornado por allowlist; texto do driver/SDK nunca atravessa HTTP/logs. Cliente preserva `error.diagnostico`/`error.status` somente para GET verificar=1. Testes simulam erros com canários e comprovam ausência de DML/upload e flag false intacta. [Operação](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
+As cinco colunas de Custos são Produto, Descrição, Custo Variável, Custo Direto Fixo e Custo Total. Aliases incluem produto/codigo/cod/item/cod produto, descrição/desc, custo variavel/custo var/variavel, fixo/direto fixo/custo fixo, total/custo total/vl total/valor total. Parsing remove milhar/R$, converte vírgula e mantém até quatro casas. Preview visual de 20 linhas não limita validação/importação. Colunas extras são toleradas.
 
-## CAD-ENV-01 — fronteira de deploy (09/10/2026)
+`classifyAlert()`/`isAlertaCritico()` e `filterAlertRows()` são canônicos: `abs(variacaoTemporal) >= 5` sem arredondamento prévio, incluindo quedas; `null` é ausência legítima de comparação, `undefined`/NaN falham. Recorte é competência; comparação usa importação. Não calcular delta monetário sem penúltimo registro.
 
-Frontend publicado somente em dist; api/scripts/executor/env/pacote/SQL ficam fora. Build recusa chave administrativa na variável pública e canários secretos em arquivos publicados. `api.verificarAmbienteReconstrucaoCadastroMestre()` faz GET verificar=1 autenticado: bucket privado, contexto integral, guardas centrais e privilégios em BEGIN READ ONLY/ROLLBACK. Funciona com flag false, sem DML/upload/executor. [Limites, configuração e procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Nenhum deploy/carga real nesta entrega; competência `data_referencia` e importação `criado_em` intactas.
+`runDiagnosticoSemAgrupamento()` distingue `{status:'ok',rows:[]}` de `{status:'indisponivel',rows:[],error}`. `categorias_agrupamento` usa SELECT `*` e resolução de chave existente. Falha não significa zero órfãos.
 
-## CAD-EXEC-WEB-01 — execução pelo servidor (09/10/2026)
+`normalizeOperationalError` e `executeOperationalBoundary` mantêm fronteiras ERR-01 em bootstrap/relatório/handlers de I/O. Erro estruturado: `{message,technical,timestamp,operation}`; detalhes apenas via `debugLog` com flag verbose. Não registrar payloads completos ou credenciais. `fillSelect` permanece na UI, com construção DOM segura. [Auditoria](../auditoria/README.md).
 
-UI → fachada API → HTTP autenticado same-origin → função Node Vercel → executor central existente. Plano central bloqueia revisão parcial; outra confirmação digitada precede POST. Servidor verifica Auth/allowlist/origem, recalcula manifesto/hash e executor revalida sob locks. Snapshot privado com upload sem sobrescrita/leitura/SHA256 é obrigatório antes do DML; referência fica no JSONB existente, junto do snapshot integral. CLI mantém cópia `wx`/`fsync`. Rollback/COMMIT/provas protegidas continuam centrais. GET de disponibilidade não conecta; GET de lote é somente SELECT.
+`MAX_VISIBLE_INVESTIGATION_ROWS = 200` limita a renderização da fila já ordenada; listener único delegado no `tbody` resolve detalhe/drill-through. Não recalcular prioridade nesse corte. Exportação usa `state.reportRows`, seleção de `EXPORT_COLUMNS` em ordem canônica e sanitização anti-fórmula; nenhuma consulta extra é necessária.
 
-`pg`, SheetJS e SDK Supabase fixados são dependencies do servidor; PGlite continua devDependency. Nenhuma biblioteca/credencial administrativa chega ao frontend. Gate server-side desabilitado por padrão, sem deploy/carga/schema nesta entrega. [Configuração, arquivos, contratos HTTP, limites e testes](../arquitetura/cadastro-mestre-execucao-web.md). Sucede a exclusividade de CLI descrita abaixo; `data_referencia`/`criado_em` dos fatos permanecem competência/importação.
+## 6. Auditoria de OP
 
-## CAD-REBUILD-01 — contrato vigente (09/10/2026)
+`op` é INTEGER NOT NULL. `parseMCAP105` remove ponto de milhar somente desse campo antes de converter. Em erro de insert, `logOpImportFailure()` registra chunk/quantidade/primeiro registro/resposta Supabase (`code,message,details,hint`), com registros/campo associados quando houver violação NOT NULL. Não mudar schema para tolerar formato do CSV.
 
-O adapter existente passa `modo:RECONSTRUCAO_UNIVERSO` ao motor de aprovação. O motor de filtros permanece intacto; `core/cadastro-mestre-reconstruction-engine.js` valida aprovação integral e consolida o plano puro. Master é lido com `supabase.from().select('*')` paginado para vincular a imagem inteira. Manifesto `RECONSTRUCAO_UNIVERSO_V1` inclui remoções revisáveis e universo esperado, mantendo download com execução desabilitada.
+`analyzeOpInvestigation()` deriva atendimento de produção, desvio de tempo, desvio de produtividade e índice de paradas sem alterar fatos ERP. `% Tempo (ERP)` é conferência do desvio de produtividade com tolerância de 0,2 p.p., sem peso duplicado. `buildOpInvestigationQueue()` ordena por decisão/motivo/magnitude.
 
-O executor `scripts/lib/cadastro-mestre-reconstruction.mjs`, chamado apenas pelo comando administrativo `scripts/reconstruir-cadastro-mestre.mjs`, usa cliente PostgreSQL dedicado, BEGIN/locks/validação completa, snapshot durável, SAVEPOINT, bulk INSERT/UPDATE e DELETE explícito somente no Master, prova final e COMMIT. Falha de DML reverte integralmente e registra lote falhou; confirmação de COMMIT perdida exige consulta e nunca retry automático. Não há SQL/RPC/DELETE no frontend.
+`classificacaoInvestigativa` fornece `mereceInvestigacao`, `decisao` (`maxima`, `alta`, `monitorar`, `registrar`, `nenhuma`, `sem_base`) e evidências. Produção entregue + tempo alto + KG/Hora baixo + parada material indica desperdício; déficit de produção na mesma combinação indica impacto máximo. Tempo adicional só se justifica com produção compatível e produtividade praticamente estável. Parada sem impacto é registro. Previsto ausente/zero não autoriza inventar eficiência.
 
-Snapshot completo, hashes, decisões e remoções ficam no JSONB existente do log e em arquivo independente antes do DML do Master. Proveniência é preenchida apenas nas escritas efetivas. Não muda schema/RLS nem cria migration. `pg` 8.16.3 é exclusivo do comando Node; PGlite 0.3.14 é exclusivo de testes locais, ambos devDependencies, sem alteração do CDN/runtime frontend. Nenhum fato, mapa, categoria ou operacional recebe DML; `data_referencia` continua competência e `criado_em` importação. [Contrato e testes transacionais](../arquitetura/cadastro-mestre-reconstrucao.md). Os limites de preservação/execução descritos nas entregas abaixo são históricos.
+`createOpController` deriva fila/histórico de carga local e filtros/competência; callback de importação renova a carga. Não há período fixo nem refetch por filtro. `data_referencia` é recorte, `criado_em` é rastreabilidade; ambos ficam fora das fórmulas.
 
-## CAD-XLS-01 — Preview na tela (08/10/2026)
+## 7. Cadastro Operacional e Master ERP
 
-`view/ui-product-master.js` delega o seletor a `createCadastroMestrePreviewController({dom,executeOperationalBoundary})` em `view/ui-cadastro-mestre-preview.js`. Fluxo: arquivo → `api.getCadastroMestrePreviewContext()` (SELECT paginado do Master ERP/categorias) → `prepararAprovacaoArquivoCadastroMestre(arquivo,contexto,globalThis.XLSX)` → manifesto/revisão pendente → modal → helpers canônicos de decisão → download JSON opcional. A fonte do Preview é `dicionario_master_produtos`, nunca `getProductMaster()`.
+`dicionario_produtos` segue classificação efetiva de Custos/OP. Edição manual usa `buildManualProductMasterPayload`: agrupamento explicitamente vazio/null grava NULL; omitido preserva. O legado `buildProductMasterPayload`/`reconcileProductMasterImport` preserva vazios e ausentes; o seletor atual não chama `importProductMasterXlsm`.
 
-O `xlsx.full` 0.20.3 existente lê BIFF/XLS e XLSX/XLSM via `arrayBuffer`, sem conversão, parser ou dependência nova. Adapter/motores permanecem intactos. A UI escapa valores ERP, impede seleção concorrente e usa a fronteira ERR-01 para falhas. O seletor não chama mais `importProductMasterXlsm`; o método legado na API permanece inalterado. Tabela/edição manual continuam na dimensão operacional. Sem executor, escrita de log/proveniência, schema, migration ou política. Aprovação/download mantêm `execucao_permitida:false`; `data_referencia` (competência) e `criado_em` (importação) dos fatos permanecem intactos.
+Consulta ERP reutiliza `lerContextoCadastroMestrePreview`, código exato por `resolverCodigoExato` e normalização existentes; busca/filtros/páginas de 50 são locais, com datasets/estado independentes. Somente `agrupamento_erp_valor` alimenta agrupamento ERP; não executar filtros do arquivo para consultar o universo persistido. [Contrato UX](../ux/cadastro-mestre.md).
 
-Regressões: `tests/cadastro-mestre-formatos.test.js`, `tests/ui-cadastro-mestre-preview.test.js` e fixture sintética em `tests/fixtures/cadastro-mestre-arquivo.js`. Bytes BIFF reais, filtros, códigos/acentos/zeros, vazios/ausentes, equivalência, seletor, aprovação/bloqueios, cancelamento, falhas, concorrência e escape; API/rede mockadas, nenhuma carga real. [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
+Preview atual usa adapter único → filtros ordenados → manifesto/revisão → plano puro. Família é código exato; rótulos iguais entre códigos diferentes são permitidos. CAD-FAM-01 usa `CADASTRO_MESTRE_DADOS_V2`, tupla de nove posições incluindo `familia_descricao_erp`, e propostas/decisões de catálogo separadas das de produto. Conflitos são verificados em todas as ocorrências dos códigos do universo efetivo, sem ampliá-lo ou escolher vencedor. V1/revisões antigas exigem novo Preview.
 
-## Fase 3.4 — carga pontual autorizada (08/10/2026)
+POST web envia somente dados compactos de todas as linhas, decisões/hash/confirmacao/lote em JSON até 4 MiB. Servidor autentica `getUser`, valida UUID allowlist/origem/gate e regenera manifesto/contexto; executor revalida sob locks. Sem SQL/RPC ou cliente PostgreSQL no browser. Hash do arquivo é proveniência declarada no modo web, sem comprovação independente dos bytes ERP.
 
-Migration 20261008184501, lote 1 concluído: Master 5.706, 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP). A gravação foi precedida por manifesto/contexto/arquivo integralmente idênticos e usa guardas contra repetição/concorrência, EXCEPT integral e log com imagens anteriores. Proveniência vincula somente 415 escritas e 342 agrupamentos recebidos. Sem schema/RLS, importer/UI, ponte ou escrita operacional. [Contrato e testes](../arquitetura/cadastro-mestre-execucao-fase3-4.md). `data_referencia` continua competência e `criado_em` evento de importação nos fatos, que não foram alterados.
+Executor único permite Master/log e somente INSERT/patch de descrição de famílias aprovados na mesma transação. Snapshot contém Master completo e imagens anteriores apenas de famílias afetadas; catálogo tem prova integral, preservando ID/código/criado_em existentes. Storage sem sobrescrita é conferido por download/hash antes do DML; CLI mantém `wx`/`fsync`. Falha exige rollback conjunto; resposta de COMMIT perdida exige consulta do lote, sem retry. [Contrato central](../arquitetura/cadastro-mestre-reconstrucao.md), [web](../arquitetura/cadastro-mestre-execucao-web.md) e [famílias](../arquitetura/cadastro-mestre-familias-erp.md) prevalecem sobre os relatos de fases anteriores nos seus escopos explicitamente sucedidos.
 
-## Fase 3.3 — manifesto e decisões sem executor (08/10/2026)
+## 8. Ambiente, execução local e qualidade
 
-`prepararAprovacaoArquivoCadastroMestre` reutiliza o adaptador, reconhece explicitamente `Agrup. Prod.` e calcula hashes SHA-256 de arquivo/contexto com Web Crypto. `core/cadastro-mestre-approval-engine.js` calcula propostas determinísticas e decisões individuais/em lote sem I/O. Revisão começa pendente e se vincula ao manifesto completo; mudança de conteúdo invalida decisões anteriores. Exportar aprovadas não é executar.
+Veja [README_SETUP.md](../../README_SETUP.md). O gerador lê variáveis do processo; copiar `.env` sozinho não as carrega. Após configurar o ambiente, gere runtime-config e sirva a raiz por HTTP. Servidor puramente estático não executa `/api`.
 
-Destino único das propostas: `dicionario_master_produtos`; nenhum Pxxx vira agrupamento Kustos. Origem/família são códigos ERP brutos com resolução exata separada. Proveniência BIGINT é requisito da execução futura, não valor já preenchido. Sem alteração de `data_referencia` (competência), `criado_em` (importação), runtime ou RLS. [Contrato completo](../arquitetura/cadastro-mestre-aprovacao.md).
+Resolução de configuração: `window.__ENV__`/`window.__RUNTIME_CONFIG__` → `import.meta.env` → meta tags `VITE_*`. URL/chave pública são obrigatórias; verbose controla `debugLog`. Falha de configuração mostra diagnóstico de fontes no bootstrap.
 
-Guia para **desenvolvedores e agentes de IA** que vão evoluir o sistema. Antes de qualquer mudança, leia o `AGENTS.md` (contratos inegociáveis) e as [Regras Gerais](../regras-gerais.md). Para encontrar fragilidades e o backlog, veja [`docs/auditoria/`](../auditoria/README.md).
-
-> Este manual é uma **porta de entrada**. Documentação aprofundada já existe em `docs/arquitetura/`, `docs/ux/` e `docs/regras-negocio/` — esses são linkados, não duplicados.
-
----
-
-## Atualizacao 2026-08-10 — ciclo do contexto de OP
-
-`createOpController` carrega `apontamentos_op` e deriva fila e historico pelos filtros e por `data_referencia`; `createImportOpController` recebe um callback que renova essa carga depois de importar. Nao ha periodo fixo ou nova consulta por filtro. `criado_em` permanece apenas evento de entrada.
-
-## 1. Stack
-
-| Camada | Tecnologia | Observação |
-|---|---|---|
-| Frontend | **JavaScript puro (ES Modules)** | Sem framework, **sem bundler**, sem `package.json` no runtime. |
-| Estilo | CSS3 (`assets/style.css`), tema escuro/glass | Variáveis CSS. |
-| Dados/Backend | **Supabase** (PostgreSQL + Auth + Realtime) | Acesso só via `supabase.from()`. Sem servidor próprio. |
-| Bibliotecas (CDN) | SheetJS/`xlsx`, `chart.js`, `sweetalert2`, `@supabase/supabase-js@2`, `remixicon` | Carregadas no `index.html`. ⚠️ versões não fixadas — ver `SEC-05`. |
-| Deploy | **Vercel** (estático) | `runtime-config.js` gerado no build. |
-
-Detalhes: [`docs/arquitetura/stack-tecnologico.md`](../arquitetura/stack-tecnologico.md).
-
----
-
-## 2. Arquitetura de pastas
-
-```
-index.html               # Shell único: sidebar + <section class="view"> por tela. Carrega CDNs e o controller.
-runtime-config.js        # Gerado no build (window.__ENV__). NÃO editar à mão.
-vercel.json              # buildCommand build-web + outputDirectory "dist"
-assets/style.css         # Estilos globais
-view/                    # Camada de UI (orquestração, DOM, estado, utils)
-  ui-controller.js       # Bootstrap + orquestração dos fluxos de UI (MNT-01 concluído)
-  ui-charts.js           # createChartsController(): gráficos (comparação/TOP variações/temporal) + layout
-  ui-drill-through.js    # createDrillThroughController(): histórico completo de importações do produto
-  ui-import.js           # createImportController(): upload, mapeamento, preview validado e gravação com log
-  ui-import-op.js        # createImportOpController(): upload CSV latin-1, preview e gravação de apontamentos de OP
-  ui-op.js               # createOpController(): filtros, fila por motivo e dossiê da Auditoria de OP
-  ui-table.js            # createTableController(): fila investigativa, detalhes e presenter operacional
-  ui-export.js           # createExportController(): seleção de colunas, XLSX e sanitização anti-fórmula
-  ui-dom.js              # getDomRefs(): mapeia todos os elementos por id
-  ui-state.js            # createInitialState(): estado central
-  ui-utils.js            # escapeHtml, debounce, fillSelect seguro por DOM, showToast, formatadores
-core/                    # Regra de negócio pura (sem DOM, sem Supabase)
-  spreadsheet-engine.js  # Parsing XLSX, fuzzy match de colunas, normalização numérica e normalizeCodigoProduto
-  op-investigation-engine.js # Motor puro de indicadores e classificação investigativa por OP
-  report-engine.js       # Cascata, variação, score de instabilidade, regime, KPIs (sem DOM)
-  heuristic-engine.js    # Sugestão de categoria (NÃO integrado — ver MNT-04)
-src/
-  config/app-config.js   # Resolução/validação de env (VITE_*) com fallback em cascata
-  services/api.js        # Camada única Supabase (queries, validação, enrichment, realtime)
-services/api.js          # Shim: re-exporta src/services/api.js (compat de import)
-scripts/
-  generate-runtime-config.mjs  # Build: gera runtime-config.js a partir do env
-  create-master-user.mjs       # Cria usuário no Supabase Auth (admin)
-sql/                     # Migrações e índices (aplicar manualmente no Supabase)
-docs/                    # Esta documentação
-```
-
-Mapa de telas/fluxos: [`docs/ux/frontend.md`](../ux/frontend.md) e [`docs/ux/rotas-navegacao.md`](../ux/rotas-navegacao.md).
-
----
-
-## 3. Modelo de dados (NÃO violar)
-
-### Separação FATO × DIMENSÃO
-
-- **FATO:** `historico_custos` — série temporal de custos. Chave de negócio: `codigo_produto` + `data_referencia` (constraint `unique_produto_data`). Colunas: `custo_variavel`, `custo_direto_fixo`, `custo_total` (NUMERIC 18,4), `data_referencia` (DATE), `criado_em` (TIMESTAMPTZ).
-- **DIMENSÕES:** `dicionario_produtos` (produto → `origem_id`/`familia_id`/`agrupamento_cod`), `categorias_origem`, `categorias_familia`, `categorias_agrupamento`.
-- **AUDITORIA:** `log_importacao` (status, totais, timestamps, competência).
-- **APONTAMENTOS DE OP:** `apontamentos_op` (linhas do relatório MCAP105) e `log_importacao_op` (ciclo do lote). `op` é `INTEGER NOT NULL`; o parser normaliza somente o ponto de milhar da OP no relatório (por exemplo, `2.081` → `2081`) antes da persistência.
-
-### Semântica temporal (crítico)
-
-| Campo | Significado | Uso no código |
-|---|---|---|
-| `data_referencia` | Competência (mês ERP) | Filtro de período, série temporal (`buildTemporalSeries`). |
-| `criado_em` | Evento de importação | Identificar "última/penúltima importação" (`getLatestImportComparison`, `getTopVariacoesImportacao`). |
-
-A UI **sempre rotula** qual eixo está mostrando. Regra detalhada no `AGENTS.md` e em [`docs/arquitetura/banco-de-dados.md`](../arquitetura/banco-de-dados.md).
-
-> **Dívida conhecida (LOG-02):** a premissa "1 importação = 1 `criado_em`" **não** é garantida pelo pipeline atual. O upsert grava em chunks de 400 (`IMPORT_CHUNK_SIZE`) e cada chunk recebe um `criado_em` próprio, então um lote com mais de 400 linhas gera vários `criado_em`. Assim, `getLatestImportComparison`/`getTopVariacoesImportacao` podem comparar dois chunks do mesmo lote em vez de duas importações reais (erro silencioso). Detalhe e opções de correção em [`docs/auditoria/robustez-erros-validacao.md`](../auditoria/robustez-erros-validacao.md) (LOG-02) e no backlog.
-
-### Regras de acesso a dados (do `AGENTS.md`)
-- **Só** `supabase.from()`. **Sem** RPC, **sem** SQL bruto no frontend.
-- Frontend exibe `descricao`; UUID/`codigo` são chave técnica, nunca semântica de negócio.
-- Credenciais só por env/runtime — nunca hardcoded.
-
-Schema, constraints e índices: [`docs/arquitetura/banco-de-dados.md`](../arquitetura/banco-de-dados.md) · views: [`docs/arquitetura/views-banco.md`](../arquitetura/views-banco.md) · migrações: [`docs/arquitetura/migracoes.md`](../arquitetura/migracoes.md) · cascata: [`docs/regras-negocio/relacionamentos-cascata.md`](../regras-negocio/relacionamentos-cascata.md).
-
----
-
-## 4. Camada de serviço (`src/services/api.js`)
-
-Fachada `api` com os métodos consumidos pela UI. Todos retornam o padrão `{ data, error }` (helpers `ok()`/`fail()`):
-
-| Método | Uso |
-|---|---|
-| `getMasters()` | Carrega dimensões + produtos com custo + diagnóstico de órfãos (`diagnostico_sem_mapa.status`: `ok` ou `indisponivel`). |
-| `getHistorico(filters)` | Histórico por intervalo ou por lista explícita de competências + cascata (enriquece dimensão antes de filtrar). |
-| `getProductHistory(codigo, temporalFilters)` | Drill-through: recebe o mesmo intervalo ou competências explícitas do relatório e calcula Δ/Δ% apenas nesse recorte. |
-| `getLatestImportComparison(filters)` | Comparação entre as 2 últimas importações (por `criado_em`). |
-| `getTopVariacoesImportacao(filters)` | TOP aumentos/reduções entre as 2 últimas importações. |
-| `importarHistoricoCustosComLog(payload, {dataReferencia})` | Importação resiliente: normaliza `codigo_produto` com `normalizeCodigoProduto`, valida linha-a-linha, garante produtos no dicionário, upsert em chunks de 400, grava `log_importacao`. |
-| `importarApontamentosOp({rows, dataReferencia, arquivoNome})` | Insere apontamentos de OP em chunks e registra `log_importacao_op`. Recebe `op` já normalizada pelo parser como inteiro. Em erro, registra resposta completa do Supabase e isola registros ligados a uma violação `NOT NULL`. |
-| `getApontamentosOp(filters)` | Consulta apontamentos de OP por competência, estágio, origem, OP e produto, com ordenação explícita. |
-| `subscribeFiltrosRealtime(cb)` | Assina mudanças em `historico_custos`/`dicionario_produtos`. |
-| `signIn/signOut/getCurrentUser` | Supabase Auth (hoje não usados no bootstrap — ver `SEC-03`). |
-
-Matriz de contratos UI→API→Banco: [`docs/arquitetura/matriz-contratos-operacionais.md`](../arquitetura/matriz-contratos-operacionais.md) · camada de serviço: [`docs/arquitetura/services-frontend.md`](../arquitetura/services-frontend.md) · endpoints: [`docs/arquitetura/mapa-endpoints.md`](../arquitetura/mapa-endpoints.md).
-
-> ⚠️ O método `importarHistoricoCustosComLog` segue grande e há caminho legado de payload — ver `MNT-06` antes de refatorar. O item `VAL-01` foi resolvido centralizando `codigo_produto` em `normalizeCodigoProduto()` no preview, payload, API, relatório e drill-through.
-
-### Diagnóstico de persistência da Auditoria de OP (MNT-OP-01)
-
-O schema declara `apontamentos_op.op` como `NOT NULL`. No CSV real, algumas OPs usam ponto de milhar e o conversor inteiro estrito as recebia como `null`. O parser corrige exclusivamente esse campo antes da conversão, sem migration e sem alteração de semântica temporal. Quando uma chamada `.insert()` falhar, `logOpImportFailure()` registra o número do chunk, sua quantidade, primeiro registro, resposta completa do Supabase (`code`, `message`, `details`, `hint`) e, quando o PostgreSQL identificar uma coluna `NOT NULL`, os registros e o campo envolvidos.
-
-### Motor investigativo da Auditoria de OP (MNT-OP-02 / MNT-OP-03)
-
-`core/op-investigation-engine.js` é puro e não altera `apontamentos_op`: recebe uma linha do MCAP105 e acrescenta `indicadoresKustos`, `conferenciaErp` e `classificacaoInvestigativa`. A fonte de verdade é `analyzeOpInvestigation()`; `buildOpInvestigationQueue()` ordena por decisão, motivo e magnitude.
-
-- **Fatos ERP:** `qtd_*`, `tempo_*`, `kg_hora_*`, `tempo_parada`, `% Tempo` e metadados continuam inalterados.
-- **Indicadores Kustos:** `atendimentoProducaoPct = produzido / previsto`, `desvioTempoPct = (real - previsto) / previsto`, `desvioProdutividadePct = (kg/h real - previsto) / previsto` e `indiceParadasPct = parada / tempo_real`.
-- **% Tempo ERP:** apenas conferência contra `desvioProdutividadePct`, tolerância de 0,2 p.p.; nunca entra como segundo peso de criticidade.
-- **Classificação:** usa combinação de sinais: gargalo de produtividade, desperdício operacional, paradas operacionais, baixa produção, tempo justificado pelo volume, parada sem impacto, alta eficiência, sinal misto ou sem base comparativa. Não expor “status crítico” genérico; a UI apresenta motivo e provável causa.
-- **Decisão (MNT-OP-03):** `classificacaoInvestigativa` inclui `mereceInvestigacao`, `decisao` (`maxima`, `alta`, `monitorar`, `registrar`, `nenhuma` ou `sem_base`) e `evidencias`. A UI apenas apresenta este contrato; não recalcula prioridade ou sinais inline.
-- **Guardrails das combinações:** produção entregue + tempo alto + KG/Hora baixo + parada material = desperdício (alta); os mesmos sinais com déficit de produção = paradas com impacto (máxima). Tempo alto não alerta se KG/Hora estiver praticamente estável e a produção explicar o tempo adicional. Parada material sem efeito em produção, tempo e KG/Hora fica registrada sem prioridade.
-- Planejado/previsão igual a zero ou ausente gera `sem_base_comparativa`; o motor não inventa eficiência. `data_referencia` filtra competência; `criado_em` é exibido no dossiê como evento de importação e não participa das fórmulas de execução.
-
-
-### Contrato de alerta investigativo (LOG-01)
-
-- `classifyAlert()`/`isAlertaCritico()` em `core/report-engine.js` é a única fonte de verdade para o KPI **Alertas (>5%)** e derivados.
-- Base temporal: `variacaoTemporal`, calculada entre última e penúltima importação pelo eixo `criado_em`; `data_referencia` continua sendo apenas o recorte de competência do relatório.
-- Critério: `Math.abs(percentual) >= 5`, sem arredondamento antes da comparação; variação negativa (queda) alerta com a mesma prioridade operacional que alta.
-- `null` representa ausência legítima de comparativo e retorna não alerta; `undefined`, `NaN` ou payload sem percentual canônico deve lançar erro para impedir contagem silenciosa divergente.
-- UI, tabela, drill-through, ranking/reincidência e exportação devem chamar o helper ou `filterAlertRows()`, nunca comparar `> 5` inline.
-
-### Contrato do diagnóstico de órfãos
-
-- `runDiagnosticoSemAgrupamento()` não retorna mais `[]` para falha operacional; retorna `{ status: 'indisponivel', rows: [], error }`.
-- `{ status: 'ok', rows: [] }` é o único estado que significa “nenhum órfão encontrado”.
-- A consulta de `categorias_agrupamento` usa `supabase.from().select('*')` e resolve a chave por `codigo`/`id`/`cod` para tolerar divergência de schema sem usar RPC ou SQL bruto no frontend.
-- A UI deve exibir “Não foi possível validar produtos sem agrupamento.” quando o diagnóstico estiver indisponível, preservando ERR-01 e sem quebrar o bootstrap.
-
-### Contrato de código de produto
-
-- `normalizeCodigoProduto()` em `core/spreadsheet-engine.js` é a única normalização canônica de identificadores de produto.
-- Não usar `Number()`, `parseFloat()` ou `String(...).trim()` isolado para chaves de produto em novos fluxos.
-- O contrato cobre células numéricas/string, notação científica, espaços, caracteres invisíveis, separadores de milhar e zeros à esquerda preserváveis quando a origem vem como texto.
-- Código inválido deve falhar por linha (preview/API) e nunca gerar persistência parcial em `historico_custos` ou `dicionario_produtos`.
-
----
-
-## 5. Rodar localmente
-
-Não há servidor: é estático. Sirva a pasta raiz.
-
-```bash
-# 1. Configurar env (uma das fontes que app-config.js entende)
-cp .env.example .env   # e preencha VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
-
-# 2a. Servir como em produção (gera runtime-config.js a partir do env e serve estático):
-node scripts/generate-runtime-config.mjs   # gera runtime-config.js (window.__ENV__)
-python3 -m http.server 8000                # http://localhost:8000
-
-# 2b. Alternativa: definir as variáveis via <meta name="VITE_*"> no index.html (apenas dev).
-```
-
-Se `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` faltarem, `src/config/app-config.js` **lança no import** e o `index.html` mostra a tela "Configuração do ambiente não encontrada" (com diagnóstico das fontes avaliadas). Setup completo: `README_SETUP.md`.
-
-### Resolução de env (ordem em `app-config.js`)
-`window.__ENV__`/`window.__RUNTIME_CONFIG__` → `import.meta.env` → `<meta name="VITE_*">`. Flags: `VITE_ENABLE_VERBOSE_LOGS` ativa `debugLog`.
-
----
-
-## 6. Build e deploy (Vercel)
-
-- `vercel.json`: `buildCommand = node scripts/build-web.mjs`, `outputDirectory = "dist"`; runtime-config gerado dentro de dist, funções /api separadas do frontend.
-- O script lê o env da Vercel e gera `runtime-config.js` com `window.__ENV__`. **Falha o build** se faltar `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` (fail-fast).
-- Variáveis ficam em **Vercel → Project Settings → Environment Variables** (não versionar `.env`).
-
-Detalhes e checklist: [`docs/arquitetura/deploy.md`](../arquitetura/deploy.md).
-
----
-
-## 7. Como adicionar uma nova tela (padrão do projeto)
-
-A "rota" é uma `<section class="view">` mostrada/escondida por classe. Para criar uma tela nova:
-
-1. **HTML** (`index.html`): um botão na `<nav>` com `data-view-trigger="minhaTela"` e uma `<section id="view-minhaTela" class="view hidden">`.
-2. **DOM** (`view/ui-dom.js`): adicione `minhaTela: document.getElementById('view-minhaTela')` ao objeto `views` (e refs dos elementos internos).
-3. **Navegação**: `bindNavigation()` (`view/ui-controller.js:95-106`) já alterna qualquer item com `data-view-trigger` — não precisa mexer.
-4. **Lógica**: crie um controller (ex.: `view/minha-tela-controller.js`) e chame seu `bind...()` no `init()`.
-
-Componentes/classes reutilizáveis (`.panel`, `.btn-primary`, `.btn-outline`, `.kpi`, `.badge`): [`docs/ux/componentes.md`](../ux/componentes.md). Utils prontos em `view/ui-utils.js` (`escapeHtml`, `debounce`, `showToast`, formatadores) — **sempre** escape entrada de usuário antes de `innerHTML` (ver `SEC-01`).
-
-### Tela de Documentação editável (`view/documentation-controller.js`)
-Implementada (Fase 2). Permite **consultar e editar** os manuais (`docs/manuais/*.md`), as regras gerais (`docs/regras-gerais.md`) e a **auditoria técnica** (`docs/auditoria/*.md`) pela própria UI, com o seletor agrupado por categoria:
-- **Render**: `marked` + `DOMPurify` (CDN fixados no `index.html`); o markdown é **sempre sanitizado** antes de ir ao DOM.
-- **Leitura**: `fetch` dos `.md` servidos estaticamente (ex.: `docs/manuais/manual-usuario.md`).
-- **Gravação**: POST para a Serverless Function `api/save-doc.js`, que comita via **GitHub Contents API** (GET sha → PUT) na branch publicada. Após o commit, a Vercel redeploya e o `.md` atualizado passa a ser servido (latência ~30-60s).
-- **Env da Function** (Vercel): `GITHUB_TOKEN` (PAT fine-grained, Contents: write só neste repo — **secreto**), `GITHUB_REPO` (`owner/repo`), `GITHUB_BRANCH` (default `main`).
-- **Segurança**: endpoint público (decisão de produto); mitigações no servidor — **allowlist de caminho** (`docs/manuais/*.md`, `docs/auditoria/*.md`, `docs/regras-gerais.md`), **limite de 200 KB**, e o token vive só no servidor. Para tornar outro documento editável, inclua-o no array `DOCS` do controller **e** na allowlist (`ALLOWED_PATHS`) da Function.
-- **Vercel**: a função vive em `api/save-doc.js`; confirme que a pasta `api/` está sendo publicada como Serverless Function (o roteamento `/api/*` tem precedência sobre o estático).
-
----
-
-## 8. Convenções
-
-- Arquivos: kebab-case (`ui-controller.js`). Funções: camelCase. Constantes: SCREAMING_SNAKE_CASE. IDs/classes: kebab-case.
-- Imports relativos com extensão `.js` (ES Modules nativos do browser).
-- Regra de ouro: **velocidade de investigação acima de tudo** — ver `AGENTS.md`. Padrões de código: [`docs/regras-negocio/padroes-codigo.md`](../regras-negocio/padroes-codigo.md) · glossário: [`docs/regras-negocio/glossario.md`](../regras-negocio/glossario.md).
-
----
-
-## 9. Documentos relacionados
-
-- Visão/produto: `VISION.md` · `README.md` · roadmap: `ROADMAP.md`.
-- Índice da documentação de arquitetura: [`docs/arquitetura/indice-documentacao-kustos.md`](../arquitetura/indice-documentacao-kustos.md).
-- Operação e troubleshooting: [Manual de Operação](./manual-operacao.md) · [`docs/troubleshooting/playbook-operacional.md`](../troubleshooting/playbook-operacional.md) · [`docs/troubleshooting/guia-integracao.md`](../troubleshooting/guia-integracao.md).
-- Auditoria técnica e backlog: [`docs/auditoria/`](../auditoria/README.md).
-
-## Atualização 2026-05-28 — ERR-01 / fronteiras assíncronas da UI
-
-`view/ui-controller.js` passou a centralizar erros operacionais em `normalizeOperationalError(error, operation)` e `executeOperationalBoundary(operation, action, options)`. Use esse padrão em novos handlers assíncronos de fronteira (rede, Supabase, XLSX, Chart), preservando contexto de tela e usando `debugLog` para detalhes técnicos somente quando `VITE_ENABLE_VERBOSE_LOGS=true`. Não registrar payloads completos nem dados sensíveis.
-
-## Tooling de desenvolvimento — Onda 2 (25/06/2026)
-
-A partir desta entrega, a validação técnica local passa a usar Node apenas como ferramenta de desenvolvimento. O runtime do Kustos Germani permanece estático via CDN.
-
-Comandos recomendados antes de abrir PR:
-
-```bash
-npm install
-npm run lint
-npm run typecheck
-npm test
-```
-
-Contratos cobertos inicialmente:
-
-- VAL-01: `normalizeCodigoProduto()` preserva códigos textuais, converte notação científica inteira e bloqueia valores ambíguos.
-- LOG-01: `classifyAlert()`/`filterAlertRows()`/KPIs usam `abs(variacaoTemporal) >= 5` no eixo de importação (`criado_em`).
-- Semântica temporal: relatórios continuam separando competência (`data_referencia`) de evento de importação (`criado_em`).
-
-Warnings de lint não devem ser silenciados sem análise; trate-os em refatorações dedicadas ou documente a exceção quando existir contrato operacional envolvido.
-
-### Nota de CI — ESLint local vs runner limpo (29/06/2026)
-
-Para validar tooling, não confie em binários globais instalados na máquina. A reprodução correta da GitHub Actions é:
-
-```bash
-rm -rf node_modules
+```powershell
 npm ci
 npm run lint
 npm run typecheck
 npm test
 ```
 
-O pacote `eslint` precisa permanecer declarado em `devDependencies`; `@eslint/js` fornece presets/regras, mas não substitui o executável `eslint` usado pelo script `npm run lint`.
+Typecheck usa `tsc --noEmit -p jsconfig.json`. Ferramentas devem vir do lockfile, sem depender de binários globais. Instalação limpa de tooling deve reproduzir CI. Para mudança exclusivamente documental, validar links/referências e `git diff --check`; testes de aplicação não são necessários. Warnings não devem ser silenciados sem análise.
 
+`npm run build` gera `dist` por allowlist e runtime-config público dentro dela; não publica. Segredos, API/executor/scripts/SQL/dependências ficam fora dos arquivos públicos. Funções `/api` são empacotadas separadamente. [Deploy](../arquitetura/deploy.md) e [diagnóstico administrativo](../arquitetura/cadastro-mestre-preparacao-ambiente.md) detalham configuração e recuperação.
 
-## Atualização 2026-07-27 — fechamento do fatiamento MNT-01
+## 9. Adicionar telas e editar documentação
 
-`view/ui-table.js` passou a concentrar a fila investigativa da aba Custos, os detalhes por linha e o presenter operacional (`getOperationalPriority`/`buildInvestigativeSummary`). `view/ui-controller.js` permanece como orquestrador dos fluxos (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`) e só injeta dependências necessárias para preservar as fronteiras ERR-01 e o re-run silencioso após drill-through. Não houve mudança funcional ou temporal; os rótulos de competência (`data_referencia`) e importação (`criado_em`) continuam na tabela.
+Uma view é uma `<section class="view">` alternada por navegação `data-view-trigger`. Adicione HTML, refs em `ui-dom.js` e controller ligado no `init`, preservando o padrão de fábrica e as fronteiras de erro. Componentes: [guia](../ux/componentes.md). Imports relativos usam extensão `.js`; arquivos kebab-case, funções camelCase, constantes SCREAMING_SNAKE_CASE.
 
-## Atualização 2026-07-30 — contrato OP: ERP x Kustos
+Documentação usa `marked`/DOMPurify para render sanitizado, fetch dos Markdown publicados e POST `api/save-doc.js` para GitHub Contents API. Função usa `GITHUB_TOKEN`, `GITHUB_REPO` e `GITHUB_BRANCH` somente no servidor. Allowlist: manuais, auditoria e regras gerais; limite 200 KB. **O handler não valida sessão**, independentemente do login do frontend; não confundir com autorização da reconstrução. Mudança de documentos editáveis exige controller e allowlist, fora desta revisão.
 
-O contrato da OP separa fatos de interpretação. Qualquer regra futura deve ampliar `core/op-investigation-engine.js`, com regressão para a combinação de sinais correspondente; não colocar fórmula ou classificação inline em `ui-op.js`.
-## Atualização 2026-08-13 — Cadastro mestre
-
-`dicionario_produtos` é a dimensão mestre ativa. `core/product-master-engine.js` reconcilia XLSM por `normalizeCodigoProduto()`: ERP não vazio atualiza descrição/origem/família, vazio preserva dados e `agrupamento_cod` permanece manual. A OP é enriquecida em leitura, sem regravar fatos.
-
-## Atualização 2026-09-28 — PERF-01 na tabela de Custos
-
-`view/ui-table.js` define `MAX_VISIBLE_INVESTIGATION_ROWS = 200` e faz `slice(0, 200)` sobre as linhas já ordenadas recebidas da fila; não deve recalcular prioridade localmente. O controlador registra um único `click` no `tbody` e resolve, por delegação, a alternância de detalhes e o drill-through. A mudança não toca API, estado, KPIs, exportação nem `data_referencia`/`criado_em`.
-
-## Atualização 2026-10-08 — CAD-UX-01
-
-O Cadastro permanece ligado a `dicionario_produtos`. `.master-table-scroll` é um único contêiner com `overflow: auto`, `max-height: 60dvh` (fallback `60vh`) e padding zero, mantendo a barra horizontal na área visível e os `th` sticky existentes, sem JS de sincronização ou alteração de filtros/ordem/paginação.
-
-`upsertProductMaster` passa pelo helper puro `buildManualProductMasterPayload`: agrupamento explicitamente vazio/null entra como `NULL`; campo omitido preserva o atual na API. O importador continua chamando `buildProductMasterPayload`, com a preservação ERP intacta. Sem mudança no Master ERP, schema, RLS, mapa, proveniência ou fatos; `data_referencia` é competência e `criado_em` é importação. [Causas, testes e limitação CRLF preexistente](../ux/cadastro-mestre.md).
-
-## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
-
-`dicionario_master_produtos` preserva os dados básicos ERP e agora pode apontar opcionalmente para `log_importacao_cadastro_mestre` por `ultima_importacao_cadastro_mestre_id`. O log guarda a evidência de arquivo/lote e resultado da futura carga; RLS está ativo e não existe policy de escrita ou importer nesta fase. O runtime, `dicionario_produtos`, fatos e classificações continuam inalterados.
-
-## Atualização 2026-10-05 — Fase 2C.2: agrupamento ERP
-
-O Master recebeu `agrupamento_erp_valor` (valor bruto, sem normalização) e `agrupamento_erp_importacao_id` (lote de origem). A dimensão operacional recebeu `agrupamento_override_manual_cod`, com FK para `categorias_agrupamento.id`, e `agrupamento_classificacao_origem`, restrita a `MASTER`, `MANUAL` ou `LEGADO_NAO_RASTREAVEL`. Nenhuma linha existente foi preenchida; `agrupamento_cod` permanece a classificação efetiva do runtime e não existe ponte ERP → Kustos nesta etapa.
-
-## Atualização 2026-10-08 — Fase 3.1: Preview puro do Mestre ERP
-
-O novo fluxo XLSM/XLSX/XLS existe como módulo, sem integração à tela: adaptador de arquivo → normalização → filtros ordenados (P/C, Produzido/Revenda, excluir inativo/EXLUIR) → comparação por `codigo_produto` no Master → Preview. Campos vazios/colunas opcionais ausentes preservam o atual; produtos ausentes não são excluídos. Origem/família resolvem exclusivamente `categorias_*.codigo`; agrupamento ERP não gera categoria Kustos.
-
-`api.getCadastroMestrePreviewContext()` fornece SELECTs paginados do Master e dos códigos de categoria, falhando explicitamente em contexto incompleto. Não há gravação, log, migration, aprovação ou execução. `data_referencia` permanece competência e `criado_em` evento de importação; nenhum é alterado no Preview. Veja [contrato, contagens e exemplo de chamada](../arquitetura/cadastro-mestre-preview.md). SheetJS 0.20.3 foi acrescentado somente como devDependency para testes de bytes reais, mantendo o CDN de produção.
+Manuais são procedimentos atuais; narrativa vai para [História](../HISTORIA_DO_PROJETO_KUSTOS.md), contratos detalhados para arquitetura e provas para auditoria. [Índice completo](../arquitetura/indice-documentacao-kustos.md).

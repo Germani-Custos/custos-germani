@@ -1,5 +1,7 @@
 # CAD-REBUILD-01 — Reconstrução do universo ERP (09/10/2026)
 
+**Guia de leitura:** extensão atual de famílias/web está indicada abaixo. O detalhamento original de sete tabelas imutáveis, ausência de botão, dependências somente dev e escrita exclusiva em Master/log é histórico nos pontos explicitamente sucedidos: função web tem dependencies de servidor, famílias aprovadas possuem proteção própria e UI pode solicitar execução ao servidor. [Manual Técnico atual](../manuais/manual-tecnico.md). Não mudar os contratos por reorganização; exemplos numéricos dependem do contexto original.
+
 Extensão vigente **CAD-FAM-01 (15/10/2026)**: famílias do universo têm propostas/decisões próprias, revalidação, snapshot parcial de catálogo e DML na mesma transação do Master. Proteção genérica de famílias substituída por comparação integral do catálogo esperado, sem permitir outras mudanças. Aprovação integral mantida. [Contrato, regras e validação](./cadastro-mestre-familias-erp.md). Menções históricas abaixo a categorias imutáveis/ausência de execução web descrevem as fases anteriores.
 
 ## CAD-PAYLOAD-01 — entrada compacta na execução web (09/10/2026)

@@ -1,96 +1,47 @@
-# Setup de Ambiente (Frontend com runtime-config.js)
+# Setup de Ambiente — Kustos Germani
 
-## CAD-ENV-01 — configuração e diagnóstico sem escrita
+Guia do checkout revisado em **16/10/2026**. Frontend estático com runtime-config gerado; funções administrativas dependem do ambiente Vercel. Não confirma configuração de produção e não autoriza deploy, criação de usuário ou reconstrução.
 
-Build agora usa `scripts/build-web.mjs`/`dist`, sem publicar api/scripts/.env/dependências. Template administrativo preenchido somente com UUID autorizado, origem e nome de bucket recomendado; segredos continuam vazios e flag false. [Guia de deploy, bucket privado, diagnóstico e primeira execução](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). O ambiente na nuvem ainda depende de configuração; nenhum deploy/reconstrução nesta preparação.
+## Requisitos e variáveis públicas
 
-## CAD-EXEC-WEB-01 — configuração exclusivamente server-side
+Node >=22 para ferramentas/build/funções e servidor HTTP estático para desenvolvimento do frontend. Instale dependências pelo lockfile com `npm ci`.
 
-A reconstrução pela aplicação usa função Node na Vercel e permanece desabilitada por padrão. [.env.example](.env.example) lista os nomes; [procedimento completo](docs/arquitetura/cadastro-mestre-execucao-web.md) explica Auth/allowlist, origem, conexão TLS do mesmo projeto e snapshot em bucket privado existente. Nunca publicar `CADASTRO_MESTRE_*` em runtime-config/variáveis VITE ou código. Não houve deploy/configuração/carga real nesta entrega. Não habilitar acesso destrutivo a produção em Preview de deploy.
+Use os nomes de [.env.example](.env.example) como referência. `.env` não deve ser versionado com valores reais; copiar esse arquivo sozinho não carrega variáveis no processo. O gerador usa `process.env` e requer URL/chave públicas:
 
-## Variáveis obrigatórias
-
-Crie um arquivo `.env` local com:
-
-```env
-VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-VITE_SUPABASE_ANON_KEY=SUA_SUPABASE_ANON_KEY
-VITE_ENABLE_VERBOSE_LOGS=false
+```powershell
+$env:VITE_SUPABASE_URL = 'https://SEU-PROJETO.supabase.co'
+$env:VITE_SUPABASE_ANON_KEY = 'SUA_CHAVE_PUBLICA'
+$env:VITE_ENABLE_VERBOSE_LOGS = 'false'
+node scripts/generate-runtime-config.mjs
 ```
 
-## Regras operacionais
+Preencha valores autorizados localmente; nunca use service-role/secret como chave pública. O comando gera `runtime-config.js` na raiz. Sirva a raiz por HTTP com ferramenta disponível no ambiente; não abra `index.html` por file://. O servidor estático não executa funções `/api`.
 
-- A fonte principal no browser estático é `runtime-config.js` com `window.__ENV__`.
+## Bootstrap e fontes de configuração
 
-- Em deploy estático/browser clássico, publique `runtime-config.js` na raiz com `window.__ENV__` e as chaves `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENABLE_VERBOSE_LOGS`.
-- `runtime-config.js` deve ser carregado antes do bootstrap em `index.html`.
-- Em ambiente com bundler Vite, `import.meta.env` segue aceito apenas como fallback de compatibilidade.
-- Se o runtime não permitir objeto global, o frontend também aceita fallback via `<meta name="VITE_SUPABASE_URL" ...>` e `<meta name="VITE_SUPABASE_ANON_KEY" ...>` no `index.html` servido.
-- Nunca commitar `.env` com credenciais reais.
-- Em Vercel (Development/Preview/Production), configure as mesmas chaves no painel de Environment Variables.
+`runtime-config.js` carrega antes do bootstrap e disponibiliza `window.__ENV__`. Ordem de resolução: `window.__ENV__`/`window.__RUNTIME_CONFIG__` → `import.meta.env` → meta tags `VITE_*`. Browser não lê `process.env` nem `.env` diretamente. Fallbacks não introduzem dependência de Vite.
 
-## Vercel (escopos obrigatórios)
+Falta de URL/chave obrigatória produz tela operacional de configuração com as fontes avaliadas. Sem sessão ativa, o fluxo principal exige login antes de masters/metadados e OP; [Autenticação](docs/arquitetura/autenticacao.md) descreve o fluxo. Isso não comprova configuração RLS remota.
 
-No projeto da Vercel, configure as três variáveis nos escopos:
+## Comandos disponíveis
 
-- Development
-- Preview
-- Production
-
-Sem isso, o bundle frontend pode compilar com ambiente incompleto e abrir a tela de erro de configuração no bootstrap.
-
-## Bootstrap
-
-No bootstrap do frontend, se `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` estiver ausente, a aplicação renderiza uma tela amigável de configuração em vez de quebrar com stacktrace bruto.
-
-## Validação local (quando o frontend estiver corretamente montado)
-
-Execute na raiz que contém `package.json`:
-
-```bash
-npm run dev
+```powershell
+npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
-Se aparecer erro de `package.json` ausente, o workspace atual não montou a raiz do frontend.
+Não há script `dev` em `package.json`. Typecheck usa `tsc --noEmit -p jsconfig.json`. Build gera `dist` por allowlist e runtime-config público dentro dela, sem publicar. Falta de variável obrigatória bloqueia o build. Testes/lint/typecheck são para mudanças de código; revisão somente documental usa verificação de links/referências e `git diff --check`.
 
+## Vercel e fronteira administrativa
 
+`vercel.json` usa `node scripts/build-web.mjs` e output `dist`. Configurar as variáveis públicas nos escopos necessários (Development/Preview/Production). `VITE_ENABLE_VERBOSE_LOGS` é opcional e deve permanecer false em produção salvo diagnóstico controlado. Funções em `/api` são empacotadas separadamente; somente hospedar `dist` não as publica.
 
-## Criar usuário master (Supabase Auth)
+A reconstrução exige configuração server-side `CADASTRO_MESTRE_*`, Auth/allowlist/origem/TLS e bucket privado existente. Flag é desabilitada por padrão. Nunca copiar esses valores para runtime-config, variáveis VITE, código ou chat. Preview de deploy deve usar ambiente isolado ou execução desabilitada, sem acesso destrutivo à produção. Procedimento: [preparação e diagnóstico](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md) e [execução web](docs/arquitetura/cadastro-mestre-execucao-web.md). Esses guias preservam também evidências históricas; conferir seu escopo/data.
 
-Para criar um usuário master operacional sem salvar credenciais no código-fonte:
+## Usuário administrativo e conferência
 
-```bash
-VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=SEU_SERVICE_ROLE_KEY \
-node scripts/create-master-user.mjs --login=Pedrokurosaki --password=kurosaki123
-```
+Criação de usuário é operação administrativa separada; [Autenticação](docs/arquitetura/autenticacao.md) aponta o script e seu contrato. Chave administrativa vive somente no processo autorizado; não documentar senhas literais de exemplo.
 
-Notas:
-- O script usa `SUPABASE_SERVICE_ROLE_KEY` apenas em runtime local/CI e não persiste a chave em arquivos do repositório.
-- Se `--login` não tiver `@`, o script cria o e-mail sintético `<login>@master.local` para autenticação via Supabase Auth.
-- O script é idempotente: se o usuário já existir, ele não cria duplicado.
-
-## Diagnóstico rápido de bootstrap
-
-Quando faltar configuração obrigatória, a mensagem inclui as fontes avaliadas (`window.__ENV__/__RUNTIME_CONFIG__`, `import.meta.env`, `meta[name=VITE_*]`) para acelerar investigação operacional em produção.
-
-
-## Geração automática do runtime-config (Vercel)
-
-- O build `scripts/build-web.mjs` chama `scripts/generate-runtime-config.mjs` em `dist`; só esse diretório é publicado como frontend pela Vercel. Funções em `/api` são empacotadas separadamente.
-- Esse script valida `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de deploy e gera `runtime-config.js` com `window.__ENV__` preenchido.
-- Se faltar variável obrigatória, o build falha cedo para evitar publicação de frontend inválido.
-- O browser **não usa** `process.env`; `process.env` é usado apenas no build/deploy para materializar `runtime-config.js`.
-
-
-## Checklist pós-setup investigativo
-
-Após configurar ambiente e autenticação, valide também o fluxo de exportação operacional:
-
-1. Rode uma análise com período preenchido (`data_referencia`) e dados importados com pelo menos dois eventos (`criado_em`).
-2. Exporte XLSX e confirme as abas `Contexto` e `Fila Investigativa`.
-3. Sem ordenação manual na UI, confirme ordenação automática por criticidade/regime/magnitude/reincidência/instabilidade.
-4. Confirme no nome do arquivo o período analisado para rastreabilidade operacional.
-
-> Importante: use `data_referencia` para competência da análise e `criado_em` para eventos de importação; ambos devem estar explícitos no contexto exportado.
+Após setup autorizado, conferir acesso e leitura, recorte por competência, deltas por importação, abas Contexto/Fila Investigativa e seleção de campos. Não importar, executar reconstrução ou criar dados apenas para testar configuração em produção. [Manual Técnico](docs/manuais/manual-tecnico.md) e [Manual de Operação](docs/manuais/manual-operacao.md) detalham os fluxos.

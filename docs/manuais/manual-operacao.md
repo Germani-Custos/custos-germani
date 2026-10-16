@@ -1,277 +1,97 @@
 # Manual de Operação — Kustos Germani
 
-## Auditoria de Custos — CUSTOS-PAGE-01 (16/10/2026)
+Procedimentos atuais de manutenção e conferência, revisados em **16/10/2026**. O [ROADMAP](../../ROADMAP.md) distingue implementação local de publicação/execução. Quantidades reais e status de ambiente citados nas provas são datados; esta revisão não acessou produção. Uso da tela: [Manual do Usuário](manual-usuario.md). Implementação: [Manual Técnico](manual-tecnico.md).
 
-Depois de publicação autorizada, recarregar a aplicação para renovar os masters em memória. No estado validado, esperar 437 produtos, 12 origens e 18 famílias na base da cascata; agrupamentos continuam vazios porque os 437 produtos não possuem classificação operacional nesse campo. No intervalo 01/02/2026–15/03/2027, o histórico deve carregar 1.370 fatos. Diagnóstico deve apontar 437 produtos sem agrupamento, não zero por truncamento.
+## 1. Rotina mensal de Custos
 
-Página com erro/incompleta ou contagem alterada exige investigar e repetir apenas a leitura; não criar classificação, importar ou reconstruir para resolver carga indisponível. Esta entrega usa exclusivamente GETs reais, com provas de `dicionario_produtos`/`historico_custos` idênticas antes/depois; não modifica Supabase, OP ou Master ERP. Fatos mantêm competência (`data_referencia`) e proveniência de importação (`criado_em`). [Contrato e limites](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+1. Obtenha XLSX ERP de uma competência e selecione essa competência na Importação.
+2. Confira as cinco colunas, mapeamento, preview e status por linha antes de confirmar.
+3. Anote Total / Importadas / Falhas; confira `log_importacao` e o banner de classificação incompleta.
+4. Abra Custos no mesmo recorte e confira KPIs/fila/drill-through.
+5. Ao exportar, escolha campos e confirme abas Contexto/Fila Investigativa, período e ordenação.
 
-## Conferência de famílias ERP — CAD-FAM-01 (15/10/2026)
+Reimportação atualiza a chave produto/competência, sem duplicá-la. `log_importacao` registra status, totais, linhas importadas/em erro, início/fim e `data_referencia`. **Competência é `data_referencia`; importação é `criado_em`.** Normalização de código é canônica (VAL-01); logs verbose devem conter somente amostras limitadas, sem planilha inteira.
 
-Publicação futura deve manter UI e função no contrato V2; gerar novo Preview/revisão, conferindo famílias e produtos separadamente. No XLS validado: 860 produtos, 81 famílias, 16 existentes e 65 novas para 693 produtos, sem conflitos; todas as 65 propostas continuam pendentes nesta entrega. Manter flag desabilitada durante conferência; não cadastrar famílias manualmente ou executar reconstrução como teste.
+Intervalo considera toda a faixa; Comparação considera só duas competências, sem meses intermediários. KPI Alertas (>5%), filtro rápido e exportação precisam usar o mesmo conjunto de variações absolutas ≥ 5%. Com mais de 200 itens, compare o total do relatório com o aviso de janela visual; refine o recorte para acessar outros itens. Exportação e KPIs usam o conjunto completo. LOG-02 continua limitando a interpretação de dois timestamps como dois lotes distintos.
 
-Após autorização própria, diagnóstico deve conferir também INSERT/UPDATE no catálogo; execução exige aprovação integral e confirmação. Snapshot inclui imagens anteriores das famílias afetadas e Master; falha reverte ambos. Consultar lote após resposta incerta e não repetir automaticamente. Catálogo compartilhado muda somente rótulos aprovados, sem vínculo/classificação operacional ou fatos; competência/importação permanecem intactas. [Procedimento e limites](../arquitetura/cadastro-mestre-familias-erp.md).
+## 2. Classificação e dados incompletos
 
-## Consulta do Master ERP — CAD-ERP-VIEW-01 (15/10/2026)
+O operacional é `dicionario_produtos`, comum a Custos/OP; Master ERP não o substitui. Produto novo sem classificação deve ser sinalizado. Confira no Cadastro Operacional e use a manutenção autorizada da classificação, com referências reais dos catálogos. Não inferir Origem/Família/Agrupamento por descrição, nem usar reconstrução ERP para corrigir classificação operacional.
 
-Após publicação autorizada, abrir Cadastro e conferir totais por fonte: no estado informado, Operacional 6.113 e Mestre ERP 860. Alternar para Master ERP e verificar código/descrição, origem/família do catálogo, agrupamento ERP e navegação de páginas. Editar/cadastrar/classificar permanece exclusivamente operacional. Preview segue disponível como fluxo separado; não enviar arquivo nem executar reconstrução para testar esta consulta.
+A view `vw_produtos_orfaos_agrupamento` é apoio SQL de triagem; a API faz diagnóstico próprio nas tabelas, tolerando chave de agrupamento `codigo`/`id`/`cod`. **“Não foi possível validar produtos sem agrupamento.”** indica indisponibilidade; não interpretar como zero. `SEM_AGRUPAMENTO` e ausência de classificação seguem o [modelo documentado](../arquitetura/banco-de-dados.md).
 
-Erro/truncamento na leitura ERP deve aparecer como **indisponível**, nunca zero ou fallback operacional. **Atualizar consulta** permite nova leitura após recuperação ou reconstrução previamente autorizada; filtros válidos são preservados e página volta à primeira. Totais respeitam visibilidade/RLS do cliente; a leitura paginada não é snapshot transacional entre requisições. Sem grant/policy/migration/env/dados novos. `data_referencia` é competência e `criado_em` é importação, intactos. [Contrato e validação](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+**Sem agrupamento** no editor remove explicitamente `agrupamento_cod`; cancelar não grava. Célula ERP vazia no fluxo de importação correspondente preserva valores. Qualquer saneamento de dado legado deve ter procedimento próprio aprovado; não executar scripts históricos de seed/reconciliação como reparo automático.
 
-## Cadastro operacional — CAD-OP-PAGE-01 (15/10/2026)
+## 3. Rotina de OP
 
-A reconstrução ERP já havia sido concluída antes desta tarefa: diagnóstico confirmou 860 no Master ERP e 6.113 no operacional. A correção atual não executa reconstrução nem sincroniza bases; remove o truncamento das leituras usadas pela tabela/contador operacional. Após deploy autorizado, recarregar Cadastro e conferir que o aviso nomeia cadastro operacional; no contexto diagnosticado, 501 códigos únicos importados devem resultar em zero ausentes. A tabela pode continuar mostrando materiais de manutenção presentes no operacional.
+Importe o CSV MCAP105 com competência, confira amostra e resumo. OP com milhar (`2.081`) deve virar inteiro `2081`; não alterar `op INTEGER NOT NULL`. Após a importação, confira fila/dossiê sem recarregar a página: a carga local deve ser renovada. Filtros/competência precisam afetar ambos.
 
-Se uma página falhar ou a contagem mudar, investigar o erro de carga e recarregar; não criar produtos ou repetir reconstrução para compensar um contador indisponível. Publicar/recarregar não faz parte dos testes de produção desta entrega. Sem mudanças de schema, agrupamentos, fatos ou dos eixos `data_referencia` (competência) e `criado_em` (importação). [Contrato](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+Triagem começa pela coluna Decisão e pelo motivo, conferindo fatos ERP versus indicadores Kustos. Prioridade máxima combina parada material, atraso, déficit e queda/não melhoria de produtividade. Desperdício com entrega merece investigação; parada sem impacto é registro. Tempo adicional explicado pelo volume e produtividade estável não é incidente isolado. Divergência de `% Tempo (ERP)` pede conferência na origem; não recalcular fórmulas na tela.
 
-## CAD-PAYLOAD-01 — publicar o contrato e conferir sem executar (09/10/2026)
+Falha de gravação: procurar `========== IMPORTAÇÃO OP ==========` no console. O diagnóstico inclui chunk, quantidade, primeiro registro e resposta Supabase; violação NOT NULL identifica registros/campo. Use essas evidências para investigar o formato, sem converter falha em mudança de schema. Competência/importação ficam distintas e não entram nas fórmulas operacionais.
 
-O transporte antigo bloqueou o XLS de 24.307.397 bytes no cliente antes do POST; CAD_UI local não criou lote ou snapshot. Última leitura registrada: Master 5.706, somente lote 1 da Fase 3.4, reconstrução pendente. A entrega substitui binário/base64/gzip por JSON dos campos ERP necessários, mantendo teto de 4 MiB, guardas, contexto/universo revalidados, snapshot/transação/rollback no mesmo executor. Não exige nova variável ou bucket/policy/schema. [Contrato e limite da proveniência](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+## 4. Conferir Cadastro e leituras completas
 
-Após publicação explicitamente autorizada, frontend e função devem usar a mesma versão do contrato. Manter a flag inalterada/desabilitada nos testes; não enviar POST para produção para verificar transporte. Gerar novo Preview do original real e conferir 6.230 linhas, 860 válidos, 4.853 remoções e 517 preservações de campos. A cópia local `cadastro mestre 8_10.xls` reproduziu essas contagens, dez UPDATEs e zero erros; tamanho igual não comprovou identidade com nome `(1)`. [Medição local de 885.146 bytes e validação](../auditoria/cadastro-mestre-payload-validacao.md). Revisões anteriores precisam ser regeneradas, inclusive no CLI; CLI mantém o original como argumento e confere seus bytes. Guardar original e revisão. Habilitação e reconstrução real exigem etapa futura autorizada, fora desta entrega.
+Cadastro Operacional e Master ERP têm fontes, totais e filtros independentes. A consulta ERP é somente leitura, com busca local, código exato, agrupamento bruto e páginas de 50. **Atualizar consulta** relê o Master e reinicia a página, conservando filtros válidos; alternar painel não sincroniza bases.
 
-Dados/manifesto/contexto divergentes ou aprovação parcial devem falhar antes do snapshot/DML. Em execução futura, consultar lote após erro/resposta perdida e investigar antes de outra tentativa; identificador local ausente do log não comprova sozinho que um POST em curso terminou. Não alterar Custos/OP/operacional/mapa. Competência `data_referencia` e evento `criado_em` dos fatos permanecem intactos.
+Após publicação autorizada das correções, confira carga integral e mensagem de ausentes **do cadastro operacional**, sem comparar com o total ERP. Leitura de qualquer página com erro/contagem alterada/incompleta deve falhar explicitamente. Repetir somente a leitura após investigar; não cadastrar/importar/reconstruir para compensar o contador.
 
-## CAD-DIAG-TLS-01 — comparar CA sem alteração (09/10/2026)
+Referências datadas para comparação, sem tratar números como metas permanentes:
 
-Manter execução false. Após publicação autorizada, recarregar Production e usar somente o GET autenticado conforme [procedimento](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver). Enviar somente JSON sanitizado; comparar fingerprint DER SHA-256 com certificado oficial fora do chat. CA ausente/inválida é informada explicitamente. Não corrigir variável, publicar certificado, enviar POST ou testar upload durante o diagnóstico.
+- [Cadastro em 15/10](../ux/cadastro-mestre.md): 6.113 operacionais, 860 no Master ERP; fontes de Custos/OP completas resultaram em 501 códigos importados únicos e zero ausentes operacionais. Os antigos 407 decorriam de truncamento.
+- [Custos em 16/10](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026): 1.370 fatos, 437 produtos com custo, 12 origens/18 famílias na hierarquia e 437 pendências de agrupamento; 151 produtos tinham família e nenhum tinha agrupamento. No intervalo documentado 01/02/2026–15/03/2027, foram lidos os 1.370 fatos.
+- [Famílias em 15/10](../arquitetura/cadastro-mestre-familias-erp.md): 81 famílias do universo, 16 existentes, 65 novas para 693 produtos; 65 propostas pendentes e nenhuma escrita nessa entrega.
 
-## CAD-DIAG-01 — investigar 409 sem executar (09/10/2026)
+A consulta respeita a visibilidade/RLS do cliente e não é snapshot transacional entre requisições. Recarregar masters após publicação não preenche classificações ausentes.
 
-Publicar a instrumentação local somente após confirmação administrativa, sem mudar env/flag. Usar exclusivamente GET verificar=1 autenticado e enviar apenas status/diagnostico sanitizados conforme [guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita). Não enviar POST, testar upload, conceder privilégio ou criar lote para investigar. Não atribuir causa TLS/senha sem código remoto. Upload/rollback de produção continuam não testados; fatos e eixos temporais não mudam.
+## 5. Reconstrução administrativa do Master
 
-## CAD-ENV-01 — preparação sem reconstrução (09/10/2026)
+O procedimento exige autorização própria. Consulta, seleção do arquivo, decisões e download não executam carga. Não reexecutar a migration pontual da Fase 3.4 nem chamar o importador legado para aplicar o manifesto atual.
 
-Seguir [passo a passo de deploy/env/bucket/diagnóstico e primeira execução](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Manter flag false e allowlist com apenas o UUID do usuário indicado. GET diagnóstico funciona nesse estado sem lote/upload/escrita; sucesso não testa upload/rollback em produção. Endpoint remoto ainda 404 e Storage sem bucket na verificação desta entrega. Configuração real permanece pendente. Nenhuma carga, snapshot de produção ou mudança nos eixos competência/importação.
+1. Confirmar versão compatível de UI/função V2 e gerar novo Preview do original XLS/XLSX/XLSM contra o contexto atual. Revisão antiga ou divergência de arquivo/contexto exige regeneração.
+2. Conferir filtros, universo, remoções do Master, campos preservados e propostas de famílias/produtos separadamente. Código identifica família; rótulos podem repetir entre códigos. Conflito bloqueia, vazio preserva. Não inserir famílias manualmente como teste.
+3. Aprovar integralmente todas as propostas permitidas; qualquer pendente/rejeitada bloqueia a carga inteira. Guardar original/revisão e contagens atuais, sem reutilizar a antiga expectativa de 860 como comando.
+4. Verificar ambiente por GET autenticado autorizado, mantendo execução desabilitada durante diagnóstico. Sucesso de leitura não prova upload/rollback real nem autoriza execução.
+5. Em etapa autorizada, executar pela aplicação com segunda confirmação digitada, ou usar CLI explícito conforme o [contrato central](../arquitetura/cadastro-mestre-reconstrucao.md#operação-e-exemplo). Não combinar caminhos nem repetir automaticamente.
+6. Conferir lote concluído, universo, contagens, proveniência, referência do snapshot e provas integrais protegidas. Atualizar consulta ERP para reler rótulos; isso não reconcilia o operacional.
 
-## CAD-EXEC-WEB-01 — habilitação e operação futura (09/10/2026)
+Somente para validação local de uma revisão já disponível, o CLI sem `--executar` não conecta ao banco:
 
-Nenhuma reconstrução real nesta entrega. Antes de publicar/habilitar: configurar função Node na Vercel com conexão PostgreSQL administrativa do mesmo projeto/TLS verificado, allowlist de UUIDs Auth, origem exata e bucket privado existente sem policies públicas. Segredos somente server-side; flag `CADASTRO_MESTRE_EXECUTION_ENABLED=false` até verificação explícita. Preview de deploy usa banco separado ou execução desabilitada. Não criar bucket/lote/migration automaticamente.
-
-Depois da habilitação, usuário autorizado seleciona original, revisa/aprova integralmente, clica **Executar reconstrução…** e confirma texto/contagens. Servidor conserva revalidação/snapshot/transação/rollback; resultado retorna lote. Conferir lote concluído/universo e fingerprints protegidos. Em erro/resposta perdida, consultar lote sem retry; snapshot privado permanece auditável, inclusive em rollback. Ausência de lote pode significar execução em curso. CLI continua alternativa explícita. [Variáveis, limites, recuperação e referências](../arquitetura/cadastro-mestre-execucao-web.md). Custos/OP/operacional/mapa não recebem DML; `data_referencia` continua competência e `criado_em` importação. Sucede a limitação de UI abaixo.
-
-## CAD-REBUILD-01 — procedimento vigente (09/10/2026)
-
-Conferir o universo filtrado e as remoções no Preview do original XLS/XLSX/XLSM. Produtos ausentes ou fora do filtro serão removidos somente do Master ERP; vazios preservam campos de quem permanece. Aprovar integralmente e baixar a revisão. Não repetir a migration pontual da Fase 3.4.
-
-Validar primeiro sem banco: `node scripts/reconstruir-cadastro-mestre.mjs --revisao "revisao.json"`. A saída informa contagens e confirmação vinculada ao manifesto. A execução administrativa futura exige `--executar`, original, revisão, caminho novo de snapshot em diretório existente, lote único, autor e confirmação exata; conexão administrativa integral fica em `CADASTRO_MESTRE_DATABASE_URL`, fora do frontend/repositório. [Argumentos e procedimento completo](../arquitetura/cadastro-mestre-reconstrucao.md#operação-e-exemplo).
-
-Arquivo ou Master alterado exige novo Preview. Lock ocupado, dependência desconhecida, snapshot indisponível, revisão parcial ou universo vazio impedem a carga. Erro durante DML reverte todo o Master e registra falhou com snapshot; resultado de COMMIT não confirmado exige consultar o lote e a cópia independente antes de qualquer tentativa. Guardar revisão, original e snapshot; nunca sobrescrever evidências.
-
-Expectativa informada pelo usuário: 6.230 linhas, 860 válidos, 853 existentes, 7 novos, 4.853 remoções; Master final 860. Conferir log concluído, quantidade final, hash e provas das tabelas protegidas. Nenhuma carga real foi feita no desenvolvimento; testes usam PostgreSQL em memória. A dimensão operacional da tela mantém sua contagem; Custos/OP, fatos e os eixos `data_referencia` (competência)/`criado_em` (importação) permanecem intactos. A preservação de ausentes registrada nas fases abaixo é histórica.
-
-## CAD-XLS-01 — conferência dos formatos ERP (08/10/2026)
-
-Na aba Cadastro, testar XLS, XLSX e XLSM por **Preview mestre (XLSM / XLSX / XLS)**. Conferir contagens e detalhes: P/C e Produzido/Revenda elegíveis, D/inativo/EXLUIR excluídos, vazios/ausentes preservados e Agrup. Prod. como ERP bruto. Decisões individuais/globais e download trabalham localmente; fechar não grava nem baixa arquivo.
-
-O seletor consulta o Master completo via SELECT e não executa o legado. Falha de leitura impede Preview, sem simular Master vazio. Não usar JSON como autorização automática nem repetir a migration da Fase 3.4. Sem log, proveniência ou mudanças RLS/schema; `data_referencia` continua competência e `criado_em` importação nos fatos.
-
-Validação local usa XLS BIFF sintético e API em memória, sem carga real. Um XLS original do ERP não foi fornecido nesta tarefa; a prova de leitura usa binário XLS gerado. [Contrato e limites](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
-
-## CAD-UX-01 — conferência do Cadastro (08/10/2026)
-
-Após deploy, conferir a rolagem horizontal no meio de uma lista longa e em janela estreita, mantendo o cabeçalho fixo. Em produto de teste autorizado, selecionar **Sem agrupamento**, salvar e reabrir: a dimensão operacional deve conter `agrupamento_cod = NULL`, e tabela/editor mostrar **Sem agrupamento**. Reatribuir agrupamento e testar cancelar sem gravar. Vazio no ERP continua preservando o cadastro; não usar importação para remover classificação nem repetir a carga da Fase 3.4. [Validação local e passos completos](../ux/cadastro-mestre.md).
-
-## Fase 3.4 — lote 1 concluído (08/10/2026)
-
-A carga autorizada terminou sem erros: 103 novos no Master e 312 existentes atualizados, preservando operacional/mapa/fatos e 4.853 produtos fora dos filtros. Master final = 5.706. Os 103 códigos já existiam no operacional; nenhum foi criado ali por esta carga. Não executar novamente a migration 20261008184501 nem usar o importer legado para repetir o lote. O relatório original continua evidência da preparação, não autorização de nova carga. [Lote, hashes e validações](../arquitetura/cadastro-mestre-execucao-fase3-4.md). Competência `data_referencia` e evento `criado_em` nos fatos continuam intactos.
-
-## Fase 3.3 — preparar aprovação, não importar (08/10/2026)
-
-Conferir manifesto e hashes antes de uma execução futura: base 853/750/103 e 11 descrições; com `Agrup. Prod.` há 342 agrupamentos ERP preenchidos, 511 vazios e 4.853 produtos preservados fora do conjunto. O manifesto tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; oito possuem duas propostas. As 423 propostas são entregues pendentes.
-
-Família pendente não autoriza classificação inventada; ERP Pxxx não é Kustos Mxxx. Controles de revisão/download trabalham somente localmente. Não usar o importador legado para executar este manifesto, não liberar RLS, gerar lote ou preencher proveniência nesta fase. A execução requer autorização e revalidação próprias. [Evidências, contrato e limitações](../arquitetura/cadastro-mestre-aprovacao.md).
-
-Procedimentos para **manter o sistema rodando** em produção: rotina mensal, categorização de órfãos, deploy/rollback, administração do Supabase e diagnóstico de problemas. Público: operação/controladoria com acesso ao Supabase e à Vercel. Para uso da tela, ver [Manual do Usuário](./manual-usuario.md); para código, [Manual Técnico](./manual-tecnico.md).
-
----
-
-## Atualizacao 2026-08-10 — conferencia apos importacao de OP
-
-Depois de importar MCAP105, confira a fila sem recarregar a pagina: o contexto e atualizado automaticamente. Os filtros De/Ate recortam a competencia (`data_referencia`), nunca a data de entrada (`criado_em`).
-
-## 1. Rotina mensal de importação
-
-1. Obtenha a planilha de custos do ERP no formato `.xlsx`, referente a **uma competência** (mês).
-2. Na tela **Importação**, selecione a **Data de Referência** = mês da competência.
-3. Suba o arquivo, confira o **mapeamento** das 5 colunas obrigatórias e valide o **preview** (🟢/🟡/🔴).
-4. Confirme. Anote o resumo (Total / Importadas / Falhas).
-5. **Verifique o banner de órfãos** (ver seção 2) — produtos novos sem categoria.
-6. Faça uma conferência rápida na **Auditoria** do mês importado (KPIs e fila de críticos).
-
-> **Reimportação é idempotente** por `codigo_produto` + `data_referencia` (constraint `unique_produto_data`): subir o mesmo mês de novo **atualiza** os registros, não duplica.
-
-### Registro de importações (`log_importacao`)
-Cada importação grava um registro com `status`, `total_linhas`, `linhas_importadas`, `linhas_erro`, `iniciado_em`, `finalizado_em`, `data_referencia`. Consulte no Supabase para auditar o que entrou e quando.
-
----
-
-## 2. Tratar produtos órfãos (sem categoria)
-
-**Sintoma:** banner amarelo na Importação ("N produto(s) sem categorização completa") e/ou produtos que não aparecem corretamente nos filtros da Auditoria.
-
-**Causa:** produto novo entrou em `historico_custos` e foi criado em `dicionario_produtos` **sem** `origem_id`/`familia_id`/`agrupamento_cod` (a importação não categoriza — apenas garante a existência do produto).
-
-**Como identificar (Supabase):** a migração de saneamento criou a view `vw_produtos_orfaos_agrupamento` e o fallback explícito `SEM_AGRUPAMENTO`. Liste os órfãos por ela.
-
-**Como corrigir:** preencha a categorização em `dicionario_produtos` (via Supabase Studio ou script): defina `origem_id`, `familia_id` e `agrupamento_cod` válidos para cada `codigo_produto`. Use as tabelas `categorias_origem`/`categorias_familia`/`categorias_agrupamento` como referência. Scripts de apoio: `sql/dicionario_master_produtos.sql`, `sql/mapa_produtos.sql`.
-
-Após categorizar, o produto passa a aparecer corretamente nos filtros (o realtime/recarna atualiza os masters).
-
-## 2.1. Conferir códigos normalizados após importação
-
-O item `VAL-01` faz o fluxo ativo usar `normalizeCodigoProduto()` em preview, payload e API. Se uma planilha vier com produto em notação científica (ex.: `7,89123E+12`), espaços, caracteres invisíveis ou separador de milhar, o sistema grava a chave normalizada ou bloqueia a linha como erro. Em modo verbose (`VITE_ENABLE_VERBOSE_LOGS=true`), as mutações críticas aparecem em `debugLog` com amostras limitadas, nunca com a planilha inteira. A competência continua sendo `data_referencia`; o momento de entrada continua sendo `criado_em`.
-
----
-
-## 3. Banco de dados (Supabase)
-
-### Estrutura
-Fato `historico_custos` + dimensões (`dicionario_produtos`, `categorias_*`) + auditoria (`log_importacao`). Schema completo: [`docs/arquitetura/banco-de-dados.md`](../arquitetura/banco-de-dados.md).
-
-### Scripts SQL versionados (`sql/`)
-Aplicados **manualmente** no Supabase (SQL Editor). Ordem cronológica importa:
-
-| Arquivo | Finalidade |
-|---|---|
-| `dicionario_master_produtos.sql` | Tabelas/seed de master data de produtos. |
-| `mapa_produtos.sql` | Mapeamento produto → categorias. |
-| `ajustar_precisao_historico_custos.sql` | Ajuste de precisão NUMERIC dos custos. |
-| `2026-05-11_indices_performance_operacional.sql` | Índices críticos de performance (consultas por produto/competência/importação). |
-| `2026-05-25_saneamento_operacional_schema.sql` | Saneamento: constraint `unique_produto_data`, índices investigativos, fallback `SEM_AGRUPAMENTO`, view de órfãos. |
-| `2026-07-23_create_apontamentos_op.sql` e `2026-07-23_log_importacao_op_status.sql` | Tabelas e ciclo de log da Auditoria de OP. |
-| `inserir_custo.sql`, `variacao_percentual_produto.sql` | Utilitários de consulta/inserção. |
-
-> Ao criar novas migrações, siga o padrão de nomeação `AAAA-MM-DD_descricao.sql` e registre em [`docs/arquitetura/migracoes.md`](../arquitetura/migracoes.md) e no log do `AGENTS.md`.
-
-### Diagnóstico de falha no upload de OP
-
-Se a importação de OP falhar, abra o console do navegador e procure `========== IMPORTAÇÃO OP ==========`. O registro contém o chunk, a quantidade, o primeiro payload e a resposta completa do Supabase. Para uma violação `NOT NULL`, ele também lista o número do registro e a coluna. Para CSVs MCAP105 com OP como `2.081`, confirme que a versão implantada contém a normalização de milhar do parser; não altere o schema para contornar esse formato.
-
-### Conferência operacional da fila de OP
-
-Após importar, abra a aba **OP** e valide a fila pela coluna **Decisão** e pelo motivo. Não trate `Tempo de Parada` ou `% Tempo (ERP)` isoladamente como incidente. Abra o **dossiê** para conferir os fatos imutáveis do ERP contra os indicadores calculados pelo Kustos e as evidências combinadas. Quando o motivo for gargalo de produtividade, a parada baixa/não material não explica tempo alto e KG/Hora baixo; quando houver paradas com impacto, confirme conjuntamente atraso, queda/não melhoria de KG/Hora e déficit de produção antes de agir. Parada sem efeito nesses três resultados deve permanecer registrada, sem prioridade. A competência é `data_referencia`; `criado_em` mostra somente quando o lote entrou no sistema.
-
-### Índices e performance
-Os índices de `2026-05-11` sustentam o drill-through e as comparações de importação. **Não remover** sem entender o impacto nas consultas de `src/services/api.js`.
-
-### Backup
-Use o backup gerenciado do Supabase (point-in-time/diário, conforme o plano do projeto). **Antes de aplicar qualquer migração de saneamento/alteração de schema**, garanta um backup recente. Exportações de dados também podem ser feitas pelo Supabase Studio.
-
----
-
-## 4. Autenticação e acesso
-
-**Estado atual:** acesso **público** (gate de login desativado em 2026-05-14). Implicações de segurança em [`docs/auditoria/seguranca.md`](../auditoria/seguranca.md) (`SEC-03`).
-
-### Criar usuário master (quando reativar auth)
-```bash
-VITE_SUPABASE_URL=https://<projeto>.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
-node scripts/create-master-user.mjs --login=<usuario> --password=<senha>
+```powershell
+node scripts/reconstruir-cadastro-mestre.mjs --revisao "revisao.json"
 ```
-É idempotente (não duplica). Se `--login` não tiver `@`, vira `<login>@master.local`. A `service-role key` é **secreta** — nunca commitar nem expor no frontend. Detalhes: [`docs/arquitetura/autenticacao.md`](../arquitetura/autenticacao.md).
 
----
+Execução real exige todos os argumentos, conexão administrativa server-side, lote único e snapshot novo em diretório existente. Parâmetros completos, limites e credenciais por ambiente ficam no contrato especializado; não passar conexão administrativa na URL da UI ou em variável VITE.
 
-## 5. Deploy e rollback (Vercel)
+Snapshot durável contém Master completo e famílias afetadas; catálogo tem prova integral. Storage usa objeto privado sem sobrescrita, conferido por download/hash antes do DML; CLI usa `wx`/`fsync`. DML de produtos/famílias aprovadas é conjunto e atômico, com log. Erro/resposta perdida exige consulta do lote: `CAD_UI` nasce no browser, lote ausente pode significar transação em curso e não autoriza retry. COMMIT incerto não é sucesso nem falha comprovada; preservar snapshot e investigar. Restauração exige procedimento aprovado, sem apagar alterações posteriores.
 
-### Deploy
-O deploy é automático a partir da branch de produção (Vercel conectada ao GitHub). No build, a Vercel roda `node scripts/build-web.mjs`, que gera `dist` por allowlist e `dist/runtime-config.js` com apenas as **Environment Variables** públicas. Alterações locais ainda sem commit exigem CLI autenticada para publicar o checkout; redeploy do commit antigo não as inclui.
+Detalhes: [execução web](../arquitetura/cadastro-mestre-execucao-web.md), [famílias](../arquitetura/cadastro-mestre-familias-erp.md) e [preparação/diagnóstico](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Os relatos de 5.706 → 860 são evidências históricas; reconstrução posterior já foi confirmada nos registros de 15/10. Novas propostas de famílias continuam uma etapa distinta.
 
-### Variáveis de ambiente (Vercel → Settings → Environment Variables)
-Obrigatórias em Production/Preview/Development:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_ENABLE_VERBOSE_LOGS` (opcional; `false` em produção)
+## 6. Acesso, configuração e publicação
 
-Se faltarem, **o build falha** (proposital). Checklist completo: [`docs/arquitetura/deploy.md`](../arquitetura/deploy.md).
+O fluxo principal do checkout chama login antes de masters/metadados e OP; criação administrativa de usuário está em [Autenticação](../arquitetura/autenticacao.md). Isso não comprova RLS ou permissões de produção. Não habilitar políticas por suposição; modelo de acesso e verificações remotas precisam de escopo próprio. Não expor senhas, tokens ou service-role no frontend, logs ou documentação.
 
-Para a **tela de Documentação editável** (gravação dos manuais via commit), a Serverless Function `api/save-doc.js` exige:
-- `GITHUB_TOKEN` — PAT fine-grained com **Contents: Read and write** apenas neste repositório. **Secreto** — nunca commitar nem expor no frontend.
-- `GITHUB_REPO` — `owner/repo` (ex.: `Germani-Custos/custos-germani`).
-- `GITHUB_BRANCH` — branch publicada (default `main`).
+Build Vercel chama `scripts/build-web.mjs`, publica `dist` por allowlist e gera runtime-config com URL/chave públicas e verbose. Funções `/api` são empacotadas separadamente. Segredos administrativos, scripts, SQL e dependências não são arquivos públicos. Variáveis/configuração: [setup](../../README_SETUP.md) e [deploy](../arquitetura/deploy.md). Ausência de variáveis obrigatórias bloqueia o build/bootstrap.
 
-> A edição em tela é **pública** (sem senha): qualquer pessoa com a URL pode editar os manuais (com allowlist de caminho e limite de tamanho no servidor). Avalie um gate/rotação de token se isso for sensível.
+Reconstrução é desabilitada por padrão; configuração real de flag não é presumida. Diagnóstico `GET ?verificar=1` exige Auth/allowlist e usa leitura/ROLLBACK; inspeciona conexão, TLS, Storage/bucket e guardas. CA só aparece como metadados/fingerprint sanitizados; parsing X.509 não prova confiança ou validade temporal. Não modificar TLS, env, privilégios, bucket ou habilitar POST para diagnosticar.
 
-### Rollback
-Pelo painel da Vercel: **Deployments → escolher o deploy estável anterior → Promote to Production** (ou "Rollback"). Como o app é estático, o rollback é imediato e seguro. Mudanças de **banco** (migrações SQL) **não** voltam com o rollback do frontend — reverta-as manualmente no Supabase se necessário.
+A gravação de documentação usa `api/save-doc.js`, com `GITHUB_TOKEN`/`GITHUB_REPO`/`GITHUB_BRANCH` server-side, allowlist e limite 200 KB. O handler não exige sessão no código atual; não confundir com gate da aplicação ou da reconstrução. Este registro não altera a decisão de acesso.
 
----
+Deploy precisa de autorização. Publicação por Git depende da integração configurada; checkout sem commit não entra em redeploy de um commit antigo. Rollback do deployment na Vercel não reverte dados/migrations; conferir compatibilidade de frontend/funções antes de promover versão anterior. Banco tem procedimento separado e backup prévio.
 
-## 6. Diagnóstico de problemas
+## 7. Banco, backup e diagnóstico
 
-| Sintoma | Causa provável | Ação |
-|---|---|---|
-| Tela "Configuração do ambiente não encontrada" | Falta `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` no ambiente | Conferir env na Vercel; reabrir os "Detalhes técnicos" da tela mostra as fontes avaliadas. Rebuild. |
-| App carrega mas sem dados / "Falha ao carregar tabelas de apoio" | Supabase indisponível, chave inválida, ou RLS bloqueando | Verificar status do Supabase, validade da `anon key`, e políticas de RLS (se ativadas). |
-| Importação com muitas falhas (🔴) | Colunas mal mapeadas ou dados em branco | Revisar mapeamento e a planilha; ver `linhas_erro`/erros no resultado. |
-| Produto sumiu dos filtros | Órfão (sem categoria) | Seção 2 — categorizar em `dicionario_produtos`. |
-| Banner mostra “Não foi possível validar produtos sem agrupamento.” | Diagnóstico de órfãos indisponível (ex.: divergência de schema/permissão em `categorias_agrupamento`) | Não interpretar como zero órfãos; verificar `categorias_agrupamento`, permissões/RLS e logs com `VITE_ENABLE_VERBOSE_LOGS=true`. |
-| Mesmo produto com históricos separados | Importação antiga anterior ao `VAL-01` ou código já salvo incorretamente | Novas importações normalizam o código no preview/API; para legado, padronizar registros existentes e reimportar a competência afetada. |
-| Auditoria lenta com base grande | Tabela sem virtualização | Limitação conhecida `PERF-01`; refinar filtros como paliativo. |
-| Logs detalhados necessários | — | Ativar `VITE_ENABLE_VERBOSE_LOGS=true` temporariamente (ativa `debugLog`). |
+[Migrações](../arquitetura/migracoes.md) centraliza scripts e estado registrado. Exemplos versionados incluem precisão de custos, índices de 11/05, saneamento de 25/05, tabelas/log OP de 23/07, proveniência cadastral de outubro e alteração isolada de unicidade da descrição de família. Scripts utilitários/seed não são rotina mensal. Não reaplicar automaticamente nem inferir que toda migration listada está pendente.
 
-Playbook detalhado: [`docs/troubleshooting/playbook-operacional.md`](../troubleshooting/playbook-operacional.md) · integração: [`docs/troubleshooting/guia-integracao.md`](../troubleshooting/guia-integracao.md).
+Preserve índices de produto/competência/importação. Antes de mudança estrutural autorizada, garantir backup recente e procedimento de retorno; backup gerenciado depende do plano do projeto. Exportações/snapshots devem ter retenção aprovada e nunca ser sobrescritos para repetir uma tentativa.
 
----
+- **Configuração ausente:** conferir fontes de runtime e variáveis no ambiente; rebuild exige autorização quando publicar.
+- **Falha ao carregar dados:** investigar rede, chave, visibilidade e paginação; resultado parcial/zero não substitui erro.
+- **Linhas inválidas:** conferir planilha, mapeamento e erros de linha/log.
+- **Produto fora dos filtros:** conferir classificação e recorte antes de alterar dados.
+- **Base extensa:** usar filtros e janela visual de 200; PERF-01 está concluído. Cache de masters permanece dívida PERF-02.
+- **Gráficos/exportação falham:** conferir mensagem/operation/timestamp. Verbose temporário, quando autorizado, ajuda a coletar diagnóstico; desativar depois. Não compartilhar tokens, configuração privada ou payloads inteiros.
 
-## 7. Monitoramento e saúde
+Após cada importação, conferir log e classificação; mensalmente, revisar alertas/regime. Na OP, revisar decisão/evidências e referências de alta eficiência. Dependências CDN têm versões no HTML; não tratá-las genericamente como “sem versão”. O handler documental público e os limites RLS são fronteiras separadas, não resolvidas por esta revisão.
 
-- **Após cada importação:** confira `log_importacao` (linhas_erro próximo de zero) e o banner de órfãos.
-- **Mensal:** revise a fila de críticos na Auditoria; investigue mudanças de regime.
-- **Após importação de OP:** revise Gargalos de produtividade e Paradas operacionais; Alta eficiência é referência a validar, não incidente automático.
-- **Dependências de CDN:** hoje sem versão fixada (`SEC-05`) — uma quebra externa pode derrubar parsing/gráficos. Se algo parar "do nada" sem deploy recente, suspeite de atualização de CDN.
-
----
-
-
-## Conferência de alertas (>5%)
-
-Ao validar uma importação ou fechar uma auditoria, o KPI **Alertas (>5%)** deve bater exatamente com a quantidade de linhas exibidas ao clicar no card e com a quantidade exportada quando a fila `alerts` está ativa. A regra operacional é variação absoluta ≥ 5% entre última e penúltima importação (`criado_em`); o período do relatório continua sendo competência (`data_referencia`). Se houver divergência, tratar como incidente de cálculo e ativar `VITE_ENABLE_VERBOSE_LOGS=true` apenas para coletar o log estruturado.
-
-## 8. Quando algo não estiver coberto aqui
-
-1. Consulte [Manual Técnico](./manual-tecnico.md), [Manual do Usuário](./manual-usuario.md) e `docs/arquitetura/`.
-2. Para fragilidades/itens em aberto, veja [`docs/auditoria/`](../auditoria/README.md).
-3. **Atualize esta documentação** ao descobrir um procedimento novo — ver [Regras Gerais](../regras-gerais.md). Documentação desatualizada é incidente operacional.
-
-## Atualização 2026-08-27 — modos temporais de Custos
-
-Use **Intervalo** para conferir todas as competências entre as datas e **Comparação** para confrontar somente duas competências. A fila, os KPIs, os gráficos temporais e o drill-through devem receber o mesmo recorte de `data_referencia`; `criado_em` continua somente como data do evento de importação.
-
-## Atualização 2026-08-24 — exportação XLSX por campos
-
-O popup de exportação parte com todos os campos da Fila Investigativa selecionados. O operador pode desmarcar colunas; a planilha usa somente essa seleção, conserva a ordem exibida e não consulta o Supabase. Cancelar encerra o fluxo sem gerar arquivo.
-
-## Atualização 2026-08-24 — recorte do drill-through de Custos
-
-Ao validar um produto no drill-through, o painel consulta exclusivamente as competências selecionadas no relatório. Em um recorte de Junho e Agosto, a comparação é feita entre esses dois registros; Julho não entra como mês intermediário. A competência continua sendo `data_referencia` e a data de importação continua sendo `criado_em`.
-
-## Atualização 2026-05-28 — diagnóstico operacional de falhas da UI
-
-Se a abertura do app, a análise, o drill-through ou a exportação falhar, a UI deve exibir mensagem operacional e manter o contexto possível da investigação. Para diagnóstico controlado, ative temporariamente `VITE_ENABLE_VERBOSE_LOGS=true`, reproduza a operação e use o `timestamp`/`operation` do log estruturado; desative a flag após a análise para manter o console limpo em produção.
-
-## CI e validação de Pull Request — 25/06/2026
-
-O repositório agora possui GitHub Actions para validação de qualidade em Pull Requests. O workflow executa lint, typecheck leve e testes automatizados, mas não realiza deploy nem altera o fluxo da Vercel. A publicação continua dependente da configuração existente de deploy estático e da geração de `runtime-config.js` com variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
-
-
-## Atualização 2026-07-20 — conferência de PRs recentes
-
-Sem mudança operacional para o usuário final nesta revisão: apenas documentação do estado real dos PRs #121–#124. A operação deve considerar que filtros, chips, ordenação e exportação seguem com o mesmo comportamento, agora em módulos dedicados. A pendência operacional relevante continua sendo performance da fila/tabela em bases grandes (`PERF-01`), dependente do fechamento do MNT-01.
-
-## Atualização 2026-07-30 — triagem de OP por motivo
-
-O procedimento de OP passa a iniciar pela explicação do Kustos e não por uma coluna isolada do ERP. Em caso de divergência entre `% Tempo (ERP)` e o desvio de produtividade calculado, conferir o apontamento na origem; o Kustos mantém ambos para auditoria.
-
-## Atualização 2026-08-03 — decisão e escalonamento de OP
-
-Use a prioridade máxima para interromper a fila e investigar paradas com impacto em produção, tempo e KG/Hora. Prioridade alta cobre desperdício com entrega ou baixa produção sem redução de tempo. Registre, sem escalar, parada sem impacto; não abra incidente por tempo maior quando a produção maior explicar o consumo e a produtividade estiver estável. Essas decisões não mudam o uso de `data_referencia` (competência) ou `criado_em` (entrada do lote).
-## Atualização 2026-08-13 — operar o Cadastro
-
-Antes de importar o XLSM, confirme que Origem e Família existentes no arquivo estão cadastradas no ambiente. Pendências de produto inválido ou categoria desconhecida não substituem valores atuais. O Cadastro representa classificação atual e não altera fatos de Custos ou OP.
-
-## Atualização 2026-09-28 — fila extensa de Custos
-
-Se a Auditoria indicar que há itens além dos 200 exibidos, use os filtros ou o recorte de competência para trazer o produto à janela investigativa. O aviso não indica perda de dados: exportação e KPIs continuam usando o relatório completo, enquanto a tabela preserva apenas a leitura operacional dos itens mais prioritários.
+[Playbook](../troubleshooting/playbook-operacional.md), [integração](../troubleshooting/guia-integracao.md) e [auditoria/backlog](../auditoria/README.md) aprofundam problemas. Atualizar procedimentos com evidências conforme as [Regras Gerais](../regras-gerais.md).

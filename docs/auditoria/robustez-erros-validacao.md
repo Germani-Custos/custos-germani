@@ -1,5 +1,7 @@
 # Auditoria — Robustez, Tratamento de Erros e Correção
 
+**Leitura vigente:** achados com resolução mantêm evidências originais; LOG-02 e VAL-02 seguem abertos. O critério antigo ERR-02 de hierarquia parcialmente carregada foi sucedido por [CUSTOS-PAGE-01](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026): falha de fonte essencial é erro explícito; falha isolada do diagnóstico continua indisponível. Não mudar esse contrato por aplicar a recomendação histórica do corpo.
+
 Ver legenda e formato em [`README.md`](./README.md). Inclui **bugs de correção** (lógica), que costumam ser mais perigosos que os de estilo.
 
 ---

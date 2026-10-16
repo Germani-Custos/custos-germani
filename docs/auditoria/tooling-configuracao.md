@@ -1,5 +1,9 @@
 # Auditoria — Tooling e Configuração
 
+**Escopo histórico:** CFG-01 a CFG-05 foram concluídos, conforme [backlog](backlog-priorizado.md). O corpo preserva investigação e recomendações da época; não declara ausência atual de lint/tipos/testes/CI. `package.json` hoje inclui dependencies de servidor para funções administrativas, além de devDependencies; o runtime frontend continua estático/CDN. Build atual usa `scripts/build-web.mjs`/`dist`, sem publicar a raiz administrativa. [Manual Técnico atual](../manuais/manual-tecnico.md).
+
+src/services/validation.js é um destino proposto após MNT-02, ainda inexistente; a referência no corpo não afirma módulo disponível hoje.
+
 Ver legenda e formato em [`README.md`](./README.md). Restrição importante: o **runtime é estático via CDN, sem bundler** (decisão de arquitetura). As melhorias abaixo **não devem introduzir bundler nem mudar o runtime** — apenas ferramentas de desenvolvimento.
 
 ---

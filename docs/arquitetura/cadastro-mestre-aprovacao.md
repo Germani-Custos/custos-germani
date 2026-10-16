@@ -1,5 +1,7 @@
 # Cadastro Mestre — manifesto e revisão local (Fase 3.3)
 
+**Registro da fase e das evidências de aprovação.** O corpo preserva a entrega original, seus hashes e ressalvas; não especifica ausência atual de execução/UI. Consulte [reconstrução](cadastro-mestre-reconstrucao.md), [web](cadastro-mestre-execucao-web.md) e [famílias V2](cadastro-mestre-familias-erp.md) para as extensões vigentes. Evidência histórica não autoriza nova carga.
+
 ## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01
 
 O adapter da tela usa `RECONSTRUCAO_UNIVERSO_V1`: propostas de novos, alterações de campos ERP e remoções de produtos fora do universo; todas precisam estar aprovadas para execução atômica administrativa. O modo incremental FASE_3_3 permanece apenas para compatibilidade das evidências históricas abaixo. Preservação de produtos ausentes e bloqueio de UPDATE de origem/família deixam de ser o contrato do Master ERP; preservação de campos vazios continua. [Contrato atual, snapshot e execução](./cadastro-mestre-reconstrucao.md). Download/decisão na UI não executa; `data_referencia` e `criado_em` dos fatos permanecem intactos.

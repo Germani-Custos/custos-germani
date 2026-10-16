@@ -1,5 +1,7 @@
 # Capítulo 6 — Banco de Dados
 
+Escopo vigente: [CAD-FAM-01](cadastro-mestre-familias-erp.md) permite somente famílias aprovadas na transação do Master, com proteção integral de catálogo; rótulos podem repetir entre códigos após [CAD-FAM-SCHEMA-01](migracoes.md). Relatos estruturais abaixo preservam o que foi criado em cada etapa, sem afirmar ausência atual de lotes. Reconstrução posterior já consta nas [evidências de 15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026); não houve consulta de banco nesta revisão documental.
+
 ## Atualização 09/10/2026 — universo mestre e snapshot
 
 `dicionario_master_produtos` passa a refletir exatamente o arquivo ERP filtrado após execução integral aprovada. Somente Master recebe remoções. Snapshot anterior completo, SHA256, remoções, decisões e contagens ficam em `log_importacao_cadastro_mestre.metadados_origem` (JSONB existente), além de cópia durável independente. Novas escritas mantêm as FKs de lote existentes; linhas removidas ficam rastreáveis pelo log/snapshot. Nenhum schema, migration, política, fato ou dimensão operacional é alterado. A transação usa conexão administrativa separada; frontend continua `supabase.from()` somente leitura neste fluxo. [Contrato](./cadastro-mestre-reconstrucao.md). `data_referencia` permanece competência e `criado_em` evento de importação nos fatos.
@@ -38,12 +40,12 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `agrupamento_erp_valor` TEXT NULL (valor bruto recebido do ERP)
 - `agrupamento_erp_importacao_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 
-É a fonte oficial planejada para os dados básicos do ERP. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
+É a fonte ERP consultada pelo painel Cadastro Mestre ERP, separada da classificação operacional. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
 
 ### `log_importacao_cadastro_mestre`
 - registra arquivo/lote, tipo de arquivo (`XLSM`, `XLSX`, `XLS`), hash ou identificador, execução, contagens, resultado, erros e metadados de origem;
 - RLS ativo, sem policy de escrita antes da implementação aprovada do importer;
-- não contém importações nesta etapa estrutural.
+- o registro de ausência de importações pertence à etapa estrutural original; a primeira carga e reconstrução posteriores estão documentadas nos contratos/evidências, sem nova leitura nesta revisão.
 
 ### `categorias_origem`
 - `id` UUID (chave técnica)

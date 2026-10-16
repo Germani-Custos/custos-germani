@@ -1,5 +1,7 @@
 # CAD-ENV-01 — Preparação da execução web (09/10/2026)
 
+**Escopo deste registro:** preparação, tentativas e diagnósticos de 09/10, preservados abaixo com seus limites. Afirmações “404”, “sem bucket”, TLS inválido, Master 5.706 e reconstrução pendente são estados históricos de etapas distintas; a revisão final abaixo registra diagnóstico posterior OK. [Evidência de 15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026) já confirma Master 860 após reconstrução. Nenhuma flag/ambiente foi reconsultada nesta revisão documental. Para nova operação: [manual](../manuais/manual-operacao.md), [web](cadastro-mestre-execucao-web.md) e [famílias V2](cadastro-mestre-familias-erp.md). Quantidades/roteiro de “primeira execução” abaixo são exemplo histórico, não autorização ou contagem atual.
+
 ## CAD-PAYLOAD-01 — estado posterior da tentativa e transporte (09/10/2026)
 
 A tentativa do original `cadastro mestre 8_10(1).xls` (24.307.397 bytes) parou no limite de 16 MiB do cliente antes da compactação/POST. `CAD_UI_3c719c89-668a-42a7-bc7d-5793cad6e7f3` foi apenas identificador local; consulta posterior não encontrou lote/snapshot. A última leitura registrada encontrou Master **5.706**, apenas lote 1 concluído e nenhum `RECONSTRUCAO_UNIVERSO_V1`. A informação anterior de validação 5.706 → 860 não deve ser tratada como estado persistido de produção.

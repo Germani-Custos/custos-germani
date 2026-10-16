@@ -1,8 +1,8 @@
 # Capítulo 5 — Frontend
 
 ## Estrutura principal
-- `index.html`: layout das telas (Importação e Auditoria).
-- `view/ui-controller.js`: orquestra eventos, importação, filtros e gráficos.
+- `index.html`: shell das áreas Importação, Custos, OP, Cadastro e Documentação, com sobreposição de login no fluxo principal de Custos/OP.
+- `view/ui-controller.js`: orquestra eventos e delega fluxos a controllers separados. [Mapa de módulos atual](../manuais/manual-tecnico.md#2-módulos-e-responsabilidades).
 - `core/spreadsheet-engine.js`: parsing/mapeamento de planilha.
 - `core/report-engine.js`: cascata, KPIs e linhas de relatório.
 
@@ -26,9 +26,9 @@
 - A parada não recebe cor de alerta isolada. A cor pertence ao motivo composto, evitando concluir problema sem contexto de tempo, produtividade e produção.
 
 
-## Atualização estrutural (2026-05-14)
+## Organização estrutural
 
-Para reduzir acoplamento e facilitar manutenção incremental, o frontend foi reorganizado sem alterar regras analíticas:
+A organização por responsabilidade preserva regras analíticas:
 
 - `ui-controller.js`: mantém apenas orquestração de fluxo investigativo e integração entre módulos.
 - `ui-state.js`: encapsula estado inicial da aplicação.

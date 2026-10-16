@@ -1,349 +1,87 @@
 # Roadmap Estratégico — Kustos Germani
 
-## Atualização 2026-10-16 — CUSTOS-PAGE-01
+Recorte documental: **16/10/2026**. Toda iniciativa deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Conclusão de implementação local e publicação/execução real são estados distintos; não houve nova consulta de produção nesta revisão.
 
-- [x] Paginar fatos/dimensão/catálogos da hierarquia e diagnóstico de Custos, histórico, comparações e drill-through; bloquear resultados incompletos, mantendo cálculos, filtros e eixos temporais.
-- [x] Validar testes de volume/falha/ordenação e sonda real somente leitura: 6.113 produtos, 1.370 fatos, 437 códigos encontrados e zero ausentes, sem modificar classificação ou dados.
-- [ ] Publicar em etapa própria autorizada; esta entrega é local e não realiza deploy, reconstrução ou sincronização ERP → operacional.
+## Concluído
 
-[Contrato e limites](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026). `data_referencia` continua competência e `criado_em` importação.
+### Consolidação operacional e investigação analítica
 
-## Atualização 2026-10-15 — CAD-FAM-01
+- Importação resiliente de custos com reconhecimento/mapeamento de cabeçalhos, parsing brasileiro, preview por linha, normalização canônica, chunking, log e garantia de produtos no dicionário.
+- Busca direta, cascata, ordenação, filtros rápidos, chips e atualização do relatório após mudança de filtros.
+- Alertas canônicos, instabilidade, mudança de regime, comparação de importações, TOP variações e evolução temporal.
+- Recortes Intervalo/Comparação compartilhados com drill-through e exportação XLSX com contexto e campos selecionáveis.
+- Auditoria de OP: persistência MCAP105, decisão investigativa por sinais combinados e carga local renovada após importar (MNT-OP-01 a MNT-OP-04).
+- Fronteiras de erro, contratos tipados, lint/testes/CI e modularização da UI (MNT-01); fila de Custos com janela TOP-200 e delegação de eventos (PERF-01).
 
-- [x] Integrar rótulo ERP ao adapter/transporte V2, catálogo puro por código/universo, Preview/decisões próprias e executor central com snapshot/provas/rollback conjuntos.
-- [x] Validar Preview real somente leitura: 81 famílias, 16 existentes, 65 novas, 693 produtos impactados; nenhuma escrita real.
-- [ ] Publicar UI/função compatíveis e executar somente em etapa futura explicitamente autorizada, após novo Preview/aprovação e diagnóstico administrativo. Esta entrega não habilita flag nem executa carga.
+### Cadastro e proveniência ERP
 
-[Contrato e limites](docs/arquitetura/cadastro-mestre-familias-erp.md). `data_referencia`/`criado_em` dos fatos intactos.
+- Dimensão operacional comum a Custos/OP e manutenção manual da classificação, separada dos fatos.
+- Estrutura de proveniência do Master, preservação do agrupamento ERP bruto e primeira carga pontual auditada.
+- Pipeline único XLS/XLSX/XLSM → Preview → manifesto → aprovação integral → reconstrução administrativa explícita, por CLI ou função Vercel, com snapshot/revalidação/transação/rollback.
+- Transporte web compacto, diagnóstico administrativo de leitura e isolamento do frontend em `dist`.
+- Reconstrução real confirmada nos registros posteriores à preparação; [evidência de 15/10](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). Isso não representa execução das novas propostas de famílias.
+- Identidade de família por código, com remoção isolada da unicidade da descrição aplicada e documentada em [Migrações](docs/arquitetura/migracoes.md).
 
-## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01
+### Implementações locais com continuidade de publicação
 
-- [x] Remover somente a unicidade do rótulo de família, preservando código único, PK, descrição obrigatória e todos os dados; migration 20261015182351 aplicada e conferida, rollback não executado.
+- CAD-OP-PAGE-01 e CUSTOS-PAGE-01: paginação integral do Cadastro operacional e da Auditoria de Custos, contagem exata e bloqueio de leitura parcial.
+- CAD-ERP-VIEW-01: consulta do Master ERP com estado independente, filtros por código e páginas visuais de 50.
+- CAD-FAM-01: catálogo de famílias ERP no Preview V2, decisões próprias e executor central com provas/snapshot/rollback conjuntos.
 
-Cadastro automático de famílias e alteração do executor continuam fora desta etapa. [Contrato estrutural e provas](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Competência e importação dos fatos permanecem intactas.
+Contratos e evidências: [matriz operacional](docs/arquitetura/matriz-contratos-operacionais.md), [Cadastro](docs/ux/cadastro-mestre.md) e [famílias ERP](docs/arquitetura/cadastro-mestre-familias-erp.md). Contagens e resultados de testes pertencem às evidências datadas, não a itens adicionais deste roadmap.
 
-## Atualização 2026-10-15 — CAD-ERP-VIEW-01
+## Em andamento
 
-- [x] Disponibilizar consulta do Master ERP dentro de Cadastro, com fonte/total explícitos e estado separado do operacional.
-- [x] Reutilizar paginação integral existente e resolução por código ERP; busca/filtros locais, páginas visuais de 50 e agrupamento somente `agrupamento_erp_valor`.
-- [x] Manter Preview comum e edição/cadastro operacional no seu painel; sem escrita, schema, sincronização ou reconstrução.
-- [ ] Publicar após revisão/autorização e conferir as duas visões com a sessão de produção. Não fazer carga para validar consulta.
+Continuidade registrada como pendente nas entregas locais, sem assumir execução ativa por alguém:
 
-[Contrato e testes](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026). Registros anteriores sobre ausência de visão ERP são históricos. `data_referencia`/`criado_em` intactos.
+- Publicação autorizada das leituras integrais de Cadastro/Custos e da consulta ERP; conferência da UI publicada com sessão de produção.
+- Publicação conjunta de UI/função V2 de famílias, novo Preview, revisão independente de famílias/produtos e diagnóstico. Habilitação/execução real das propostas exige autorização própria; não é teste da consulta.
+- Esclarecimento da divergência histórica de fingerprint operacional registrada na [Fase 3.3](docs/arquitetura/cadastro-mestre-aprovacao.md#ressalva-detectada-na-comparação-real), sem atribuir causa ou autoria por suposição.
 
-## Atualização 2026-10-15 — CAD-OP-PAGE-01
+Não há publicação, habilitação ou execução autorizada por este documento. Estado remoto de flags/permissões deve ser verificado na operação correspondente.
 
-- [x] Paginar as três fontes do contador operacional, detectar leitura incompleta e explicitar seu nome no aviso. Sem sincronização Master → operacional, nova visão, schema ou escrita.
-- [x] Registrar estado posterior às entregas históricas de 09/10: reconstrução executada anteriormente; diagnóstico confirmou Master ERP 860 e operacional 6.113. Esta tarefa não executa reconstrução.
-- [x] Validar 23 regressões novas/432 testes totais, lint/typecheck/build/diff check; sonda real somente leitura do método alterado carregou 6.113/1.370/704 linhas e confirmou 501 únicos/zero ausentes, sem consultar Master ERP ou escrever.
-- [ ] Publicar esta correção somente após autorização e conferir a carga completa/contador na UI: contexto diagnosticado tem 501 códigos únicos importados e zero ausentes operacionais.
+## Próxima onda
 
-[Contrato](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). `data_referencia` é competência e `criado_em` é importação, inalterados.
+### Prioridade técnica vigente
 
-## Atualização 2026-10-09 — CAD-PAYLOAD-01
+Seguir o [backlog priorizado](docs/auditoria/backlog-priorizado.md), que mantém critérios e dependências. MNT-01/PERF-01 já estão concluídos; não reiniciar a preparação histórica:
 
-- [x] Transporte web por representação compacta dos campos ERP necessários de todas as linhas, sem binário XLS/base64/gzip ou plano de DML fornecido pelo cliente.
-- [x] Hash dos dados vinculado ao manifesto aprovado; servidor recalcula filtros/universo/contexto e executor central repete a validação sob locks, mantendo snapshot/transação/rollback.
-- [x] Cópia local `cadastro mestre 8_10.xls` (24.307.397 bytes) lida: 6.230 linhas, 860 válidos, 4.853 remoções, dez UPDATEs e 517 preservações de campos. Manifestos direto/compacto/servidor iguais; POST medido localmente 885.146 bytes/4.870 decisões. 409 testes/31 arquivos passaram. [Evidência e limites](docs/auditoria/cadastro-mestre-payload-validacao.md).
-- [ ] Publicação e nova conferência na UI do contrato atualizado; não habilitar nem executar como teste. Tamanho igual da cópia local não comprova identidade com o original nomeado `(1)`.
-- [ ] Reconstrução real continua pendente: última leitura confirmou Master 5.706 e apenas lote 1; tentativa local `CAD_UI` bloqueada antes do POST não é lote persistido.
+1. **MNT-03:** centralizar cascata; `fillSelect` já tem lar único, mas a iniciativa permanece parcial.
+2. **SEC-02:** padronizar HTML seguro sobre os fluxos separados.
+3. **PERF-02:** cache de masters com invalidação por importação/realtime e diagnóstico explícito de falhas.
+4. **MNT-02 / VAL-02:** separar responsabilidades da API mantendo a fachada e consolidar validação entre preview e persistência.
+5. **LOG-02:** decidir identidade de lote versus timestamp por chunk antes de corrigir comparação de importações. `criado_em` segue importação; `data_referencia` segue competência.
+6. **MNT-08:** avaliar presenter investigativo dedicado e desacoplamento da ordenação de exportação dos rótulos visuais.
 
-[Contrato](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto). Sem schema, nova credencial, mudança de filtro ou DML de produção nesta entrega; `data_referencia` continua competência e `criado_em` importação nos fatos. Registros abaixo são históricos e sucedidos quando descrevem transporte do arquivo bruto.
+### Próxima evolução funcional — Memória operacional
 
-## Atualização 2026-10-09 — CAD-DIAG-TLS-01
+Planejada, sem implementação declarada por esta reorganização:
 
-- [x] Inspeção local da CA X.509 e parâmetros efetivos do driver no GET autorizado; regressões sem rede/DML/upload ou alteração de TLS/flag/executor.
-- [x] Publicado diagnóstico autorizado em Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`; GET público 401 sem CA/endpoint, execução false e disponibilidade 503. 369 testes/lint/typecheck/diff check passaram.
-- [x] GET autenticado confirmado pelo usuário: CA presente/aplicada, 1.365 bytes, marcadores PEM presentes, parsing X.509 inválido/fingerprint null; HTTP 409 `SELF_SIGNED_CERT_IN_CHAIN`, execução false. Reconstrução continua pendente; não corrigir CA automaticamente.
+- Histórico de alertas por produto, frequência/reincidência e linha do tempo de regime, preservando o alerta canônico ≥ 5%.
+- Comparação entre períodos equivalentes e exportação do drill-through individual.
+- Autocomplete avançado por código/descrição e persistência do filtro de mudança de regime por período.
 
-## Atualização 2026-10-09 — CAD-DIAG-01
+Decisões pendentes: cálculo local versus views para séries longas, retenção de `log_importacao` e suficiência dos índices já documentados. A antiga proposta de indexação não implica ausência dos índices existentes.
 
-- [x] Instrumentação local do GET por etapa, códigos sanitizados e testes sem escrita/segredos.
-- [x] Diagnóstico publicado em Production após autorização explícita: READY, configuração OK e flag false no GET público (401 sem sessão).
-- [x] Usuário confirmou GET autenticado HTTP 409: `SELF_SIGNED_CERT_IN_CHAIN`, configuração/origem/auth/autorização OK, PostgreSQL não concluído e Storage não verificado. Não houve execução.
+## Backlog futuro
 
-## Atualização 2026-10-09 — CAD-ENV-01
+### Inteligência operacional
 
-- [x] Build público isolado em dist, diagnóstico autenticado READ ONLY com flag false e testes de ausência de escrita/segredos.
-- [x] Usuário inicial resolvido por SELECT no Auth e procedimento completo de configuração/primeira execução documentado.
-- [ ] Deploy real, segredos Production, bucket privado e diagnóstico remoto: pendentes de acesso/configuração administrativa.
-- [ ] Reconstrução real 5.706 → 860: não executada nesta tarefa.
+- Ampliar priorização para ranking de risco composto e sugestões explicáveis de próximos produtos a investigar; a prioridade contextual atual já existe.
+- Distinguir sazonalidade de ruptura, gerar insights textuais de recorrência e avaliar previsão de tendência.
+- Integração direta ERP/SAP e eventual sugestão revisável de classificação por código de negócio.
+- Reavaliar datalist em volumes grandes (PERF-04) e acessibilidade conforme impacto investigativo.
 
-[Evidências e procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Não alterar Custos/OP/operacional/mapa, `data_referencia` ou `criado_em`.
+### Decisões de negócio e dados
 
-## Atualização 2026-10-09 — CAD-EXEC-WEB-01 implementado
+- Reconciliação Master ERP → dimensão operacional somente após decisão explícita de negócio; nenhuma sincronização automática está implícita na existência de duas visões.
+- Ponte empresarial aprovada para agrupamento ERP → categoria Kustos; não converter por família, origem, descrição ou semelhança de códigos.
+- Modelo de acesso/RLS e retenção de evidências conforme necessidade operacional. Login existente não comprova isolamento no banco.
 
-Execução explícita pela aplicação conecta Preview integralmente aprovado ao executor central por função Node autenticada/autorizada na Vercel. Confirmação digitada, hash, revalidação, snapshot privado conferido, transação/rollback e consulta do lote preservam o contrato. Deploy/configuração/habilitação administrativa e execução real permanecem pendentes; nenhuma carga de produção ou schema nesta entrega. Custos/OP/operacional/mapa e `data_referencia` (competência)/`criado_em` (importação) não mudam. [Procedimento](docs/arquitetura/cadastro-mestre-execucao-web.md). Sucede a limitação de UI da entrega abaixo.
+### Não priorizar
 
-## Atualização 2026-10-09 — CAD-REBUILD-01 concluído
+Features decorativas, CRUD complexo, multi-tenant/RBAC burocrático enquanto não houver necessidade de uso, microserviços sem justificativa, abstrações excessivas e IA genérica sem aplicação verificável à auditoria. [Multi-tenant](docs/roadmap/multi-tenant.md) continua proposta futura.
 
-- [x] Manifesto de reconstrução do universo filtrado com INSERT, UPDATE e remoções explícitas somente do Master; Preview e aprovação local mantidos.
-- [x] Executor administrativo opt-in em uma transação, com snapshot integral independente e no log existente, lote/proveniência e proteção de operacional/mapa/fatos.
-- [x] Regressões de XLS/XLSX/XLSM e PostgreSQL em memória: preservação de vazios, remoção, erros com reversão integral, arquivo/contexto divergente e resposta de COMMIT incerta.
-- [ ] Execução do lote real permanece pendente de aprovação operacional; nenhum banco real foi carregado nesta tarefa.
-- [ ] Integração de execução no navegador e reconciliação operacional continuam fora deste escopo.
+## Documentos de apoio
 
-[Contrato atual](docs/arquitetura/cadastro-mestre-reconstrucao.md). Substitui a preservação de produtos fora do universo no Master e a pendência histórica de executor administrativo; não muda schema, RLS, filtros nem `data_referencia` (competência)/`criado_em` (importação) dos fatos.
-
-## Atualização 2026-10-08 — CAD-XLS-01 concluído
-
-- [x] Seletor XLSM/XLSX/XLS conectado ao adapter/motores existentes de Preview e aprovação, com contagens, preservações, decisões locais e download JSON.
-- [x] Regressões de XLS binário BIFF, equivalência entre formatos e UI sem escrita.
-- [ ] Executor genérico e persistência de novas revisões continuam fora desta entrega. A carga pontual da Fase 3.4 não foi repetida.
-
-[Contrato atual da tela](docs/ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
-
-## Atualização 2026-10-08 — CAD-UX-01 concluído
-
-- [x] Barra horizontal acessível durante a navegação vertical da tabela do Cadastro, usando um único contêiner com cabeçalho sticky.
-- [x] Remoção explícita do agrupamento na edição manual (`agrupamento_cod = NULL`), com regressões para preservação de vazios no importador.
-
-[Contrato e validação](docs/ux/cadastro-mestre.md). Sem mudança de ordenação, paginação, Master ERP, mapa, fatos ou pipeline da Fase 3.4.
-
-## Atualização 2026-10-08 — Fase 3.4 concluída
-
-- [x] **CAD-EXEC-01** — primeira carga pontual do Master, após manifesto integral idêntico; lote 1 concluído, Master 5.706, zero erros, EXCEPTs e preservação operacional validados.
-- [ ] Importer geral/integrado, permissões de escrita para clientes e reconciliação operacional continuam fora da entrega. Nenhuma ponte de agrupamento ou regra para família pendente foi criada.
-
-[Contrato e evidência da execução](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md). Os eixos `data_referencia` (competência) e `criado_em` (importação) nos fatos continuam inalterados.
-
-## Atualização 2026-10-08 — Fase 3.3: preparar, não executar
-
-- [x] **CAD-APPROVAL-01** — alias oficial `Agrup. Prod.` → agrupamento ERP bruto; manifesto determinístico e controles locais para revisão/decisão individual ou global, com testes e nenhuma escrita.
-- [x] Primeira execução pontual/proveniência autorizada e entregue na Fase 3.4. A reconciliação operacional e a ponte ERP → categoria de agrupamento continuam não implementadas.
-
-O manifesto real foi entregue com 423 propostas pendentes, sem aprovação aplicada. `data_referencia` continua competência e `criado_em` evento de importação; nenhum fato foi reescrito. Ver [contrato](docs/arquitetura/cadastro-mestre-aprovacao.md).
-
-> Princípio do roadmap: toda feature deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Funcionalidades decorativas não entram.
-
----
-
-## Atualizacao 2026-08-10 — MNT-OP-04
-
-- [x] Contexto investigativo dinamico: a importacao renova a carga local e fila/dossie sao derivados dos filtros e da competencia atual, sem periodo fixo. `data_referencia` e recorte; `criado_em` e rastreabilidade.
-
-## FASE 1 — CONSOLIDAÇÃO OPERACIONAL
-
-**Status: CONCLUÍDA**
-
-Objetivo: garantir robustez operacional total na importação e análise básica.
-
-### Entregues
-
-- Importação resiliente com Smart Scraper de cabeçalhos
-- Preview linha a linha antes de gravar (🟢 válida / 🟡 atenção / 🔴 erro)
-- Mapeamento manual de colunas com fuzzy matching
-- Parsing numérico brasileiro robusto
-- Auto-criação de produtos no dicionário em import
-- Filtros em cascata (Origem → Família → Agrupamento → Produto)
-- Ordenação interativa por coluna
-- KPIs de itens analisados e alertas
-- Auditoria de OP: importação de CSV com rastreabilidade por competência e lote, incluindo normalização de OP com separador de milhar
-
----
-
-## FASE 2 — INVESTIGAÇÃO ANALÍTICA
-
-**Status: CONCLUÍDA**
-
-Objetivo: transformar o sistema de dashboard em motor de investigação.
-
-### Entregues
-
-- Score de instabilidade com classificação automática (ESTÁVEL / OSCILANDO / MUITO INSTÁVEL)
-- Alertas automáticos (variação absoluta ≥ 5% entre importações, com regra canônica compartilhada por KPI/filtro/exportação)
-- TOP VARIAÇÕES entre últimas 2 importações
-- Evolução temporal de custos com gráfico de linha
-- Badge de tendência (🟢 Estável / 🔺 Alta / 🔻 Queda)
-- Tooltip com variação vs. ponto anterior no gráfico
-- Auto-refresh ao alterar filtros (elimina necessidade de clicar "Analisar")
-- Seleção temporal por Intervalo ou Comparação entre duas competências
-- Exportação do relatório para Excel (.xlsx) com seleção de colunas da fila investigativa
-
-### Entregues na revisão arquitetural (mai/2026)
-
-- **Busca direta por produto**: bypass completo da hierarquia, 1 interação para chegar à análise
-- **Drill-through de eventos**: histórico das competências selecionadas por produto com `data_referencia` (competência) e `criado_em` (importação) claramente separados, e delta monetário/percentual por registro
-- **Detecção de mudança de regime**: 4º KPI — identifica produtos que eram ESTÁVEL e ficaram instáveis no período
-- **Coluna "Regime"** na tabela analítica com badge visual
-- **Coluna "Competência"** separando claramente data de vigência do custo vs. data de importação
-- **Banner de órfãos**: alerta visível quando há produtos sem categorização no dicionário; falhas do diagnóstico aparecem como estado operacional indisponível, nunca como lista vazia
-- **Debounce de 2s** no listener de real-time (evita reloads em cascata durante imports)
-- **Segurança**: remoção de credenciais hardcoded do código-fonte
-
----
-
-## FASE 3 — MEMÓRIA OPERACIONAL
-
-**Status: PRÓXIMA**
-
-Objetivo: registrar comportamento histórico e identificar padrões.
-
-### Funcionalidades planejadas
-
-- Histórico de alertas por produto (quando foi alertado, com que frequência, mantendo a regra canônica `abs(variacaoTemporal) >= 5`)
-- Detecção de reincidência (produto que voltou a oscilar após período estável)
-- Linha do tempo de regime: quando um produto mudou de ESTÁVEL → INSTÁVEL → ESTÁVEL
-- Comparação entre períodos equivalentes (este mês vs. mesmo mês do ano anterior)
-- Exportação de drill-through individual por produto
-
-### Decisões de arquitetura a tomar
-
-- Manter cálculo client-side ou migrar para views Supabase para períodos mais longos
-- Estratégia de retenção para `log_importacao` (hoje cresce sem cleanup)
-- Indexação em `historico_custos(codigo_produto, data_referencia)` para queries de drill-through
-
----
-
-## FASE 4 — INTELIGÊNCIA OPERACIONAL
-
-**Status: FUTURO**
-
-Objetivo: antecipar investigação humana.
-
-### Funcionalidades planejadas
-
-- Ranking automático de risco (score composto: variação + instabilidade + mudança de regime)
-- Sugestão de próximos produtos a investigar
-- Detecção de sazonalidade vs. ruptura (produto que sobe todo trimestre vs. ruptura inesperada)
-- Insights textuais operacionais ("produto X oscilou 4 meses consecutivos")
-- Previsão de tendência por regressão simples
-
----
-
-## NÃO PRIORIZAR (anti-roadmap)
-
-- Features decorativas sem valor operacional
-- Burocracia administrativa (multi-tenant, RBAC complexo enquanto for uso interno)
-- Abstrações excessivas / overengineering
-- Dashboards genéricos estilo Power BI
-- Microserviços desnecessários
-- IA genérica sem valor específico de auditoria de custos
-
-- [x] Hardening inicial concluído: configuração por ambiente, remoção de auto-auth e gate real de acesso.
-
-
-## Atualização contínua — 11/05/2026
-
-- Hardening de performance operacional: bulk upsert em chunk, redução de requests no import e pacote de índices SQL para histórico temporal e comparação de importações.
-
-## Atualização contínua — 14/05/2026
-
-- Refinamento da fila investigativa: redução de poluição visual na tabela principal com foco em criticidade operacional.
-- Header sticky e densidade visual ajustada para leitura vertical contínua.
-- Chips removíveis de filtros ativos para acelerar mudança de recorte sem reset manual de todos os campos.
-- Contexto investigativo pré-interpretado por linha (sequência de alta/queda e sinais de oscilação crescente).
-
-## Atualização contínua — 14/05/2026 (configuração frontend)
-
-- Estratégia final de configuração híbrida: prioridade `import.meta.env` + fallback `window.__ENV__` + fallback `<meta name="VITE_*">` com contrato `VITE_*` para compatibilidade de runtime real.
-- Tela de falha amigável no bootstrap quando variáveis obrigatórias não estiverem definidas.
-
-- Hardening de configuração em deploy estático: geração automática de `runtime-config.js` no build da Vercel com validação de variáveis obrigatórias e fail-fast.
-
-## Atualização contínua — 14/05/2026 (autenticação)
-
-- Modo temporário de acesso aberto ativado no frontend (sem prompt de login) para acelerar uso investigativo imediato.
-- Header de sessão padronizado como `acesso público` durante a janela sem autenticação.
-- Fluxo de autenticação hardening mantido como base para futura reativação de controle de acesso.
-
-- Auditoria de fluxo de autenticação com hardening fail-closed no bootstrap.
-- Remoção de alias de credenciais (`username` interno) para eliminar superfície de bypass.
-- Validação estrita de sucesso de login: usuário + sessão/token obrigatórios antes de liberar acesso.
-- Em qualquer inconsistência no login, sessão é encerrada e o acesso continua bloqueado.
-
-## Atualização contínua — 25/05/2026 (auditoria de contratos)
-
-- Matriz operacional de contratos publicada em `docs/arquitetura/matriz-contratos-operacionais.md`.
-- Correção de desalinhamento crítico de cascata nos métodos `getLatestImportComparison` e `getTopVariacoesImportacao` (enriquecimento via dimensão antes dos filtros).
-- Hardening fail-fast em `getProductHistory` para bloquear chamadas ambíguas com código vazio.
-- Refatoração de confiabilidade da camada `src/services/api.js` com:
-  - sanitização explícita e whitelist de payload no `upsertHistoricoCustos`;
-  - padronização de contratos de retorno `{ data, error }` nos métodos críticos de comparação/drill-through;
-  - erros operacionais contextualizados (sem crash silencioso) em `getHistorico`, `getLatestImportComparison`, `getTopVariacoesImportacao` e `getProductHistory`;
-  - normalização explícita de recortes temporais (`data_referencia`) antes de aplicar filtros de cascata.
-
-
-## Marco concluído — Export investigativo operacional (2026-05-21)
-
-- [x] export orientado por fila investigativa (não dump)
-- [x] ordenação automática por criticidade/regime/magnitude/reincidência/instabilidade
-- [x] contexto investigativo automático por item
-- [x] snapshot do estado ativo da investigação (filtros + período + fila)
-- [x] metadados de rastreabilidade temporal em aba dedicada
-
-
-## Atualização contínua — 25/05/2026 (saneamento operacional do banco)
-
-- Entregue: hardening de schema com constraints temporais (`unique_produto_data`), índices de investigação e contrato explícito para órfãos de agrupamento via `SEM_AGRUPAMENTO` + `vw_produtos_orfaos_agrupamento`.
-
-## Atualização contínua — 28/05/2026 (ERR-01)
-
-- Concluído o item **ERR-01** do backlog: fronteiras operacionais de erro em `init()`, `runReport()` e handlers assíncronos críticos do frontend.
-- Próximo foco permanece nos demais itens da Onda 1, sem refatoração ampla: `SEC-01`, `LOG-01`, `SEC-04` e `SEC-05`. `VAL-01` foi concluído em 28/05/2026.
-
-
-## Atualização contínua — 28/05/2026 (VAL-01)
-
-- Concluído o item **VAL-01** do backlog: normalização canônica de `codigo_produto` com `normalizeCodigoProduto()` em preview, payload, API, cascata, relatório, drill-through e exportação derivada.
-- O fluxo agora bloqueia linha com código inválido/ambíguo, preserva zeros à esquerda quando a origem vem textual e reduz mutações causadas por notação científica do Excel.
-- Sem alteração na arquitetura FATO × DIMENSÃO nem na semântica temporal (`data_referencia` competência; `criado_em` importação).
-
-## Atualização contínua — 25/06/2026 (Onda 2 — Ferramentas)
-
-- [x] CFG-04 — `package.json` criado apenas para tooling, sem dependências de produção e sem alterar runtime CDN.
-- [x] CFG-01 — ESLint flat config adicionado para qualidade mínima, globals do browser/CDN/Node e regra contra `innerHTML` interpolado sem revisão explícita.
-- [x] CFG-03 — Vitest adicionado com testes de regressão de núcleo para VAL-01, LOG-01 e semântica temporal do relatório.
-- [x] CFG-02 — `jsconfig.json`, `// @ts-check` e JSDoc inicial adicionados para type checking leve em JavaScript.
-- [x] CFG-05 — GitHub Actions criado para lint/typecheck/test em PRs, sem deploy.
-
-Próximo foco recomendado após a reavaliação arquitetural de 02/07/2026: seguir a nova ordem do `docs/auditoria/backlog-priorizado.md` — começar por `MNT-06`, `MNT-07` e `MNT-05`, então executar `MNT-01` como fatiamento destravador da UI antes de `PERF-01`, `MNT-03`, `SEC-02`, `PERF-02`, `MNT-02` e `VAL-02`. A hipótese validada é que o acoplamento do `view/ui-controller.js` virou o maior multiplicador de risco para performance, segurança de HTML e futura validação.
-
-
-## Atualização contínua — 20/07/2026 (conferência de backlog)
-
-- **MNT-01 concluído no Engineering Freeze v1.0**: a fila/tabela e a apresentação investigativa (`renderTable`, prioridade operacional e resumo por linha) foram movidas para `view/ui-table.js`, mantendo `ui-controller.js` como orquestrador e preservando comportamento.
-- **MNT-03 permanece aberto**, mas parcialmente reduzido: `fillSelect` saiu do `core/` e foi centralizado em `view/ui-utils.js`; ainda falta unificar a cascata em um helper/módulo único.
-
-## Atualização 2026-07-27 — estabilização da persistência de OP
-
-- [x] **MNT-OP-01** — corrigido o parsing de `op` no MCAP105: 119 dos 296 valores do CSV de validação têm ponto de milhar (por exemplo, `2.081`) e eram convertidos indevidamente para `null`. O parser agora produz inteiros, mantendo `op` obrigatório no schema e preservando `data_referencia` como competência e `criado_em` como evento de importação.
-- Incluído diagnóstico completo de erro por chunk para acelerar investigações futuras, sem alterar schema, tela ou filtros.
-
-## Atualização 2026-07-30 — Motor Investigativo da Auditoria de OP
-
-- [x] **MNT-OP-02** — implementado motor local de investigação para apontamentos de OP, sem alterar schema nem os fatos importados do ERP. A fila prioriza motivo e provável causa, com dossiê que separa dados ERP de indicadores calculados pelo Kustos.
-- Criados indicadores de atendimento da produção, desvio de tempo, desvio de produtividade e índice de paradas. `% Tempo (ERP)` é mantido como conferência do desvio de produtividade; não é usado como segunda regra de criticidade.
-- Refinada a UX da OP com KPIs por motivo, filtro de motivo e atualização automática do relatório depois da primeira análise ao alterar filtros. `data_referencia` permanece o recorte de competência; `criado_em` é exibido apenas como evento de importação no dossiê.
-
-## Atualização 2026-08-03 — decisão investigativa da Auditoria de OP
-
-- [x] **MNT-OP-03** — a interpretação de OP agora entrega uma decisão explícita (`mereceInvestigacao`), prioridade e evidências combinadas no motor puro. A fila e o dossiê mostram a resposta operacional sem alterar schema ou fatos do ERP.
-- Cobertos os cenários de desperdício com entrega, excelente execução, baixa produção, tempo justificado por volume, parada sem impacto e parada com perda de produtividade/atraso/déficit de produção (prioridade máxima).
-- A semântica temporal não mudou: `data_referencia` filtra competência; `criado_em` informa o evento de importação e não participa das fórmulas.
-## Atualização 2026-08-13 — Cadastro mestre de produtos
-
-- [x] Aba Cadastro sobre `dicionario_produtos`, sem fonte paralela.
-- [x] Importação incremental do XLSM e agrupamento investigativo manual.
-- [x] Resolução compartilhada por Custos e Auditoria de OP.
-
-## Atualização 2026-09-28 — PERF-01 concluído
-
-- [x] Fila investigativa limitada à janela TOP-200 já priorizada, com aviso de total e refinamento de filtros.
-- [x] Drill-through e detalhes preservados por delegação de um único evento no `tbody`, sem listeners por linha.
-
-## Atualização 2026-10-01 — Fase 2A: estrutura do Cadastro Mestre
-
-- [x] Criado o log auditável de importação do Cadastro Mestre e a referência opcional de proveniência por produto.
-- [ ] Reconciliar `dicionario_master_produtos` com `dicionario_produtos` somente após decisão de negócio para os códigos de família ERP sem correspondência determinística.
-
-## Atualização 2026-10-05 — Fase 2C.2: agrupamento ERP e proveniência
-
-- [x] Estrutura aditiva para guardar agrupamento ERP bruto, lote de origem, override manual e origem de classificação.
-- [ ] Definir uma ponte empresarial explícita antes de qualquer conversão de agrupamento ERP para categoria Kustos.
-
-## Atualização 2026-10-08 — Fase 3.1: núcleo de Preview
-
-- [x] **CAD-PREVIEW-01** — leitura XLSM/XLSX/XLS, normalização canônica, filtros ordenados e comparação em memória contra `dicionario_master_produtos`, com testes e sem gravação/ativação na UI.
-- [x] Preparação de manifesto e revisão local entregue na Fase 3.3; o lote real não foi aprovado.
-- [ ] Execução auditável e eventual projeção operacional exigem novas fases explícitas. Agrupamento ERP continua sem ponte oficial.
+[VISION](VISION.md) define a direção; [README](README.md) apresenta o estado do checkout; [backlog](docs/auditoria/backlog-priorizado.md) ordena correções técnicas; [História](docs/HISTORIA_DO_PROJETO_KUSTOS.md) explica decisões e marcos anteriores. O histórico oficial de commits permanece no Git.

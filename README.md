@@ -1,521 +1,92 @@
 # Kustos Germani — Motor de Investigação de Custos
 
-## Atualização 2026-10-16 — CUSTOS-PAGE-01: leitura integral da Auditoria
+## 1. O que é o Kustos
 
-`getMasters()`, histórico, diagnóstico de agrupamentos, gráficos de comparação e drill-through de Custos usam páginas de 500 com contagem exata e ordenação determinística, sem teto total. Falha, página incompleta ou contagem alterada não viram sucesso parcial. A hierarquia continua vindo de `dicionario_produtos`, com enriquecimento antes dos filtros; não há sincronização ERP nem preenchimento de classificações. `data_referencia` permanece competência e `criado_em` importação.
+O Kustos Germani é um motor de investigação operacional de custos sobre dados ERP/SAP. Organiza evidências, destaca anomalias e permite chegar ao histórico de um produto por busca direta ou filtros em cascata. Seu público é controladoria, custos industriais e coordenação operacional.
 
-Validação real somente GET confirmou 6.113 produtos, 1.370 fatos e 437 códigos encontrados/zero ausentes; 437 com origem, 151 com família e zero com agrupamento. O método corrigido retornou 437 vínculos, 12 origens, 18 famílias e 437 pendências de agrupamento. Nenhuma escrita, migration, deploy ou commit. [Contrato, testes e limites](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+## 2. Objetivo
 
-## Atualização 2026-10-15 — CAD-FAM-01: famílias ERP no Preview aprovado
+Encontrar problemas em segundos: mostrar o que mudou, quanto, em qual competência e entre quais eventos de importação, com contexto para priorizar a investigação. Identidade, princípios e direção estão em [VISION.md](VISION.md).
 
-O leitor existente transporta `Família` e `Descr. (Família)` no contrato V2. Preview separa operações de produtos e catálogo: código exato identifica família; nova categoria ou mudança de rótulo exige decisão própria. Servidor/executor regeneram manifesto/contexto sob locks; snapshot das famílias afetadas, transação e rollback abrangem catálogo e Master, com provas integrais de preservação. [Contrato e validação real](docs/arquitetura/cadastro-mestre-familias-erp.md).
+## 3. Como funciona
 
-Leitura real: 860 produtos, 81 famílias, 16 existentes, 65 novas (693 produtos impactados), zero conflitos/rótulos ausentes; 65 propostas pendentes, nenhuma escrita. Publicar UI/função compatíveis e gerar nova revisão antes de execução futura autorizada. Não houve deploy, reconstrução, cadastro real, nova migration/env/flag ou commit; fatos e eixos temporais permanecem intactos.
+Planilhas de custos e apontamentos de OP passam por leitura, normalização, preview e validação antes da persistência. A investigação combina os fatos ERP com a classificação operacional dos produtos; cálculos e interpretação ficam nos motores puros do Kustos.
 
-## Atualização 2026-10-15 — CAD-FAM-SCHEMA-01: identidade de família por código
+Os dois eixos temporais são distintos: **`data_referencia` é competência operacional**; **`criado_em` é evento de importação**. Intervalo inclui as competências entre início e fim; Comparação considera somente as duas competências escolhidas. Fila, gráficos e drill-through compartilham o recorte.
 
-Migration estrutural aplicada remove somente a unicidade da descrição em `categorias_familia`, permitindo rótulos iguais para códigos diferentes. PK, código único, descrição obrigatória e os 38 registros foram preservados; nenhuma carga de famílias ou alteração do executor foi implementada. [SQL, rollback não executado e provas antes/depois](docs/arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026). Fatos e seus eixos de competência/importação permanecem intactos.
+## 4. Principais capacidades
 
-## Atualização 2026-10-15 — CAD-ERP-VIEW-01: duas fontes no Cadastro
+- Busca por código/descrição e cascata Origem → Família → Agrupamento → Produto.
+- Fila investigativa de Custos com prioridade, contexto, instabilidade e mudança de regime; janela visual de até 200 itens, com KPIs e exportação sobre o relatório completo.
+- Drill-through por produto com competência, importação, custos e deltas; alerta canônico de variação absoluta ≥ 5%.
+- Gráficos de comparação de importações, TOP variações e evolução por competência.
+- Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
+- Auditoria de OP com decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.
+- Cadastro Operacional para classificação Kustos e consulta independente do Cadastro Mestre ERP; Preview de XLS/XLSX/XLSM com aprovação e execução administrativa explícita.
+- Consulta/edição dos documentos permitidos pela tela Documentação.
 
-Cadastro agora oferece **Cadastro Operacional** (`dicionario_produtos`, classificação Kustos/runtime) e **Cadastro Mestre ERP** (`dicionario_master_produtos`, universo oficial, somente consulta). Totais vêm dos dados carregados, sem fixar 6.113/860 no código. A visão ERP permite busca por código/descrição, filtros por origem/família, agrupamento ERP bruto e páginas visuais de 50; leitura Supabase em páginas de 500 com contagem exata, reutilizando o leitor existente. Origem/família resolvem exclusivamente por código ERP exato nos catálogos. [Fluxo, limites e validação](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+Procedimentos e limites: [Manual do Usuário](docs/manuais/manual-usuario.md).
 
-Preview continua separado e acessível em ambas as visões; cadastro/edição/classificação permanecem no painel operacional. A nova visão não sincroniza nem altera dados/schema e não executa reconstrução. `data_referencia` e `criado_em` dos fatos permanecem intactos. Esta implementação ainda depende de publicação autorizada; registros anteriores abaixo são históricos.
+## 5. Arquitetura resumida
 
-Validação CAD-ERP-VIEW-01: **463 testes/35 arquivos passaram**, com 31 regressões novas; reexecução com dois workers após timeout inicial em teste volumoso preexistente, sem alterar timeout. Sonda real restrita a GET confirmou 860 produtos/50 por página/18 páginas, sem consultar operacional ou escrever. Interface conferida localmente com dados sintéticos; [evidências e limites](docs/ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
+Frontend estático em HTML/CSS/JavaScript ES Modules, com bibliotecas CDN. `view/` apresenta e orquestra; `core/` calcula sem I/O; `src/services/api.js` concentra o acesso Supabase e delega o HTTP administrativo. Funções Vercel em `api/` tratam gravação documental e execução autorizada do Master. O executor PostgreSQL administrativo é compartilhado com o CLI e permanece fora do browser.
 
-## Atualização 2026-10-15 — CAD-OP-PAGE-01: Cadastro operacional completo
+`historico_custos` é fato temporal; `dicionario_produtos` e `categorias_*` fornecem a classificação operacional de Custos/OP. `dicionario_master_produtos` guarda o universo ERP, separado da dimensão operacional. Agrupamento ERP bruto não se converte em agrupamento Kustos por texto ou inferência. [Modelo de dados](docs/arquitetura/banco-de-dados.md) e [matriz de contratos](docs/arquitetura/matriz-contratos-operacionais.md) detalham os limites.
 
-`getProductMaster()` pagina `dicionario_produtos`, `historico_custos` e `apontamentos_op` em blocos de 500, com ordenação por código, contagem exata e recusa de leitura parcial. O aviso passa a dizer **código(s) importado(s) ausente(s) do cadastro operacional**. A tabela continua operacional; não usa nem sincroniza o Master ERP. O diagnóstico anterior confirmou Master ERP com 860 registros e operacional com 6.113: com as fontes completas, 501 códigos importados únicos e zero ausentes; os 407 eram efeito do corte em 1.000. [Contrato e validação](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
+## 6. Estrutura do projeto
 
-Esta correção não reconstrói nem escreve dados, não muda schema/agrupamentos e não cria a visão Master ERP. `data_referencia` continua competência e `criado_em` importação. Os registros de 09/10 abaixo são históricos: a reconstrução foi concluída posteriormente, antes desta tarefa. Publicação desta correção ainda depende de deploy autorizado.
-
-Validação local: **432 testes/32 arquivos**, lint, typecheck, build com configuração pública sintética e diff check passaram. Sonda do método alterado, somente GETs reais: **6.113 produtos + 1.370 Custos + 704 OP → 501 códigos únicos/zero ausentes**. Sem escrita de produção, reconstrução, alteração de variável ou deploy. [Evidências e limites](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
-
-## Atualização 2026-10-09 — CAD-PAYLOAD-01: execução com dados do Preview
-
-O XLS/XLSX/XLSM original permanece necessário para o Preview. A execução web envia somente os campos ERP necessários já lidos pelo adapter, em representação compacta, decisões, hash do manifesto, confirmação e identificador da tentativa; não envia o binário original. Isso elimina o bloqueio do XLS de 24.307.397 bytes sem aumentar o antigo teto de 16 MiB. O servidor recalcula os mesmos filtros e o manifesto contra o contexto atual; o executor central repete a revalidação sob locks, mantendo snapshot, transação e rollback. [Payload, validação e limite de confiança](docs/arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
-
-Última leitura de produção: Master **5.706**; a tentativa `CAD_UI` foi bloqueada antes do POST e não persistiu lote ou snapshot. A cópia local `cadastro mestre 8_10.xls`, também com 24.307.397 bytes, produziu **6.230 linhas, 860 válidos, 4.853 remoções, dez UPDATEs e 517 preservações de campos**, zero erros. Não foi comprovada identidade byte a byte com o nome original que inclui `(1)`. Manifestos direto/compacto/servidor coincidiram; corpo medido localmente com 4.870 decisões: **885.146 bytes**, abaixo de 4 MiB. **409 testes/31 arquivos passaram**. [Evidência e limites](docs/auditoria/cadastro-mestre-payload-validacao.md). **860 continua resultado esperado**, sem reconstrução ou escrita de produção, deploy, mudança de variável/schema ou commit; competência `data_referencia` e importação `criado_em` dos fatos permanecem intactas.
-
-## Atualização 2026-10-09 — revisão final da execução web
-
-Production READY `Jvnme82E7wA8R3h63YfnuaKA5KW1`, main `04a2412`. Usuário informou novo GET autenticado `DIAGNOSTICO_OK`, CA X.509/TLS/PostgreSQL/Storage/guardas OK e execução false; a falha TLS registrada abaixo é histórica. Conferência pública nesta revisão: configuração OK, diagnóstico sem sessão 401, disponibilidade 503 e flag false. Módulos publicados de UI/transporte/plano correspondem ao checkout. 103 regressões locais passaram, somente fixtures/PGlite/Storage mockado; nenhuma escrita de produção, variável alterada, deploy ou commit nesta revisão. [Escopo, resultado esperado e limites](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026).
-
-## Atualização 2026-10-09 — CAD-DIAG-TLS-01: inspecionar CA sem expor credenciais
-
-GET `?verificar=1`, após autenticação e autorização, informa presença/tamanho/formato/X.509/fingerprint SHA-256 da CA e parâmetros sanitizados efetivos do driver. Não corrige CA/URI/TLS, altera variáveis nem chama executor. `rejectUnauthorized=true` e execução desabilitada permanecem. Publicado em Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`; usuário confirmou HTTP 409: CA presente/aplicada, 1.365 bytes, marcadores PEM presentes, parsing X.509 inválido e fingerprint null, `SELF_SIGNED_CERT_IN_CHAIN`, execução false. 369 testes/lint/typecheck/diff check passaram. Nenhuma correção/env/escrita/commit. [Campos e procedimento](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
-
-## Atualização 2026-10-09 — CAD-DIAG-01: localizar falhas do GET
-
-Diagnóstico instrumentado distingue configuração, autenticação, autorização, conexão PostgreSQL, TLS, Storage e bucket, além das guardas de leitura. Retorna apenas etapas/códigos conhecidos e mensagens fixas, sem erro bruto/credenciais. Publicado em Production após autorização explícita (deployment B2mVXerHzJjbRjaYHSjZMm3TWPvF, READY), sem commit/env/DML. GET público confirma configuração OK, autenticação 401 e `execucao_habilitada:false`. Falha original 409 ainda depende de nova consulta autenticada; não comprova COMMIT/reconstrução. [Procedimento seguro](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
-
-## Atualização 2026-10-09 — CAD-ENV-01: preparar sem executar
-
-Build publica somente `dist`, excluindo código administrativo/configurações privadas. Diagnóstico autenticado `GET ?verificar=1` funciona com execução desabilitada, somente leitura, sem lote/upload/executor. Allowlist inicial indica apenas o usuário solicitado. Ambiente real ainda pendente: endpoint público 404, bucket inexistente, deploy/segredos não configurados por esta entrega. [Configuração, validação sem escrita e primeira execução passo a passo](docs/arquitetura/cadastro-mestre-preparacao-ambiente.md). Master continua 5.706; nenhuma reconstrução, escrita de produção ou commit. `data_referencia` é competência e `criado_em` importação dos fatos, intactos.
-
-## Atualização 2026-10-09 — CAD-EXEC-WEB-01: execução explícita na aplicação
-
-Após aprovação integral, **Executar reconstrução…** abre confirmação com contagens e texto obrigatório. Função Node autenticada/autorizada na Vercel chama o executor central, revalida arquivo/contexto, preserva snapshot em Storage privado/log e mantém transação/rollback. Seleção, aprovação e download não executam carga. Execução vem desabilitada até configuração administrativa, sem segredos no navegador. [Arquitetura, configuração e recuperação](docs/arquitetura/cadastro-mestre-execucao-web.md).
-
-Nenhuma reconstrução real, deploy, migration ou escrita de produção nesta entrega. Custos/OP/dicionário operacional/mapa ficam intocados; a investigação do fingerprint operacional é separada. `data_referencia` continua competência e `criado_em` importação. Os limites de execução históricos abaixo são sucedidos por este fluxo.
-
-## Atualização 2026-10-09 — CAD-REBUILD-01: universo atual do ERP
-
-O Preview passa a propor remoção do Master de produtos ausentes ou fora dos filtros, além de novos e alterações. Campos ERP vazios preservam valores dos produtos que permanecem. Após aprovação integral, um comando administrativo explícito reconstrói somente `dicionario_master_produtos` em uma transação, com snapshot integral em disco/log, lote e provas de preservação operacional. A tela continua sem execução automática. Não há mudança de schema, RPC ou SQL no frontend.
-
-Para as contagens do XLS real informadas pelo usuário: **6.230 linhas → 860 válidos = 853 existentes + 7 novos**; **4.853 remoções**, com **5.706 − 4.853 + 7 = 860** no Master. Nenhuma carga real foi executada nesta entrega. [Contrato, rollback, comando e validação](docs/arquitetura/cadastro-mestre-reconstrucao.md). As referências abaixo à preservação de produtos fora do conjunto descrevem as entregas históricas e são substituídas por este contrato somente no Master ERP. Custos/OP mantêm `data_referencia` como competência e `criado_em` como evento de importação.
-
-## Atualização 2026-10-08 — CAD-XLS-01: Preview direto do ERP
-
-Em **Cadastro → Preview mestre (XLSM / XLSX / XLS)**, escolha o arquivo ERP original, sem conversão manual. Os três formatos usam o mesmo adapter e motores de Preview/aprovação. A janela mostra contagens, propostas e preservações; decisões e download JSON são locais, sem execução ou escrita no banco. Após esclarecimento humano, o seletor deixou de chamar o importador legado. [Fluxo, contratos e validação](docs/ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
-
-## Atualização 2026-10-08 — CAD-UX-01: usabilidade do Cadastro
-
-A tabela do Cadastro usa uma área de rolagem com altura limitada à viewport: a barra horizontal permanece acessível enquanto as linhas rolam, com cabeçalho fixo. Na edição manual, selecionar **Sem agrupamento** grava `agrupamento_cod = NULL`; vazios na importação continuam preservando valores. A tela mantém sua ligação atual com `dicionario_produtos`, sem alterar o Master ERP ou o pipeline da Fase 3.4. [Comportamento e validação](docs/ux/cadastro-mestre.md).
-
-## Atualização 2026-10-08 — Fase 3.4: primeira carga do Cadastro Mestre
-
-Após revalidação integral, a carga pontual autorizada concluiu o lote 1: 103 novos e 312 existentes atualizados (11 descrições + 309 agrupamentos ERP), com Master final de 5.706. Os 4.853 fora dos filtros foram preservados; operacional/mapa/fatos/categorias não mudaram. Não há importer de runtime nem ponte Pxxx → Mxxx. [Lote, migration e provas](docs/arquitetura/cadastro-mestre-execucao-fase3-4.md).
-
-## Atualização 2026-10-08 — Fase 3.3: manifesto antes da execução
-
-`Agrup. Prod.` (Q) é o campo ERP oficial para `agrupamento_erp_valor`, por decisão de negócio; Pxxx não é convertido em Mxxx. Novo núcleo puro prepara manifesto determinístico e revisão local individual/em lote, sem gravação ou ativação no importador legado. O lote real tem 103 INSERTs candidatos e 320 UPDATEs por campo em 312 existentes; as 423 propostas foram entregues pendentes. [Contrato, contagens e limites](docs/arquitetura/cadastro-mestre-aprovacao.md). Nenhuma alteração de Custos, OP, mapa, fatos, schema ou RLS.
-
-Sistema operacional de auditoria analítica de custos. Não é um dashboard genérico.
-
-É um cockpit investigativo que transforma planilhas ERP em velocidade de investigação.
-
----
-
-## Atualizacao 2026-08-10 — contexto investigativo dinamico da OP
-
-O contexto da Auditoria de OP deixou de depender do cache da abertura da tela: apos importar, a fonte local e recarregada; a fila e o dossie sao recalculados pelo recorte selecionado, sem janela fixa de meses. `data_referencia` define a competencia; `criado_em` continua como rastreabilidade da entrada.
-
-## Documentos estratégicos
-
-- `VISION.md`: identidade do produto, princípios e direção estratégica
-- `ROADMAP.md`: fases entregues e próximas, com raciocínio de priorização
-- `AGENTS.md`: guia para agentes e desenvolvedores (regras técnicas e de produto)
-- `docs/arquitetura/indice-documentacao-kustos.md`: índice da documentação técnica
-- `docs/arquitetura/matriz-contratos-operacionais.md`: auditoria de contratos UI ↔ API ↔ banco ↔ engines
-
----
-
-## 1. Visão Geral
-
-O sistema importa planilhas de custo (origem ERP/SAP), armazena histórico temporal e oferece investigação analítica por produto com filtros em cascata e drill-through de eventos.
-
-**Princípio central**: o investigador deve encontrar o problema em segundos, não em minutos.
-
----
-
-## 2. Fluxo Operacional
-
-### Importação
-
-1. Selecionar data de referência (competência operacional)
-2. Arrastar planilha `.xlsx` ou clicar na área de upload
-3. Confirmar mapeamento de colunas (detecção automática com fuzzy matching)
-4. Revisar preview linha a linha (🟢 válida / 🟡 atenção / 🔴 erro)
-5. Confirmar importação — somente linhas sem erro são gravadas
-
-### Auditoria de OP
-
-1. Na aba **OP**, importar o CSV do relatório de apontamentos e informar sua competência (`data_referencia`).
-2. O preview é apenas conferência do arquivo; a gravação usa `apontamentos_op` e registra o lote em `log_importacao_op`.
-3. O relatório pode formatar a OP com ponto de milhar (por exemplo, `2.081`). O parser remove esse separador exclusivamente nesse campo e grava o inteiro `2081`, preservando a obrigatoriedade de `op` no banco.
-4. Se o Supabase rejeitar um chunk, o console registra chunk, quantidade, primeiro registro, resposta completa (`code`, `message`, `details`, `hint`) e os registros vinculados a uma constraint `NOT NULL`.
-
-### Auditoria
-
-1. **Busca direta** (novo): digitar código ou descrição — acesso imediato sem navegar pela hierarquia
-2. Ou usar filtros em cascata: Origem → Família → Agrupamento → Item
-3. Escolher o modo temporal: **Intervalo** inclui todas as competências entre início e fim; **Comparação** usa exatamente as duas competências informadas — relatório atualiza automaticamente
-4. Clicar em qualquer linha da tabela → abre **drill-through** apenas nas competências escolhidas no recorte, inclusive quando não consecutivas
-5. Usar KPIs clicáveis para filtrar rapidamente:
-   - **Itens analisados**: todos
-   - **Alertas (>5%)**: variações absolutas ≥ 5% entre as duas últimas importações (`criado_em`), usando a mesma regra do filtro rápido/exportação
-   - **Mudanças de Regime**: produtos que eram ESTÁVEL e ficaram instáveis
-   - **Média de variação**: variações positivas
-6. Exportar relatório operacional para Excel: selecionar os campos desejados e gerar XLSX com abas `Contexto` e `Fila Investigativa`
-
----
-
-## 3. Arquitetura de Dados
-
-### Separação Fato × Dimensão
-
-**Tabela fato**: `historico_custos`
-- `codigo_produto` (TEXT)
-- `descricao` (TEXT) — snapshot no momento da importação
-- `custo_variavel` (NUMERIC 18,4)
-- `custo_direto_fixo` (NUMERIC 18,4)
-- `custo_total` (NUMERIC 18,4)
-- `data_referencia` (DATE) — **competência operacional** (quando o custo é válido)
-- `criado_em` (TIMESTAMPTZ) — **evento de importação** (quando entrou no sistema)
-- UNIQUE: `(codigo_produto, data_referencia)`
-
-**Dimensão produtos**: `dicionario_produtos`
-- `codigo_produto` (TEXT) — chave de negócio
-- `origem_id` (UUID) → `categorias_origem.id`
-- `familia_id` (UUID) → `categorias_familia.id`
-- `agrupamento_cod` (TEXT) → `categorias_agrupamento.codigo`
-
-**Dimensões de categoria**: `categorias_origem`, `categorias_familia`, `categorias_agrupamento`
-- `id` (UUID): chave técnica de integração
-- `codigo` (TEXT): chave de negócio
-- `descricao` (TEXT): rótulo exibido na UI
-
-### Semântica Temporal (importante)
-
-O sistema tem dois eixos de tempo distintos:
-
-| Campo | Uso |
-|---|---|
-| `data_referencia` | Período de competência do custo — usado para análise temporal |
-| `criado_em` | Data de importação — usado para identificar "última importação" vs. "penúltima" |
-
-Estes conceitos nunca devem ser confundidos. O drill-through exibe os dois explicitamente.
-
----
-
-## 4. Capacidades Analíticas
-
-### Score de Instabilidade
-
-Média das variações percentuais absolutas entre pontos consecutivos no período:
-- `ESTÁVEL`: score < 3%
-- `OSCILANDO`: score 3–8%
-- `MUITO INSTÁVEL`: score ≥ 8%
-
-
-### Fila Investigativa (Tabela Principal)
-
-A tabela analítica evoluiu para uma **fila investigativa operacional** com hierarquia de leitura:
-
-- **Produto** (código + descrição)
-- **Variação** (delta monetário + %)
-- **Prioridade operacional** (`🔴 Crítico`, `🟠 Atenção`, `🟡 Monitorar`, `🟢 Estável`)
-- **Regime** (com destaque forte para mudança de regime)
-- **Contexto investigativo resumido** (pré-interpretação automática)
-
-Dados detalhados (sem perda analítica) ficam em **expansão por linha**: penúltimo custo, custo inicial/final, score de instabilidade e os dois eixos temporais explícitos:
-
-- **Importado em (`criado_em`)** = evento de importação
-- **Competência (`data_referencia`)** = validade operacional do custo
-
-Refinamentos de UX investigativa (mai/2026):
-- Header da tabela com comportamento **sticky** para manter contexto durante rolagem.
-- **Chips de filtros ativos removíveis** para reduzir carga cognitiva e facilitar pivôs rápidos de investigação.
-- Hierarquia de leitura reforçada por linha: foco em produto + criticidade + variação + regime; detalhes secundários apenas em expansão sob demanda.
-- Contexto investigativo passa a antecipar sinais como "2ª alta consecutiva", "2ª queda consecutiva" e "oscilação crescente", reduzindo interpretação manual.
-
-### Detecção de Mudança de Regime
-
-Produto com ≥ 4 pontos no período: compara instabilidade da primeira metade vs. segunda metade.
-- `ESTÁVEL` na primeira metade + `OSCILANDO` ou `MUITO INSTÁVEL` na segunda → `mudouRegime = true`
-- Aparece como KPI "Mudanças de Regime" e coluna "⚡ Mudou" na tabela
-
-### Drill-through de Eventos
-
-Histórico completo de importações para o produto selecionado:
-- Competência (data_referencia): período de vigência
-- Importado em (criado_em): data/hora da entrada no sistema
-- Custo variável, direto fixo e total
-- Delta monetário e percentual vs. registro anterior
-- Destaque em vermelho para variações ≥ 5%
-
-### Evolução Temporal de Custos (gráfico)
-
-Semântica investigativa do gráfico temporal:
-- Eixo temporal: **competência** (`data_referencia`)
-- Eixo de atualização: usa `criado_em` apenas para escolher o **registro mais recente por produto+competência**
-- Quando há produto selecionado: plota **custo unitário do produto** por competência (sem soma acumulada)
-- Quando não há produto selecionado: plota média agregada por competência com base no snapshot mais recente de cada produto
-
-Isso evita inflação por soma indevida de múltiplas importações da mesma competência.
-
-O gráfico, a fila e os KPIs usam o mesmo recorte: em **Intervalo**, todos os meses entre as datas; em **Comparação**, somente as duas competências selecionadas.
-
-
-### Exportação Investigativa (XLSX)
-
-A exportação foi desenhada para preservar contexto operacional e acelerar handoff investigativo:
-
-- Gera duas abas: **`Contexto`** (filtros/período/metadata da execução) e **`Fila Investigativa`** (itens priorizados para ação).
-- Sem ordenação manual ativa, aplica ordenação automática por prioridade investigativa: **criticidade → mudança de regime → magnitude → reincidência → instabilidade**.
-- Cada linha exportada inclui **contexto pré-interpretado** para reduzir leitura manual posterior.
-- Antes de gerar o arquivo, o investigador pode selecionar quais colunas da fila levar; todas começam marcadas e a ordem original é preservada.
-- O nome do arquivo inclui o **período analisado** para rastreabilidade.
-
-### TOP VARIAÇÕES
-
-Compara automaticamente os dois últimos eventos de importação (`criado_em`):
-- TOP 5 maiores aumentos de custo
-- TOP 5 maiores reduções de custo
-
-### Alerta de Importação
-
-Variação absoluta ≥ 5% entre os dois últimos eventos de importação (`criado_em`) de um produto → badge ALERTA, usando a mesma regra do KPI/filtro.
-
----
-
-
-### Escalabilidade operacional (atualização de 11/05/2026)
-
-- Importação com **bulk upsert em chunks (400 linhas)** para reduzir requisições HTTP e manter tolerância parcial de erros.
-- Garantia de produtos no dicionário em **lote** antes da escrita da fato `historico_custos`.
-- Consultas de comparação entre importações com recorte menor de eventos (`criado_em`) para reduzir carga de leitura.
-- Script de índices essenciais em `sql/2026-05-11_indices_performance_operacional.sql` para acelerar drill-through, filtros e comparações temporais.
-
-
-### Configuração operacional em deploy estático
-
-- O runtime do frontend lê configurações prioritariamente de `runtime-config.js` (`window.__ENV__`).
-- Em Vercel, `vercel.json` executa `node scripts/build-web.mjs` e publica somente `dist`; runtime-config é gerado nesse diretório com apenas as três variáveis públicas.
-- Fallbacks de compatibilidade permanecem ativos (`window.__RUNTIME_CONFIG__`, `import.meta.env`, `<meta name="VITE_*">`).
-- `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` são obrigatórias e validadas no build e no bootstrap.
-
-## 5. Módulos
-
-| Arquivo | Responsabilidade |
-|---|---|
-| `view/ui-controller.js` | Orquestração principal (bootstrap, navegação, busca direta e execução do relatório; fluxos delegados a módulos dedicados) |
-| `view/ui-table.js` | Fila investigativa da aba Custos: renderização da tabela, detalhes por linha e presenter operacional compartilhado com exportação |
-| `view/ui-filters.js` | Filtros investigativos: cascata, filtros rápidos dos KPIs, ordenação e chips ativos |
-| `view/ui-export.js` | Exportação XLSX investigativa com contexto, prioridade operacional e sanitização anti-fórmula |
-| `view/ui-state.js` | Estado central da UI (filtros, visão da fila e referências de gráficos) |
-| `view/ui-dom.js` | Mapeamento único de referências do DOM para reduzir acoplamento |
-| `view/ui-utils.js` | Utilitários puros de formatação, debounce, escape, `fillSelect` seguro por DOM e feedback visual |
-| `view/ui-import-op.js` | Upload e preview do CSV de apontamentos de OP |
-| `view/ui-op.js` | Fila por motivo, filtros e dossiê da Auditoria de OP |
-| `core/spreadsheet-engine.js` | Parsing de planilhas, detecção fuzzy de colunas, normalização |
-| `core/op-investigation-engine.js` | Motor puro da Auditoria de OP: indicadores calculados, conferência do ERP, motivo e provável causa |
-| `core/report-engine.js` | Cálculos analíticos, cascata, detecção de regime |
-| `src/services/api.js` | Camada única de acesso Supabase |
-| `services/api.js` | Shim de compatibilidade (re-exporta de src/services) |
-| `assets/style.css` | Estilos globais |
-| `index.html` | Estrutura HTML e carregamento de dependências |
-
-### Dependências externas (CDN)
-
-- `XLSX.js`: leitura e exportação de planilhas Excel
-- `Chart.js`: gráficos temporais e de comparação
-- `SweetAlert2`: diálogos de confirmação e preview
-- `Supabase JS v2`: acesso ao banco de dados
-- `RemixIcon`: ícones
-
----
-
-## 6. Regras de Identidade
-
-- **Backend/persistência**: lógica via código de negócio + FKs técnicas
-- **Frontend**: exibe `descricao` — UUID nunca é semântica de negócio na UI
-- **Categorização**: nunca depende de texto livre — sempre opera por código/FK
-- **Credenciais**: nunca armazenadas em código-fonte
-
----
-
-## 7. Importação — Comportamento
-
-### Colunas obrigatórias (5)
-
-| Campo | Aliases detectados automaticamente |
-|---|---|
-| `codigo_produto` | produto, codigo, cod, item, cod produto |
-| `descricao` | descrição, desc |
-| `custo_variavel` | custo variavel, custo var, variavel |
-| `custo_direto_fixo` | fixo, direto fixo, custo fixo |
-| `custo_total` | total, custo total, vl total, valor total |
-
-### Parsing numérico
-
-- Remove separadores de milhar e símbolo R$
-- Converte vírgula decimal para ponto
-- Arredonda para 4 casas decimais (exibição em 2-4 casas)
-- Trata notação científica em códigos de produto
-
-### Normalização de código de produto
-
-`normalizeCodigoProduto()` é a função canônica para todo identificador de produto. O mesmo código é normalizado antes do preview, do payload de importação, da validação API, dos filtros/cascata, do relatório, do drill-through e da exportação. Ela remove espaços/caracteres invisíveis, preserva zeros à esquerda quando vêm como texto, expande notação científica do Excel e bloqueia códigos ambíguos em vez de persistir uma chave parcialmente mutada. Logs de mutação são emitidos apenas via `debugLog` quando `VITE_ENABLE_VERBOSE_LOGS=true`, com amostras limitadas.
-
-
-### Regra operacional de alerta (>5%)
-
-`isAlertaCritico()` / `classifyAlert()` em `core/report-engine.js` é a fonte única para alerta investigativo. A regra usa a variação percentual entre as duas últimas importações (`variacaoTemporal`, eixo `criado_em`) e considera alerta quando `abs(variação) >= 5`, sem arredondar antes da comparação. Altas e quedas entram no mesmo conjunto lógico. Quando não há comparativo anterior (`null`), o item não é alerta; `undefined`, `NaN` ou payload sem percentual canônico geram falha operacional para evitar KPI/filtro/exportação inconsistentes. O período escolhido continua filtrado por `data_referencia`, mas o alerta mede mudança entre importações.
-
-### Produto novo
-
-Se o código não existe em `dicionario_produtos`, é criado automaticamente com categorização nula.
-O banner de órfãos sinaliza quantos produtos estão sem categoria. Se o diagnóstico não puder ser executado por falha operacional ou divergência de schema em `categorias_agrupamento`, o banner não assume zero órfãos: exibe explicitamente `Não foi possível validar produtos sem agrupamento.` para impedir investigação com categorização mascarada.
-
----
-
-## 8. Filtros em Cascata
-
-Cascata funcional: **Origem → Família → Agrupamento → Produto**
-
-- Apenas categorias com custo histórico real aparecem nos filtros
-- Mudança de Origem reseta Família, Agrupamento e Item
-- Mudança de Família reseta Agrupamento e Item
-- Filtros auto-atualizam o relatório quando período está preenchido
-
-### Busca Rápida (bypass da hierarquia)
-
-Campo de busca aceita código puro (`M012`) ou formato `M012 - DESCRIÇÃO`.
-Seta o Item diretamente e executa o relatório em 1 interação.
-
----
-
-## 9. Análise Temporal
-
-- **Modo produto** (Item selecionado): série com o custo do produto específico
-- **Modo agregado** (sem Item específico): média de custo dos produtos do filtro por data
-- Linha auxiliar: média histórica do período (tracejada)
-- Badge de tendência: 🟢 Estável / 🔺 Alta / 🔻 Queda
-
----
-
-## 10. Boas Práticas Técnicas
-
-- `codigo` é referência de negócio em categorias; `id` UUID é referência técnica
-- Nunca depender de texto livre para categorização
-- `data_referencia` = competência; `criado_em` = evento de importação (não confundir)
-- Real-time debounced: 2s de delay para evitar reloads em cascata durante imports
-- Export via XLSX.js (mesma biblioteca já usada para leitura)
-
----
-
-## 12. Segurança e Configuração por Ambiente
-
-A aplicação usa configuração por ambiente com estratégia de runtime real do deploy estático: prioriza `window.__ENV__` (arquivo `runtime-config.js` carregado antes do bootstrap), com fallback de compatibilidade para `window.__RUNTIME_CONFIG__`, `import.meta.env` e `<meta name="VITE_*">` no HTML servido.
-
-### Arquivos de configuração
-
-- `.env`: variáveis locais (não versionar segredos reais)
-- `.env.example`: modelo mínimo obrigatório
-- `README_SETUP.md`: setup operacional local e Vercel
-- `src/config/app-config.js`: módulo central de leitura/validação de config
-
-### Variáveis mínimas
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_ENABLE_VERBOSE_LOGS` (`true`/`false`)
-
-### Gate de autenticação
-
-O gate de login foi **temporariamente desativado em 14/05/2026** para manter acesso aberto durante a fase atual de investigação operacional.
-
-- O bootstrap da UI não exige mais `signInWithPassword` para liberar carregamento.
-- A identificação de sessão no header passa a exibir `acesso público`.
-- A camada de dados continua restrita a `supabase.from()` e sem SQL bruto no frontend.
-
-### Preparação para RLS
-
-A arquitetura permanece compatível com RLS e pode reativar autenticação por sessão quando a estratégia de acesso controlado voltar a ser necessária.
-
-
-## Exportação investigativa operacional (Atualização 2026-05-21)
-
-A exportação `.xlsx` deixou de ser dump de tabela e passou a refletir o **estado investigativo ativo**:
-
-- respeita filtros ativos, fila rápida e contexto temporal selecionado;
-- prioriza ordenação operacional (`criticidade > mudança de regime > magnitude > reincidência > instabilidade`) quando não houver ordenação manual explícita;
-- inclui coluna de **contexto investigativo automático** para reduzir interpretação manual;
-- preserva rastreabilidade separando explicitamente `data_referencia` (competência) e `criado_em` (importação);
-- gera duas abas: `Contexto` (metadados investigativos) e `Fila Investigativa` (priorização de ação).
-
-Padrão de nome de arquivo: `auditoria_criticos_<periodo_inicio>_a_<periodo_fim>_<YYYYMMDD>.xlsx`.
-
-
-### Atualização contínua — 25/05/2026 (saneamento de schema)
-
-- Saneamento operacional do schema Supabase com hardening de constraints, índices, fallback explícito para órfãos de agrupamento e view de auditoria (`sql/2026-05-25_saneamento_operacional_schema.sql`).
-
-## Atualização 2026-05-28 — ERR-01: fronteiras operacionais de erro
-
-- `init()` e `runReport()` agora possuem fronteiras explícitas para falhas assíncronas, evitando tela branca ou `Uncaught (in promise)` no fluxo principal de investigação.
-- Falhas em filtros, metadata, drill-through e exportação exibem mensagem operacional amigável, preservam o contexto atual da tela e registram detalhes técnicos apenas quando `VITE_ENABLE_VERBOSE_LOGS=true`.
-- A mudança não altera contratos Supabase, regras de negócio, semântica temporal (`data_referencia` x `criado_em`) nem visual do relatório.
-
----
-
-## Atualização 2026-05-28 (VAL-01)
-
-- A importação passou a centralizar o identificador de produto em `normalizeCodigoProduto()` para impedir divergência causada por Excel/notação científica, espaços invisíveis, zeros à esquerda textuais e formatos numéricos mistos.
-- Linhas com código inválido são bloqueadas no preview/API e contabilizadas como falha de linha, sem derrubar o lote e sem persistência ambígua.
-- A mudança não altera contratos Supabase, regras investigativas nem a distinção temporal: `data_referencia` continua sendo competência operacional; `criado_em` continua sendo evento de importação.
-
-
-## Atualização 2026-05-28 (LOG-01)
-
-- O KPI **Alertas (>5%)**, o filtro rápido do card, os destaques da tabela, o drill-through e a exportação passaram a reutilizar a mesma regra canônica `isAlertaCritico()`/`classifyAlert()`.
-- A semântica ficou explícita: alerta é `abs(variacaoTemporal) >= 5` entre as duas últimas importações (`criado_em`), sem arredondamento prévio, cobrindo altas e quedas; ausência real de comparativo (`null`) não alerta, mas `undefined`/`NaN` falha rápido.
-- A mudança não altera visual, KPIs existentes, Supabase, `scoreInstabilidade` nem a distinção temporal: `data_referencia` filtra a competência analisada; `criado_em` define última/penúltima importação.
-
-## 12. Tooling de Qualidade (Onda 2 — 25/06/2026)
-
-A rede de segurança antes de refatorações foi adicionada sem alterar o runtime estático/CDN do produto:
-
-- `package.json` contém apenas `devDependencies` e scripts de desenvolvimento (`lint`, `typecheck`, `test`, `build`).
-- ESLint usa flat config para qualidade básica, variáveis/imports mortos e bloqueio de `innerHTML` interpolado sem revisão explícita.
-- `jsconfig.json` habilita type checking leve para JavaScript (`checkJs`) sem migração para TypeScript nem bundler.
-- Vitest cobre regressões do núcleo (`core/`) para VAL-01 (`normalizeCodigoProduto`) e LOG-01 (`classifyAlert`/`filterAlertRows`/KPIs), além da semântica temporal `data_referencia` × `criado_em` em `buildReportRows`.
-- GitHub Actions executa `npm run lint`, `npm run typecheck` e `npm test` em Pull Requests, sem deploy e sem alteração do fluxo Vercel.
-
-Comandos locais:
-
-```bash
-npm install
-npm run lint
-npm run typecheck
-npm test
+```text
+index.html / assets/       Shell, navegação e estilos
+view/                     Controllers, estado, DOM e apresentação
+core/                     Parsing, cálculos e motores puros
+src/services/             Fachada Supabase, adapter e cliente HTTP
+services/api.js           Shim de compatibilidade
+api/                      Funções Vercel
+scripts/                  Build e ferramentas administrativas
+sql/                      Scripts e migrations versionados
+tests/ / types/           Regressões e contratos de tipos
+docs/                     Manuais, arquitetura, auditoria e história
 ```
 
-Observação: warnings atuais de `no-unused-vars` são baseline de manutenibilidade já exposto pelo lint e devem ser tratados em itens de refatoração dedicados, sem misturar com a Onda 2.
+O [Manual Técnico](docs/manuais/manual-tecnico.md) descreve os módulos e o ciclo de desenvolvimento.
 
+## 7. Fluxos principais
 
-## Atualização documental — 20/07/2026
+1. **Custos:** selecionar competência → enviar XLSX → conferir colunas/preview → importar com log → investigar por produto ou cascata → detalhar/exportar.
+2. **OP:** enviar CSV MCAP105 com competência → conferir/importar → investigar fila e dossiê derivados da carga local atualizada.
+3. **Cadastro:** consultar/editar classificação operacional ou consultar Master ERP com estado independente. Preview ERP é separado da consulta e da edição manual; decidir/baixar revisão é local. Executar reconstrução exige autorização administrativa, aprovação integral, segunda confirmação e revalidação no servidor.
+4. **Documentação:** consultar os documentos disponibilizados na tela; salvar usa função própria e gera commit no GitHub. Essa ação não faz parte desta reorganização local.
 
-Engineering Freeze v1.0: o MNT-01 foi encerrado com a extração da fila/tabela e do presenter investigativo para `view/ui-table.js`. `view/ui-controller.js` permanece como orquestrador dos fluxos já modularizados (`ui-charts`, `ui-drill-through`, `ui-import`, `ui-filters`, `ui-export`, `ui-table`), sem alteração funcional.
+## 8. Como executar/desenvolver
 
-## Atualização 2026-07-27 — MNT-OP-01
+Requer Node >= 22 para ferramentas e funções. Veja o [setup](README_SETUP.md) antes de executar comandos; configure somente os valores públicos do frontend no ambiente, sem versionar credenciais.
 
-- Corrigida a persistência da Auditoria de OP sem alterar layout, filtros, regras investigativas ou schema.
-- Causa raiz: o CSV real formata algumas OPs com ponto de milhar; o conversor inteiro estrito devolvia `null` para valores como `2.081`, e o PostgreSQL rejeitava o chunk por `op NOT NULL`. O parser agora normaliza apenas o campo `op` antes da conversão (`2.081` → `2081`).
-- O diagnóstico de falha de chunk agora exibe a resposta completa do Supabase e aponta os registros/campos afetados por uma violação `NOT NULL`.
+```powershell
+npm ci
+node scripts/generate-runtime-config.mjs
+```
 
-## Atualização 2026-07-30 — MNT-OP-02: motor investigativo da Auditoria de OP
+Sirva a raiz com um servidor HTTP estático disponível no seu ambiente. O servidor estático permite usar o frontend, mas não executa as funções `/api`. Não existe script `npm run dev` neste pacote.
 
-- A aba OP deixou de reproduzir somente a tabela do ERP e passou a ordenar a fila por **Motivo da investigação**: gargalo de produtividade, paradas operacionais, baixa produção, sinal misto, sem base comparativa ou alta eficiência.
-- Os fatos do ERP continuam imutáveis no dossiê (`Tempo Previsto/Real`, `KG/Hora Previsto/Real`, `% Tempo (ERP)`, quantidades e parada). O Kustos calcula separadamente **Desvio de Tempo**, **Desvio de Produtividade**, **Atendimento da Produção** e **Índice de Paradas**.
-- Nenhum indicador isolado define criticidade: parada só é hipótese principal quando acompanha atraso e produtividade normal/baixa; produtividade baixa com tempo alto e parada não material aponta gargalo de processo. `% Tempo (ERP)` é conferência contra o desvio de produtividade, nunca dupla penalidade.
-- O dossiê explicita competência (`data_referencia`) e o evento de importação (`criado_em`) sem misturá-los.
+Para mudanças de código, os scripts de qualidade são `npm run lint`, `npm run typecheck` e `npm test`. `npm run build` gera `dist` por allowlist e não publica o projeto; configuração pública obrigatória ausente bloqueia o build. Funções são empacotadas separadamente pela Vercel. [Desenvolvimento](docs/manuais/manual-tecnico.md) e [operação](docs/manuais/manual-operacao.md) explicam as rotinas.
 
-## Atualização 2026-08-03 — MNT-OP-03: decisão investigativa combinada
+## 9. Documentação relacionada
 
-- A fila de OP passou a responder explicitamente se a execução **merece investigação**, com prioridade máxima, alta, monitoramento, registro ou nenhuma investigação necessária.
-- A decisão é derivada no motor puro pela leitura conjunta de produção, tempo, KG/Hora e paradas; o dossiê mostra as **evidências combinadas** que sustentam a conclusão.
-- Entrega com tempo alto, KG/Hora baixo e parada material sinaliza desperdício operacional; a mesma combinação com déficit de produção vira prioridade máxima por paradas com impacto. Em contrapartida, tempo maior explicado por volume maior não alerta, e parada sem efeito em entrega/tempo/produtividade é apenas registrada.
-- Não há mudança de schema nem dos fatos do ERP. `data_referencia` permanece a competência do recorte e `criado_em` apenas registra quando o apontamento entrou no sistema.
-## Atualização 2026-08-13 — Cadastro mestre de produtos
+- [Índice completo](docs/arquitetura/indice-documentacao-kustos.md): navegação por responsabilidade.
+- [VISION.md](VISION.md): identidade, missão, princípios e direção estratégica.
+- [ROADMAP.md](ROADMAP.md): iniciativas concluídas, continuidade, próxima onda e futuro.
+- [AGENTS.md](AGENTS.md) e [Regras Gerais](docs/regras-gerais.md): contratos obrigatórios e processo de trabalho.
+- [Manual do Usuário](docs/manuais/manual-usuario.md), [Técnico](docs/manuais/manual-tecnico.md) e [Operação](docs/manuais/manual-operacao.md): procedimentos por público.
+- [Auditoria e backlog](docs/auditoria/README.md): fragilidades, evidências e prioridades técnicas.
+- [História do Projeto](docs/HISTORIA_DO_PROJETO_KUSTOS.md): decisões, problemas superados e marcos; Git continua sendo a fonte oficial de commits.
+- [Auditoria desta reorganização](docs/auditoria/reorganizacao-documental.md): diagnóstico, destinos, divergências e validação.
 
-A aba **Cadastro** mantém `dicionario_produtos` como fonte única de produtos para Custos e OP. Importa o XLSM incrementalmente: valores ERP preenchidos atualizam Produto/Descrição/Origem/Família; campos vazios e produtos ausentes do arquivo são preservados; fatos continuam imutáveis.
+## 10. Estado atual
 
-## Atualização 2026-09-28 — fila investigativa responsiva
+Estado do **checkout documentado em 16/10/2026**, sem nova verificação de produção nesta revisão:
 
-A Auditoria de Custos exibe no máximo os **200 itens mais prioritários** da fila já ordenada e informa o total quando houver mais resultados. Refinar o recorte coloca outros itens na janela sem mudar prioridade, KPIs, drill-through, exportação ou semântica temporal. Os cliques de detalhe e drill-through usam um único listener delegado no corpo da tabela.
-
-## Atualização 2026-10-01 — Fase 2A do Cadastro Mestre
-
-`dicionario_master_produtos` recebeu somente a estrutura de proveniência para futuras cargas ERP em XLSM, XLSX ou XLS. O runtime continua consumindo `dicionario_produtos`; não houve importação, reconciliação, classificação de família nem alteração de fatos.
-
-## Atualização 2026-10-05 — Fase 2C.2: proveniência de agrupamento
-
-O Master passou a poder preservar o valor bruto de agrupamento recebido do ERP e seu lote, sem convertê-lo para uma categoria Kustos. A dimensão operacional agora comporta override manual e origem de classificação, ambos inicialmente nulos; a ponte ERP → Kustos continua inexistente e não houve alteração de agrupamentos, fatos ou runtime.
-
-## Atualização 2026-10-08 — Fase 3.1: Preview do Cadastro Mestre
-
-Novo núcleo puro e adaptador para XLSM/XLSX/XLS: filtros Tipo P/C → Descr(Origem) Produzido/Revenda → exclusão de inativo/EXLUIR; comparação por código contra `dicionario_master_produtos`. Preview preserva vazios/ausentes, resolve origem/família somente por código exato e guarda agrupamento ERP sem ponte Kustos. Sem gravação, migration, aprovação ou execução, e sem ativação na UI/importador legado. Contrato e exemplo em [Cadastro Mestre — Preview](docs/arquitetura/cadastro-mestre-preview.md).
+- Investigação de Custos/OP, Cadastro e Documentação implementados. Bootstrap exige sessão/login; isso não comprova políticas RLS do ambiente remoto.
+- Leituras integrais de Cadastro/Custos implementadas com paginação de 500, contagem exata e recusa de resultados incompletos. Paginação entre requisições não é snapshot transacional.
+- Consulta ERP independente e catálogo de famílias no Preview V2 implementados. Os registros de entrega ainda deixam publicação dessas alterações e execução real das novas propostas de famílias pendentes de etapa autorizada.
+- Reconstrução do Master ERP já foi confirmada nos registros de 15/10; antigas contagens de 5.706 e expectativa de 860 pertencem às fases anteriores. Quantidades são evidências datadas, nunca valores fixos do produto.
+- Dívidas abertas incluem cascata compartilhada, HTML seguro, cache de masters, separação da API/validação e LOG-02: timestamps distintos de chunks ainda podem representar um mesmo lote lógico. Prioridades e limites estão no [backlog](docs/auditoria/backlog-priorizado.md).

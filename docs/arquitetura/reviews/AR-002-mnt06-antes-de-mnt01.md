@@ -1,5 +1,7 @@
 # AR-002 — MNT-06 antes de MNT-01
 
+**Decisão histórica da reavaliação de 02/07/2026.** A análise abaixo explica a ordem escolhida naquela base; não declara MNT-06/MNT-01 abertos hoje nem localiza atualmente o importador no controller. Ambos estão concluídos no [backlog](../../auditoria/backlog-priorizado.md); fluxo atual em `view/ui-import.js`. Mantido integralmente como memória arquitetural, referenciada pela [História](../../HISTORIA_DO_PROJETO_KUSTOS.md).
+
 ## Objetivo
 
 Registrar permanentemente o raciocínio arquitetural que levou à priorização de **MNT-06** antes de **MNT-01** após a reavaliação do backlog de 2026-07-02.
