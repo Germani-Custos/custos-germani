@@ -33,19 +33,11 @@ const supabase = createClient(appConfig.supabase.url, appConfig.supabase.anonKey
 // subir com segurança se a importação ficar lenta em bases maiores.
 const IMPORT_CHUNK_SIZE = 400;
 
-// Cadastro operacional: páginas abaixo do teto PostgREST, sem truncar o contador.
+// Páginas abaixo do teto PostgREST; não limitam o total lido.
 const PRODUCT_MASTER_PAGE_SIZE = 500;
 
-// MNT-07: teto de linhas lidas (apenas coluna `criado_em`) para descobrir as
-// duas últimas importações distintas em getLatestImportComparison/getTopVariacoesImportacao.
-// Risco conhecido: se uma única importação gravar mais de IMPORT_COMPARISON_LOOKBACK_LIMIT
-// linhas, ou se o total de historico_custos ultrapassar esse valor com poucas
-// importações recentes, a importação anterior pode ficar fora da janela lida e
-// a comparação silenciosamente não encontrar 2 lotes. Em 2026-07-13 a tabela
-// tinha 601 linhas no total (bem abaixo do teto), então o risco é baixo hoje.
-// Se a base crescer perto deste valor, trocar por uma consulta de
-// `criado_em` distinto no banco (view ou RPC) em vez de só subir o número.
-const IMPORT_COMPARISON_LOOKBACK_LIMIT = 1000;
+// Mesma ordem temporal da consulta analítica, com PK como desempate entre páginas.
+const HISTORICO_PAGE_ORDER = ['data_referencia', 'id'];
 
 function resolveMasterId(row) {
   return row?.id ?? row?.codigo ?? row?.cod ?? row?.uuid ?? row?.value ?? null;
@@ -119,6 +111,57 @@ function fail(message, details = {}, upstreamError = null) {
     error.details = { ...details, cause: upstreamError.message || String(upstreamError) };
   }
   return { data: null, error };
+}
+
+/**
+ * Leitura integral compartilhada com o Cadastro operacional. Recria a consulta
+ * filtrada em cada página e só libera dados após conferir todas as contagens.
+ * @param {string} table
+ * @param {string} fields
+ * @param {string|Array<string|{column:string, ascending:boolean}>} orderBy
+ * @param {(query:any) => any} [configure]
+ */
+async function lerCompleto(table, fields, orderBy, configure = query => query) {
+  const rows = [];
+  let expected = null;
+  try {
+    for (let start = 0; ; start += PRODUCT_MASTER_PAGE_SIZE) {
+      let query = configure(supabase.from(table).select(fields, { count: 'exact' }));
+      for (const order of typeof orderBy === 'string' ? [orderBy] : orderBy) {
+        query = typeof order === 'string'
+          ? query.order(order, { ascending: true })
+          : query.order(order.column, { ascending: order.ascending });
+      }
+      const { data, error, count } = await query.range(start, start + PRODUCT_MASTER_PAGE_SIZE - 1);
+      if (error) throw error;
+      if (!Array.isArray(data) || !Number.isSafeInteger(count) || count < 0 ||
+          (expected !== null && expected !== count)) {
+        throw createApiError('Contagem incompleta ou alterada durante a leitura paginada.', { tabela: table });
+      }
+      expected = count;
+      if (data.length !== Math.min(PRODUCT_MASTER_PAGE_SIZE, count - start)) {
+        throw createApiError('Leitura paginada incompleta.', { tabela: table });
+      }
+      rows.push(...data);
+      if (rows.length === count) return ok(rows);
+    }
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+async function lerDicionarioDosCodigos(codigos) {
+  const rows = [];
+  // Limita o tamanho de cada IN, nunca a quantidade total de códigos.
+  for (let start = 0; start < codigos.length; start += PRODUCT_MASTER_PAGE_SIZE) {
+    const chunk = codigos.slice(start, start + PRODUCT_MASTER_PAGE_SIZE);
+    const result = await lerCompleto(TABLES.dicionario,
+      'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto',
+      query => query.in('codigo_produto', chunk));
+    if (result.error) return result;
+    rows.push(...result.data);
+  }
+  return ok(rows);
 }
 
 function isValidDateValue(value) {
@@ -289,29 +332,16 @@ function mapHierarchyRows(dicionario = []) {
 
 async function getHistoricoWithClientFallback(filters) {
   const temporalFilters = normalizeTemporalFilters(filters);
-  let query = supabase
-    .from(TABLES.historico)
-    .select('*');
-
-  if (temporalFilters.competencias.length) {
-    query = query.in('data_referencia', temporalFilters.competencias);
-  } else {
-    query = query
-      .gte('data_referencia', temporalFilters.start)
-      .lte('data_referencia', temporalFilters.end);
-  }
-
-  const { data: historicoBase, error: historicoError } = await query
-    .order('data_referencia', { ascending: true });
+  const { data: historicoBase, error: historicoError } = await lerCompleto(
+    TABLES.historico, '*', HISTORICO_PAGE_ORDER, query => temporalFilters.competencias.length
+      ? query.in('data_referencia', temporalFilters.competencias)
+      : query.gte('data_referencia', temporalFilters.start).lte('data_referencia', temporalFilters.end));
 
   if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
   if (!historicoBase?.length) return ok([]);
 
   const codigos = [...new Set(historicoBase.map(item => normalizeCodigoProduto(item.codigo_produto)).filter(Boolean))];
-  const { data: dicionarioRows, error: dicionarioError } = await supabase
-    .from(TABLES.dicionario)
-    .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
-    .in('codigo_produto', codigos);
+  const { data: dicionarioRows, error: dicionarioError } = await lerDicionarioDosCodigos(codigos);
 
   if (dicionarioError) return fail('Falha ao enriquecer histórico com dimensão de produtos.', { metodo: 'getHistorico', tabela: TABLES.dicionario }, dicionarioError);
 
@@ -340,10 +370,7 @@ async function enrichRowsWithDicionario(rows = []) {
 
   if (!codigos.length) return { data: rows, error: null };
 
-  const { data: dicionarioRows, error: dicionarioError } = await supabase
-    .from(TABLES.dicionario)
-    .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
-    .in('codigo_produto', codigos);
+  const { data: dicionarioRows, error: dicionarioError } = await lerDicionarioDosCodigos(codigos);
 
   if (dicionarioError) return { data: null, error: dicionarioError };
 
@@ -382,11 +409,11 @@ function createDiagnosticoSemAgrupamentoOk(rows = []) {
 
 async function runDiagnosticoSemAgrupamento() {
   const [{ data: historicoRows, error: historicoError }, { data: dicionarioRows, error: dicionarioError }, { data: agrupamentoRows, error: agrupamentoError }] = await Promise.all([
-    supabase.from(TABLES.historico).select('codigo_produto'),
-    supabase.from(TABLES.dicionario).select('codigo_produto, agrupamento_cod'),
+    lerCompleto(TABLES.historico, 'codigo_produto', ['codigo_produto', 'id']),
+    lerCompleto(TABLES.dicionario, 'codigo_produto, agrupamento_cod', 'codigo_produto'),
     // Selecionar '*' evita acoplar o diagnóstico a uma variante específica do schema
     // (`codigo`, `id` ou `cod`) e impede que o erro 42703 seja mascarado como “zero órfãos”.
-    supabase.from(TABLES.agrupamento).select('*')
+    lerCompleto(TABLES.agrupamento, '*', 'id')
   ]);
 
   if (historicoError) return createDiagnosticoSemAgrupamentoUnavailable(historicoError, 'historico');
@@ -458,20 +485,17 @@ async function garantirProdutosNoDicionarioEmLote(produtos = []) {
 export const api = {
   /**
    * Carrega as dimensões (masters) usadas pela cascata de filtros e pelo relatório.
-   * Degrada parcialmente por dimensão em caso de erro (ERR-02): historico é
-   * crítico (sem ele não há dados), as demais dimensões voltam vazias se falharem.
+   * Só monta a hierarquia depois de carregar integralmente fatos e dimensões.
    * @returns {Promise<Masters & {diagnostico_sem_mapa: {status: string, rows: Array<unknown>, error: unknown}, error: unknown}>}
    */
   async getMasters() {
-    // ERR-02: Promise.allSettled permite degradação parcial — dimensões que falharem
-    // retornam vazias mas as demais continuam carregando normalmente.
+    // Aguarda as fontes independentes, mas não libera hierarquia parcial.
     const settled = await Promise.allSettled([
-      supabase.from(TABLES.historico).select('codigo_produto, descricao'),
-      supabase.from(TABLES.origem).select('*').order('descricao'),
-      supabase.from(TABLES.familia).select('*').order('descricao'),
-      supabase.from(TABLES.agrupamento).select('*').order('descricao'),
-      supabase.from(TABLES.dicionario)
-        .select('codigo_produto, descricao, origem_id, familia_id, agrupamento_cod')
+      lerCompleto(TABLES.historico, 'codigo_produto, descricao', ['codigo_produto', 'id']),
+      lerCompleto(TABLES.origem, '*', ['descricao', 'id']),
+      lerCompleto(TABLES.familia, '*', ['descricao', 'id']),
+      lerCompleto(TABLES.agrupamento, '*', ['descricao', 'id']),
+      lerCompleto(TABLES.dicionario, 'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto')
     ]);
 
     const resolve = (result) => result.status === 'fulfilled' ? result.value : { data: null, error: result.reason };
@@ -483,13 +507,11 @@ export const api = {
       { data: dicionarioRaw, error: dicionarioError }
     ] = settled.map(resolve);
 
-    // Historico é crítico: sem ele não há nada para mostrar
-    if (historicoError) {
-      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: { status: 'ok', rows: [], error: null }, error: historicoError };
+    // Hierarquia exige todas as fontes completas; erro nunca vira dimensão vazia.
+    const error = historicoError || origensError || familiasError || agrupamentosError || dicionarioError;
+    if (error) {
+      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: { status: 'indisponivel', rows: [], error }, error };
     }
-    // Dimensões com erro degradam parcialmente (log + array vazio)
-    const error = origensError || familiasError || agrupamentosError || dicionarioError;
-    if (error) debugLog('getMasters: degradação parcial em dimensão', { origensError, familiasError, agrupamentosError, dicionarioError });
 
     const historicoNormalizado = (historicoRows || [])
       .map(item => ({
@@ -574,27 +596,6 @@ export const api = {
 
   /** Cadastro legado: a mesma dimensão consultada por Custos e OP. */
   async getProductMaster() {
-    const lerCompleto = async (table, fields, key) => {
-      const rows = [];
-      let expected = null;
-      try {
-        for (let start = 0; ; start += PRODUCT_MASTER_PAGE_SIZE) {
-          const { data, error, count } = await supabase.from(table).select(fields, { count: 'exact' })
-            .order(key, { ascending: true }).range(start, start + PRODUCT_MASTER_PAGE_SIZE - 1);
-          if (error) throw error;
-          if (!Array.isArray(data) || !Number.isSafeInteger(count) || count < 0 ||
-              (expected !== null && expected !== count)) throw createApiError('Contagem incompleta ou alterada durante a leitura do cadastro operacional.', { tabela: table });
-          expected = count;
-          rows.push(...data);
-          if (rows.length === count) return { data: rows, error: null };
-          if (data.length !== PRODUCT_MASTER_PAGE_SIZE || rows.length > count) {
-            throw createApiError('Leitura paginada incompleta do cadastro operacional.', { tabela: table });
-          }
-        }
-      } catch (error) {
-        return { data: null, error };
-      }
-    };
     const [produtosResult, origensResult, familiasResult, agrupamentosResult, historicoResult, opResult] = await Promise.all([
       lerCompleto(TABLES.dicionario, 'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto'),
       supabase.from(TABLES.origem).select('id, descricao').order('descricao'),
@@ -918,11 +919,8 @@ export const api = {
   },
 
   async getLatestImportComparison(filters = {}) {
-    const { data: importRows, error: importError } = await supabase
-      .from(TABLES.historico)
-      .select('criado_em')
-      .order('criado_em', { ascending: false })
-      .limit(IMPORT_COMPARISON_LOOKBACK_LIMIT);
+    const { data: importRows, error: importError } = await lerCompleto(TABLES.historico,
+      'criado_em', [{ column: 'criado_em', ascending: false }, 'id']);
 
     if (importError) return fail('Falha ao listar importações para comparação.', { metodo: 'getLatestImportComparison' }, importError);
 
@@ -933,10 +931,8 @@ export const api = {
 
     const [latestImport, previousImport] = latestImports;
 
-    const { data: rows, error } = await supabase
-      .from(TABLES.historico)
-      .select('*')
-      .in('criado_em', [latestImport, previousImport]);
+    const { data: rows, error } = await lerCompleto(TABLES.historico, '*', HISTORICO_PAGE_ORDER,
+      query => query.in('criado_em', [latestImport, previousImport]));
 
     if (error) return fail('Falha ao carregar base de comparação entre importações.', { metodo: 'getLatestImportComparison' }, error);
 
@@ -1001,20 +997,14 @@ export const api = {
 
     const filters = Array.isArray(temporalFilters) ? { competencias: temporalFilters } : temporalFilters;
     const temporal = normalizeTemporalFilters(filters);
-    let query = supabase
-      .from(TABLES.historico)
-      .select('codigo_produto, descricao, custo_total, custo_variavel, custo_direto_fixo, data_referencia, criado_em')
-      .eq('codigo_produto', codigo);
-
-    if (temporal.competencias.length) {
-      query = query.in('data_referencia', temporal.competencias);
-    } else if (temporal.start && temporal.end) {
-      query = query.gte('data_referencia', temporal.start).lte('data_referencia', temporal.end);
-    }
-
-    const { data, error } = await query
-      .order('data_referencia', { ascending: true })
-      .order('criado_em', { ascending: true });
+    const { data, error } = await lerCompleto(TABLES.historico,
+      'codigo_produto, descricao, custo_total, custo_variavel, custo_direto_fixo, data_referencia, criado_em',
+      ['data_referencia', 'criado_em', 'id'], query => {
+        query = query.eq('codigo_produto', codigo);
+        if (temporal.competencias.length) return query.in('data_referencia', temporal.competencias);
+        if (temporal.start && temporal.end) return query.gte('data_referencia', temporal.start).lte('data_referencia', temporal.end);
+        return query;
+      });
 
     if (error) return fail('Falha ao carregar histórico detalhado do produto.', { metodo: 'getProductHistory', codigo_produto: codigo }, error);
 
@@ -1038,11 +1028,8 @@ export const api = {
   },
 
   async getTopVariacoesImportacao(filters = {}) {
-    const { data: importRows, error: importError } = await supabase
-      .from(TABLES.historico)
-      .select('criado_em')
-      .order('criado_em', { ascending: false })
-      .limit(IMPORT_COMPARISON_LOOKBACK_LIMIT);
+    const { data: importRows, error: importError } = await lerCompleto(TABLES.historico,
+      'criado_em', [{ column: 'criado_em', ascending: false }, 'id']);
 
     if (importError) return fail('Falha ao listar importações para cálculo de variações.', { metodo: 'getTopVariacoesImportacao' }, importError);
 
@@ -1051,10 +1038,9 @@ export const api = {
 
     const [ultimaImportacao, penultimaImportacao] = latestImports;
 
-    const { data: rows, error } = await supabase
-      .from(TABLES.historico)
-      .select('codigo_produto, descricao, custo_total, criado_em, data_referencia')
-      .in('criado_em', [ultimaImportacao, penultimaImportacao]);
+    const { data: rows, error } = await lerCompleto(TABLES.historico,
+      'codigo_produto, descricao, custo_total, criado_em, data_referencia', HISTORICO_PAGE_ORDER,
+      query => query.in('criado_em', [ultimaImportacao, penultimaImportacao]));
     if (error) return fail('Falha ao carregar base de variações por importação.', { metodo: 'getTopVariacoesImportacao' }, error);
 
     const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);

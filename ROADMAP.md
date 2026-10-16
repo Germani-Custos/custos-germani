@@ -1,5 +1,13 @@
 # Roadmap Estratégico — Kustos Germani
 
+## Atualização 2026-10-16 — CUSTOS-PAGE-01
+
+- [x] Paginar fatos/dimensão/catálogos da hierarquia e diagnóstico de Custos, histórico, comparações e drill-through; bloquear resultados incompletos, mantendo cálculos, filtros e eixos temporais.
+- [x] Validar testes de volume/falha/ordenação e sonda real somente leitura: 6.113 produtos, 1.370 fatos, 437 códigos encontrados e zero ausentes, sem modificar classificação ou dados.
+- [ ] Publicar em etapa própria autorizada; esta entrega é local e não realiza deploy, reconstrução ou sincronização ERP → operacional.
+
+[Contrato e limites](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026). `data_referencia` continua competência e `criado_em` importação.
+
 ## Atualização 2026-10-15 — CAD-FAM-01
 
 - [x] Integrar rótulo ERP ao adapter/transporte V2, catálogo puro por código/universo, Preview/decisões próprias e executor central com snapshot/provas/rollback conjuntos.

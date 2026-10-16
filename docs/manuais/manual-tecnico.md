@@ -1,5 +1,11 @@
 # Manual de Uso Técnico — Kustos Germani
 
+## Leituras completas de Custos — CUSTOS-PAGE-01 (16/10/2026)
+
+`lerCompleto` foi extraído do leitor existente em `getProductMaster()` para a API compartilhá-lo com Custos. Recria cada SELECT com `count:'exact'`, filtros originais, ORDER BY total e `range` de 500; confere total invariável e tamanho exato esperado em cada página, inclusive a última. Não há limite total. `getMasters()`/diagnóstico ordenam fatos por código+id; histórico por competência+id; drill-through por competência+importação+id. Catálogos usam descrição+id ou id. Dimensão filtrada por IN é lida em blocos de até 500 códigos, todos percorridos.
+
+`getLatestImportComparison()`/`getTopVariacoesImportacao()` também paginam a descoberta de `criado_em` e os fatos das duas importações escolhidas; removido o teto de 1.000, sem mudar definição de importação ou fórmulas. LOG-02 (chunks com timestamps distintos) permanece pendente. Falha em fonte da hierarquia agora retorna `error`, em vez de dimensão vazia silenciosa; falha isolada do diagnóstico continua `indisponivel`. Leitura por várias requisições não é snapshot transacional: alteração concorrente com mesma contagem pode não ser detectada. `data_referencia` permanece competência, `criado_em` importação. [Escopo, testes e validação](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+
 ## Catálogo de famílias ERP — CAD-FAM-01 (15/10/2026)
 
 `familia_descricao_erp` entra pelo adapter existente e na nona posição do transporte `CADASTRO_MESTRE_DADOS_V2`. `proporCatalogoFamiliasCadastroMestre` usa códigos efetivos do universo e identifica no-op/nova/alteração/vazio/conflito; descrição não resolve identidade. Manifesto inclui catálogo e operações identificadas por tabela/código, com revisão independente. Operações do Master mantêm contagens e plano separados.

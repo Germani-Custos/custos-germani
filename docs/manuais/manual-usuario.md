@@ -1,5 +1,9 @@
 # Manual do Usuário — Custos Germani
 
+## Auditoria de Custos — leitura completa (16/10/2026, CUSTOS-PAGE-01)
+
+Após publicação desta correção, Origem/Família/Agrupamento serão montados sobre todos os produtos operacionais com Custos, mesmo com mais de 1.000 registros. Famílias e agrupamentos não são preenchidos automaticamente: no estado conferido há 437 produtos com origem, 151 com família e nenhum com agrupamento. A leitura completa não torna essas classificações completas. Erro de carga deve ser investigado/recarregado, nunca compensado por nova importação ou reconstrução. O período continua sendo a competência (`data_referencia`); importação (`criado_em`) mantém seu significado. [Contrato](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+
 ## Famílias ERP no Preview — CAD-FAM-01 (15/10/2026)
 
 Em **Preview mestre**, confira a seção **Catálogo de famílias ERP**: código, rótulo oficial/atual, situação, produtos impactados e decisão própria. Código é identidade; rótulos iguais podem pertencer a códigos diferentes. Famílias já cadastradas sem mudança não exigem decisão; vazios preservam catálogo; conflitos bloqueiam até corrigir a fonte e gerar novo Preview.

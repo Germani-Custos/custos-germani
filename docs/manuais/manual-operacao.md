@@ -1,5 +1,11 @@
 # Manual de Operação — Kustos Germani
 
+## Auditoria de Custos — CUSTOS-PAGE-01 (16/10/2026)
+
+Depois de publicação autorizada, recarregar a aplicação para renovar os masters em memória. No estado validado, esperar 437 produtos, 12 origens e 18 famílias na base da cascata; agrupamentos continuam vazios porque os 437 produtos não possuem classificação operacional nesse campo. No intervalo 01/02/2026–15/03/2027, o histórico deve carregar 1.370 fatos. Diagnóstico deve apontar 437 produtos sem agrupamento, não zero por truncamento.
+
+Página com erro/incompleta ou contagem alterada exige investigar e repetir apenas a leitura; não criar classificação, importar ou reconstruir para resolver carga indisponível. Esta entrega usa exclusivamente GETs reais, com provas de `dicionario_produtos`/`historico_custos` idênticas antes/depois; não modifica Supabase, OP ou Master ERP. Fatos mantêm competência (`data_referencia`) e proveniência de importação (`criado_em`). [Contrato e limites](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+
 ## Conferência de famílias ERP — CAD-FAM-01 (15/10/2026)
 
 Publicação futura deve manter UI e função no contrato V2; gerar novo Preview/revisão, conferindo famílias e produtos separadamente. No XLS validado: 860 produtos, 81 famílias, 16 existentes e 65 novas para 693 produtos, sem conflitos; todas as 65 propostas continuam pendentes nesta entrega. Manter flag desabilitada durante conferência; não cadastrar famílias manualmente ou executar reconstrução como teste.

@@ -1,5 +1,11 @@
 # Kustos Germani — Motor de Investigação de Custos
 
+## Atualização 2026-10-16 — CUSTOS-PAGE-01: leitura integral da Auditoria
+
+`getMasters()`, histórico, diagnóstico de agrupamentos, gráficos de comparação e drill-through de Custos usam páginas de 500 com contagem exata e ordenação determinística, sem teto total. Falha, página incompleta ou contagem alterada não viram sucesso parcial. A hierarquia continua vindo de `dicionario_produtos`, com enriquecimento antes dos filtros; não há sincronização ERP nem preenchimento de classificações. `data_referencia` permanece competência e `criado_em` importação.
+
+Validação real somente GET confirmou 6.113 produtos, 1.370 fatos e 437 códigos encontrados/zero ausentes; 437 com origem, 151 com família e zero com agrupamento. O método corrigido retornou 437 vínculos, 12 origens, 18 famílias e 437 pendências de agrupamento. Nenhuma escrita, migration, deploy ou commit. [Contrato, testes e limites](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+
 ## Atualização 2026-10-15 — CAD-FAM-01: famílias ERP no Preview aprovado
 
 O leitor existente transporta `Família` e `Descr. (Família)` no contrato V2. Preview separa operações de produtos e catálogo: código exato identifica família; nova categoria ou mudança de rótulo exige decisão própria. Servidor/executor regeneram manifesto/contexto sob locks; snapshot das famílias afetadas, transação e rollback abrangem catálogo e Master, com provas integrais de preservação. [Contrato e validação real](docs/arquitetura/cadastro-mestre-familias-erp.md).

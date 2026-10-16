@@ -1,5 +1,25 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## CUSTOS-PAGE-01 — leituras integrais da Auditoria de Custos (16/10/2026)
+
+O leitor paginado já existente no Cadastro foi movido para `lerCompleto` na mesma API, sem novo módulo ou fonte de verdade. As consultas continuam exclusivamente em `supabase.from()`, sem RPC/SQL no browser. Páginas de 500 usam `count:'exact'`; tamanho esperado, total invariável e erros são conferidos antes de liberar o conjunto. Não existe teto total nem retorno parcial de uma leitura com falha. A paginação não é snapshot transacional; mutações concorrentes que mantenham a mesma contagem não são necessariamente detectadas.
+
+- `getMasters()`: pagina histórico (código+id), operacional (código) e catálogos (descrição+id). Mesma interseção por código, resolução de IDs e construção da hierarquia. Fonte com falha retorna `error`, sem degradação silenciosa para catálogo vazio.
+- `getHistorico()`: pagina fatos no mesmo intervalo `gte/lte` ou conjunto explícito `in(data_referencia)`, ordenando competência+id. Busca dimensão em blocos paginados por código, enriquece antes de aplicar a cascata. Nenhuma alteração em fórmulas ou classificação.
+- `runDiagnosticoSemAgrupamento()`: pagina as três fontes; erro isolado retorna `indisponivel`, nunca zero válido por truncamento. Grupo continua resolvido pelo helper existente (`id`/`codigo`/`cod`).
+- Comparações/gráficos: pagina descoberta de timestamps (importação descendente+id) e fatos das duas importações. Remove apenas a janela fixa de 1.000 linhas; escolha dos dois `criado_em` distintos, recorte temporal, enriquecimento e cálculos permanecem. LOG-02 não foi corrigido nesta etapa.
+- `getProductHistory()`: pagina o mesmo recorte do drill-through, preservando ordem por competência/importação e acrescentando id como desempate. Deltas permanecem calculados após a leitura completa.
+
+`getApontamentosOp()`, importadores, Master ERP/reconstrução, classificações e cálculos puros não foram alterados. `getProductMaster()` reutiliza o mesmo leitor extraído, mantendo seu contrato. `getTrendsByProduct()` não é chamado pela UI atual e fica fora do escopo. `data_referencia` continua competência e `criado_em` evento de importação; nenhum valor é escrito.
+
+### Validação
+
+25 testes novos em `tests/api-custos-pagination.test.js`: volumes acima de 1.000, zero/múltiplos exatos/última página, ordenação com empate, famílias/códigos após a primeira página, diagnóstico completo, erros/rejeições/contagem ausente ou alterada/página curta, intervalo e competências explícitas, enriquecimento antes dos filtros, gráficos e drill-through completos, sem classificação ou escrita. Mocks temporais existentes foram adaptados para páginas/count, mantendo as mesmas expectativas.
+
+Sonda local do código alterado contra Supabase real, com transporte restrito a GET em allowlist de cinco tabelas: **72 GETs, zero erros HTTP**. Não carrega credencial administrativa ou sessão e não consulta OP/Master ERP. Resultado: **6.113 produtos operacionais, 1.370 fatos, 437 códigos distintos, 437 encontrados, zero ausentes, 437 com origem, 151 com família, zero com agrupamento**. API retornou hierarquia com 437 vínculos, 12 origens, 18 famílias, histórico de 1.370 fatos e diagnóstico `ok` com 437 pendências. Comparação SHA-256 em memória das leituras integrais de operacional/fatos antes/depois foi idêntica. Nenhum valor de classificação foi preenchido; sem escrita/migration/deploy/env/commit.
+
+Suíte local: **523 testes/37 arquivos passaram** com dois workers; **lint, typecheck, build e `git diff --check` passaram**. Build executado com configuração pública sintética, sem alterar ambiente real. Após publicação futura autorizada, é necessário recarregar a aplicação; esta validação usa o módulo local, não modifica o deploy atual. Worktree contém somente API, testes e documentação desta tarefa; sem commit.
+
 ## Consulta separada ERP — CAD-ERP-VIEW-01 (15/10/2026)
 
 Cadastro → seleção Operacional/ERP → `createCadastroMestreErpController` → `api.getCadastroMestreErp()` → leitor integral existente via `supabase.from()` (`dicionario_master_produtos`, `categorias_origem`, `categorias_familia`, páginas de 500/count exact/ORDER BY) → núcleo puro de consulta → busca/filtros/páginas locais de 50/total encontrado. Sem operacional, fatos ou mapa nessa API. Origem/família resolvem por código exato; agrupamento é `agrupamento_erp_valor`. Estados independentes; cadastro/edição operacional e Preview existentes mantidos. Nenhum acesso de escrita, reconstrução, SQL/RPC ou alteração de eixos temporais. [Contrato UX](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).

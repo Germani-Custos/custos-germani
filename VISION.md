@@ -1,5 +1,9 @@
 # Visão do Produto — Kustos Germani
 
+## Atualização 2026-10-16 — CUSTOS-PAGE-01
+
+A investigação de Custos deve carregar o conjunto completo antes de construir filtros ou analisar fatos. Paginação sem teto total e falha explícita evitam hierarquia vazia e análises silenciosamente incompletas; não criam classificação nem sincronizam o Master ERP. Competência (`data_referencia`) e importação (`criado_em`) mantêm seus contratos. [Leituras e validação](docs/arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
+
 ## Atualização 2026-10-15 — CAD-FAM-01
 
 Família ERP deve ser identificada por código, com rótulo oficial e decisão explícita para cadastro/alteração. O Preview mostra lacunas sem preencher o operacional ou reclassificar produtos; aprovação, revalidação e transação compartilhada mantêm a carga auditável. Implementação local, sem carga real; competência/importação dos fatos intactas. [Contrato](docs/arquitetura/cadastro-mestre-familias-erp.md).

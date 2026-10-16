@@ -20,11 +20,10 @@ vi.mock('../src/config/app-config.js', () => ({
 import { api } from '../src/services/api.js';
 
 function configureSupabase(rows) {
-  const orderByImportacao = vi.fn().mockResolvedValue({ data: rows, error: null });
-  const orderByCompetencia = vi.fn(() => ({ order: orderByImportacao }));
   const query = {
-    in: supabaseMock.in.mockReturnValue({ order: orderByCompetencia }),
-    order: orderByCompetencia
+    in: supabaseMock.in.mockImplementation(() => query),
+    order: vi.fn(() => query),
+    range: vi.fn(async (start, end) => ({ data: rows.slice(start, end + 1), count: rows.length, error: null }))
   };
 
   supabaseMock.from.mockReturnValue({
@@ -35,17 +34,21 @@ function configureSupabase(rows) {
 }
 
 function configureHistoricoSupabase(rows) {
-  const order = vi.fn().mockResolvedValue({ data: rows, error: null });
   const historicoQuery = {
     in: vi.fn(() => historicoQuery),
     gte: vi.fn(() => historicoQuery),
     lte: vi.fn(() => historicoQuery),
-    order
+    order: vi.fn(() => historicoQuery),
+    range: vi.fn(async (start, end) => ({ data: rows.slice(start, end + 1), count: rows.length, error: null }))
+  };
+  const dictionaryQuery = {
+    in: vi.fn(() => dictionaryQuery), order: vi.fn(() => dictionaryQuery),
+    range: vi.fn(async () => ({ data: [], count: 0, error: null }))
   };
   supabaseMock.from.mockImplementation(table => {
     if (table === 'historico_custos') return { select: () => historicoQuery };
     if (table === 'dicionario_produtos') return {
-      select: () => ({ in: vi.fn().mockResolvedValue({ data: [], error: null }) })
+      select: () => dictionaryQuery
     };
     throw new Error(`Tabela inesperada: ${table}`);
   });
