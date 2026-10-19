@@ -4,6 +4,7 @@
 
 Este conjunto preserva achados e evidências da base analisada em cada data. Não é declaração de que todos os defeitos originais permanecem ativos, nem nova inspeção de produção. Para estados/resoluções, consultar o [backlog](backlog-priorizado.md); para contratos em vigor, a [matriz operacional](../arquitetura/matriz-contratos-operacionais.md).
 
+- [VIS-01 — identidade visual Black + Purple](identidade-visual.md): escopo visual, componentes, conferência local sintética e limites.
 - [DOC-ORG-01 — auditoria e reorganização documental](reorganizacao-documental.md): inventário completo, responsabilidades, movimentos, redundâncias, divergências e validação.
 - Evidências de Cadastro: [reconstrução](cadastro-mestre-reconstrucao-validacao.md), [execução web](cadastro-mestre-execucao-web-validacao.md), [preparação](cadastro-mestre-preparacao-ambiente-validacao.md) e [transporte compacto](cadastro-mestre-payload-validacao.md). Estados remotos pertencem à data de cada prova.
 - [História do Projeto](../HISTORIA_DO_PROJETO_KUSTOS.md): decisões e marcos, separados dos procedimentos atuais.

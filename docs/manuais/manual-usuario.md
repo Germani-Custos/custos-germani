@@ -12,6 +12,8 @@ Sem sessão ativa, o fluxo principal de Custos/OP apresenta login antes da carga
 - **Cadastro:** manter classificação operacional e consultar Master ERP.
 - **Documentação:** consultar/editar os documentos disponibilizados no seletor.
 
+A área **Importação** também apresenta a Central de investigação: cards de Custos, OP, Cadastro e Documentação abrem essas mesmas áreas. A navegação lateral permanece disponível; em telas estreitas fica acima do conteúdo. A identidade preta/grafite e roxa destaca ações, enquanto vermelho, amarelo, verde e azul conservam os significados operacionais indicados pelos rótulos. [Linguagem visual](../ux/componentes.md).
+
 ## 2. Competência e importação
 
 **Competência (`data_referencia`)** é o mês/período a que o dado pertence no ERP. **Importação (`criado_em`)** é quando ele entrou no sistema. Uma planilha de março enviada em maio continua sendo da competência março; o evento de entrada é maio. As telas identificam os dois eixos separadamente.

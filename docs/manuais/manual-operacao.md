@@ -80,6 +80,8 @@ A gravação de documentação usa `api/save-doc.js`, com `GITHUB_TOKEN`/`GITHUB
 
 Deploy precisa de autorização. Publicação por Git depende da integração configurada; checkout sem commit não entra em redeploy de um commit antigo. Rollback do deployment na Vercel não reverte dados/migrations; conferir compatibilidade de frontend/funções antes de promover versão anterior. Banco tem procedimento separado e backup prévio.
 
+Na conferência da interface Black + Purple, verificar central de módulos, Custos, OP, ambas as visões de Cadastro, Documentação e Preview em 1440×900, 1024×768 e 390×700. Confirmar foco visível, rótulos operacionais e rolagem interna das tabelas. Conferir revisão e cancelar, sem usar importação, reconstrução ou salvar documentos apenas para testar aparência. [Referência visual](../ux/componentes.md).
+
 ## 7. Banco, backup e diagnóstico
 
 [Migrações](../arquitetura/migracoes.md) centraliza scripts e estado registrado. Exemplos versionados incluem precisão de custos, índices de 11/05, saneamento de 25/05, tabelas/log OP de 23/07, proveniência cadastral de outubro e alteração isolada de unicidade da descrição de família. Scripts utilitários/seed não são rotina mensal. Não reaplicar automaticamente nem inferir que toda migration listada está pendente.

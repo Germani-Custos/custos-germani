@@ -36,6 +36,8 @@ Node >=22 é necessário para ferramentas/funções. `package.json` tem scripts 
 
 Novos fluxos UI seguem `create<Fluxo>Controller(deps)`. Manter `ui-controller.js` como orquestrador; a injeção do presenter de exportação permanece o contrato atual (MNT-08 aberto).
 
+A apresentação compartilhada está em `assets/style.css`: tokens em `:root`, componentes globais e breakpoints. Login também usa essa folha. Chart.js lê esses tokens somente para cores, sem mudar séries ou cálculos. Cards reutilizam `data-view-trigger`, sem novo router, framework ou dependência. [Contrato visual e manutenção](../ux/componentes.md).
+
 ## 3. Dados, identidade e temporalidade
 
 Fato `historico_custos`: código, descrição snapshot, custos NUMERIC(18,4), competência DATE e importação TIMESTAMPTZ; chave `codigo_produto + data_referencia` (`unique_produto_data`). `dicionario_produtos` fornece classificação operacional atual. Em Custos, origem/família do Master têm autoridade para códigos presentes nele, com resolução exata via `categorias_*.codigo`; somente códigos ausentes usam origem/família operacional. Agrupamento permanece operacional. `apontamentos_op` preserva fatos MCAP105 e `log_importacao_op` rastreia lotes. Master ERP e `log_importacao_cadastro_mestre` são separados do operacional. [Modelo detalhado](../arquitetura/banco-de-dados.md).
@@ -115,6 +117,8 @@ npm test
 ```
 
 Typecheck usa `tsc --noEmit -p jsconfig.json`. Ferramentas devem vir do lockfile, sem depender de binários globais. Instalação limpa de tooling deve reproduzir CI. Para mudança exclusivamente documental, validar links/referências e `git diff --check`; testes de aplicação não são necessários. Warnings não devem ser silenciados sem análise.
+
+O teste de volume do transporte Master mantém 6.230 linhas, 860 produtos válidos, 4.853 remoções e 517 preservações, com preparação/revalidação reais e HTTP interceptado. Ele tem limite local de 10 s para acomodar a carga concorrente; o timeout global permanece 5 s. Em máquinas com recursos disputados, a suíte completa pode ser executada com `node node_modules/vitest/vitest.mjs run --maxWorkers=2`, sem configurar timeout global nem remover testes. [Investigação e medições CAD-VOL-01](../auditoria/cadastro-mestre-payload-validacao.md#cad-vol-01--timeout-local-do-teste-de-volume-19102026).
 
 `npm run build` gera `dist` por allowlist e runtime-config público dentro dela; não publica. Segredos, API/executor/scripts/SQL/dependências ficam fora dos arquivos públicos. Funções `/api` são empacotadas separadamente. [Deploy](../arquitetura/deploy.md) e [diagnóstico administrativo](../arquitetura/cadastro-mestre-preparacao-ambiente.md) detalham configuração e recuperação.
 

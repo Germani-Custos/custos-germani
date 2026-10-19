@@ -8,11 +8,12 @@ import { api } from '../src/services/api.js';
 import { normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
 import { escapeHtml, formatCurrencyBRL, showToast } from './ui-utils.js';
 
+const themeColor = token => window.getComputedStyle(document.documentElement).getPropertyValue(token).trim();
 const chartA11yTheme = {
-  textColor: '#FFFFFF',
-  gridColor: 'rgba(255,255,255,0.22)',
-  gridBorderColor: 'rgba(255,255,255,0.4)',
-  tooltipBg: 'rgba(15,23,42,0.95)'
+  get textColor() { return themeColor('--text-primary'); },
+  get gridColor() { return themeColor('--chart-grid'); },
+  get gridBorderColor() { return themeColor('--chart-grid-border'); },
+  get tooltipBg() { return themeColor('--surface-elevated'); }
 };
 
 function getReadableChartOptions() {
@@ -134,7 +135,7 @@ export function createChartsController({ dom, state }) {
       type: 'bar',
       data: {
         labels,
-        datasets: [{ label: 'Custo médio por importação', data: values, backgroundColor: ['#0ea5e9', '#6366f1'] }]
+        datasets: [{ label: 'Custo médio por importação', data: values, backgroundColor: [themeColor('--primary-purple'), themeColor('--secondary-purple')] }]
       },
       options: {
         ...baseA11yOptions,
@@ -226,8 +227,8 @@ export function createChartsController({ dom, state }) {
       data: {
         labels,
         datasets: [
-          { label: mode === 'produto' ? 'Custo do produto' : 'Custo médio agregado', data: values, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.14)', fill: true, tension: 0.25 },
-          { label: 'Média histórica', data: labels.map(() => avg), borderColor: '#f59e0b', borderDash: [6, 6], pointRadius: 0, fill: false }
+          { label: mode === 'produto' ? 'Custo do produto' : 'Custo médio agregado', data: values, borderColor: themeColor('--primary-purple'), backgroundColor: themeColor('--accent-soft'), fill: true, tension: 0.25 },
+          { label: 'Média histórica', data: labels.map(() => avg), borderColor: themeColor('--warning'), borderDash: [6, 6], pointRadius: 0, fill: false }
         ]
       },
       options: {

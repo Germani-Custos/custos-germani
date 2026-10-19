@@ -43,7 +43,7 @@ function buildPreviewHtml(rows, errors) {
   `).join('');
 
   const avisoErros = errors.length
-    ? `<p style="color:#b45309;"><b>${errors.length}</b> linha(s) ignorada(s) por erro de leitura.</p>`
+    ? `<p style="color:var(--warning);"><b>${errors.length}</b> linha(s) ignorada(s) por erro de leitura.</p>`
     : '';
 
   return `

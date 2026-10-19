@@ -102,7 +102,7 @@ async function confirmImportPreview(preview, totalColunasValidas) {
         </table>
       </div>
       <p style="margin-top:10px;">Somente linhas sem erro serão gravadas.</p>
-      ${produtosSemCadastro ? `<p style="margin-top:6px; color:#b45309;"><b>${produtosSemCadastro}</b> produto(s) sem cadastro: após importar, use <b>Cadastro → Cadastrar produto</b> para resolvê-los sem inventar classificação.</p>` : ''}
+      ${produtosSemCadastro ? `<p style="margin-top:6px; color:var(--warning);"><b>${produtosSemCadastro}</b> produto(s) sem cadastro: após importar, use <b>Cadastro → Cadastrar produto</b> para resolvê-los sem inventar classificação.</p>` : ''}
     `,
     showCancelButton: true,
     confirmButtonText: `Confirmar importação (${preview.validRows.length} linhas)`,

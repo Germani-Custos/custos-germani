@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Germani Alimentos | Custos Germani</title>
+  <title>Kustos Germani | Investigação Operacional</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
   <link rel="stylesheet" href="assets/style.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%23dc2626%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-size=%2232%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22Arial%22%3EG%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%236d28d9%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-size=%2232%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22Arial%22%3EK%3C/text%3E%3C/svg%3E" />
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
@@ -19,9 +19,9 @@
     const showConfigErrorScreen = error => {
       console.error(error);
       document.body.innerHTML = `
-        <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#0f172a;color:#e2e8f0;font-family:Inter,Arial,sans-serif;">
-          <section style="max-width:680px;background:#111827;border:1px solid #374151;border-radius:12px;padding:24px;line-height:1.6;">
-            <h1 style="margin-top:0;color:#f8fafc;">Configuração do ambiente não encontrada.</h1>
+        <main class="config-error-screen">
+          <section class="panel config-error-card">
+            <h1 class="config-error-title">Configuração do ambiente não encontrada.</h1>
             <p>Verifique as variáveis:</p>
             <ul>
               <li><code>VITE_SUPABASE_URL</code></li>
@@ -39,55 +39,7 @@
 
     import('./view/ui-controller.js').catch(showConfigErrorScreen);
   </script>
-  <style>
-    /* ── Login overlay ─────────────────────────────────────── */
-    .login-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(10,15,28,0.97);
-      backdrop-filter: blur(8px);
-      transition: opacity 0.3s;
-    }
-    .login-overlay.hidden { display: none; }
-    .login-card {
-      width: 100%; max-width: 380px;
-      background: #131c2e; border: 1px solid #1e293b;
-      border-radius: 16px; padding: 40px 36px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-    }
-    .login-brand { text-align: center; margin-bottom: 32px; }
-    .login-brand i { font-size: 40px; color: #38bdf8; }
-    .login-brand h1 { font-size: 1.4rem; color: #e2e8f0; margin: 8px 0 4px; }
-    .login-brand p  { font-size: 0.8rem; color: #64748b; }
-    .login-form { display: flex; flex-direction: column; gap: 16px; }
-    .login-field { display: flex; flex-direction: column; gap: 6px; }
-    .login-field label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
-    .login-field input {
-      background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
-      padding: 10px 14px; color: #e2e8f0; font-size: 0.95rem; outline: none;
-      transition: border-color 0.2s;
-    }
-    .login-field input:focus { border-color: #38bdf8; }
-    .login-error { color: #f87171; font-size: 0.82rem; margin: 0; }
-    .login-submit {
-      margin-top: 8px; padding: 12px; border-radius: 8px;
-      background: #38bdf8; color: #0f172a; font-weight: 700;
-      font-size: 0.95rem; border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: background 0.2s, opacity 0.2s;
-    }
-    .login-submit:hover { background: #7dd3fc; }
-    .login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-    /* ── User box com logout ────────────────────────────────── */
-    .user-box { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .logout-btn {
-      background: none; border: 1px solid #334155; border-radius: 6px;
-      color: #94a3b8; cursor: pointer; padding: 4px 8px; font-size: 1rem;
-      transition: color 0.2s, border-color 0.2s;
-      display: flex; align-items: center;
-    }
-    .logout-btn:hover { color: #f87171; border-color: #f87171; }
-  </style>
+
 </head>
 <body>
 
@@ -96,7 +48,7 @@
     <div class="login-card glass">
       <div class="login-brand">
         <i class="ri-shield-check-line"></i>
-        <h1>Germani Custos</h1>
+        <h1>Kustos Germani</h1>
         <p>Motor de Investigação de Custos</p>
       </div>
       <form id="loginForm" class="login-form" autocomplete="on">
@@ -119,7 +71,7 @@
   <div id="appShell" class="app-shell">
     <aside class="sidebar glass">
       <div class="brand-card">
-        <h1><i class="ri-shield-check-line"></i> Germani Custos</h1>
+        <h1><i class="ri-shield-check-line"></i> Kustos Germani</h1>
         <p>Motor de Investigação de Custos</p>
       </div>
 
@@ -153,9 +105,39 @@
       <!-- ===== VIEW: IMPORTAÇÃO ===== -->
       <section id="view-import" class="view">
         <header class="view-header center">
-          <h2>Smart Scraper de Planilhas</h2>
-          <p>Escaneamento inteligente dos cabeçalhos + validação antes de gravar.</p>
+          <span class="eyebrow">KUSTOS / INVESTIGAÇÃO OPERACIONAL</span>
+          <h2>Central de investigação</h2>
+          <p>Evidências para entender custos, priorizar anomalias e investigar a operação.</p>
         </header>
+
+        <nav class="module-grid" aria-label="Acesso aos módulos">
+          <button class="module-card" data-view-trigger="report">
+            <i class="ri-bar-chart-box-line" aria-hidden="true"></i>
+            <span class="module-title">Auditoria de Custos</span>
+            <span class="module-description">Investigação temporal de custos e identificação de anomalias.</span>
+            <span class="module-action">ACESSAR MÓDULO <span aria-hidden="true">→</span></span>
+          </button>
+          <button class="module-card" data-view-trigger="op">
+            <i class="ri-flow-chart" aria-hidden="true"></i>
+            <span class="module-title">Auditoria de OP</span>
+            <span class="module-description">Produção, tempo, produtividade e paradas em uma investigação.</span>
+            <span class="module-action">ACESSAR MÓDULO <span aria-hidden="true">→</span></span>
+          </button>
+          <button class="module-card module-admin" data-view-trigger="products">
+            <i class="ri-archive-line" aria-hidden="true"></i>
+            <span class="module-title">Cadastro</span>
+            <span class="module-description">Classificação operacional e consulta independente ao Mestre ERP.</span>
+            <span class="module-action">ABRIR CADASTRO <span aria-hidden="true">→</span></span>
+          </button>
+          <button class="module-card module-docs" data-view-trigger="documentation">
+            <i class="ri-book-open-line" aria-hidden="true"></i>
+            <span class="module-title">Documentação</span>
+            <span class="module-description">Manuais, regras e evidências técnicas para apoiar a análise.</span>
+            <span class="module-action">ABRIR DOCUMENTAÇÃO <span aria-hidden="true">→</span></span>
+          </button>
+        </nav>
+
+        <div class="section-heading"><i class="ri-upload-cloud-2-line" aria-hidden="true"></i><div><h3>Importação de Custos</h3><p class="help-text">Planilha ERP · competência · validação antes de gravar</p></div></div>
 
         <div id="orphansBanner" class="panel orphans-banner hidden">
           <i class="ri-alert-line"></i>

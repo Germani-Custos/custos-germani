@@ -1,6 +1,6 @@
 # CAD-PAYLOAD-01 — Validação do transporte compacto (09/10/2026)
 
-**Evidência histórica de 09/10:** a tentativa bloqueada e a medição local abaixo precedem a reconstrução posterior confirmada em [15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). Não substituir estas contagens por valores atuais; equivalência/tamanho de V1 não comprovam execução de V2. [Contrato de famílias vigente](../arquitetura/cadastro-mestre-familias-erp.md). Nenhuma nova medição ou consulta nesta revisão.
+**Evidência histórica de 09/10:** a tentativa bloqueada e a medição local abaixo precedem a reconstrução posterior confirmada em [15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). Não substituir estas contagens por valores atuais; equivalência/tamanho de V1 não comprovam execução de V2. [Contrato de famílias vigente](../arquitetura/cadastro-mestre-familias-erp.md). A reorganização documental não refez as medições de produção. A seção CAD-VOL-01 ao final registra nova investigação exclusivamente sintética/local.
 
 ## Escopo e fonte
 
@@ -78,3 +78,48 @@ Documentação (13 arquivos):
 O entrypoint `api/reconstruir-cadastro-mestre.js`, a fachada `src/services/api.js` e os motores de filtros/aprovação/plano permanecem os existentes; não houve schema, migration, dependência ou variável nova.
 
 **Nenhuma escrita em Production, reconstrução real, upload/snapshot/lote de produção, mudança de variável, deploy, schema/migration ou commit nesta validação.** `data_referencia` permanece competência e `criado_em` importação nos fatos. [Contrato completo](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
+
+
+## CAD-VOL-01 — timeout local do teste de volume (19/10/2026)
+
+Pedido de pós-validação: investigar uma falha de 5.000 ms no teste `Volume real informado, registros exclusivamente sintéticos > 6.230 linhas → 860 válidos, 4.853 remoções e 517 preservações cabem no POST de 4 MiB`, sem reduzir dados ou trocar o processamento real por mocks. As alterações visuais já presentes em `assets/style.css`, `index.html`, `view/ui-charts.js`, `view/ui-import.js` e `view/ui-import-op.js` foram preservadas, sem edição nesta correção.
+
+### Diagnóstico e reprodução
+
+- O diff inicial contém somente esses cinco arquivos visuais. `vitest.config.js`, package/lockfile, teste alvo e módulos de preparação/revalidação não mudaram em relação ao HEAD `509a64d`.
+- Configuração usa ambiente Node, sem `setupFiles`, `globalSetup`, bootstrap visual ou timeout global configurado. O limite padrão efetivo de 5 s foi reproduzido, sem alteração na configuração.
+- O grafo estático alcançável do teste tem onze módulos locais, todos idênticos ao HEAD após normalizar CRLF/LF. Nenhum módulo em `view/`, CSS, HTML ou inicialização do aplicativo é importado. A fixture compartilhada carrega SheetJS para os testes de formatos durante coleta; o caso de volume constrói arrays e não abre/transforma workbook.
+- O import de `hashReconstrucao` alcança o executor administrativo apenas como definição de função e dependências puras já importadas. Não instancia cliente PostgreSQL, não abre conexão, não executa SQL, não cria UI e não grava snapshot.
+- Uma execução isolada original passou em **1.651 ms**. Na suíte completa padrão, o mesmo teste falhou por timeout em **5.052,856 ms**: **552 passaram / 2 falharam**. A segunda falha foi um timeout separado no primeiro teste de build (**6.538,638 ms**), já observado antes de qualquer alteração desta correção.
+- O host informa 12 CPUs disponíveis e 8 GiB de RAM total, com cerca de 1 GiB livre no momento da leitura. A configuração padrão permite disputa de recursos entre arquivos. O contraste entre execuções isoladas e concorrentes, inclusive no build independente, sustenta a origem em tempo de parede sob concorrência; não foi atribuído um processo externo específico ou alegada medição de saturação do sistema operacional.
+
+### Perfil e determinismo
+
+Uma cópia temporária do teste adicionou somente relógios entre as etapas, mantendo os mesmos arrays, funções reais, asserts e o mock HTTP original. Três processos isolados produziram os seguintes tempos por etapa em milissegundos, na ordem das rodadas:
+
+- Montagem do fixture: **3 / 3 / 2**.
+- Criação/validação dos dados compactos: **12 / 10 / 8**.
+- Preparação do manifesto/revisão: **250 / 224 / 223**.
+- Asserções do resumo: **2 / 2 / 2**.
+- Aprovação integral: **392 / 321 / 325**.
+- Plano/revalidação: **444 / 433 / 426**.
+- Cliente HTTP, nova revalidação do plano, hashes e serialização do POST: **595 / 563 / 563**.
+- Asserções do corpo: **19 / 18 / 18**.
+
+Somas das etapas: **1.717 / 1.574 / 1.565 ms**. Não há uma espera de UI escondida: `document`, `Chart` e `getComputedStyle` permanecem `undefined` no ambiente do caso. O SHA-256 canônico do corpo JSON foi o mesmo nas três rodadas: `7c652b4344b362c971f266f16c3df7499d1b2b82e91afcebea2240f19ac9e305`.
+
+O custo predominante é aprovação/plano/revalidações e serialização/hashing do conjunto com milhares de operações; as validações existentes fazem buscas repetidas nas listas e são exercitadas novamente pelo cliente HTTP. Isso faz parte da cobertura do contrato atual, sem nova alteração pelo redesign. Não houve redução/remoção dessas verificações ou mudança na implementação para obter o resultado. Instrumentação e cópia temporárias foram removidas.
+
+### Correção e validação final
+
+Somente o `it` de volume em `tests/cadastro-mestre-execution-data.test.js` recebe **10.000 ms** pelo argumento local do Vitest, com comentário explicativo. É uma margem de duas vezes o limite anterior para a execução concorrente medida, sem timeout global, retries ou teste desabilitado. O corpo funcional do teste permanece integralmente igual ao HEAD: 6.230 linhas, 860 válidos, 4.853 remoções, 517 preservações, limite de POST 4 MiB, hashes, aprovação/plano e mocks HTTP originais.
+
+Na suíte completa com concorrência padrão, o teste alvo passou em **5.894,669 ms**, efetivamente acima do limite antigo. Resultado dessa rodada: **553 passaram / 1 falhou**, sendo a falha remanescente o timeout separado do teste de build (**6.132,407 ms**). Seu código/timeout não foi alterado nesta tarefa.
+
+Validação da suíte integral com `node node_modules/vitest/vitest.mjs run --maxWorkers=2`: **554 testes / 38 arquivos passaram**, sem exclusões ou aumento global de timeout. O volume levou **2.322,711 ms** e o primeiro teste de build **715,557 ms**. O limite de workers foi usado apenas no comando dessa conferência, sem mudar `vitest.config.js` ou o script `npm test`.
+
+Lint (`node node_modules/eslint/bin/eslint.js .`), typecheck (`node node_modules/typescript/bin/tsc --noEmit -p jsconfig.json`) e build local (`buildWeb({env})`, configuração pública sintética somente em memória) passaram. `git diff --check` e links locais foram conferidos no fechamento. Sem deploy, commit, push, mudanças de env, banco ou acesso de produção.
+
+Arquivos da correção: teste alvo, entrada datada em AGENTS, nota do Manual Técnico, item CAD-VOL-01 no backlog e esta evidência. README/VISION/ROADMAP e manuais de usuário/operação foram revisados e não precisam de mudança: comportamento funcional, contratos de dados/POST e procedimentos do produto permanecem iguais. `data_referencia` continua competência e `criado_em` importação.
+
+Limite conhecido: esta correção resolve o timeout do teste de volume; não declara que a suíte com concorrência padrão deixou de ser sensível à disponibilidade de recursos, pois houve timeout independente de build antes/depois. A conferência integral verde usa dois workers explicitamente.

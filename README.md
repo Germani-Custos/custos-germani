@@ -27,6 +27,8 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 
 Procedimentos e limites: [Manual do Usuário](docs/manuais/manual-usuario.md).
 
+A interface usa a identidade **Black + Purple**: superfícies grafite, acentos violeta e cores operacionais semânticas. A área inicial de Importação reúne cards para os módulos existentes. [Componentes e tokens visuais](docs/ux/componentes.md).
+
 ## 5. Arquitetura resumida
 
 Frontend estático em HTML/CSS/JavaScript ES Modules, com bibliotecas CDN. `view/` apresenta e orquestra; `core/` calcula sem I/O; `src/services/api.js` concentra o acesso Supabase e delega o HTTP administrativo. Funções Vercel em `api/` tratam gravação documental e execução autorizada do Master. O executor PostgreSQL administrativo é compartilhado com o CLI e permanece fora do browser.

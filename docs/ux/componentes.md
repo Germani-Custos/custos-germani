@@ -22,6 +22,25 @@
 
 
 ## Acessibilidade visual dos gráficos
-- Labels, eixos, valores e legendas dos gráficos da Auditoria usam `#FFFFFF` para alto contraste com o fundo escuro.
+- Labels, eixos, valores e legendas dos gráficos usam `--text-primary` para alto contraste com o fundo escuro; séries usam os tokens roxos e a média histórica mantém a referência amarela tracejada.
 - Grid e bordas do gráfico usam tons claros translúcidos para manter referência visual sem poluição.
 - Tooltip usa fundo escuro com texto branco para leitura consistente durante hover.
+
+## Identidade Black + Purple (VIS-01)
+
+`assets/style.css` é a fonte dos tokens. Não adicionar paletas locais por módulo. O runtime continua HTML/CSS/ES Modules com as mesmas dependências.
+
+- Base: `--background`, `--surface`, `--surface-elevated`, `--border` e aliases existentes `--bg-1`, `--bg-2`, `--panel`, `--line`.
+- Identidade: `--primary-purple`, `--secondary-purple`, `--accent-solid`, `--accent-soft`, `--accent-border`, `--hover` e `--focus`.
+- Texto: `--text-primary`, `--text-secondary`, `--muted`, `--on-primary`.
+- Semântica: `--critical`, `--warning`, `--success`, `--informational` e suas superfícies `*-soft`. Vermelho continua crítico, amarelo/âmbar atenção, verde favorável e azul informativo. Rótulos e símbolos existentes acompanham as cores.
+- Especializações: `--documentation-accent` (azul-violeta) e `--admin-accent` (violeta/magenta). Não representam novos estados ou permissões.
+- Gráficos: `--chart-grid`, `--chart-grid-border` e tokens de superfície/texto/séries, lidos em `view/ui-charts.js` exclusivamente para apresentação.
+
+`.module-grid` e `.module-card` organizam os quatro acessos aos módulos existentes dentro da view Importação. Cada card possui ícone, título, descrição e ação; hover tem borda roxa e elevação de 2px. Não há estado “online” presumido. O checkout não possui Dashboard nem Configuração/Admin independentes; os controles administrativos permanecem no Cadastro/Preview. A navegação usa o handler existente, e CSS identifica o destino aberto também ao entrar por card.
+
+`.panel`, `.glass`, `.btn-primary`, `.btn-outline`, `.field`, `.search-bar`, `.kpi`, `.badge`, tabelas, login e SweetAlert2 compartilham superfícies/tokens. As duas fontes cadastrais continuam nomeadas e separadas por seus painéis/seletores. Preview e revisão usam controles escuros legíveis. Desabilitado conserva sua condição; foco usa contorno de 2px, sem depender de glow. `prefers-reduced-motion` elimina transições/animações.
+
+Cards usam quatro colunas em desktop, duas até 1280px e uma até 700px. Até 1160px a navegação passa para cima do conteúdo. Até 700px os filtros ficam em uma coluna, ações quebram linha e tabelas mantêm rolagem interna. Cabeçalhos sticky existentes e densidade investigativa são preservados.
+
+Não há mudança temporal: `data_referencia` é competência e `criado_em` é importação. [Conferência visual e limites](../auditoria/identidade-visual.md).

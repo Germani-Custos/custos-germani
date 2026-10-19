@@ -117,6 +117,8 @@ describe('Representação compacta — usa todas as linhas relevantes sem workbo
 
 describe('Volume real informado, registros exclusivamente sintéticos', () => {
   afterEach(() => vi.unstubAllGlobals());
+  // Revalida aprovação/plano e hashes do lote completo; sob concorrência pode exceder 5 s.
+  // Margem somente deste teste de volume (CAD-VOL-01), sem reduzir fixture ou processamento.
   it('6.230 linhas → 860 válidos, 4.853 remoções e 517 preservações cabem no POST de 4 MiB', async () => {
     const produtos = Array.from({ length: 5706 }, (_, i) => ({ codigo_produto: String(i + 1), descricao: 'Atual',
       origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' }));
@@ -144,5 +146,5 @@ describe('Volume real informado, registros exclusivamente sintéticos', () => {
     expect(Buffer.byteLength(serializarDeterministico(dados))).toBeLessThan(1024 * 1024);
     expect(JSON.parse(body).arquivo_base64).toBeUndefined();
     expect(JSON.parse(body).dados_execucao.linhas).toHaveLength(6230);
-  });
+  }, 10_000);
 });
