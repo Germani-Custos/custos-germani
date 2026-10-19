@@ -24,7 +24,7 @@ Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação
 
 ### Implementações locais com continuidade de publicação
 
-- CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva preparada, transporte V3 e nova aprovação obrigatórios; aplicação/publicação/execução ainda dependem de etapa autorizada.
+- CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva aplicada em produção na etapa CAD-COM-PROD-01, sem carga. Publicação compatível V3, novo Preview/aprovação e execução continuam dependentes de novas etapas autorizadas. [Prova da migration](docs/auditoria/cadastro-mestre-comercial-producao-etapa1.md).
 
 - CUSTOS-ERP-01: classificação analítica de origem/família pelo Master em memória, fallback fora do Master e agrupamento operacional; validação GET e interface local concluídas, publicação fora desta etapa.
 - CAD-OP-PAGE-01 e CUSTOS-PAGE-01: paginação integral do Cadastro operacional e da Auditoria de Custos, contagem exata e bloqueio de leitura parcial.

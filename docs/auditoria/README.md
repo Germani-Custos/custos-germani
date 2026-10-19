@@ -72,4 +72,5 @@ Toda mudança deve respeitar o `AGENTS.md`: **"velocidade de investigação acim
 
 - [CUSTOS-ERP-01 — classificação analítica pelo Master](custos-classificacao-erp.md): contrato, validação somente GET e interface local, sem sincronização operacional.
 
-- [CAD-COM-01 — validação comercial ERP](cadastro-mestre-comercial-validacao.md): XLS real, contagens, hashes remotos, testes e migration pendente.
+- [CAD-COM-01 — validação comercial ERP](cadastro-mestre-comercial-validacao.md): evidência local anterior à aplicação, XLS real, contagens, hashes e testes.
+- [CAD-COM-PROD-01 — migration comercial em produção](cadastro-mestre-comercial-producao-etapa1.md): estrutura, backup e provas de dados idênticos antes/depois; sem carga XLS.

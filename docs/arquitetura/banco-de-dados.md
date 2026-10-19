@@ -38,7 +38,7 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `descricao`, `familia_cod`, `origem_cod` TEXT (dados básicos do ERP)
 - `ultima_importacao_cadastro_mestre_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 - `agrupamento_erp_valor` TEXT NULL (Agrup. Prod. bruto recebido do ERP)
-- `agrupamento_comercial_erp_cod` TEXT NULL e `agrupamento_comercial_erp_descricao` TEXT NULL (Agrup. Com. e seu rótulo, opcionais; migration CAD-COM-01 preparada localmente, ainda não aplicada remotamente)
+- `agrupamento_comercial_erp_cod` TEXT NULL e `agrupamento_comercial_erp_descricao` TEXT NULL (Agrup. Com. e seu rótulo, opcionais; migration CAD-COM-01 aplicada em produção como 20261019173633 na etapa CAD-COM-PROD-01; ainda sem carga comercial)
 - `agrupamento_erp_importacao_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 
 É a fonte ERP consultada pelo painel Cadastro Mestre ERP, separada da classificação operacional. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime. A projeção CUSTOS-ERP-01 enriquece exclusivamente a análise de Custos com origem/família ERP, sem reconciliação ou escrita; presença no Master determina autoridade inclusive quando o campo é vazio. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.

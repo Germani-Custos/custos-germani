@@ -1,5 +1,7 @@
 # CAD-COM-01 — validação de Agrup. Com. ERP
 
+Registro histórico da validação local **anterior à aplicação da migration**. A etapa posterior CAD-COM-PROD-01 aplicou somente o schema em produção; declarações abaixo de migration pendente/ausência de colunas pertencem ao estado anterior. [Prova posterior, sem carga XLS](cadastro-mestre-comercial-producao-etapa1.md).
+
 Implementação local concluída em 19/10/2026. Sem commit, push, deploy, migration no Supabase, reconstrução real ou escrita remota. [Contrato](../arquitetura/cadastro-mestre-agrupamento-comercial-erp.md) e [provas em JSON](cadastro-mestre-comercial-validacao.json).
 
 ## Fonte e escopo

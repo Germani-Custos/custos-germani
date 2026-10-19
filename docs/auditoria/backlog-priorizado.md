@@ -1,8 +1,10 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-COM-PROD-01 — somente migration** (19/10/2026): versão remota 20261019173633 aplicada com backup; duas colunas TEXT NULL, 860 produtos sem preenchimento comercial. Contagens e SHA-256 das 12 tabelas públicas idênticos; sem carga, publicação, commit ou push. [Provas](cadastro-mestre-comercial-producao-etapa1.md).
+
 - [x] **VIS-01 — implementação visual local** (19/10/2026): tokens Black + Purple, cards para módulos existentes e apresentação compartilhada de Custos/OP/Cadastro/Documentação/login/modais, com semântica operacional preservada. Conferência sintética em três viewports e 554 testes verdes; sem publicação. Aprovação humana pendente. [Escopo e evidências](identidade-visual.md).
 
-- [x] **CAD-COM-01 — implementação local** (19/10/2026): dois campos comerciais opcionais, limpeza explícita de vazio para NULL, transporte V3/manifesto V2, executor/snapshot/rollback e consulta ERP. 860 produtos reais: 162 com comercial, 698 sem, 29 códigos, zero conflitos; remoto somente leitura. Migration aditiva preparada, não aplicada. Publicação e carga futura dependem de etapa autorizada. [Provas](cadastro-mestre-comercial-validacao.md).
+- [x] **CAD-COM-01 — implementação local** (19/10/2026): dois campos comerciais opcionais, limpeza explícita de vazio para NULL, transporte V3/manifesto V2, executor/snapshot/rollback e consulta ERP. XLS real: 860 produtos válidos, 162 com comercial, 698 sem, 29 códigos, zero conflitos; validação local anterior com remoto somente leitura. Migration posteriormente aplicada em CAD-COM-PROD-01, sem carga; os novos campos do Master de produção continuam NULL. Publicação e carga futura dependem de nova etapa autorizada. [Provas](cadastro-mestre-comercial-validacao.md).
 
 ## Organização documental — 16/10/2026
 

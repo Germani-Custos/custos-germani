@@ -1,0 +1,187 @@
+{
+  "data": "2026-10-19",
+  "etapa": "CAD-COM-PROD-01 — somente migration",
+  "projeto": {
+    "nome": "Custos-Germani",
+    "id": "umpebdovrazzrdndhigc",
+    "regiao": "sa-east-1"
+  },
+  "migration": {
+    "arquivo": "sql/20261019163220_cadastro_mestre_agrupamento_comercial_erp.sql",
+    "versao_local": "20261019163220",
+    "versao_remota": "20261019173633",
+    "nome": "cadastro_mestre_agrupamento_comercial_erp",
+    "aplicada": true,
+    "sha256_arquivo_local": "8482e8c382f43e2af70510435be1c44202ee48b7fa1c5cd5168e816999a599d8",
+    "somente_uma_migration_adicionada": true
+  },
+  "backup": {
+    "arquivo": "backup-antes.json",
+    "local": "fora do repositorio",
+    "master_registros": 860,
+    "sha256": "3092bd972c36df9ad86574bf1f610bc0799427f56b67e23b277bed086d27b0b7",
+    "fsync_e_releitura": true
+  },
+  "capturado_antes": "2026-10-19T17:35:13.040215+00:00",
+  "capturado_depois": "2026-10-19T17:36:57.051335+00:00",
+  "colunas_criadas": [
+    {
+      "coluna": "agrupamento_comercial_erp_cod",
+      "tipo": "text",
+      "nullable": true,
+      "valor_default": null,
+      "comentario": "Código opcional de Agrup. Com. do ERP; independente de agrupamento_cod do Kustos.",
+      "constraints_coluna": 0
+    },
+    {
+      "coluna": "agrupamento_comercial_erp_descricao",
+      "tipo": "text",
+      "nullable": true,
+      "valor_default": null,
+      "comentario": "Descrição opcional de Agrup. Com. recebida do ERP; sem inferência ou ponte Kustos.",
+      "constraints_coluna": 0
+    }
+  ],
+  "comparacao_tabelas": [
+    {
+      "tabela": "dicionario_master_produtos",
+      "antes": 860,
+      "depois": 860,
+      "sha256_antes": "46fa8c71f39c2fab7a98a91da21dc8e6b9817ef9b2d9f58ca0a7d8a9b72fcec0",
+      "sha256_depois": "46fa8c71f39c2fab7a98a91da21dc8e6b9817ef9b2d9f58ca0a7d8a9b72fcec0",
+      "identicos": true
+    },
+    {
+      "tabela": "dicionario_produtos",
+      "antes": 6113,
+      "depois": 6113,
+      "sha256_antes": "c0f7901f2edd028d2cfa5b29d99a0ab3cffa58f90ca5d2ca1b14ef9313868a04",
+      "sha256_depois": "c0f7901f2edd028d2cfa5b29d99a0ab3cffa58f90ca5d2ca1b14ef9313868a04",
+      "identicos": true
+    },
+    {
+      "tabela": "historico_custos",
+      "antes": 1370,
+      "depois": 1370,
+      "sha256_antes": "7daae1699411ea858884432073b34f774d13fae511fdb29e1ca5d77a6c6e1391",
+      "sha256_depois": "7daae1699411ea858884432073b34f774d13fae511fdb29e1ca5d77a6c6e1391",
+      "identicos": true
+    },
+    {
+      "tabela": "apontamentos_op",
+      "antes": 704,
+      "depois": 704,
+      "sha256_antes": "66143f37c92c86b55ea8ba34388285b34239914c105a039ffc8dc83b1e7e6368",
+      "sha256_depois": "66143f37c92c86b55ea8ba34388285b34239914c105a039ffc8dc83b1e7e6368",
+      "identicos": true
+    },
+    {
+      "tabela": "mapa_produtos",
+      "antes": 292,
+      "depois": 292,
+      "sha256_antes": "c38669ebadff0a0e1b8cf693a09b91e1dcfd2b0ccd55fff5131f3c03d977c929",
+      "sha256_depois": "c38669ebadff0a0e1b8cf693a09b91e1dcfd2b0ccd55fff5131f3c03d977c929",
+      "identicos": true
+    },
+    {
+      "tabela": "categorias_origem",
+      "antes": 50,
+      "depois": 50,
+      "sha256_antes": "93f8e5f055d89e0dde49d10fc40ffaecb4d9eef04e63d9e154212eca32763db3",
+      "sha256_depois": "93f8e5f055d89e0dde49d10fc40ffaecb4d9eef04e63d9e154212eca32763db3",
+      "identicos": true
+    },
+    {
+      "tabela": "categorias_familia",
+      "antes": 103,
+      "depois": 103,
+      "sha256_antes": "dd753382d3f914b33ef88a78da79fa32a5e273681f49d9651461b9fc5c6d49c4",
+      "sha256_depois": "dd753382d3f914b33ef88a78da79fa32a5e273681f49d9651461b9fc5c6d49c4",
+      "identicos": true
+    },
+    {
+      "tabela": "categorias_agrupamento",
+      "antes": 34,
+      "depois": 34,
+      "sha256_antes": "cd4a12bc4b20464e09ac11718c6497308a9d5634d2ab233b797824e7a50737ea",
+      "sha256_depois": "cd4a12bc4b20464e09ac11718c6497308a9d5634d2ab233b797824e7a50737ea",
+      "identicos": true
+    },
+    {
+      "tabela": "familias_base",
+      "antes": 21,
+      "depois": 21,
+      "sha256_antes": "2c13be51186bdd5616ae57da54472f37fbcf781d27fa68cea9395fdd407f7890",
+      "sha256_depois": "2c13be51186bdd5616ae57da54472f37fbcf781d27fa68cea9395fdd407f7890",
+      "identicos": true
+    },
+    {
+      "tabela": "log_importacao",
+      "antes": 25,
+      "depois": 25,
+      "sha256_antes": "72ab20b27e3228d8e7ca9567c73fcf50ed45420b50de22b972bd45d58acd430e",
+      "sha256_depois": "72ab20b27e3228d8e7ca9567c73fcf50ed45420b50de22b972bd45d58acd430e",
+      "identicos": true
+    },
+    {
+      "tabela": "log_importacao_cadastro_mestre",
+      "antes": 3,
+      "depois": 3,
+      "sha256_antes": "226a2d3e82c4c45e06633116f4597b131cb4bad0625f8e659baa4624ee690ed5",
+      "sha256_depois": "226a2d3e82c4c45e06633116f4597b131cb4bad0625f8e659baa4624ee690ed5",
+      "identicos": true
+    },
+    {
+      "tabela": "log_importacao_op",
+      "antes": 6,
+      "depois": 6,
+      "sha256_antes": "69b821bfa6e258b9bfad7f745b5832ae96021b3aeb7d5c6d8be8185f7f28cb35",
+      "sha256_depois": "69b821bfa6e258b9bfad7f745b5832ae96021b3aeb7d5c6d8be8185f7f28cb35",
+      "identicos": true
+    }
+  ],
+  "provas": {
+    "master_colunas_anteriores": 9,
+    "master_colunas_depois": 11,
+    "master_registros_anteriores_comparados_integralmente": 860,
+    "master_valores_anteriores_identicos": true,
+    "master_ambos_novos_campos_null": 860,
+    "master_algum_novo_campo_preenchido": 0,
+    "colunas_anteriores_todas_tabelas_identicas": true,
+    "constraints_indices_politicas_grants_rls_owners_triggers_event_triggers_identicos": true,
+    "descricao_hash": "SHA-256 do conjunto integral ordenado de linhas JSONB; no Master exclui apenas os dois novos campos, também conferidos separadamente como NULL.",
+    "sql": "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;\nSELECT 'dicionario_master_produtos' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT (to_jsonb(t)-'agrupamento_comercial_erp_cod'-'agrupamento_comercial_erp_descricao')::text AS registro FROM public.dicionario_master_produtos t) dados\nUNION ALL\nSELECT 'dicionario_produtos' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.dicionario_produtos t) dados\nUNION ALL\nSELECT 'historico_custos' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.historico_custos t) dados\nUNION ALL\nSELECT 'apontamentos_op' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.apontamentos_op t) dados\nUNION ALL\nSELECT 'mapa_produtos' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.mapa_produtos t) dados\nUNION ALL\nSELECT 'categorias_origem' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.categorias_origem t) dados\nUNION ALL\nSELECT 'categorias_familia' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.categorias_familia t) dados\nUNION ALL\nSELECT 'categorias_agrupamento' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.categorias_agrupamento t) dados\nUNION ALL\nSELECT 'familias_base' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.familias_base t) dados\nUNION ALL\nSELECT 'log_importacao' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.log_importacao t) dados\nUNION ALL\nSELECT 'log_importacao_cadastro_mestre' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.log_importacao_cadastro_mestre t) dados\nUNION ALL\nSELECT 'log_importacao_op' AS tabela,count(*)::bigint AS quantidade,encode(sha256(convert_to(COALESCE(string_agg(registro,E'\\n' ORDER BY registro),''),'UTF8')),'hex') AS sha256 FROM (SELECT to_jsonb(t)::text AS registro FROM public.log_importacao_op t) dados;\nCOMMIT;"
+  },
+  "limites": {
+    "carga_xls": false,
+    "reconstrucao": false,
+    "alteracao_dados_de_negocio": false,
+    "outras_migrations": false,
+    "push": false,
+    "deploy": false,
+    "commit": false
+  },
+  "git": {
+    "branch": "main",
+    "head": "55a35251309059d0bf72b6f2f29b902af704ba94",
+    "antes_limpo": true,
+    "depois": "11 documentos modificados e duas provas novas, sem stage/commit; codigo, SQL original, config e testes inalterados",
+    "arquivos_documentais": [
+      "README.md",
+      "ROADMAP.md",
+      "AGENTS.md",
+      "docs/arquitetura/banco-de-dados.md",
+      "docs/arquitetura/cadastro-mestre-agrupamento-comercial-erp.md",
+      "docs/arquitetura/migracoes.md",
+      "docs/arquitetura/cadastro-mestre-reconstrucao.md",
+      "docs/arquitetura/matriz-contratos-operacionais.md",
+      "docs/auditoria/README.md",
+      "docs/auditoria/backlog-priorizado.md",
+      "docs/auditoria/cadastro-mestre-comercial-validacao.md",
+      "docs/auditoria/cadastro-mestre-comercial-producao-etapa1.md",
+      "docs/auditoria/cadastro-mestre-comercial-producao-etapa1.json"
+    ],
+    "diff_check": true,
+    "links_locais": true
+  }
+}
