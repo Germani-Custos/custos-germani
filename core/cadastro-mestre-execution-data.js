@@ -1,8 +1,8 @@
 // @ts-check
 /* Entrada compacta do adapter; nunca aceita patches, universo ou SQL do cliente. */
-export const VERSAO_DADOS_EXECUCAO_CADASTRO_MESTRE = 'CADASTRO_MESTRE_DADOS_V2';
+export const VERSAO_DADOS_EXECUCAO_CADASTRO_MESTRE = 'CADASTRO_MESTRE_DADOS_V3';
 export const CAMPOS_DADOS_EXECUCAO_CADASTRO_MESTRE = Object.freeze([
-  'codigo_produto', 'descricao', 'tipo', 'descr_origem', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'familia_descricao_erp'
+  'codigo_produto', 'descricao', 'tipo', 'descr_origem', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'familia_descricao_erp', 'agrupamento_comercial_erp_cod', 'agrupamento_comercial_erp_descricao'
 ]);
 const obrigatorios = CAMPOS_DADOS_EXECUCAO_CADASTRO_MESTRE.slice(0, 4);
 const shaValido = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);

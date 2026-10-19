@@ -31,16 +31,17 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - `agrupamento_override_manual_cod` TEXT NULL FK → `categorias_agrupamento.id`
 - `agrupamento_classificacao_origem` TEXT NULL (`MASTER`, `MANUAL`, `LEGADO_NAO_RASTREAVEL`)
 
-É a dimensão operacional atualmente consumida por Custos e OP e a única fonte de Origem/Família desses fluxos. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
+É a dimensão operacional e fonte da OP. Em Custos, CUSTOS-ERP-01 usa origem/família do Master ERP em memória para códigos presentes nele; somente códigos fora do Master usam origem/família operacional. Agrupamento permanece sempre operacional. A classificação é atual, não reescreve `historico_custos` nem `apontamentos_op`.
 
 ### `dicionario_master_produtos` (CADASTRO MESTRE ERP)
 - `codigo_produto` TEXT PK
 - `descricao`, `familia_cod`, `origem_cod` TEXT (dados básicos do ERP)
 - `ultima_importacao_cadastro_mestre_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
-- `agrupamento_erp_valor` TEXT NULL (valor bruto recebido do ERP)
+- `agrupamento_erp_valor` TEXT NULL (Agrup. Prod. bruto recebido do ERP)
+- `agrupamento_comercial_erp_cod` TEXT NULL e `agrupamento_comercial_erp_descricao` TEXT NULL (Agrup. Com. e seu rótulo, opcionais; migration CAD-COM-01 preparada localmente, ainda não aplicada remotamente)
 - `agrupamento_erp_importacao_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 
-É a fonte ERP consultada pelo painel Cadastro Mestre ERP, separada da classificação operacional. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime até uma reconciliação posterior e explicitamente aprovada. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
+É a fonte ERP consultada pelo painel Cadastro Mestre ERP, separada da classificação operacional. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime. A projeção CUSTOS-ERP-01 enriquece exclusivamente a análise de Custos com origem/família ERP, sem reconciliação ou escrita; presença no Master determina autoridade inclusive quando o campo é vazio. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
 
 ### `log_importacao_cadastro_mestre`
 - registra arquivo/lote, tipo de arquivo (`XLSM`, `XLSX`, `XLS`), hash ou identificador, execução, contagens, resultado, erros e metadados de origem;

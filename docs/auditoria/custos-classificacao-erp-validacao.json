@@ -1,0 +1,92 @@
+{
+  "data": "2026-10-16T17:36:38.670Z",
+  "modo": "Somente GET/HEAD com chave pública e visibilidade do cliente",
+  "antes": {
+    "historico_custos": {
+      "total": 1370,
+      "sha256": "b9bb91c717518a58daef6795f1e107c33c79884d4d54afa26c0a208e4dd78de6"
+    },
+    "dicionario_produtos": {
+      "total": 6113,
+      "sha256": "f56f80ccaac44b9a5e2e89e2918a48630ebdbd3e8cd2fbc6d6f3f6e171729ec9"
+    },
+    "dicionario_master_produtos": {
+      "total": 860,
+      "sha256": "7bd0ab5e30777e0fbe495a63ff65a60b837e8500919019eea5ca2826ad267732"
+    },
+    "apontamentos_op": {
+      "total": 704,
+      "sha256": "033a3c569f0650f1ce41ccd1c3af43ddf61f9753fe8e5a5d5cac4ee6ba0134e4"
+    },
+    "categorias_origem": {
+      "total": 50,
+      "sha256": "eb21575bacfdc1f3818731099d99c3918e1626731ce36924bb62923cb17daf4d"
+    },
+    "categorias_familia": {
+      "total": 103,
+      "sha256": "a8d346b3aef125450095d7ffbe3845f198397fe16da1419c3fcb1a630c1d57e7"
+    },
+    "categorias_agrupamento": {
+      "total": 34,
+      "sha256": "75afd10c7da7bd835dd64581c10e311c9ab12e990dd0f79acb430b1436d4f2c8"
+    }
+  },
+  "depois": {
+    "historico_custos": {
+      "total": 1370,
+      "sha256": "b9bb91c717518a58daef6795f1e107c33c79884d4d54afa26c0a208e4dd78de6"
+    },
+    "dicionario_produtos": {
+      "total": 6113,
+      "sha256": "f56f80ccaac44b9a5e2e89e2918a48630ebdbd3e8cd2fbc6d6f3f6e171729ec9"
+    },
+    "dicionario_master_produtos": {
+      "total": 860,
+      "sha256": "7bd0ab5e30777e0fbe495a63ff65a60b837e8500919019eea5ca2826ad267732"
+    },
+    "apontamentos_op": {
+      "total": 704,
+      "sha256": "033a3c569f0650f1ce41ccd1c3af43ddf61f9753fe8e5a5d5cac4ee6ba0134e4"
+    },
+    "categorias_origem": {
+      "total": 50,
+      "sha256": "eb21575bacfdc1f3818731099d99c3918e1626731ce36924bb62923cb17daf4d"
+    },
+    "categorias_familia": {
+      "total": 103,
+      "sha256": "a8d346b3aef125450095d7ffbe3845f198397fe16da1419c3fcb1a630c1d57e7"
+    },
+    "categorias_agrupamento": {
+      "total": 34,
+      "sha256": "75afd10c7da7bd835dd64581c10e311c9ab12e990dd0f79acb430b1436d4f2c8"
+    }
+  },
+  "codigosCustos": 437,
+  "codigosRetornados": 437,
+  "ausentes": 0,
+  "cobertura": {
+    "operacionaisComFamilia": 151,
+    "analiticosComOrigem": 437,
+    "analiticosComFamilia": 315,
+    "novasClassificacoesFamilia": 164,
+    "presentesMaster": 265,
+    "analiticosComAgrupamento": 0,
+    "opcoesOrigem": 12,
+    "opcoesFamilia": 37,
+    "opcoesAgrupamento": 0
+  },
+  "familiaValidada": {
+    "origem": "CHOCOLATE PRODUZIDO UN",
+    "familia": "PASCOA UN",
+    "esperados": 46,
+    "agregado": 46,
+    "fatos": 46,
+    "produtoIndividual": "1769541U",
+    "fatosIndividual": 1,
+    "fatosDrill": 1
+  },
+  "requests": {
+    "GET": 114
+  },
+  "provasIguais": true
+}

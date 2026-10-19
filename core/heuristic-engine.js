@@ -3,7 +3,8 @@
  * ATENÇÃO — REGRA CENTRAL DO SISTEMA (NÃO VIOLAR):
  * Este módulo NÃO deve inferir categorias por descrição, palavras-chave ou
  * qualquer heurística baseada em texto. Categorização é responsabilidade
- * exclusiva do dicionario_produtos (fonte de verdade).
+ * do cadastro operacional; em Custos, a projeção CUSTOS-ERP-01 usa origem/família
+ * do Master ERP por código exato, com fallback operacional apenas fora dele.
  *
  * Ref: MNT-04, AGENTS.md — "NUNCA misturar lógica temporal com categorização"
  *

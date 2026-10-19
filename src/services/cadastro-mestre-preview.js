@@ -17,7 +17,9 @@ const ALIASES = {
   familia_cod: ['familia', 'familia cod', 'codigo familia', 'cod familia'],
   familia_descricao_erp: ['descr familia', 'descricao familia'],
   // Decisão de negócio Fase 3.3: alias explícito, nunca equivalência Pxxx → Mxxx.
-  agrupamento_erp_valor: ['agrupamento', 'agrupamento erp', 'agrupamento erp valor', 'agrup prod']
+  agrupamento_erp_valor: ['agrupamento', 'agrupamento erp', 'agrupamento erp valor', 'agrup prod'],
+  agrupamento_comercial_erp_cod: ['agrup com', 'agrupamento comercial erp cod'],
+  agrupamento_comercial_erp_descricao: ['descricao agrup com', 'descr agrup com', 'agrupamento comercial erp descricao']
 };
 const OBRIGATORIOS = ['codigo_produto', 'descricao', 'tipo', 'descr_origem'];
 const normalizarCabecalho = value => String(value ?? '').normalize('NFD')
@@ -66,7 +68,7 @@ export async function lerArquivoCadastroMestre(arquivo, leitor, nomeAba) {
   // genérica (milhar/decimais) nem arredondar números imprecisos para inventar códigos.
   const mapped = mapearPlanilhaCadastroMestre(matriz);
   for (const row of mapped.linhas) {
-    for (const campo of ['codigo_produto', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor']) {
+    for (const campo of ['codigo_produto', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'agrupamento_comercial_erp_cod']) {
       const col = mapped.colunas[campo];
       if (col === undefined) continue;
       const cell = sheet[leitor.utils.encode_cell({ r: row.linha - 1, c: col })];

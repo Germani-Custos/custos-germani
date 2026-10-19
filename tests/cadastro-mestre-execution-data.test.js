@@ -23,12 +23,12 @@ describe('Representação compacta — usa todas as linhas relevantes sem workbo
     const leituraOriginal = await lerArquivoCadastroMestre(arquivo, SheetJS);
     const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivo, contexto, SheetJS);
     const dados = preparado.dadosExecucao;
-    expect(dados.versao_transporte).toBe('CADASTRO_MESTRE_DADOS_V2');
+    expect(dados.versao_transporte).toBe('CADASTRO_MESTRE_DADOS_V3');
     expect(Object.keys(dados).sort()).toEqual(['fonte', 'linhas', 'versao_transporte']);
     expect(() => validarDadosExecucaoCadastroMestre(dados)).not.toThrow();
     expect(linhasDadosExecucaoCadastroMestre(dados)).toEqual(leituraOriginal.linhas);
     expect(dados.linhas).toHaveLength(8); // Inclusive D/origem inválida/inativo/EXLUIR.
-    expect(dados.linhas.every(r => r.length === 9)).toBe(true);
+    expect(dados.linhas.every(r => r.length === 11)).toBe(true);
     const servidor = await prepararAprovacaoDadosCadastroMestre(clone(dados), clone(contexto));
     expect(servidor.manifesto).toEqual(preparado.manifesto);
     expect(servidor.revisao).toEqual(preparado.revisao);
@@ -53,7 +53,7 @@ describe('Representação compacta — usa todas as linhas relevantes sem workbo
     const produto = preparado.manifesto.produtos[0];
     expect(produto.diferencas.find(d => d.campo === 'descricao').tipo).toBe('CAMPO_VAZIO_PRESERVA_EXISTENTE');
     expect(produto.diferencas.find(d => d.campo === 'origem_cod').tipo).toBe('CAMPO_NAO_FORNECIDO');
-    expect(produto.calculado).toEqual({ codigo_produto: '002', descricao: 'Preservar descrição', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P302' });
+    expect(produto.calculado).toEqual({ codigo_produto: '002', descricao: 'Preservar descrição', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P302', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null });
   });
 
   it('transporte conserva números zero, textos com zeros e os valores fornecidos sem reparar', () => {

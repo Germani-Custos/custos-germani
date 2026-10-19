@@ -6,7 +6,7 @@ import { normalizeCodigoProduto } from './spreadsheet-engine.js';
 /** @typedef {{ produtos: Registro[], origens: Registro[], familias: Registro[] }} ContextoPreview */
 
 export const CAMPOS_CADASTRO_MESTRE = Object.freeze([
-  'descricao', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor'
+  'descricao', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'agrupamento_comercial_erp_cod', 'agrupamento_comercial_erp_descricao'
 ]);
 
 /** Normalização técnica; caixa, zeros textuais e espaços internos permanecem. */
@@ -106,10 +106,13 @@ export function criarPreviewCadastroMestre(linhas, contexto) {
       const valorAtual = textoCadastro(current?.[campo]);
       const fornecido = Object.hasOwn(recebido, campo);
       const valorRecebido = fornecido ? recebido[campo] : null;
-      const proposto = valorRecebido ?? valorAtual;
+      // Somente o par comercial limpa o existente quando a coluna informa vazio.
+      const comercial = campo.startsWith('agrupamento_comercial_erp_');
+      const proposto = comercial && fornecido ? valorRecebido : valorRecebido ?? valorAtual;
       calculado[campo] = proposto;
       const tipo = !fornecido ? 'CAMPO_NAO_FORNECIDO'
-        : current && valorRecebido === null ? 'CAMPO_VAZIO_PRESERVA_EXISTENTE'
+        : current && comercial ? (valorRecebido !== valorAtual ? 'ALTERACAO_POTENCIAL' : 'SEM_ALTERACAO')
+          : current && valorRecebido === null ? 'CAMPO_VAZIO_PRESERVA_EXISTENTE'
           : !current ? 'NOVO_PRODUTO'
             : valorRecebido !== valorAtual ? 'ALTERACAO_POTENCIAL' : 'SEM_ALTERACAO';
       return { campo, atual: valorAtual, recebido: valorRecebido, fornecido, proposto, tipo };

@@ -22,15 +22,14 @@ import { api } from '../src/services/api.js';
 function configureSupabase(rows) {
   const query = {
     in: supabaseMock.in.mockImplementation(() => query),
+    gte: vi.fn(() => query), lte: vi.fn(() => query),
     order: vi.fn(() => query),
     range: vi.fn(async (start, end) => ({ data: rows.slice(start, end + 1), count: rows.length, error: null }))
   };
 
-  supabaseMock.from.mockReturnValue({
-    select: () => ({
-      eq: () => query
-    })
-  });
+  const empty = { in: () => empty, order: () => empty, range: async () => ({ data: [], count: 0, error: null }) };
+  supabaseMock.from.mockImplementation(table => ({ select: () => table === 'historico_custos'
+    ? { eq: () => query } : empty }));
 }
 
 function configureHistoricoSupabase(rows) {
@@ -47,7 +46,7 @@ function configureHistoricoSupabase(rows) {
   };
   supabaseMock.from.mockImplementation(table => {
     if (table === 'historico_custos') return { select: () => historicoQuery };
-    if (table === 'dicionario_produtos') return {
+    if (['dicionario_produtos', 'dicionario_master_produtos', 'categorias_origem', 'categorias_familia'].includes(table)) return {
       select: () => dictionaryQuery
     };
     throw new Error(`Tabela inesperada: ${table}`);

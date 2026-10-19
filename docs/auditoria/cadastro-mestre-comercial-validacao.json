@@ -1,0 +1,492 @@
+{
+  "data": "2026-10-19T16:38:10.229Z",
+  "arquivo": "cadastro mestre 8_10.xls",
+  "tamanho": 24307397,
+  "sha256": "3b0e8ce693038884f5453e2094adf8a0e860d4a0d079d25f8dccbffb15c16c14",
+  "aba": "Sheet1",
+  "colunas": {
+    "codigo_produto": 1,
+    "descricao": 2,
+    "tipo": 9,
+    "descr_origem": 34,
+    "origem_cod": 10,
+    "familia_cod": 5,
+    "familia_descricao_erp": 29,
+    "agrupamento_erp_valor": 16,
+    "agrupamento_comercial_erp_cod": 18,
+    "agrupamento_comercial_erp_descricao": 41
+  },
+  "arquivoCompleto": {
+    "total": 6230,
+    "comAgrupCom": 316,
+    "semAgrupCom": 5914,
+    "codigosDistintos": 34,
+    "codigoSemDescricao": 0,
+    "descricaoSemCodigo": 0,
+    "conflitos": [],
+    "correspondencias": [
+      {
+        "codigo": "C003",
+        "descricoes": [
+          "BISCOITO AMANTEIGADO"
+        ]
+      },
+      {
+        "codigo": "C004",
+        "descricoes": [
+          "BISCOITO APERITIVO"
+        ]
+      },
+      {
+        "codigo": "C005",
+        "descricoes": [
+          "BISCOITO CHAMPAGNE"
+        ]
+      },
+      {
+        "codigo": "C006",
+        "descricoes": [
+          "BISCOITO ESPECIAL"
+        ]
+      },
+      {
+        "codigo": "C007",
+        "descricoes": [
+          "BISCOITO INTEGRAL"
+        ]
+      },
+      {
+        "codigo": "C008",
+        "descricoes": [
+          "BISCOITO LAMINADO DOCE"
+        ]
+      },
+      {
+        "codigo": "C009",
+        "descricoes": [
+          "BISCOITO LAMINADO SALGADO"
+        ]
+      },
+      {
+        "codigo": "C010",
+        "descricoes": [
+          "BISCOITO PALITINHO"
+        ]
+      },
+      {
+        "codigo": "C011",
+        "descricoes": [
+          "BISCOITO RECHEADO"
+        ]
+      },
+      {
+        "codigo": "C012",
+        "descricoes": [
+          "BISCOITO SOLTO DOCE"
+        ]
+      },
+      {
+        "codigo": "C013",
+        "descricoes": [
+          "BISCOITO SOLTO DOCE GLACE"
+        ]
+      },
+      {
+        "codigo": "C014",
+        "descricoes": [
+          "BISCOITO SORTIDO"
+        ]
+      },
+      {
+        "codigo": "C015",
+        "descricoes": [
+          "BISCOITO TRICKS"
+        ]
+      },
+      {
+        "codigo": "C016",
+        "descricoes": [
+          "CEREAIS"
+        ]
+      },
+      {
+        "codigo": "C017",
+        "descricoes": [
+          "CEVADA"
+        ]
+      },
+      {
+        "codigo": "C018",
+        "descricoes": [
+          "DERIVADOS DE AVEIA"
+        ]
+      },
+      {
+        "codigo": "C019",
+        "descricoes": [
+          "DERIVADOS DE MANDIOCA"
+        ]
+      },
+      {
+        "codigo": "C020",
+        "descricoes": [
+          "DERIVADOS DE MILHO"
+        ]
+      },
+      {
+        "codigo": "C021",
+        "descricoes": [
+          "GRANOLA E CEREAIS"
+        ]
+      },
+      {
+        "codigo": "C022",
+        "descricoes": [
+          "MACARRAO INSTANTANEO"
+        ]
+      },
+      {
+        "codigo": "C023",
+        "descricoes": [
+          "MASSA CASEIRA"
+        ]
+      },
+      {
+        "codigo": "C024",
+        "descricoes": [
+          "MASSA COM OVOS"
+        ]
+      },
+      {
+        "codigo": "C025",
+        "descricoes": [
+          "MASSA ESPECIAL"
+        ]
+      },
+      {
+        "codigo": "C026",
+        "descricoes": [
+          "MASSA INTEGRAL"
+        ]
+      },
+      {
+        "codigo": "C027",
+        "descricoes": [
+          "MASSA SEM OVOS"
+        ]
+      },
+      {
+        "codigo": "C028",
+        "descricoes": [
+          "MASSA VEGETAIS"
+        ]
+      },
+      {
+        "codigo": "C029",
+        "descricoes": [
+          "MATINAL"
+        ]
+      },
+      {
+        "codigo": "C030",
+        "descricoes": [
+          "MINI BOLO"
+        ]
+      },
+      {
+        "codigo": "C031",
+        "descricoes": [
+          "MISTURA PARA BOLO"
+        ]
+      },
+      {
+        "codigo": "C032",
+        "descricoes": [
+          "SOPAO"
+        ]
+      },
+      {
+        "codigo": "C033",
+        "descricoes": [
+          "MARCA PROPRIA"
+        ]
+      },
+      {
+        "codigo": "C034",
+        "descricoes": [
+          "WAFFER"
+        ]
+      },
+      {
+        "codigo": "C035",
+        "descricoes": [
+          "BISCOITO LAMINADO INTEGRAL"
+        ]
+      },
+      {
+        "codigo": "C036",
+        "descricoes": [
+          "MASSA FARINHA INTEIRA"
+        ]
+      }
+    ]
+  },
+  "universoEfetivo": {
+    "total": 860,
+    "comAgrupCom": 162,
+    "semAgrupCom": 698,
+    "codigosDistintos": 29,
+    "codigoSemDescricao": 0,
+    "descricaoSemCodigo": 0,
+    "conflitos": [],
+    "correspondencias": [
+      {
+        "codigo": "C003",
+        "descricoes": [
+          "BISCOITO AMANTEIGADO"
+        ]
+      },
+      {
+        "codigo": "C004",
+        "descricoes": [
+          "BISCOITO APERITIVO"
+        ]
+      },
+      {
+        "codigo": "C005",
+        "descricoes": [
+          "BISCOITO CHAMPAGNE"
+        ]
+      },
+      {
+        "codigo": "C006",
+        "descricoes": [
+          "BISCOITO ESPECIAL"
+        ]
+      },
+      {
+        "codigo": "C007",
+        "descricoes": [
+          "BISCOITO INTEGRAL"
+        ]
+      },
+      {
+        "codigo": "C008",
+        "descricoes": [
+          "BISCOITO LAMINADO DOCE"
+        ]
+      },
+      {
+        "codigo": "C009",
+        "descricoes": [
+          "BISCOITO LAMINADO SALGADO"
+        ]
+      },
+      {
+        "codigo": "C010",
+        "descricoes": [
+          "BISCOITO PALITINHO"
+        ]
+      },
+      {
+        "codigo": "C011",
+        "descricoes": [
+          "BISCOITO RECHEADO"
+        ]
+      },
+      {
+        "codigo": "C012",
+        "descricoes": [
+          "BISCOITO SOLTO DOCE"
+        ]
+      },
+      {
+        "codigo": "C013",
+        "descricoes": [
+          "BISCOITO SOLTO DOCE GLACE"
+        ]
+      },
+      {
+        "codigo": "C014",
+        "descricoes": [
+          "BISCOITO SORTIDO"
+        ]
+      },
+      {
+        "codigo": "C015",
+        "descricoes": [
+          "BISCOITO TRICKS"
+        ]
+      },
+      {
+        "codigo": "C016",
+        "descricoes": [
+          "CEREAIS"
+        ]
+      },
+      {
+        "codigo": "C017",
+        "descricoes": [
+          "CEVADA"
+        ]
+      },
+      {
+        "codigo": "C018",
+        "descricoes": [
+          "DERIVADOS DE AVEIA"
+        ]
+      },
+      {
+        "codigo": "C019",
+        "descricoes": [
+          "DERIVADOS DE MANDIOCA"
+        ]
+      },
+      {
+        "codigo": "C020",
+        "descricoes": [
+          "DERIVADOS DE MILHO"
+        ]
+      },
+      {
+        "codigo": "C021",
+        "descricoes": [
+          "GRANOLA E CEREAIS"
+        ]
+      },
+      {
+        "codigo": "C022",
+        "descricoes": [
+          "MACARRAO INSTANTANEO"
+        ]
+      },
+      {
+        "codigo": "C023",
+        "descricoes": [
+          "MASSA CASEIRA"
+        ]
+      },
+      {
+        "codigo": "C024",
+        "descricoes": [
+          "MASSA COM OVOS"
+        ]
+      },
+      {
+        "codigo": "C025",
+        "descricoes": [
+          "MASSA ESPECIAL"
+        ]
+      },
+      {
+        "codigo": "C028",
+        "descricoes": [
+          "MASSA VEGETAIS"
+        ]
+      },
+      {
+        "codigo": "C029",
+        "descricoes": [
+          "MATINAL"
+        ]
+      },
+      {
+        "codigo": "C031",
+        "descricoes": [
+          "MISTURA PARA BOLO"
+        ]
+      },
+      {
+        "codigo": "C033",
+        "descricoes": [
+          "MARCA PROPRIA"
+        ]
+      },
+      {
+        "codigo": "C034",
+        "descricoes": [
+          "WAFFER"
+        ]
+      },
+      {
+        "codigo": "C035",
+        "descricoes": [
+          "BISCOITO LAMINADO INTEGRAL"
+        ]
+      }
+    ]
+  },
+  "status": "OK",
+  "erros": [],
+  "manifesto": {
+    "contrato": "RECONSTRUCAO_UNIVERSO_V2",
+    "transporte": "CADASTRO_MESTRE_DADOS_V3",
+    "universoIgualSemCamposComerciais": true,
+    "inserts": 0,
+    "updates": 162,
+    "remocoes": 0,
+    "operacoes": 324,
+    "propostasComerciais": 324,
+    "regeneradoIdentico": true,
+    "aprovacaoSomenteEmMemoria": true
+  },
+  "dadosCompactosBytes": 820344,
+  "corpoPostSimuladoBytes": 847017,
+  "requests": {
+    "GET": 46
+  },
+  "provas": {
+    "dicionario_master_produtos": {
+      "antes": 860,
+      "depois": 860,
+      "sha256Antes": "4047d303ad1408137daca0e8eca2e6d904b86ec92dfbf87d7fb72381857e237a",
+      "sha256Depois": "4047d303ad1408137daca0e8eca2e6d904b86ec92dfbf87d7fb72381857e237a",
+      "iguais": true
+    },
+    "dicionario_produtos": {
+      "antes": 6113,
+      "depois": 6113,
+      "sha256Antes": "777c3fea4b4abd24a8a302148a068125df7db5132e1498acdbda493dffbe194f",
+      "sha256Depois": "777c3fea4b4abd24a8a302148a068125df7db5132e1498acdbda493dffbe194f",
+      "iguais": true
+    },
+    "historico_custos": {
+      "antes": 1370,
+      "depois": 1370,
+      "sha256Antes": "2a78def288840c5deb292dace90d9ad10598a4e11ecc2c8259460b60adacd17e",
+      "sha256Depois": "2a78def288840c5deb292dace90d9ad10598a4e11ecc2c8259460b60adacd17e",
+      "iguais": true
+    },
+    "apontamentos_op": {
+      "antes": 704,
+      "depois": 704,
+      "sha256Antes": "4ec041c91930b5fcf4a68a2fc6952905bb312e3dbfa10c8d48708b09a9e02525",
+      "sha256Depois": "4ec041c91930b5fcf4a68a2fc6952905bb312e3dbfa10c8d48708b09a9e02525",
+      "iguais": true
+    },
+    "categorias_origem": {
+      "antes": 50,
+      "depois": 50,
+      "sha256Antes": "8bcebc6bea5bf01eaa4d7d2aa6eb5e32bd70f156ea568d603fd707f507136697",
+      "sha256Depois": "8bcebc6bea5bf01eaa4d7d2aa6eb5e32bd70f156ea568d603fd707f507136697",
+      "iguais": true
+    },
+    "categorias_familia": {
+      "antes": 103,
+      "depois": 103,
+      "sha256Antes": "6e6b6b8f686ee0e0c7f8c991cb25ee08cf1951564130707dd9689242741a3872",
+      "sha256Depois": "6e6b6b8f686ee0e0c7f8c991cb25ee08cf1951564130707dd9689242741a3872",
+      "iguais": true
+    },
+    "categorias_agrupamento": {
+      "antes": 34,
+      "depois": 34,
+      "sha256Antes": "b289371e80e358963e8a8e0eadf29ad6a327de3870d7a2bc2da4261a76be0450",
+      "sha256Depois": "b289371e80e358963e8a8e0eadf29ad6a327de3870d7a2bc2da4261a76be0450",
+      "iguais": true
+    }
+  },
+  "schemaRemotoComCamposComerciais": false,
+  "execucaoRemota": false,
+  "migrationRemotaAplicada": false
+}

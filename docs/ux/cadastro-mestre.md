@@ -1,5 +1,9 @@
 # CAD-UX-01 — Usabilidade do Cadastro
 
+## CAD-COM-01 — Agrup. Com. opcional no Master ERP (19/10/2026)
+
+Consulta ERP mostra Agrup. Prod., Agrup. Com. e Descrição (Agrup. Com.) em colunas separadas e escapadas; ausências são não informado, sem SEM_AGRUPAMENTO. Preview mostra os dois campos, contagens com/sem comercial, códigos distintos e propostas por campo. Célula comercial vazia propõe limpar existente para NULL; coluna ausente preserva. Produto sem agrupamento é válido. Nada preenche agrupamento operacional; não há edição manual desses campos na consulta ERP. Transporte V3/manifesto V2 exigem novo Preview após a migration aditiva autorizada. Snapshot/rollback mantidos. [Contrato e provas](../arquitetura/cadastro-mestre-agrupamento-comercial-erp.md).
+
 **Escopo documental:** as primeiras seções registram os contratos atuais de famílias/consulta ERP/leitura operacional; as seções posteriores preservam entrega, causa, testes e limites de cada etapa. “Sem visão ERP”, “sem botão” e “ausentes preservados” são afirmações históricas explicitamente sucedidas. Uso atual sem cronologia: [Manual do Usuário](../manuais/manual-usuario.md). Não houve nova publicação ou consulta real nesta reorganização.
 
 ## CAD-FAM-01 — famílias ERP no Preview (15/10/2026)

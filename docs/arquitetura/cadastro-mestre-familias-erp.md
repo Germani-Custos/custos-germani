@@ -1,5 +1,7 @@
 # CAD-FAM-01 — famílias ERP no Cadastro Mestre (15/10/2026)
 
+Continuidade CAD-COM-01 (19/10/2026): transporte atual V3 acrescenta dois campos comerciais opcionais à tupla, sem alterar filtros, propostas de família, catálogo, snapshot parcial ou sua aprovação. A descrição de Agrup. Com. fica no Master, separada de `familia_descricao_erp`, que continua sendo fonte do catálogo. O V2 descrito nesta entrega original não é mais aceito na execução. [Contrato vigente](cadastro-mestre-agrupamento-comercial-erp.md).
+
 ## Escopo e identidade
 
 Código exato identifica a família; descrição é apenas rótulo. Códigos diferentes podem compartilhar descrição após a migration estrutural já aplicada, 20261015182351. Esta entrega não cria migration/tabela, não sincroniza Master → operacional e não altera fatos, mapa, agrupamentos Kustos ou vínculos. `data_referencia` continua competência e `criado_em` importação dos fatos, intactos.
@@ -12,7 +14,7 @@ Situações: `EXISTENTE_SEM_ALTERACAO` não escreve; `NOVA_FAMILIA` propõe INSE
 
 ## Transporte, manifesto e decisões
 
-Contrato vigente **CADASTRO_MESTRE_DADOS_V2**: tupla de nove posições `[linha,codigo_produto,descricao,tipo,descr_origem,origem_cod,familia_cod,agrupamento_erp_valor,familia_descricao_erp]`. Todas as linhas não vazias continuam no transporte, inclusive excluídas. Mesmos limites de 4 MiB, sem XLS bruto, SQL, patches ou catálogo declarado como instrução de escrita. V1 é recusado: gerar novo Preview e publicar UI/função compatíveis antes de executar.
+Contrato original desta fase, sucedido por CAD-COM-01: **CADASTRO_MESTRE_DADOS_V2**: tupla de nove posições `[linha,codigo_produto,descricao,tipo,descr_origem,origem_cod,familia_cod,agrupamento_erp_valor,familia_descricao_erp]`. Todas as linhas não vazias continuam no transporte, inclusive excluídas. Mesmos limites de 4 MiB, sem XLS bruto, SQL, patches ou catálogo declarado como instrução de escrita. V1 é recusado: gerar novo Preview e publicar UI/função compatíveis antes de executar.
 
 Manifesto contém `catalogo_familias` (lista/resumo) e operações com IDs `CADASTRAR_FAMILIA_ERP:<codigo codificado>` ou `ATUALIZAR_ROTULO_FAMILIA_ERP:<codigo codificado>`, tabela `categorias_familia`, `codigo_familia`, precondições e quantidade impactada. INSERT tem `{codigo,descricao}`; UPDATE, apenas `{descricao}`, com imagem anterior/ID/código. Dados, rótulos, contexto, universo e propostas ficam vinculados pelos hashes existentes.
 

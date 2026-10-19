@@ -1,6 +1,6 @@
 # Roadmap Estratégico — Kustos Germani
 
-Recorte documental: **16/10/2026**. Toda iniciativa deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Conclusão de implementação local e publicação/execução real são estados distintos; não houve nova consulta de produção nesta revisão.
+Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Conclusão de implementação local e publicação/execução real são estados distintos; a validação GET de CUSTOS-ERP-01 está na auditoria específica e não representa publicação.
 
 ## Concluído
 
@@ -24,6 +24,9 @@ Recorte documental: **16/10/2026**. Toda iniciativa deve acelerar investigação
 
 ### Implementações locais com continuidade de publicação
 
+- CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva preparada, transporte V3 e nova aprovação obrigatórios; aplicação/publicação/execução ainda dependem de etapa autorizada.
+
+- CUSTOS-ERP-01: classificação analítica de origem/família pelo Master em memória, fallback fora do Master e agrupamento operacional; validação GET e interface local concluídas, publicação fora desta etapa.
 - CAD-OP-PAGE-01 e CUSTOS-PAGE-01: paginação integral do Cadastro operacional e da Auditoria de Custos, contagem exata e bloqueio de leitura parcial.
 - CAD-ERP-VIEW-01: consulta do Master ERP com estado independente, filtros por código e páginas visuais de 50.
 - CAD-FAM-01: catálogo de famílias ERP no Preview V2, decisões próprias e executor central com provas/snapshot/rollback conjuntos.

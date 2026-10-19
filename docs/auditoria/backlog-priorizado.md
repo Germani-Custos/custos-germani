@@ -1,5 +1,7 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-COM-01 — implementação local** (19/10/2026): dois campos comerciais opcionais, limpeza explícita de vazio para NULL, transporte V3/manifesto V2, executor/snapshot/rollback e consulta ERP. 860 produtos reais: 162 com comercial, 698 sem, 29 códigos, zero conflitos; remoto somente leitura. Migration aditiva preparada, não aplicada. Publicação e carga futura dependem de etapa autorizada. [Provas](cadastro-mestre-comercial-validacao.md).
+
 ## Organização documental — 16/10/2026
 
 - [x] **DOC-ORG-01** — auditar os 53 Markdown versionados, separar apresentação/estratégia/planejamento/contratos/processo/manuais/evidências/história, reaproveitar História e atualizar índice. Somente documentação; sem testes de aplicação, commit, push ou deploy. [Diagnóstico, movimentos e validação](reorganizacao-documental.md).
@@ -44,6 +46,8 @@ Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / re
 ## Entrega 2026-08-10 — MNT-OP-04
 
 - [x] Contexto investigativo dinamico. Causa raiz: `allRows` era carregado somente na abertura e a importacao nao o renovava; o dossie tambem ignorava o recorte de competencia. Correcao: renovar a carga apos importar e derivar fila/dossie pelos filtros e por `data_referencia`, sem schema, RPC ou regra nova. `criado_em` permanece rastreabilidade. Regressao cobre dados novos e mudanca de competencia.
+
+- [x] **CUSTOS-ERP-01** (16/10/2026): origem/família analíticas pelo Master com fallback apenas fora dele, projeção em memória antes da cascata e mesmos produtos na fila/gráficos/drill-through/XLSX. Operacional e agrupamento preservados. Implementação e validação GET/interface local concluídas; sem publicação nesta etapa. [Provas e testes](custos-classificacao-erp.md).
 
 ## Estabilizações operacionais concluídas
 

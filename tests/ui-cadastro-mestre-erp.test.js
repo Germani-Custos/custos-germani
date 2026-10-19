@@ -50,6 +50,17 @@ async function setup() {
 }
 
 describe('Cadastro em duas visões independentes', () => {
+  it('CAD-COM-01 mostra código/descrição comerciais escapados e ausência sem substituir agrupamento operacional', async () => {
+    master.produtos[0].agrupamento_comercial_erp_cod = 'C006';
+    master.produtos[0].agrupamento_comercial_erp_descricao = '<b>BISCOITO ESPECIAL</b>';
+    const { dom } = await setup();
+    expect(dom.erpTableBody.innerHTML).toContain('<td>C006</td>');
+    expect(dom.erpTableBody.innerHTML).toContain('&lt;b&gt;BISCOITO ESPECIAL&lt;/b&gt;');
+    expect(dom.erpTableBody.innerHTML).toContain('Não informado');
+    expect(dom.masterTableBody.innerHTML).toContain('Grupo operacional');
+    expect(dom.masterTableBody.innerHTML).not.toContain('C006');
+  });
+
   it('rotula as duas fontes com totais dinâmicos e exibe somente campos ERP no painel de consulta', async () => {
     const { dom, errors } = await setup();
     expect(errors).toEqual([]);
@@ -155,7 +166,9 @@ describe('Cadastro em duas visões independentes', () => {
     expect(html).toContain('Cadastro Mestre ERP —');
     expect(html.match(/id="master-import-btn"/g)).toHaveLength(1);
     expect(html.indexOf('id="master-import-btn"')).toBeLessThan(html.indexOf('id="master-operational-panel"'));
-    expect(erp).toContain('Agrupamento ERP');
+    expect(erp).toContain('Agrup. Prod. (ERP)');
+    expect(erp).toContain('Agrup. Com. (ERP)');
+    expect(erp).toContain('Descrição (Agrup. Com.)');
     expect(erp).not.toMatch(/<form|master-new-btn|master-form|Salvar classificação|Excluir|Sincronizar/);
   });
 });

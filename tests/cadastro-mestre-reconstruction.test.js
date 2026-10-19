@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { main, salvarSnapshotDuravel } from '../scripts/reconstruir-cadastro-mestre.mjs';
 import { criarCadastroMestreWebHandler } from '../scripts/lib/cadastro-mestre-web.mjs';
 import { ambienteWeb, respostaWeb, storageWeb } from './fixtures/cadastro-mestre-web.js';
+import { arquivoComercial } from './fixtures/cadastro-mestre-comercial.js';
 import { arquivoFamilias } from './fixtures/cadastro-mestre-familias.js';
 
 const aprovar = m => decidirOperacoesCadastroMestre(m, criarRevisaoCadastroMestre(m), m.operacoes.filter(o => o.aprovavel).map(o => o.id), 'APROVADO');
@@ -66,7 +67,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
         registros_erro int DEFAULT 0,erros jsonb DEFAULT '[]',metadados_origem jsonb DEFAULT '{}',
         criado_em timestamptz DEFAULT now(),iniciado_em timestamptz DEFAULT now(),finalizado_em timestamptz);
       CREATE TABLE dicionario_master_produtos (codigo_produto text PRIMARY KEY,descricao text,origem_cod text,familia_cod text,
-        agrupamento_erp_valor text,ultima_importacao_cadastro_mestre_id bigint REFERENCES log_importacao_cadastro_mestre(id),
+        agrupamento_erp_valor text,agrupamento_comercial_erp_cod text,agrupamento_comercial_erp_descricao text,ultima_importacao_cadastro_mestre_id bigint REFERENCES log_importacao_cadastro_mestre(id),
         agrupamento_erp_importacao_id bigint REFERENCES log_importacao_cadastro_mestre(id),
         criado_em timestamptz DEFAULT now(),atualizado_em timestamptz DEFAULT now());
       CREATE TABLE categorias_origem (id text PRIMARY KEY,codigo text,descricao text);
@@ -554,6 +555,49 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(snapshot).not.toHaveBeenCalled();
     expect((await ctx()).produtos).toEqual(before.produtos);
   });
+
+  it.each(['xls', 'xlsx', 'xlsm'])('CAD-COM-01 %s grava/atualiza comercial, limpa vazio para NULL, preserva snapshot e tabelas protegidas', async formato => {
+    await db.query("UPDATE dicionario_master_produtos SET agrupamento_comercial_erp_cod='C012',agrupamento_comercial_erp_descricao='BISCOITO SOLTO DOCE' WHERE codigo_produto IN ('001','002')");
+    before = await ctx();
+    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivoComercial(formato), before, SheetJS);
+    const dados = preparado.dadosExecucao;
+    const pedido = { manifesto: preparado.manifesto, revisao: aprovar(preparado.manifesto) };
+    const result = await executar({ arquivo: null, dadosExecucao: dados, evidencia: pedido,
+      confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(preparado.manifesto)}` });
+    expect(result.status).toBe('concluido');
+    const produtos = (await ctx()).produtos;
+    expect(produtos).toHaveLength(3);
+    expect(produtos.find(p => p.codigo_produto === '001')).toMatchObject({ agrupamento_comercial_erp_cod: 'C006', agrupamento_comercial_erp_descricao: 'BISCOITO ESPECIAL', agrupamento_erp_valor: 'P005' });
+    for (const codigo of ['002', '2000']) expect(produtos.find(p => p.codigo_produto === codigo)).toMatchObject({ agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null });
+    expect(snapshot.mock.calls[0][0].snapshot_master).toEqual(before.produtos);
+    const log = (await db.query('SELECT metadados_origem FROM log_importacao_cadastro_mestre')).rows[0].metadados_origem;
+    expect(log.snapshot_master.find(p => p.codigo_produto === '002').agrupamento_comercial_erp_cod).toBe('C012');
+    expect(log.protegidas_antes).toEqual(log.protegidas_depois);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+  });
+
+  it('CAD-COM-01 erro após atualizar comercial reverte também a limpeza para NULL', async () => {
+    await db.query("UPDATE dicionario_master_produtos SET agrupamento_comercial_erp_cod='C012',agrupamento_comercial_erp_descricao='BISCOITO SOLTO DOCE' WHERE codigo_produto='002'");
+    before = await ctx();
+    const preparado = await prepararAprovacaoArquivoCadastroMestre(arquivoComercial(), before, SheetJS);
+    const original = client.query;
+    client.query = vi.fn((sql, params) => sql.startsWith('DELETE FROM public.dicionario_master_produtos') ? db.query('SELECT 1/0') : original(sql, params));
+    await expect(executar({ arquivo: null, dadosExecucao: preparado.dadosExecucao,
+      evidencia: { manifesto: preparado.manifesto, revisao: aprovar(preparado.manifesto) },
+      confirmacao: `RECONSTRUIR_MASTER:${hashReconstrucao(preparado.manifesto)}` })).rejects.toThrow('revertida integralmente');
+    expect((await ctx()).produtos).toEqual(before.produtos);
+    expect(snapshot.mock.calls[0][0].snapshot_master).toEqual(before.produtos);
+  });
+
+  it('CAD-COM-01 schema não preparado bloqueia antes de log/snapshot/DML', async () => {
+    await db.exec('ALTER TABLE dicionario_master_produtos DROP COLUMN agrupamento_comercial_erp_cod');
+    client.query.mockClear();
+    await expect(executar()).rejects.toThrow();
+    expect(snapshot).not.toHaveBeenCalled();
+    expect(client.query.mock.calls.some(([sql]) => /^(INSERT INTO|UPDATE|DELETE FROM) public\./.test(sql))).toBe(false);
+    expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
+  });
+
 });
 
 describe('Comando administrativo e snapshot independente', () => {

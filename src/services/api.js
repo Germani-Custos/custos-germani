@@ -3,6 +3,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 import { appConfig, debugLog } from '../config/app-config.js';
+import { classificarCustos } from '../../core/custos-classification-engine.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
 import { buildManualProductMasterPayload, buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
 import { lerContextoCadastroMestrePreview } from './cadastro-mestre-preview.js';
@@ -18,6 +19,7 @@ const TABLES = {
   historico: 'historico_custos',
   logImportacao: 'log_importacao',
   dicionario: 'dicionario_produtos',
+  masterErp: 'dicionario_master_produtos',
   origem: 'categorias_origem',
   familia: 'categorias_familia',
   agrupamento: 'categorias_agrupamento',
@@ -340,53 +342,29 @@ async function getHistoricoWithClientFallback(filters) {
   if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
   if (!historicoBase?.length) return ok([]);
 
-  const codigos = [...new Set(historicoBase.map(item => normalizeCodigoProduto(item.codigo_produto)).filter(Boolean))];
-  const { data: dicionarioRows, error: dicionarioError } = await lerDicionarioDosCodigos(codigos);
-
-  if (dicionarioError) return fail('Falha ao enriquecer histórico com dimensão de produtos.', { metodo: 'getHistorico', tabela: TABLES.dicionario }, dicionarioError);
-
-  const dicionarioByCodigo = new Map((dicionarioRows || []).map(row => [normalizeCodigoProduto(row.codigo_produto), row]));
-
-  const enrichedRows = historicoBase
-    .map(item => {
-      const codigoNormalizado = normalizeCodigoProduto(item.codigo_produto);
-      const dictionaryEntry = dicionarioByCodigo.get(codigoNormalizado);
-      return {
-        ...item,
-        descricao: dictionaryEntry?.descricao || item.descricao || null,
-        origem_id: dictionaryEntry?.origem_id ?? null,
-        familia_id: dictionaryEntry?.familia_id ?? null,
-        agrupamento_cod: dictionaryEntry?.agrupamento_cod ?? null
-      };
-    });
-
-  return ok(applyCascadeFilterInMemory(enrichedRows, filters));
+  const { data, error } = await enrichRowsWithClassificacaoCustos(historicoBase);
+  if (error) return fail('Falha ao enriquecer histórico com classificação analítica.', { metodo: 'getHistorico' }, error);
+  return ok(applyCascadeFilterInMemory(data, filters));
 }
 
-async function enrichRowsWithDicionario(rows = []) {
-  const codigos = [...new Set((rows || [])
-    .map(item => normalizeCodigoProduto(item?.codigo_produto))
-    .filter(Boolean))];
-
-  if (!codigos.length) return { data: rows, error: null };
-
-  const { data: dicionarioRows, error: dicionarioError } = await lerDicionarioDosCodigos(codigos);
-
-  if (dicionarioError) return { data: null, error: dicionarioError };
-
-  const byCodigo = new Map((dicionarioRows || []).map(row => [normalizeCodigoProduto(row.codigo_produto), row]));
-  const enriched = (rows || []).map(row => {
-    const dict = byCodigo.get(normalizeCodigoProduto(row?.codigo_produto));
-    return {
-      ...row,
-      descricao: dict?.descricao || row?.descricao || null,
-      origem_id: dict?.origem_id ?? null,
-      familia_id: dict?.familia_id ?? null,
-      agrupamento_cod: dict?.agrupamento_cod ?? null
-    };
-  });
-
-  return { data: enriched, error: null };
+async function enrichRowsWithClassificacaoCustos(rows = []) {
+  const codigos = [...new Set(rows.map(item => normalizeCodigoProduto(item?.codigo_produto)).filter(Boolean))];
+  if (!codigos.length) return ok(rows);
+  const results = await Promise.all([
+    lerDicionarioDosCodigos(codigos),
+    lerCompleto(TABLES.masterErp, 'codigo_produto, origem_cod, familia_cod', 'codigo_produto'),
+    lerCompleto(TABLES.origem, '*', ['descricao', 'id']),
+    lerCompleto(TABLES.familia, '*', ['descricao', 'id'])
+  ]);
+  const error = results.find(result => result.error)?.error;
+  if (error) return { data: null, error };
+  try {
+    return ok(classificarCustos(rows, results[0].data, {
+      produtos: results[1].data, origens: results[2].data, familias: results[3].data
+    }));
+  } catch (error) {
+    return { data: null, error };
+  }
 }
 
 function createDiagnosticoSemAgrupamentoUnavailable(upstreamError, etapa) {
@@ -495,7 +473,8 @@ export const api = {
       lerCompleto(TABLES.origem, '*', ['descricao', 'id']),
       lerCompleto(TABLES.familia, '*', ['descricao', 'id']),
       lerCompleto(TABLES.agrupamento, '*', ['descricao', 'id']),
-      lerCompleto(TABLES.dicionario, 'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto')
+      lerCompleto(TABLES.dicionario, 'codigo_produto, descricao, origem_id, familia_id, agrupamento_cod', 'codigo_produto'),
+      lerCompleto(TABLES.masterErp, 'codigo_produto, origem_cod, familia_cod', 'codigo_produto')
     ]);
 
     const resolve = (result) => result.status === 'fulfilled' ? result.value : { data: null, error: result.reason };
@@ -504,11 +483,12 @@ export const api = {
       { data: origensRaw,   error: origensError },
       { data: familiasRaw,  error: familiasError },
       { data: agrupamentosRaw, error: agrupamentosError },
-      { data: dicionarioRaw, error: dicionarioError }
+      { data: dicionarioRaw, error: dicionarioError },
+      { data: masterErpRows, error: masterErpError }
     ] = settled.map(resolve);
 
     // Hierarquia exige todas as fontes completas; erro nunca vira dimensão vazia.
-    const error = historicoError || origensError || familiasError || agrupamentosError || dicionarioError;
+    const error = historicoError || origensError || familiasError || agrupamentosError || dicionarioError || masterErpError;
     if (error) {
       return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: { status: 'indisponivel', rows: [], error }, error };
     }
@@ -525,8 +505,16 @@ export const api = {
       .filter(value => !isNullLike(value))
       .map(value => String(value).trim()));
 
-    const dicionarioComCusto = (dicionarioRaw || [])
-      .filter(item => codigosComCusto.has(normalizeCodigoProduto(item?.codigo_produto)));
+    // Projeção de todos os códigos de Custos, inclusive sem cadastro operacional.
+    let dicionarioComCusto;
+    try {
+      dicionarioComCusto = classificarCustos(
+        [...new Map(historicoNormalizado.map(row => [row.codigo_produto, row])).values()],
+        (dicionarioRaw || []).filter(item => codigosComCusto.has(normalizeCodigoProduto(item?.codigo_produto))),
+        { produtos: masterErpRows, origens: origensRaw, familias: familiasRaw });
+    } catch (error) {
+      return { origens: [], familias: [], agrupamentos: [], produtos: [], dicionario: [], hierarquia: [], diagnostico_sem_mapa: { status: 'indisponivel', rows: [], error }, error };
+    }
 
     const dicionarioByCodigo = new Map((dicionarioComCusto || [])
       .filter(item => !isNullLike(item?.codigo_produto))
@@ -936,7 +924,7 @@ export const api = {
 
     if (error) return fail('Falha ao carregar base de comparação entre importações.', { metodo: 'getLatestImportComparison' }, error);
 
-    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
+    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithClassificacaoCustos(rows || []);
     if (enrichError) return fail('Falha ao enriquecer comparação de importações com dimensão.', { metodo: 'getLatestImportComparison' }, enrichError);
 
     const filteredRows = applyCascadeFilterInMemory(
@@ -1008,7 +996,10 @@ export const api = {
 
     if (error) return fail('Falha ao carregar histórico detalhado do produto.', { metodo: 'getProductHistory', codigo_produto: codigo }, error);
 
-    const sorted = data || [];
+    const enriched = await enrichRowsWithClassificacaoCustos(data || []);
+    if (enriched.error) return fail('Falha ao classificar histórico detalhado do produto.', { metodo: 'getProductHistory' }, enriched.error);
+    // Descrição do drill-through continua sendo o snapshot do fato.
+    const sorted = enriched.data.map((row, i) => ({ ...row, descricao: data[i].descricao }));
     const annotated = sorted.map((row, i) => {
       const prev = i > 0 ? sorted[i - 1] : null;
       const custoAtual = Number(row.custo_total || 0);
@@ -1043,7 +1034,7 @@ export const api = {
       query => query.in('criado_em', [ultimaImportacao, penultimaImportacao]));
     if (error) return fail('Falha ao carregar base de variações por importação.', { metodo: 'getTopVariacoesImportacao' }, error);
 
-    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithDicionario(rows || []);
+    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithClassificacaoCustos(rows || []);
     if (enrichError) return fail('Falha ao enriquecer variações com dimensão de produtos.', { metodo: 'getTopVariacoesImportacao' }, enrichError);
 
     const rowsFiltered = applyCascadeFilterInMemory(

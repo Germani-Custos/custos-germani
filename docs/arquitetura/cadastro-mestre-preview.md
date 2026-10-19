@@ -1,5 +1,7 @@
 # Cadastro Mestre — Preview determinístico (Fase 3.1)
 
+Extensão vigente CAD-COM-01 (19/10/2026): adapter também reconhece Agrup. Com. e Descrição (Agrup. Com.) por aliases explícitos, sem posições fixas. Campos comerciais opcionais são persistíveis no produto Master. Célula comercial vazia limpa para NULL; coluna ausente preserva. Demais campos mantêm as regras abaixo. Transporte V3/manifesto de reconstrução V2 exigem novo Preview. [Contrato](cadastro-mestre-agrupamento-comercial-erp.md).
+
 **Registro de fase e núcleo de Preview.** Relatos de ausência de UI/executor e Master “atual” de 5.706 abaixo pertencem à entrega original. Fluxo completo vigente: [reconstrução](cadastro-mestre-reconstrucao.md), [execução web](cadastro-mestre-execucao-web.md), [famílias V2](cadastro-mestre-familias-erp.md) e [consulta ERP](../ux/cadastro-mestre.md). Não usar contagens históricas como pré-condição atual.
 
 ## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01

@@ -4,10 +4,10 @@ import { createRequire } from 'node:module';
 export const SheetJS = createRequire(import.meta.url)('xlsx');
 export const contexto = {
   produtos: [
-    { codigo_produto: '001', descricao: 'Descrição anterior', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' },
-    { codigo_produto: '002', descricao: 'Preservar descrição', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P302' },
-    ...['003', '004', '005', '006', '009'].map(codigo_produto => ({ codigo_produto, descricao: 'Preservar produto', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' })),
-    { codigo_produto: '008', descricao: 'Sem alteração', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005' }
+    { codigo_produto: '001', descricao: 'Descrição anterior', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null },
+    { codigo_produto: '002', descricao: 'Preservar descrição', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P302', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null },
+    ...['003', '004', '005', '006', '009'].map(codigo_produto => ({ codigo_produto, descricao: 'Preservar produto', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null })),
+    { codigo_produto: '008', descricao: 'Sem alteração', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P005', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: null }
   ],
   origens: [{ id: 'o', codigo: '01', descricao: 'Produzido' }],
   familias: [{ id: 'f', codigo: 'F1', descricao: 'Família teste' }]

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arquivoCadastro, contexto, SheetJS } from './fixtures/cadastro-mestre-arquivo.js';
+import { arquivoComercial } from './fixtures/cadastro-mestre-comercial.js';
 import { arquivoFamilias } from './fixtures/cadastro-mestre-familias.js';
 
 vi.mock('../src/services/api.js', () => ({ api: {
@@ -72,6 +73,23 @@ describe('Cadastro — seleção → adapter real → Preview/aprovação local'
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+
+  it('CAD-COM-01 Preview mostra par comercial opcional, contagens e propostas de limpeza para NULL', async () => {
+    api.getCadastroMestrePreviewContext.mockResolvedValue({ data: { ...contexto, produtos: contexto.produtos.map(p => ({ ...p,
+      agrupamento_comercial_erp_cod: 'C012', agrupamento_comercial_erp_descricao: 'BISCOITO SOLTO DOCE' })) }, error: null });
+    const { controller, dom } = setup(arquivoComercial());
+    await controller.bind();
+    await dom.masterImportInput.emit('change');
+    const html = globalThis.Swal.fire.mock.calls[0][0].html;
+    expect(html).toContain('Agrup. Com. (ERP)');
+    expect(html).toContain('BISCOITO ESPECIAL');
+    expect(html).toContain('vazio limpa');
+    expect(html).toContain('<td>Com Agrup. Com. ERP</td><td>1</td>');
+    expect(html).toContain('<td>Sem Agrup. Com. ERP</td><td>2</td>');
+    expect(html).not.toContain('E999');
+    expect(api.executarReconstrucaoCadastroMestre).not.toHaveBeenCalled();
   });
 
   it('seletor HTML aceita os três formatos e o botão abre a seleção', async () => {

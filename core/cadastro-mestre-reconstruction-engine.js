@@ -3,7 +3,7 @@
 import { obterOperacoesAprovadasCadastroMestre, serializarDeterministico } from './cadastro-mestre-approval-engine.js';
 
 export function criarPlanoReconstrucaoCadastroMestre(manifesto, revisao) {
-  if (manifesto?.versao_contrato !== 'RECONSTRUCAO_UNIVERSO_V1' || manifesto.modo !== 'RECONSTRUCAO_UNIVERSO') {
+  if (manifesto?.versao_contrato !== 'RECONSTRUCAO_UNIVERSO_V2' || manifesto.modo !== 'RECONSTRUCAO_UNIVERSO') {
     throw new Error('Gerar novo Preview no contrato de reconstrução do universo.');
   }
   const aprovado = obterOperacoesAprovadasCadastroMestre(manifesto, revisao);

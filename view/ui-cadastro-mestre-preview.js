@@ -7,8 +7,8 @@ import { escapeHtml } from './ui-utils.js';
 import { criarPlanoReconstrucaoCadastroMestre } from '../core/cadastro-mestre-reconstruction-engine.js';
 
 const DECISOES = { PENDENTE: 'Pendente', APROVADO: 'Aprovado', REJEITADO: 'Rejeitado' };
-const CAMPOS = { descricao: 'Descrição', origem_cod: 'Origem ERP', familia_cod: 'Família ERP', agrupamento_erp_valor: 'Agrup. Prod. (ERP)' };
-const CATEGORIAS = { NOVO_PRODUTO: 'Novo no Cadastro Mestre', ATUALIZAR_DESCRICAO: 'Atualizar descrição', ATUALIZAR_AGRUPAMENTO_ERP: 'Atualizar agrupamento ERP', ATUALIZAR_ORIGEM_ERP: 'Atualizar origem ERP', ATUALIZAR_FAMILIA_ERP: 'Atualizar família ERP', REMOVER_FORA_UNIVERSO: 'Remover do Cadastro Mestre' };
+const CAMPOS = { descricao: 'Descrição', origem_cod: 'Origem ERP', familia_cod: 'Família ERP', agrupamento_erp_valor: 'Agrup. Prod. (ERP)', agrupamento_comercial_erp_cod: 'Agrup. Com. (ERP)', agrupamento_comercial_erp_descricao: 'Descrição (Agrup. Com.)' };
+const CATEGORIAS = { NOVO_PRODUTO: 'Novo no Cadastro Mestre', ATUALIZAR_DESCRICAO: 'Atualizar descrição', ATUALIZAR_AGRUPAMENTO_ERP: 'Atualizar agrupamento ERP', ATUALIZAR_ORIGEM_ERP: 'Atualizar origem ERP', ATUALIZAR_FAMILIA_ERP: 'Atualizar família ERP', ATUALIZAR_CODIGO_AGRUPAMENTO_COMERCIAL_ERP: 'Atualizar código comercial ERP (vazio limpa)', ATUALIZAR_DESCRICAO_AGRUPAMENTO_COMERCIAL_ERP: 'Atualizar descrição comercial ERP (vazio limpa)', REMOVER_FORA_UNIVERSO: 'Remover do Cadastro Mestre' };
 const SITUACOES_FAMILIA = { EXISTENTE_SEM_ALTERACAO: 'Já cadastrada — nenhuma alteração', NOVA_FAMILIA: 'Nova família — cadastrar',
   ALTERACAO_DESCRICAO: 'Divergência — atualizar descrição', DESCRICAO_VAZIA: 'Descrição ERP vazia — preservar catálogo',
   CONFLITO: 'Bloqueada — conflito de descrições', CATALOGO_AMBIGUO: 'Bloqueada — código ambíguo no catálogo' };
@@ -39,7 +39,8 @@ function htmlPreview(manifesto, revisao) {
     ['Produtos a remover do Cadastro Mestre', r.produtos_a_remover],
     ['Cadastro Mestre antes', r.produtos_master_antes], ['Cadastro Mestre após reconstrução', r.produtos_master_depois],
     ['Existentes sem operação', r.existentes_sem_operacao], ['Campos preservados', r.preservacoes_campos],
-    ['Erros', r.erros]
+    ['Com Agrup. Com. ERP', r.agrupamentos_comerciais_preenchidos], ['Sem Agrup. Com. ERP', r.agrupamentos_comerciais_vazios],
+    ['Códigos comerciais ERP distintos', r.agrupamentos_comerciais_distintos], ['Erros', r.erros]
   ];
   const decisoes = new Map(revisao.decisoes.map(d => [d.id, d.status]));
   const operacoes = manifesto.operacoes.filter(o => o.tabela === 'dicionario_master_produtos').map(o => `<tr><td>${valor(o.codigo_produto)}</td><td>${valor(CATEGORIAS[o.categoria])}</td><td>${detalhesOperacao(o)}</td><td>${seletorDecisao(o, decisoes, `${o.codigo_produto}: ${CATEGORIAS[o.categoria]}`)}</td></tr>`);
@@ -50,6 +51,7 @@ function htmlPreview(manifesto, revisao) {
   });
   return `<p>${valor(manifesto.fonte.arquivo)} · ${valor(manifesto.fonte.tipo_arquivo)} · Aba ${valor(manifesto.fonte.aba)}</p>
     <p>Reconstrução do universo: o Cadastro Mestre deverá conter somente os produtos válidos do arquivo filtrado. Confira também as remoções antes de aprovar. Decisões e download são locais; a seleção do arquivo não executa a carga. Executar reconstrução irá MODIFICAR o Cadastro Mestre ERP.</p>
+    <p>Agrup. Com. e sua descrição são opcionais e independentes do agrupamento Kustos. Célula comercial vazia limpa o valor existente para NULL; coluna ausente preserva. Nenhum valor é inferido.</p>
     <p>A execução administrativa exige todas as propostas aprovadas, inclusive remoções e alterações do catálogo de famílias. Famílias têm decisões próprias; aprovar um produto não aprova sua família. Qualquer proposta pendente ou rejeitada impede a reconstrução inteira.</p>
     ${manifesto.reconstrucao_bloqueada ? '<p role="alert">Reconstrução bloqueada: existem erros no arquivo/catálogo ou o universo filtrado está vazio. Corrija e gere novo Preview antes de aprovar.</p>' : ''}
     ${tabela(['Resumo', 'Quantidade'], contagens.map(([label, count]) => `<tr><td>${escapeHtml(label)}</td><td>${count}</td></tr>`))}
@@ -59,7 +61,7 @@ function htmlPreview(manifesto, revisao) {
     ${tabela(['Produto', 'Proposta', 'Valores', 'Decisão'], operacoes)}
     ${familias ? `<h3>Catálogo de famílias ERP</h3><p>${familias.resumo.total} famílias do universo · ${familias.resumo.existentes_sem_alteracao} já cadastradas · ${familias.resumo.novas} novas · ${familias.resumo.atualizacoes} alterações de descrição · ${familias.resumo.produtos_impactados_novas} produtos nas novas famílias · ${familias.resumo.conflitos} conflitos · ${familias.resumo.sem_descricao} sem descrição ERP.</p>${tabela(['Código', 'Descrição ERP', 'Descrição atual', 'Situação / proposta', 'Produtos impactados', 'Decisão da família'], linhasFamilias)}` : ''}
     <details><summary>Produtos válidos e valores após preservação (${manifesto.produtos.length})</summary>
-      ${tabela(['Produto', 'Descrição', 'Origem ERP', 'Família ERP', 'Agrup. Prod. (ERP)'], manifesto.produtos.map(p =>
+      ${tabela(['Produto', ...Object.values(CAMPOS)], manifesto.produtos.map(p =>
         `<tr><td>${valor(p.codigo_produto)}</td>${Object.keys(CAMPOS).map(c => `<td>${valor(p.calculado[c])}</td>`).join('')}</tr>`))}</details>
     <details><summary>Produtos a remover do Cadastro Mestre (${manifesto.remocoes.length})</summary>
       ${tabela(['Produto', 'Descrição atual', 'Motivo'], manifesto.remocoes.map(p => `<tr><td>${valor(p.codigo_produto)}</td><td>${valor(p.atual?.descricao)}</td><td>${p.motivo === 'AUSENTE_NO_ARQUIVO' ? 'Ausente do arquivo' : 'Fora dos filtros oficiais'}</td></tr>`))}</details>

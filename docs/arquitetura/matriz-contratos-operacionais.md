@@ -1,6 +1,10 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
-Leitura vigente em 16/10/2026: CUSTOS-PAGE-01 governa completude de Custos; CAD-ERP-VIEW-01 separa consulta ERP; [CAD-FAM-01](cadastro-mestre-familias-erp.md) estende executor/web com transporte V2, decisões de famílias e DML aprovado de catálogo na mesma transação. Menções a “somente Master/log” abaixo preservam o alcance anterior. Evidências numéricas são datadas, sem nova verificação de produção nesta revisão documental.
+## CAD-COM-01 — campos comerciais opcionais do Master ERP (19/10/2026)
+
+`prepararAprovacaoArquivoCadastroMestre` → adapter Agrup. Com./Descrição (Agrup. Com.) → Preview e manifesto RECONSTRUCAO_UNIVERSO_V2 → transporte CADASTRO_MESTRE_DADOS_V3 de onze posições → revalidação servidor/locks → executor central → duas colunas TEXT NULL no Master, cobertas pelo snapshot integral e provas finais. Valores vazios comerciais limpam o existente para NULL; ausente preserva. Versões antigas exigem novo Preview/aprovação; GET de lotes V1 permanece compatível. `getCadastroMestreErp()` continua SELECT integral `*`; consulta e Preview exibem os novos campos separadamente de Agrup. Prod. Sem alteração em UI/API/dimensões de Custos/OP, RLS, agrupamentos operacionais ou fatos. `data_referencia`/`criado_em` preservados. Migration preparada e não aplicada remotamente. [Contrato completo](cadastro-mestre-agrupamento-comercial-erp.md).
+
+Leitura vigente em 16/10/2026: CUSTOS-ERP-01 governa a classificação analítica de Custos; CUSTOS-PAGE-01 governa completude de Custos; CAD-ERP-VIEW-01 separa consulta ERP; [CAD-FAM-01](cadastro-mestre-familias-erp.md) estende executor/web com transporte V2, decisões de famílias e DML aprovado de catálogo na mesma transação. Menções a “somente Master/log” abaixo preservam o alcance anterior. Evidências numéricas são datadas; a nova validação somente GET de CUSTOS-ERP-01 está no registro de auditoria vinculado ao seu contrato.
 
 ## CUSTOS-PAGE-01 — leituras integrais da Auditoria de Custos (16/10/2026)
 
@@ -33,6 +37,18 @@ UI `createProductMasterController.reload` → `getProductMaster()` → SELECTs p
 ## Diagnóstico — CAD-ENV-01 (09/10/2026)
 
 Administrador → `api.verificarAmbienteReconstrucaoCadastroMestre()` → cliente HTTP GET `/api/reconstruir-cadastro-mestre?verificar=1` com sessão → getUser/allowlist → Storage getBucket e PostgreSQL BEGIN READ ONLY/contexto/guardas/privilégios/policies/ROLLBACK. Nenhum executor/lote/upload/DML. Disponível com flag false; POST verificar é recusado. Frontend estático limitado a dist, administrativo só na função. [Contrato de preparação](./cadastro-mestre-preparacao-ambiente.md).
+
+## CUSTOS-ERP-01 — classificação analítica em memória (16/10/2026)
+
+`getMasters()` lê integralmente fatos, operacional, Master ERP e catálogos. `classificarCustos()` projeta todos os códigos com Custos, inclusive sem linha operacional, antes das opções e cascata. A presença do código normalizado no Master decide a fonte de origem/família: presente usa `origem_cod`/`familia_cod` resolvidos exclusivamente por `categorias_*.codigo` exato → FK `id`; ausente usa `origem_id`/`familia_id` operacional. A UI usa as descrições oficiais dessas FKs. Vazio, código sem correspondência ou ambíguo no Master produz null, nunca fallback por campo, texto ou ID. Identidade duplicada/inválida do Master bloqueia a projeção.
+
+`getHistorico`, `getLatestImportComparison`, `getTopVariacoesImportacao` e `getProductHistory` usam o mesmo núcleo. O enriquecimento ocorre antes da cascata; `buildReportRows` e os gráficos temporais consomem o histórico enriquecido, e XLSX consome `state.reportRows` com o filtro rápido/ordenação existentes. Drill-through mantém o código clicado na fila e o recorte temporal, acrescentando a classificação efetiva ao retorno.
+
+`masters.dicionario`/`hierarquia` representam a projeção analítica, sem substituir registros persistidos. `agrupamento_cod` continua operacional; descrição preserva a regra de cada fluxo (snapshot do fato no drill-through); a consulta Master seleciona somente código/origem/família. Não consulta agrupamento ERP nem sincroniza dimensões. Diagnóstico de agrupamento continua operacional. OP, Cadastro, Preview, reconstrução e escritas não mudam. Nenhum schema, migration, tabela, RPC ou SQL no frontend.
+
+Todas as fontes usam o leitor integral existente: páginas de 500/count exact, ordem total, IN operacional em blocos sem teto total. Erro/incompletude/contagem alterada impedem sucesso parcial; falha do Master não vira fallback. Leituras independentes não são snapshot transacional; ausência de cache mantém as consultas completas a cada chamada. A classificação reflete o cadastro atual, sem histórico de categorias. `data_referencia` permanece competência; `criado_em` permanece importação; recortes e cálculos não mudam.
+
+Este contrato sucede, apenas para origem/família analíticas de Custos, a exclusividade operacional dos contratos anteriores. Evidências, testes, limitações e arquivos em [auditoria CUSTOS-ERP-01](../auditoria/custos-classificacao-erp.md).
 
 ## Contrato vigente — CAD-PAYLOAD-01 / CAD-EXEC-WEB-01 (09/10/2026)
 
@@ -90,7 +106,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
-| UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` como fonte única de Origem/Família | Sim | ✅ (TAREFA-3) |
+| UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` operacional; Custos usa a projeção CUSTOS-ERP-01 | Sim | ✅ (TAREFA-3) |
 | UI → API | `api.getCadastroMestrePreviewContext()` | SELECT integral/paginado do Master ERP/categorias para XLSM/XLSX/XLS, sem escrita ou fallback vazio | Sim | ✅ (CAD-XLS-01) |
 | UI → API | `api.getCadastroMestreErp()` | Consulta integral Master/origens/famílias, sem operacional/fatos/mapa; estado ERP independente | Sim | ✅ (CAD-ERP-VIEW-01) |
 | UI → HTTP | `api.getCadastroMestreExecutionAvailability()` / `api.verificarAmbienteReconstrucaoCadastroMestre()` | GET autorizado; disponibilidade sem conectar ao PostgreSQL e diagnóstico somente leitura | Sim | Contratos web/diagnóstico acima |

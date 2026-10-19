@@ -202,7 +202,7 @@ export function criarCadastroMestreWebHandler({ env = process.env, criarSupabase
           metadados_origem->>'snapshot_referencia' AS snapshot_referencia,
           metadados_origem->'catalogo_familias'->'registros_inseridos' AS familias_inseridas,
           metadados_origem->'catalogo_familias'->'registros_atualizados' AS familias_atualizadas FROM public.log_importacao_cadastro_mestre
-          WHERE identificador_lote=$1 AND metadados_origem->>'contrato'='RECONSTRUCAO_UNIVERSO_V1'`, [loteConsulta]);
+          WHERE identificador_lote=$1 AND metadados_origem->>'contrato' IN ('RECONSTRUCAO_UNIVERSO_V1','RECONSTRUCAO_UNIVERSO_V2')`, [loteConsulta]);
         return res.status(200).json({ identificador_lote: loteConsulta, resultado: rows[0] || null });
       }
       const storage = criarSupabase(cfg.url, cfg.secret, { auth: { persistSession: false, autoRefreshToken: false } }).storage;

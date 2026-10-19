@@ -1,5 +1,9 @@
 # Capítulo 15 — Migrações
 
+## CAD-COM-01 — migration aditiva preparada (19/10/2026)
+
+[`20261019163220_cadastro_mestre_agrupamento_comercial_erp.sql`](../../sql/20261019163220_cadastro_mestre_agrupamento_comercial_erp.sql), criada pelo Supabase CLI em diretório temporário e preservada no diretório SQL do projeto. Adiciona somente duas colunas TEXT NULL sem default no Master: `agrupamento_comercial_erp_cod` e `agrupamento_comercial_erp_descricao`. Sem backfill/DML, constraint de obrigatoriedade, FK, tabela nova, índice, ponte Kustos ou alteração operacional/fatos. Aplicada e validada somente em PGlite local; **não aplicada no Supabase remoto**. Backup estrutural/dados deve anteceder futura aplicação autorizada. Remover colunas futuramente exige preservar seus dados e revisão própria, sem rollback destrutivo automático. UI/função V3 e novo Preview/aprovação são necessários após a migration. `data_referencia` e `criado_em` dos fatos continuam competência/importação. [Contrato](cadastro-mestre-agrupamento-comercial-erp.md).
+
 ## CAD-FAM-SCHEMA-01 — descrição de família não é identidade (15/10/2026)
 
 Aplicada, mediante solicitação humana, **20261015182351 / categorias_familia_descricao_nao_unica**. [Migration isolada](../../sql/20261015182351_categorias_familia_descricao_nao_unica.sql): transação com limites de espera/execução, removendo exclusivamente `categorias_familia_descricao_key` com `RESTRICT`, sem `CASCADE` ou DML. O índice pertencente à constraint também é removido pelo PostgreSQL; os demais objetos permanecem intactos. `codigo` continua sendo a identidade de negócio; códigos diferentes podem compartilhar um rótulo.

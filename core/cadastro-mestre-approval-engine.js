@@ -28,7 +28,21 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
   const catalogo = proporCatalogoFamiliasCadastroMestre(reconstruir ? linhas : [], reconstruir ? preview.produtos : [], contexto.familias);
   const errosFamilias = catalogo.familias.filter(f => ['CONFLITO', 'CATALOGO_AMBIGUO'].includes(f.status))
     .map(f => ({ linha: null, codigo_produto: null, codigo_familia: f.codigo, motivo: `Família ${f.codigo}: ${f.status}. Corrija a fonte/catálogo e gere novo Preview.` }));
-  const bloqueado = reconstruir && (preview.status !== 'OK' || !preview.produtos.length || errosFamilias.length > 0);
+  // Conflitos do mesmo código comercial não escolhem descrição vencedora.
+  const comerciais = new Map();
+  const codigosComerciais = new Set(preview.produtos.map(p => p.calculado.agrupamento_comercial_erp_cod).filter(c => c !== null));
+  for (const row of linhas) {
+    const codigo = textoCadastro(row.agrupamento_comercial_erp_cod);
+    const descricao = textoCadastro(row.agrupamento_comercial_erp_descricao);
+    if (!codigosComerciais.has(codigo) || descricao === null) continue;
+    if (!comerciais.has(codigo)) comerciais.set(codigo, new Set());
+    comerciais.get(codigo).add(descricao);
+  }
+  const errosComerciais = [...comerciais].filter(([, descricoes]) => descricoes.size > 1).map(([codigo]) => ({
+    linha: null, codigo_produto: null, codigo_agrupamento_comercial: codigo,
+    motivo: `Agrup. Com. ${codigo}: descrições conflitantes no arquivo. Corrija a fonte e gere novo Preview.`
+  }));
+  const bloqueado = reconstruir && (preview.status !== 'OK' || !preview.produtos.length || errosFamilias.length > 0 || errosComerciais.length > 0);
   const operacoes = [];
   const preservacoes = [];
   const pendencias = [];
@@ -52,11 +66,11 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
     const bloqueios = foraEscopo.map(d => ({ campo: d.campo, atual: d.atual, recebido: d.recebido, motivo: 'ALTERACAO_FORA_ESCOPO_FASE_3_3' }));
     for (const bloqueio of bloqueios) pendencias.push({ codigo_produto: codigo, ...bloqueio, status: 'BLOQUEADO', impede_dado_erp_bruto: true });
     for (const diferenca of produto.diferencas) {
-      if (diferenca.fornecido && diferenca.recebido === null) preservacoes.push({
+      if (diferenca.fornecido && diferenca.recebido === null && !diferenca.campo.startsWith('agrupamento_comercial_erp_')) preservacoes.push({
         codigo_produto: codigo, campo: diferenca.campo, atual: diferenca.atual,
         tipo: novo ? 'CAMPO_VAZIO_OMITIDO_NO_INSERT' : 'CAMPO_VAZIO_PRESERVA_EXISTENTE', operacao: null
       });
-      else if (!diferenca.fornecido) preservacoes.push({ codigo_produto: codigo, campo: diferenca.campo, atual: diferenca.atual, tipo: 'CAMPO_NAO_FORNECIDO', operacao: null });
+      else if (!diferenca.fornecido && (!diferenca.campo.startsWith('agrupamento_comercial_erp_') || diferenca.atual !== null)) preservacoes.push({ codigo_produto: codigo, campo: diferenca.campo, atual: diferenca.atual, tipo: 'CAMPO_NAO_FORNECIDO', operacao: null });
     }
     const adicionar = (categoria, dados, diferencas) => {
       operacoes.push({
@@ -74,15 +88,17 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       });
     };
     if (novo) {
-      const dados = { codigo_produto: codigo, ...Object.fromEntries(Object.entries(produto.recebido).filter(([, valor]) => valor !== null)) };
+      const dados = { codigo_produto: codigo, ...Object.fromEntries(Object.entries(produto.recebido).filter(([campo, valor]) => valor !== null || campo.startsWith('agrupamento_comercial_erp_'))) };
       adicionar('NOVO_PRODUTO', dados, produto.diferencas);
     } else {
       const antes = operacoes.length;
       const campos = [['descricao', 'ATUALIZAR_DESCRICAO'], ['agrupamento_erp_valor', 'ATUALIZAR_AGRUPAMENTO_ERP'],
-        ...(reconstruir ? [['origem_cod', 'ATUALIZAR_ORIGEM_ERP'], ['familia_cod', 'ATUALIZAR_FAMILIA_ERP']] : [])];
+        ...(reconstruir ? [['origem_cod', 'ATUALIZAR_ORIGEM_ERP'], ['familia_cod', 'ATUALIZAR_FAMILIA_ERP']] : []),
+        ['agrupamento_comercial_erp_cod', 'ATUALIZAR_CODIGO_AGRUPAMENTO_COMERCIAL_ERP'],
+        ['agrupamento_comercial_erp_descricao', 'ATUALIZAR_DESCRICAO_AGRUPAMENTO_COMERCIAL_ERP']];
       for (const [campo, categoria] of campos) {
         const diferenca = produto.diferencas.find(d => d.campo === campo);
-        if (diferenca.tipo === 'ALTERACAO_POTENCIAL' && diferenca.recebido !== null) adicionar(categoria, { [campo]: diferenca.recebido }, [diferenca]);
+        if (diferenca.tipo === 'ALTERACAO_POTENCIAL' && (diferenca.recebido !== null || campo.startsWith('agrupamento_comercial_erp_'))) adicionar(categoria, { [campo]: diferenca.recebido }, [diferenca]);
       }
       if (antes === operacoes.length && !bloqueios.length) semAlteracao.push(codigo);
     }
@@ -120,17 +136,17 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
   const inserts = operacoes.filter(o => o.tabela === 'dicionario_master_produtos' && o.acao === 'INSERT');
   const updates = operacoes.filter(o => o.tabela === 'dicionario_master_produtos' && o.acao === 'UPDATE');
   return {
-    versao_contrato: reconstruir ? 'RECONSTRUCAO_UNIVERSO_V1' : 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
+    versao_contrato: reconstruir ? 'RECONSTRUCAO_UNIVERSO_V2' : 'FASE_3_3', somente_preparacao: true, execucao_permitida: false,
     modo: reconstruir ? 'RECONSTRUCAO_UNIVERSO' : 'INCREMENTAL', reconstrucao_bloqueada: bloqueado,
     universo: reconstruir ? [...elegiveis].sort(comparar) : [],
-    fonte: copiar(fonte), status: errosFamilias.length ? 'COM_ERROS' : preview.status,
+    fonte: copiar(fonte), status: errosFamilias.length || errosComerciais.length ? 'COM_ERROS' : preview.status,
     ...(reconstruir ? { catalogo_familias: catalogo } : {}),
     resumo_base: { produtos: preview.produtos.length, existentes: existentes.length, novos: inserts.length,
       existentes_sem_alteracao: existentes.length - alteradosBase, existentes_com_alteracao: alteradosBase,
       alteracoes_descricao: operacoes.filter(o => o.categoria === 'ATUALIZAR_DESCRICAO').length },
     resumo: {
       ...preview.resumo, inserts_propostos: inserts.length, updates_propostos: updates.length,
-      erros: preview.resumo.erros + errosFamilias.length,
+      erros: preview.resumo.erros + errosFamilias.length + errosComerciais.length,
       produtos_existentes_com_update: new Set(updates.map(o => o.codigo_produto)).size,
       operacoes_propostas: operacoes.length, operacoes_bloqueadas: operacoes.filter(o => !o.aprovavel).length,
       existentes_sem_operacao: semAlteracao.length, produtos_fora_conjunto_preservados: reconstruir ? 0 : preservados.length,
@@ -141,11 +157,14 @@ export function criarManifestoCadastroMestre(linhas, contexto, fonte = {}) {
       agrupamentos_erp_distintos: porValor.size,
       agrupamentos_erp_novos: inserts.filter(o => Object.hasOwn(o.dados, 'agrupamento_erp_valor')).length,
       agrupamentos_erp_existentes: existentes.filter(p => p.agrupamento.recebido !== null).length,
+      agrupamentos_comerciais_preenchidos: preview.produtos.filter(p => p.calculado.agrupamento_comercial_erp_cod !== null).length,
+      agrupamentos_comerciais_vazios: preview.produtos.filter(p => p.calculado.agrupamento_comercial_erp_cod === null).length,
+      agrupamentos_comerciais_distintos: codigosComerciais.size,
       preservacoes_campos: preservacoes.length
     },
     distribuicao_agrupamento: [...porValor.values()].sort((a, b) => comparar(a.valor, b.valor)),
     operacoes, preservacoes, preservados: reconstruir ? [] : preservados, remocoes, sem_alteracao: semAlteracao,
-    pendencias, produtos: preview.produtos, erros: [...preview.erros, ...errosFamilias]
+    pendencias, produtos: preview.produtos, erros: [...preview.erros, ...errosFamilias, ...errosComerciais]
   };
 }
 

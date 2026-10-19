@@ -10,11 +10,13 @@ const LOG = 'public.log_importacao_cadastro_mestre';
 const FAMILIAS = 'public.categorias_familia';
 // Famílias têm prova integral própria, permitindo somente os patches aprovados.
 const PROTEGIDAS = ['apontamentos_op', 'categorias_agrupamento', 'categorias_origem', 'dicionario_produtos', 'historico_custos', 'mapa_produtos'];
-const CAMPOS = ['descricao', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor'];
+const CAMPOS = ['descricao', 'origem_cod', 'familia_cod', 'agrupamento_erp_valor', 'agrupamento_comercial_erp_cod', 'agrupamento_comercial_erp_descricao'];
 const serializar = serializarDeterministico;
 export const hashReconstrucao = value => createHash('sha256').update(serializar(value)).digest('hex');
 
 export async function contextoAtual(client) {
+  // Falha antes de snapshot/log/DML quando a migration aditiva ainda não existe.
+  await client.query(`SELECT agrupamento_comercial_erp_cod,agrupamento_comercial_erp_descricao FROM ${MASTER} LIMIT 0`);
   const ler = async (table, fields, key) => (await client.query(`SELECT to_jsonb(t) AS registro FROM (SELECT ${fields} FROM public.${table} ORDER BY ${key}) t`)).rows.map(r => r.registro);
   // Uma única conexão/transaction; nenhuma consulta ao operacional como fonte ERP.
   return { produtos: await ler('dicionario_master_produtos', '*', 'codigo_produto'),

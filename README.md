@@ -10,7 +10,7 @@ Encontrar problemas em segundos: mostrar o que mudou, quanto, em qual competênc
 
 ## 3. Como funciona
 
-Planilhas de custos e apontamentos de OP passam por leitura, normalização, preview e validação antes da persistência. A investigação combina os fatos ERP com a classificação operacional dos produtos; cálculos e interpretação ficam nos motores puros do Kustos.
+Planilhas de custos e apontamentos de OP passam por leitura, normalização, preview e validação antes da persistência. A investigação de Custos usa origem/família do Master ERP quando o código existe nele, com fallback operacional apenas para códigos fora do Master; agrupamento continua operacional. A OP usa a classificação operacional; cálculos e interpretação ficam nos motores puros do Kustos.
 
 Os dois eixos temporais são distintos: **`data_referencia` é competência operacional**; **`criado_em` é evento de importação**. Intervalo inclui as competências entre início e fim; Comparação considera somente as duas competências escolhidas. Fila, gráficos e drill-through compartilham o recorte.
 
@@ -31,7 +31,7 @@ Procedimentos e limites: [Manual do Usuário](docs/manuais/manual-usuario.md).
 
 Frontend estático em HTML/CSS/JavaScript ES Modules, com bibliotecas CDN. `view/` apresenta e orquestra; `core/` calcula sem I/O; `src/services/api.js` concentra o acesso Supabase e delega o HTTP administrativo. Funções Vercel em `api/` tratam gravação documental e execução autorizada do Master. O executor PostgreSQL administrativo é compartilhado com o CLI e permanece fora do browser.
 
-`historico_custos` é fato temporal; `dicionario_produtos` e `categorias_*` fornecem a classificação operacional de Custos/OP. `dicionario_master_produtos` guarda o universo ERP, separado da dimensão operacional. Agrupamento ERP bruto não se converte em agrupamento Kustos por texto ou inferência. [Modelo de dados](docs/arquitetura/banco-de-dados.md) e [matriz de contratos](docs/arquitetura/matriz-contratos-operacionais.md) detalham os limites.
+`historico_custos` é fato temporal; `dicionario_produtos` e `categorias_*` fornecem a classificação operacional. Em Custos, `core/custos-classification-engine.js` projeta em memória origem/família do `dicionario_master_produtos`, resolvidas por código exato dos catálogos, antes da cascata e da análise. O fallback operacional vale somente fora do Master; a projeção não grava cadastros nem fatos. OP e manutenção operacional conservam sua fonte. Classificações de agrupamento provenientes do ERP são dados opcionais e independentes da classificação investigativa do Kustos. O Master preserva Agrup. Prod. e, em campos próprios, Agrup. Com. e sua descrição; nenhum deles preenche agrupamento Kustos. [Contrato comercial ERP](docs/arquitetura/cadastro-mestre-agrupamento-comercial-erp.md). [Modelo de dados](docs/arquitetura/banco-de-dados.md) e [matriz de contratos](docs/arquitetura/matriz-contratos-operacionais.md) detalham os limites.
 
 ## 6. Estrutura do projeto
 
@@ -83,10 +83,11 @@ Para mudanças de código, os scripts de qualidade são `npm run lint`, `npm run
 
 ## 10. Estado atual
 
-Estado do **checkout documentado em 16/10/2026**, sem nova verificação de produção nesta revisão:
+Estado do **checkout documentado em 19/10/2026**. A [validação CUSTOS-ERP-01](docs/auditoria/custos-classificacao-erp.md) usou apenas GET contra os dados reais e interface local; os demais estados abaixo mantêm as referências anteriores:
 
 - Investigação de Custos/OP, Cadastro e Documentação implementados. Bootstrap exige sessão/login; isso não comprova políticas RLS do ambiente remoto.
+- Classificação analítica de Custos pelo Master ERP implementada em memória e validada localmente; publicação fora desta etapa. Cadastro Operacional e agrupamento não são sincronizados.
 - Leituras integrais de Cadastro/Custos implementadas com paginação de 500, contagem exata e recusa de resultados incompletos. Paginação entre requisições não é snapshot transacional.
-- Consulta ERP independente e catálogo de famílias no Preview V2 implementados. Os registros de entrega ainda deixam publicação dessas alterações e execução real das novas propostas de famílias pendentes de etapa autorizada.
+- Consulta ERP independente, catálogo de famílias e agrupamento comercial opcional implementados. Agrup. Com. requer a migration aditiva local e UI/função compatíveis com transporte V3, ainda sem aplicação/publicação nesta etapa. Os registros de entrega ainda deixam publicação dessas alterações e execução real das novas propostas de famílias pendentes de etapa autorizada.
 - Reconstrução do Master ERP já foi confirmada nos registros de 15/10; antigas contagens de 5.706 e expectativa de 860 pertencem às fases anteriores. Quantidades são evidências datadas, nunca valores fixos do produto.
 - Dívidas abertas incluem cascata compartilhada, HTML seguro, cache de masters, separação da API/validação e LOG-02: timestamps distintos de chunks ainda podem representar um mesmo lote lógico. Prioridades e limites estão no [backlog](docs/auditoria/backlog-priorizado.md).

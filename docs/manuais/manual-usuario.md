@@ -1,6 +1,6 @@
 # Manual do Usuário — Kustos Germani
 
-Guia do comportamento implementado no checkout, revisado em **16/10/2026**. Publicação das entregas recentes é acompanhada no [ROADMAP](../../ROADMAP.md); este manual não confirma o estado do ambiente remoto. Instalação: [Manual Técnico](manual-tecnico.md). Rotina e recuperação: [Manual de Operação](manual-operacao.md).
+Guia do comportamento implementado no checkout, revisado em **19/10/2026**. Publicação das entregas recentes é acompanhada no [ROADMAP](../../ROADMAP.md); este manual não confirma o estado do ambiente remoto. Instalação: [Manual Técnico](manual-tecnico.md). Rotina e recuperação: [Manual de Operação](manual-operacao.md).
 
 ## 1. Acesso e áreas da aplicação
 
@@ -36,6 +36,9 @@ Reimportar produto/competência atualiza o registro, em vez de duplicá-lo. O ba
 
 Na área **Custos**, digite código ou descrição na busca rápida e escolha a sugestão, ou defina o período e refine Origem → Família → Agrupamento → Produto. A cascata mostra apenas dados existentes e remove seleções dependentes quando o filtro anterior muda. Depois da primeira análise, alterações de filtros atualizam o relatório; **Analisar** permite solicitar a execução. Chips mostram filtros ativos e podem ser removidos pelo x.
 
+Em Custos, Origem/Família usam a classificação oficial do Master ERP para códigos que existem nele. Produtos fora do Master preservam a classificação operacional. Campo ERP vazio ou sem correspondência no catálogo permanece sem classificação. Agrupamento continua sendo o manual do Kustos. Isso não atualiza o Cadastro Operacional.
+
+Para investigar uma família ERP, escolha Origem → Família, mantenha **Item/Produto = TODOS** e clique **Analisar**. A fila contém todos os produtos dessa família com fatos no período; escolher um produto restringe a análise individual. Gráficos, drill-through e exportação seguem o mesmo conjunto e recorte: `data_referencia` é competência, `criado_em` é importação.
 ### Ler a fila
 
 Os quatro KPIs são clicáveis: Itens analisados, Alertas (>5%), Mudanças de Regime e Média de variação. O filtro de média mostra variações positivas. Apesar do rótulo **Alertas (>5%)**, o critério é variação absoluta **≥ 5%**, incluindo quedas, entre última e penúltima importação (`criado_em`) no recorte de competência. Sem comparativo anterior, o delta não representa o custo inteiro.
@@ -84,14 +87,14 @@ O aviso **código(s) importado(s) ausente(s) do cadastro operacional** compara c
 
 Consulta independente do universo ERP, sem editar/excluir/cadastrar/classificar. Totais são dinâmicos; busca por código/descrição, origem/família e páginas de 50 consideram todo o universo carregado. Alternar fontes preserva seus filtros/página. **Atualizar consulta** relê os dados, conserva filtros válidos e retorna à primeira página; não sincroniza bases.
 
-Origem/família usam códigos ERP exatos e mostram descrição ou pendência explícita. **Agrupamento ERP** é valor bruto, separado da classificação operacional. Falha de carga não vira zero nem usa o operacional como substituto.
+Origem/família usam códigos ERP exatos e mostram descrição ou pendência explícita. **Agrup. Prod. (ERP)** é valor bruto. **Agrup. Com. (ERP)** e **Descrição (Agrup. Com.)** são campos próprios e opcionais; ausência aparece como não informado. Classificações de agrupamento provenientes do ERP são dados opcionais e independentes da classificação investigativa do Kustos. Falha de carga não vira zero nem usa o operacional como substituto.
 
 ### Preview, aprovação e execução
 
 1. Use **Preview mestre (XLSM / XLSX / XLS)** com o original ERP; não é necessária conversão do XLS.
-2. Confira linhas, produtos válidos, novos, alterações, preservações de campos e **remoções do Master**. Filtros: Tipo P/C → Descr. (Origem) contendo Produzido/Revenda → excluir descrição com inativo/EXLUIR. Produtos fora do universo são removíveis somente do Master; vazios de quem permanece preservam o existente.
+2. Confira linhas, produtos válidos, novos, alterações, preservações de campos e **remoções do Master**. Filtros: Tipo P/C → Descr. (Origem) contendo Produzido/Revenda → excluir descrição com inativo/EXLUIR. Produtos fora do universo são removíveis somente do Master; vazios de quem permanece preservam o existente, exceto Agrup. Com. e sua descrição: célula comercial vazia propõe limpar para NULL. Coluna comercial ausente preserva. Produto sem agrupamento permanece válido.
 3. Confira separadamente **Catálogo de famílias ERP**: código, rótulo, situação, impacto e decisão. Rótulos iguais podem identificar códigos diferentes; conflitos bloqueiam e exigem corrigir a fonte e gerar novo Preview.
-4. Escolha Aprovado/Rejeitado/Pendente por proposta ou ações globais. Aprovar produto não aprova família. Descrição/agrupamento de existente têm decisões próprias; novo produto é indivisível. Qualquer proposta pendente/rejeitada impede a execução inteira.
+4. Escolha Aprovado/Rejeitado/Pendente por proposta ou ações globais. Aprovar produto não aprova família. Descrição e campos de agrupamento de existente têm decisões próprias, inclusive limpeza comercial para vazio; novo produto é indivisível. Qualquer proposta pendente/rejeitada impede a execução inteira.
 5. **Baixar revisão (sem gravar)** salva evidência local. **Fechar** descarta a revisão. Seleção, decisão e download não escrevem.
 6. Com aprovação integral e disponibilidade administrativa, **Executar reconstrução…** abre outra confirmação. Confira as contagens atuais e digite `RECONSTRUIR <quantidade final>`. Cancelar não envia execução.
 

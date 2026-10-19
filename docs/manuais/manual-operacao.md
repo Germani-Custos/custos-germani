@@ -1,6 +1,6 @@
 # Manual de Operação — Kustos Germani
 
-Procedimentos atuais de manutenção e conferência, revisados em **16/10/2026**. O [ROADMAP](../../ROADMAP.md) distingue implementação local de publicação/execução. Quantidades reais e status de ambiente citados nas provas são datados; esta revisão não acessou produção. Uso da tela: [Manual do Usuário](manual-usuario.md). Implementação: [Manual Técnico](manual-tecnico.md).
+Procedimentos atuais de manutenção e conferência, revisados em **19/10/2026**. O [ROADMAP](../../ROADMAP.md) distingue implementação local de publicação/execução. Quantidades reais e status de ambiente citados nas provas são datados; esta revisão não acessou produção. Uso da tela: [Manual do Usuário](manual-usuario.md). Implementação: [Manual Técnico](manual-tecnico.md).
 
 ## 1. Rotina mensal de Custos
 
@@ -16,7 +16,7 @@ Intervalo considera toda a faixa; Comparação considera só duas competências,
 
 ## 2. Classificação e dados incompletos
 
-O operacional é `dicionario_produtos`, comum a Custos/OP; Master ERP não o substitui. Produto novo sem classificação deve ser sinalizado. Confira no Cadastro Operacional e use a manutenção autorizada da classificação, com referências reais dos catálogos. Não inferir Origem/Família/Agrupamento por descrição, nem usar reconstrução ERP para corrigir classificação operacional.
+O operacional é `dicionario_produtos`, preservado para manutenção e OP. Em Custos, origem/família do Master enriquecem a análise em memória para os códigos existentes nele, sem atualizar o operacional; códigos fora do Master mantêm o fallback operacional. Agrupamento continua operacional. Produto novo sem classificação deve ser sinalizado. Confira no Cadastro Operacional e use a manutenção autorizada da classificação, com referências reais dos catálogos. Não inferir Origem/Família/Agrupamento por descrição, nem usar reconstrução ERP para corrigir classificação operacional.
 
 A view `vw_produtos_orfaos_agrupamento` é apoio SQL de triagem; a API faz diagnóstico próprio nas tabelas, tolerando chave de agrupamento `codigo`/`id`/`cod`. **“Não foi possível validar produtos sem agrupamento.”** indica indisponibilidade; não interpretar como zero. `SEM_AGRUPAMENTO` e ausência de classificação seguem o [modelo documentado](../arquitetura/banco-de-dados.md).
 
@@ -44,12 +44,13 @@ Referências datadas para comparação, sem tratar números como metas permanent
 
 A consulta respeita a visibilidade/RLS do cliente e não é snapshot transacional entre requisições. Recarregar masters após publicação não preenche classificações ausentes.
 
+Para conferir a classificação analítica de Custos, recarregue a página, selecione uma origem e família ERP, mantenha Item/Produto em TODOS e compare os códigos da fila com os produtos dessa família que possuem custos no recorte. Depois selecione um produto e abra seu histórico; exportação deriva da mesma fila. Não preencher o operacional como teste. Campos ERP sem resolução não autorizam fallback; erro de página/contagem interrompe a leitura. A projeção reflete o cadastro atual e não é classificação histórica por competência. `data_referencia` continua competência e `criado_em` importação. [Evidências GET e teste local](../auditoria/custos-classificacao-erp.md).
 ## 5. Reconstrução administrativa do Master
 
 O procedimento exige autorização própria. Consulta, seleção do arquivo, decisões e download não executam carga. Não reexecutar a migration pontual da Fase 3.4 nem chamar o importador legado para aplicar o manifesto atual.
 
-1. Confirmar versão compatível de UI/função V2 e gerar novo Preview do original XLS/XLSX/XLSM contra o contexto atual. Revisão antiga ou divergência de arquivo/contexto exige regeneração.
-2. Conferir filtros, universo, remoções do Master, campos preservados e propostas de famílias/produtos separadamente. Código identifica família; rótulos podem repetir entre códigos. Conflito bloqueia, vazio preserva. Não inserir famílias manualmente como teste.
+1. Confirmar migration comercial aditiva aplicada em etapa autorizada e versão compatível de UI/função V3 e gerar novo Preview do original XLS/XLSX/XLSM contra o contexto atual. Revisão antiga ou divergência de arquivo/contexto exige regeneração.
+2. Conferir filtros, universo, remoções do Master, campos preservados e propostas de famílias/produtos separadamente. Código identifica família; rótulos podem repetir entre códigos. Conflito bloqueia. Nos campos comerciais, célula vazia limpa o existente para NULL; coluna ausente preserva. Nos demais campos, vazio preserva. Não inserir famílias manualmente como teste.
 3. Aprovar integralmente todas as propostas permitidas; qualquer pendente/rejeitada bloqueia a carga inteira. Guardar original/revisão e contagens atuais, sem reutilizar a antiga expectativa de 860 como comando.
 4. Verificar ambiente por GET autenticado autorizado, mantendo execução desabilitada durante diagnóstico. Sucesso de leitura não prova upload/rollback real nem autoriza execução.
 5. Em etapa autorizada, executar pela aplicação com segunda confirmação digitada, ou usar CLI explícito conforme o [contrato central](../arquitetura/cadastro-mestre-reconstrucao.md#operação-e-exemplo). Não combinar caminhos nem repetir automaticamente.

@@ -23,7 +23,9 @@ export function prepararConsultaCadastroMestreErp(contexto) {
     codigos.add(codigo);
     return { codigo_produto: codigo, descricao: textoCadastro(produto.descricao),
       origem: categoria(produto.origem_cod, contexto.origens), familia: categoria(produto.familia_cod, contexto.familias),
-      agrupamento_erp_valor: textoCadastro(produto.agrupamento_erp_valor) };
+      agrupamento_erp_valor: textoCadastro(produto.agrupamento_erp_valor),
+      agrupamento_comercial_erp_cod: textoCadastro(produto.agrupamento_comercial_erp_cod),
+      agrupamento_comercial_erp_descricao: textoCadastro(produto.agrupamento_comercial_erp_descricao) };
   }).sort((a, b) => a.codigo_produto < b.codigo_produto ? -1 : a.codigo_produto > b.codigo_produto ? 1 : 0);
   const opcoes = campo => [...new Map(produtos.filter(p => p[campo].codigo !== null)
     .map(p => [p[campo].codigo, { value: p[campo].codigo, label: p[campo].label }])).values()]

@@ -1,5 +1,7 @@
 # CAD-EXEC-WEB-01 — Execução explícita do Cadastro Mestre (09/10/2026)
 
+Contrato vigente CAD-COM-01 (19/10/2026): transporte **CADASTRO_MESTRE_DADOS_V3**, onze posições, manifesto **RECONSTRUCAO_UNIVERSO_V2**. Acrescenta Agrup. Com. e descrição opcionais; célula vazia limpa para NULL, coluna ausente preserva. Sem alteração de teto JSON, filtros, aprovação integral, Auth/allowlist, snapshot, executor ou guardas de escrita protegida. V1/V2 de transporte são recusados; novo Preview/aprovação obrigatório. [Contrato comercial e migration necessária](cadastro-mestre-agrupamento-comercial-erp.md).
+
 **Leitura documental em 16/10:** contrato web com extensão V2 indicada a seguir. As contagens 5.706 → 860, tentativa bloqueada e estados de deploy na seção de evidências pertencem a 09/10; [registros de 15/10](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026) confirmam reconstrução posterior. Não representam publicação da extensão de famílias nem status remoto de flag verificado hoje. Menções a categorias sem DML preservam a fase anterior; o alcance atual permite somente famílias aprovadas, conforme CAD-FAM-01.
 
 Contrato vigente **CAD-FAM-01 (15/10/2026)**: famílias entram na aprovação/revalidação e na mesma transação/snapshot do Master, com proteção específica. Transporte V2 exige novo Preview e publicação compatível de UI/função. Implementação/validação sem escrita de produção ou deploy. [Decisões, guardas e provas](./cadastro-mestre-familias-erp.md). Referências abaixo à ausência de DML em categorias descrevem a fase anterior.
@@ -49,19 +51,20 @@ Bucket previamente existente e privado, sem policies públicas de leitura/escrit
 
 O contrato anterior enviava o original em base64, eventualmente compactado, e rejeitava arquivos maiores que 16 MiB antes da compactação. O XLS informado (`cadastro mestre 8_10(1).xls`, 24.307.397 bytes) passou pelo Preview, mas foi bloqueado no cliente antes do POST: o identificador `CAD_UI` não chegou ao log ou ao Storage. O contrato abaixo substitui esse transporte na web sem alterar filtros/reconciliação ou simplesmente aumentar o limite do binário.
 
-O adapter de Preview mantém os valores dos campos ERP necessários de **todas** as linhas não vazias, inclusive excluídas e inválidas. A representação compacta usa o contrato `CADASTRO_MESTRE_DADOS_V2`:
+O adapter de Preview mantém os valores dos campos ERP necessários de **todas** as linhas não vazias, inclusive excluídas e inválidas. A representação compacta atual usa o contrato `CADASTRO_MESTRE_DADOS_V3`:
 
 ```js
 {
   dados_execucao: {
-    versao_transporte: 'CADASTRO_MESTRE_DADOS_V2',
+    versao_transporte: 'CADASTRO_MESTRE_DADOS_V3',
     fonte: {
       arquivo, tipo_arquivo, aba, colunas, linha_cabecalho,
       hash_arquivo_sha256
     },
     linhas: [
       [linha, codigo_produto, descricao, tipo, descr_origem,
-       origem_cod, familia_cod, agrupamento_erp_valor, familia_descricao_erp]
+       origem_cod, familia_cod, agrupamento_erp_valor, familia_descricao_erp,
+       agrupamento_comercial_erp_cod, agrupamento_comercial_erp_descricao]
     ]
   },
   decisoes,

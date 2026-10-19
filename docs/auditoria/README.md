@@ -68,3 +68,7 @@ O **único** ponto de XSS realmente explorável é o `fillSelect` em `core/repor
 ## Princípio que rege as correções
 
 Toda mudança deve respeitar o `AGENTS.md`: **"velocidade de investigação acima de tudo"** e a **separação FATO × DIMENSÃO** com a semântica `data_referencia` (competência) × `criado_em` (importação). Uma "melhoria" que viole esses contratos é regressão. Ao concluir um item, **atualize a documentação** (ver `docs/regras-gerais.md`).
+
+- [CUSTOS-ERP-01 — classificação analítica pelo Master](custos-classificacao-erp.md): contrato, validação somente GET e interface local, sem sincronização operacional.
+
+- [CAD-COM-01 — validação comercial ERP](cadastro-mestre-comercial-validacao.md): XLS real, contagens, hashes remotos, testes e migration pendente.
