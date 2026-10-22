@@ -46,6 +46,8 @@ Fato `historico_custos`: código, descrição snapshot, custos NUMERIC(18,4), co
 
 **LOG-02 permanece:** upserts em chunks de 400 podem produzir vários `criado_em` para um mesmo lote; dois timestamps distintos não garantem dois lotes reais. Não mudar esse contrato por reorganização documental. [Dívida e opções](../auditoria/robustez-erros-validacao.md).
 
+No drill-through, `view/ui-drill-through.js` usa o `data_referencia` já retornado por `getProductHistory()` para Competência (mês/ano) e Data (DD/MM/AAAA). A formatação da segunda coluna interpreta DATE em horário local, sem deslocar o dia por UTC. Não agrupa/deduplica pelo mês: cada registro retornado vira uma linha, preservando 05/10 e 14/10 quando ambos pertencem ao recorte. `criado_em` continua no payload e na ordenação/proveniência; não é exibido nesta coluna nem usado como fallback de data ausente/inválida (`-`). API, filtros e deltas permanecem iguais. [Provas CUSTOS-DATA-01](../auditoria/robustez-erros-validacao.md#custos-data-01--data-de-referência-no-histórico-do-produto-22102026).
+
 Descrição é exibição, código/FK define relacionamento e UUID é chave técnica. A regra de agrupamento está no modelo especializado; o diagnóstico tolera chave `codigo`/`id`/`cod`. Nunca deduzir categoria pelo texto.
 
 ## 4. Contratos da fachada e leituras completas

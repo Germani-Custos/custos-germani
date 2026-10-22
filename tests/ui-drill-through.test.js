@@ -28,7 +28,7 @@ describe('createDrillThroughController — renderDrillThrough', () => {
     global.Swal = { fire: vi.fn() };
   });
 
-  it('renderiza o histórico rotulando competência × importação e marca alerta ≥5%', async () => {
+  it('renderiza competência e data de referência e marca alerta ≥5%', async () => {
     api.getProductHistory.mockResolvedValue({
       data: [
         { data_referencia: '2026-01-01', criado_em: '2026-05-10T10:00:00Z', custo_variavel: 1, custo_direto_fixo: 2, custo_total: 3, delta: null, deltaPerc: null, descricao: 'Item A' },
@@ -53,6 +53,66 @@ describe('createDrillThroughController — renderDrillThrough', () => {
     // Painel exibido e rolado até a área.
     expect(dom.drillPanel.classList.removed).toContain('hidden');
     expect(dom.drillPanel.scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('exibe os cinco exemplos pela data_referencia, sem data/hora de importação', async () => {
+    const dates = ['2026-04-05', '2026-05-05', '2026-06-05', '2026-07-05', '2026-10-05'];
+    const history = dates.map(data_referencia => Object.freeze({
+      data_referencia, criado_em: '2026-08-07T15:15:17-03:00',
+      custo_variavel: 1, custo_direto_fixo: 2, custo_total: 3,
+      delta: null, deltaPerc: null, descricao: 'Item A'
+    }));
+    api.getProductHistory.mockResolvedValue({ data: history, error: null });
+    const dom = fakeDom();
+    await createDrillThroughController({ dom }).renderDrillThrough('001');
+
+    const html = dom.drillBody.innerHTML;
+    expect(html).toContain('<th title="Data de referência da competência">Data</th>');
+    expect(html).not.toContain('Importado em');
+    expect(html).not.toContain('07/08/2026');
+    expect(html).not.toContain('15:15:17');
+    const pairs = [...html.matchAll(/<td><strong>(.*?)<\/strong><\/td>\s*<td>(.*?)<\/td>/g)]
+      .map(([, competencia, data]) => [competencia, data]);
+    expect(pairs).toEqual([
+      ['abr. de 2026', '05/04/2026'], ['mai. de 2026', '05/05/2026'],
+      ['jun. de 2026', '05/06/2026'], ['jul. de 2026', '05/07/2026'],
+      ['out. de 2026', '05/10/2026']
+    ]);
+    expect(history.map(row => row.data_referencia)).toEqual(dates);
+    expect(history.every(row => row.criado_em === '2026-08-07T15:15:17-03:00')).toBe(true);
+  });
+
+  it.each([
+    ['2026-04-01', '01/04/2026'], ['2026-05-01', '01/05/2026'],
+    ['2026-06-01', '01/06/2026'], ['2026-07-15', '15/07/2026'],
+    ['2026-10-05', '05/10/2026'], ['2026-10-14', '14/10/2026'],
+    ['2024-02-29', '29/02/2024'], [null, '-'], ['', '-'], ['inválida', '-']
+  ])('preserva o dia de origem %s como %s, sem fallback para criado_em', async (data_referencia, expected) => {
+    api.getProductHistory.mockResolvedValue({
+      data: [{ data_referencia, criado_em: '2026-08-07T15:15:17-03:00',
+        custo_variavel: 1, custo_direto_fixo: 2, custo_total: 3, delta: null, deltaPerc: null }],
+      error: null
+    });
+    const dom = fakeDom();
+    await createDrillThroughController({ dom }).renderDrillThrough('001');
+    expect(dom.drillBody.innerHTML).toContain(`<td>${expected}</td>`);
+    expect(dom.drillBody.innerHTML).not.toContain('15:15:17');
+  });
+
+  it('mantém duas linhas de outubro para 05/10 e 14/10, sem agrupar pelo rótulo mensal', async () => {
+    api.getProductHistory.mockResolvedValue({
+      data: ['2026-10-05', '2026-10-14'].map(data_referencia => ({
+        data_referencia, criado_em: '2026-10-20T15:15:17-03:00',
+        custo_variavel: 1, custo_direto_fixo: 2, custo_total: 3, delta: null, deltaPerc: null
+      })), error: null
+    });
+    const dom = fakeDom();
+    await createDrillThroughController({ dom }).renderDrillThrough('001');
+    const html = dom.drillBody.innerHTML;
+    expect(html.match(/<strong>out\. de 2026<\/strong>/g)).toHaveLength(2);
+    expect(html).toMatch(/out\. de 2026<\/strong><\/td>\s*<td>05\/10\/2026<\/td>/);
+    expect(html).toMatch(/out\. de 2026<\/strong><\/td>\s*<td>14\/10\/2026<\/td>/);
+    expect(dom.drillSubtitle.textContent).toContain('2 registro(s)');
   });
 
   it('não renderiza tabela nem abre o painel quando não há histórico', async () => {

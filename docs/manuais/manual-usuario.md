@@ -51,7 +51,7 @@ Instabilidade é a média das variações percentuais absolutas consecutivas: ES
 
 ### Histórico e gráficos
 
-Clique na linha do produto para abrir o drill-through: competências selecionadas, importações, custos variável/fixo/total e Δ/Δ% em relação ao registro anterior desse recorte. Variações absolutas ≥ 5% recebem destaque. Meses intermediários não entram na Comparação.
+Clique na linha do produto para abrir o drill-through: **Competência** mantém mês/ano e **Data** mostra a data de referência completa (`data_referencia`, DD/MM/AAAA), sem horário. A tabela conserva cada registro do recorte: 05/10/2026 e 14/10/2026 aparecem em linhas separadas com a mesma competência out. de 2026. Não há dia fixo nem substituição pela data de importação (`criado_em`), que permanece proveniência dos dados. Custos variável/fixo/total e Δ/Δ% em relação ao registro anterior desse recorte continuam disponíveis. Variações absolutas ≥ 5% recebem destaque. Meses intermediários não entram na Comparação.
 
 O gráfico temporal usa competência: custo unitário do produto selecionado ou média agregada quando não há produto, com média histórica e tendência. `criado_em` escolhe o registro mais recente por produto/competência. Comparação e TOP variações usam os últimos timestamps de importação; existe a [ressalva LOG-02](../auditoria/robustez-erros-validacao.md), pois chunks podem pertencer ao mesmo lote lógico.
 

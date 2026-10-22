@@ -2,11 +2,18 @@
    importações de um produto (competência, importação, deltas por registro).
    Extraído de view/ui-controller.js (MNT-01) sem alteração de comportamento.
 
-   Contrato temporal preservado: cada linha exibe a competência (`data_referencia`)
-   e a data de importação (`criado_em`) explicitamente rotuladas. */
+   Contrato temporal: Competência exibe mês/ano e Data exibe o dia completo de
+   `data_referencia`; `criado_em` permanece proveniência na API, sem exibição nesta tabela. */
 import { api } from '../src/services/api.js';
 import { isAlertaCritico } from '../core/report-engine.js';
-import { escapeHtml, formatCurrencyBRL, formatDateBR, formatDateTimeBR, showToast } from './ui-utils.js';
+import { escapeHtml, formatCurrencyBRL, formatDateBR, showToast } from './ui-utils.js';
+
+function formatReferenceDateBR(value) {
+  if (!value) return '-';
+  // DATE do payload, interpretado à meia-noite local para preservar o dia sem conversão UTC.
+  const parsed = new Date(value + 'T00:00:00');
+  return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString('pt-BR');
+}
 
 /**
  * Cria o controlador de drill-through ligado ao `dom` compartilhado.
@@ -38,7 +45,7 @@ export function createDrillThroughController({ dom }) {
         <thead>
           <tr>
             <th>Competência</th>
-            <th>Importado em</th>
+            <th title="Data de referência da competência">Data</th>
             <th>Custo Variável</th>
             <th>Custo Direto Fixo</th>
             <th>Custo Total</th>
@@ -62,7 +69,7 @@ export function createDrillThroughController({ dom }) {
             return `
               <tr class="${isAlert ? 'row-alert' : ''}">
                 <td><strong>${formatDateBR(row.data_referencia)}</strong></td>
-                <td>${formatDateTimeBR(row.criado_em)}</td>
+                <td>${formatReferenceDateBR(row.data_referencia)}</td>
                 <td>R$ ${formatCurrencyBRL(row.custo_variavel)}</td>
                 <td>R$ ${formatCurrencyBRL(row.custo_direto_fixo)}</td>
                 <td><strong>R$ ${formatCurrencyBRL(row.custo_total)}</strong></td>

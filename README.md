@@ -18,7 +18,7 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 
 - Busca por código/descrição e cascata Origem → Família → Agrupamento → Produto.
 - Fila investigativa de Custos com prioridade, contexto, instabilidade e mudança de regime; janela visual de até 200 itens, com KPIs e exportação sobre o relatório completo.
-- Drill-through por produto com competência, importação, custos e deltas; alerta canônico de variação absoluta ≥ 5%.
+- Drill-through por produto com competência (mês/ano), Data de referência (DD/MM/AAAA), custos e deltas; mantém cada registro, inclusive datas diferentes no mesmo mês. Importação (`criado_em`) permanece proveniência, sem exibição na coluna Data; alerta canônico de variação absoluta ≥ 5%.
 - Gráficos de comparação de importações, TOP variações e evolução por competência.
 - Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
 - Auditoria de OP com decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.

@@ -7,7 +7,7 @@ Procedimentos atuais de manutenção e conferência, revisados em **19/10/2026**
 1. Obtenha XLSX ERP de uma competência e selecione essa competência na Importação.
 2. Confira as cinco colunas, mapeamento, preview e status por linha antes de confirmar.
 3. Anote Total / Importadas / Falhas; confira `log_importacao` e o banner de classificação incompleta.
-4. Abra Custos no mesmo recorte e confira KPIs/fila/drill-through.
+4. Abra Custos no mesmo recorte e confira KPIs/fila/drill-through. No histórico do produto, Competência mostra mês/ano e Data mostra `data_referencia` completo, sem horário. Confira o dia real de cada registro, inclusive duas datas no mesmo mês (05/10 e 14/10); não há agrupamento mensal nesta tabela. `criado_em` permanece evento de importação/proveniência, sem exibição na coluna Data.
 5. Ao exportar, escolha campos e confirme abas Contexto/Fila Investigativa, período e ordenação.
 
 Reimportação atualiza a chave produto/competência, sem duplicá-la. `log_importacao` registra status, totais, linhas importadas/em erro, início/fim e `data_referencia`. **Competência é `data_referencia`; importação é `criado_em`.** Normalização de código é canônica (VAL-01); logs verbose devem conter somente amostras limitadas, sem planilha inteira.
