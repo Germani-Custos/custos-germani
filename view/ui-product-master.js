@@ -7,6 +7,7 @@ const TODOS = 'TODOS';
 
 export function createProductMasterController({ dom, executeOperationalBoundary, onChanged }) {
   let cadastro = { produtos: [], origens: [], familias: [], agrupamentos: [], ausentes: [] };
+  let importPending = [];
   const erp = dom.erpTableBody ? createCadastroMestreErpController({ dom, executeOperationalBoundary }) : null;
 
   function selecionarVisao(visao) {
@@ -41,7 +42,7 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
   function openEditor(codigo = '', descricao = '') {
     selecionarVisao('operacional');
     const produto = cadastro.produtos.find(item => item.codigo_produto === codigo) || {};
-    dom.masterCode.value = produto.codigo_produto || '';
+    dom.masterCode.value = produto.codigo_produto || codigo;
     dom.masterCode.disabled = Boolean(produto.codigo_produto);
     dom.masterDescription.value = produto.descricao || descricao || '';
     fillSelect(dom.masterOrigem, cadastro.origens.map(item => ({ value: item.id, label: item.descricao })), { value: '', label: 'Sem origem' }, produto.origem_id || '');
@@ -59,12 +60,35 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     render();
   }
 
+  async function showImportPendingProducts(produtos) {
+    await reload();
+    importPending = produtos.map(item => ({ ...item }));
+    selecionarVisao('operacional');
+    dom.masterForm.classList.add('hidden');
+    dom.masterImportPendingCount.textContent = String(importPending.length);
+    dom.masterImportPendingBody.innerHTML = importPending.map(item => `<tr>
+      <td>${escapeHtml(item.codigo_produto)}</td><td>${escapeHtml(item.descricao || 'Descrição não informada no arquivo')}</td>
+      <td><button type="button" class="btn-outline btn-sm" data-import-pending-code="${escapeHtml(item.codigo_produto)}">Consultar / preparar cadastro</button></td></tr>`).join('');
+    dom.masterImportPending.classList.remove('hidden');
+  }
+
   function bind() {
     if (!dom.masterTableBody) return;
     dom.masterSearch.addEventListener('input', render);
     dom.masterOrigemFilter.addEventListener('change', render);
     dom.masterFamiliaFilter.addEventListener('change', render);
     dom.masterNewBtn.addEventListener('click', () => openEditor());
+    dom.masterImportPendingClear?.addEventListener('click', () => {
+      importPending = [];
+      dom.masterImportPendingBody.replaceChildren();
+      dom.masterImportPendingCount.textContent = '0';
+      dom.masterImportPending.classList.add('hidden');
+    });
+    dom.masterImportPendingBody?.addEventListener('click', event => {
+      const codigo = event.target.closest('[data-import-pending-code]')?.dataset.importPendingCode;
+      const produto = importPending.find(item => item.codigo_produto === codigo);
+      if (produto) openEditor(produto.codigo_produto, produto.descricao);
+    });
     createCadastroMestrePreviewController({ dom, executeOperationalBoundary }).bind();
     dom.masterOperationalTab?.addEventListener('click', () => selecionarVisao('operacional'));
     dom.erpTab?.addEventListener('click', () => selecionarVisao('erp'));
@@ -82,5 +106,5 @@ export function createProductMasterController({ dom, executeOperationalBoundary,
     }, { message: 'Não foi possível salvar o cadastro mestre do produto.' }));
     return Promise.all([reload(), erp?.bind()]);
   }
-  return { bind, reload, openEditor };
+  return { bind, reload, openEditor, showImportPendingProducts };
 }

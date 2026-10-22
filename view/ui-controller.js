@@ -24,7 +24,12 @@ const state = createInitialState();
 const dom = getDomRefs();
 const charts = createChartsController({ dom, state });
 const drillThrough = createDrillThroughController({ dom });
-const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata });
+const importer = createImportController({ dom, state, executeOperationalBoundary, fetchMetadata,
+  onViewProducts: async produtos => {
+    dom.navItems.find(btn => btn.dataset.viewTrigger === 'products')?.click();
+    await productMaster.showImportPendingProducts(produtos);
+  }
+});
 const opController = createOpController({ dom, executeOperationalBoundary });
 const productMaster = createProductMasterController({ dom, executeOperationalBoundary, onChanged: async () => { await loadMasters({ force: true }); await opController.reloadData(); } });
 const importerOp = createImportOpController({ dom, executeOperationalBoundary, onImported: () => opController.reloadData() });

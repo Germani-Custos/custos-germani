@@ -1,5 +1,7 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **IMP-PEND-01 — implementação local** (22/10/2026): lista única de códigos/descrições do arquivo compartilhada com warnings e contagem, deduplicação e acesso contextual ao Cadastro. Momento anterior ao envio explícito por decisão humana; API/garantia legada intactas. Abrir/preparar não salva. Sem classificação nova, escrita remota ou publicação. [Diagnóstico e provas](robustez-erros-validacao.md#imp-pend-01--produtos-sem-cadastro-identificáveis-22102026).
+
 - [x] **CUSTOS-DATA-01 — apresentação local** (22/10/2026): Histórico de Importações do produto exibe Data a partir de `data_referencia` já presente no payload, sem horário/dia fixo. Competência e uma linha por registro mantidas, inclusive 05/10 e 14/10. `criado_em` permanece proveniência; sem API/filtros/cálculos/banco/schema/publicação. [Causa e validação real](robustez-erros-validacao.md#custos-data-01--data-de-referência-no-histórico-do-produto-22102026).
 
 - [x] **CAD-COM-EXEC-01 — executor isolado local** (22/10/2026): somente UPDATE do par comercial, com fotografia/hash, revalidação pelo adapter e universo 860/162/698, transação e rollback, preservando timestamps/proveniência/logs. Escrita real bloqueada até autorização própria; sem schema/publicação. [Contrato](../arquitetura/cadastro-mestre-comercial-executor-isolado.md) e [provas](cadastro-mestre-comercial-executor-isolado.md).

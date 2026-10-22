@@ -1,5 +1,14 @@
 # Auditoria — Robustez, Tratamento de Erros e Correção
 
+## IMP-PEND-01 — produtos sem cadastro identificáveis (22/10/2026)
+
+- **Causa:** aviso antigo contava linhas, duplicava códigos e usava `state.masters.produtos` (universo analítico com fatos), não o operacional completo. Faltavam identidades e navegação no resultado. A API já tenta criar ausentes: decisão humana explícita manteve essa regra e definiu que o aviso representa o momento anterior ao envio.
+- **Mudança:** leitura integral via `getProductMaster()` existente e helper puro por código exato normalizado. Uma lista define warnings, contagem e tabela no Preview/resultado, sem corte em 20/500/1.000. Primeira descrição não vazia do arquivo é preservada; ausência explícita não muda o erro de descrição vazia da linha. Texto escapado contra HTML.
+- **Ação:** botão primário leva a mesma lista ao operacional. Painel contextual independente dos filtros abre editor por código sem redigitação. Cadastro atual prevalece se o registro já existir; ausente recebe apenas código/descrição no formulário, sem salvar. Limpar/cancelar/preparar não persistem. Classes existentes mantêm Black + Purple; nenhum CSS alterado.
+- **Escopo:** `src/services/api.js`, persistência/garantia legadas, classificações, fatos, Master/OP e schema intactos. `data_referencia` continua competência e `criado_em` importação; payload temporal igual. Não executar importação para validar esse aviso.
+- **Testes:** 34 testes relacionados em quatro arquivos passaram: zero/um/múltiplos, duplicidade/normalização, descrição presente/ausente, cadastrados excluídos, conjunto dos warnings = lista = contagem, mais de 1.000 pendentes, escape, erro de leitura, preparo sem salvar e consulta de cadastro já criado. Suíte integral: **599 testes/40 arquivos passaram**, dois workers. **Lint, typecheck, build e git diff --check passaram**. Build local com configuração pública sintética; não publica nem altera variáveis reais.
+- **Prova real somente leitura:** harness local do Preview com snapshots reais de Custos (não os bytes do XLS original) e API local lendo Supabase: **6.113 produtos operacionais, 2.268 fatos, 447 códigos distintos, zero pendentes**. Preview sem alerta, cancelado antes do envio. **60 GETs**, zero erros HTTP, transporte bloqueando métodos/fontes fora da allowlist e guarda de persistência não acionada. Leituras integrais de operacional/fatos antes/depois comparadas por SHA-256 em memória foram idênticas. Casos positivos são sintéticos; não foi criado ausente real. Sem INSERT/UPDATE/DELETE/RPC/migration, commit, push ou deploy.
+
 ## CUSTOS-DATA-01 — data de referência no histórico do produto (22/10/2026)
 
 - **Causa:** a tabela do drill-through em `view/ui-drill-through.js` formatava `row.criado_em` na segunda coluna, intitulada Importado em. `getProductHistory()` já seleciona `historico_custos.data_referencia`; nenhum campo ou consulta adicional é necessário no produto.

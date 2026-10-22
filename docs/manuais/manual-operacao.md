@@ -6,7 +6,7 @@ Procedimentos atuais de manutenção e conferência, revisados em **19/10/2026**
 
 1. Obtenha XLSX ERP de uma competência e selecione essa competência na Importação.
 2. Confira as cinco colunas, mapeamento, preview e status por linha antes de confirmar.
-3. Anote Total / Importadas / Falhas; confira `log_importacao` e o banner de classificação incompleta.
+3. Anote Total / Importadas / Falhas; confira `log_importacao` e o banner de classificação incompleta. Havendo ausentes antes do envio, confira lista/quantidade únicas e descrições do arquivo. **Ver produtos no Cadastro** leva contexto ao operacional sem gravar; o registro pode já ter sido criado pela rotina existente. Consultar/preparar confere a situação atual; salvar permanece manual. Falha de leitura do cadastro deve ser resolvida antes do envio, nunca interpretada como zero pendências.
 4. Abra Custos no mesmo recorte e confira KPIs/fila/drill-through. No histórico do produto, Competência mostra mês/ano e Data mostra `data_referencia` completo, sem horário. Confira o dia real de cada registro, inclusive duas datas no mesmo mês (05/10 e 14/10); não há agrupamento mensal nesta tabela. `criado_em` permanece evento de importação/proveniência, sem exibição na coluna Data.
 5. Ao exportar, escolha campos e confirme abas Contexto/Fila Investigativa, período e ordenação.
 

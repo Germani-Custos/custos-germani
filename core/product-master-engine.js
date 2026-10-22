@@ -22,6 +22,24 @@ export function createProductMasterIndex(produtos = []) {
   return index;
 }
 
+/** Códigos únicos ausentes do operacional; descrição é somente rótulo do arquivo.
+ * @param {Array<Record<string, unknown>>} rows
+ * @param {Array<Record<string, unknown>>} produtos
+ * @returns {Array<{codigo_produto:string, descricao:string|null}>}
+ */
+export function listarProdutosSemCadastro(rows, produtos) {
+  const index = createProductMasterIndex(produtos);
+  const pendentes = new Map();
+  for (const row of rows) {
+    const codigo = normalizeCodigoProduto(row.codigo_produto);
+    if (!codigo || index.has(codigo)) continue;
+    const descricao = hasValue(row.descricao) ? String(row.descricao) : null;
+    if (!pendentes.has(codigo)) pendentes.set(codigo, { codigo_produto: codigo, descricao });
+    else if (!pendentes.get(codigo).descricao && descricao) pendentes.get(codigo).descricao = descricao;
+  }
+  return [...pendentes.values()];
+}
+
 /** @param {Record<string, unknown>} produto */
 export function getProductClassificationStatus(produto) {
   if (!produto) return 'ausente';

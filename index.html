@@ -358,6 +358,11 @@
         </div>
         <div id="master-operational-panel" role="region" aria-labelledby="master-operational-tab">
         <h3>Cadastro Operacional</h3><p class="help-text">Dimensão usada por Custos e OP. A classificação Kustos é mantida nesta visão.</p>
+        <section id="master-import-pending" class="panel hidden" aria-labelledby="master-import-pending-title">
+          <div class="actions-row"><h4 id="master-import-pending-title">Produtos identificados antes da importação de Custos — <span id="master-import-pending-count">0</span></h4><button type="button" id="master-import-pending-clear" class="btn-outline btn-sm">Limpar lista</button></div>
+          <p class="help-text">Lista recebida do arquivo, independente dos filtros abaixo. O registro pode ter sido criado pela rotina de importação. Consultar/preparar abre o formulário; salvar continua sendo uma ação manual.</p>
+          <div class="master-table-scroll" tabindex="0"><table><thead><tr><th>Código</th><th>Descrição no arquivo</th><th>Ação</th></tr></thead><tbody id="master-import-pending-body"></tbody></table></div>
+        </section>
         <div class="panel"><div class="filters-grid">
           <div class="field"><label for="master-search">Código ou descrição</label><input id="master-search" type="search" placeholder="Pesquisar produto" /></div>
           <div class="field"><label for="master-origem-filter">Origem</label><select id="master-origem-filter"><option value="TODOS">Todas as origens</option></select></div>

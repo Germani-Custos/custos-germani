@@ -32,6 +32,10 @@ A normalização trata espaços, caracteres invisíveis e notação científica;
 
 Reimportar produto/competência atualiza o registro, em vez de duplicá-lo. O banner sinaliza produtos sem classificação; não invente categoria para eliminá-lo. **“Não foi possível validar produtos sem agrupamento.”** significa diagnóstico indisponível, e não ausência de pendências.
 
+Quando houver ausentes do Cadastro Operacional na validação anterior ao envio, Preview e resultado mostram códigos únicos e descrição original do arquivo. Código repetido conta uma vez; mantém-se a primeira descrição não vazia disponível. Sem descrição, aparece **Descrição não informada no arquivo**; a linha continua inválida para importação. Produtos já cadastrados, mesmo sem classificação, não entram nessa lista.
+
+**Ver produtos no Cadastro** abre o operacional com a lista contextual, independente dos filtros. **Consultar / preparar cadastro** abre formulário com código/descrição sem redigitação e sem salvar; se já existir, usa os dados atuais do Cadastro. **Salvar classificação** continua manual; **Limpar lista** remove somente o contexto da tela. A lista é anterior ao envio: a rotina existente pode ter criado o registro ao importar, portanto não confirma ausência atual. Não há filtro múltiplo novo ou sincronização ERP.
+
 ## 4. Investigar custos
 
 ### Chegar ao produto

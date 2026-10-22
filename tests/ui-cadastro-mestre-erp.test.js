@@ -15,7 +15,7 @@ function element() {
     setAttribute: (key, value) => { attributes[key] = value; }, getAttribute: key => attributes[key],
     replaceChildren: vi.fn(), click: vi.fn(),
     addEventListener: (event, fn) => { listeners[event] = fn; },
-    emit: async event => listeners[event]?.({ preventDefault() {}, target: {} }) };
+    emit: async (event, target = {}) => listeners[event]?.({ preventDefault() {}, target }) };
 }
 
 let master;
@@ -40,7 +40,8 @@ async function setup() {
   const keys = ['masterSearch', 'masterOrigemFilter', 'masterFamiliaFilter', 'masterMissingCount', 'masterTableBody', 'masterNewBtn',
     'masterImportBtn', 'masterImportInput', 'masterCancelBtn', 'masterForm', 'masterCode', 'masterDescription', 'masterOrigem', 'masterFamilia', 'masterAgrupamento',
     'masterOperationalTab', 'masterOperationalCount', 'masterOperationalPanel', 'erpTab', 'erpCount', 'erpPanel',
-    'erpSearch', 'erpOrigemFilter', 'erpFamiliaFilter', 'erpSummary', 'erpTableBody', 'erpPreviousBtn', 'erpNextBtn', 'erpPageInfo', 'erpRefreshBtn'];
+    'erpSearch', 'erpOrigemFilter', 'erpFamiliaFilter', 'erpSummary', 'erpTableBody', 'erpPreviousBtn', 'erpNextBtn', 'erpPageInfo', 'erpRefreshBtn',
+    'masterImportPending', 'masterImportPendingCount', 'masterImportPendingBody', 'masterImportPendingClear'];
   const dom = Object.fromEntries(keys.map(key => [key, element()]));
   const errors = [];
   const executeOperationalBoundary = async (_operation, action) => { try { return await action(); } catch (error) { errors.push(error); } };
@@ -50,6 +51,41 @@ async function setup() {
 }
 
 describe('Cadastro em duas visões independentes', () => {
+  it('recebe a lista da importação, mantém contexto completo e prepara cadastro sem salvar nem exigir redigitação', async () => {
+    const { dom, controller } = await setup();
+    await dom.erpTab.emit('click');
+    dom.masterSearch.value = 'filtro anterior';
+    const pendentes = [{ codigo_produto: '200', descricao: '<b>Do arquivo</b>' }, { codigo_produto: '300', descricao: null }];
+    await controller.showImportPendingProducts(pendentes);
+    expect(dom.masterImportPendingCount.textContent).toBe('2');
+    expect(dom.masterImportPendingBody.innerHTML).toContain('<td>200</td><td>&lt;b&gt;Do arquivo&lt;/b&gt;</td>');
+    expect(dom.masterImportPendingBody.innerHTML).toContain('Descrição não informada no arquivo');
+    expect(dom.masterSearch.value).toBe('filtro anterior');
+    expect(dom.erpPanel.classList.contains('hidden')).toBe(true);
+    expect(api.getProductMaster).toHaveBeenCalledTimes(2);
+    await dom.masterImportPendingBody.emit('click', { closest: () => ({ dataset: { importPendingCode: '200' } }) });
+    expect(dom.masterCode.value).toBe('200');
+    expect(dom.masterCode.disabled).toBe(false);
+    expect(dom.masterDescription.value).toBe('<b>Do arquivo</b>');
+    expect(dom.masterOrigem.value).toBe('');
+    await dom.masterImportPendingBody.emit('click', { closest: () => ({ dataset: { importPendingCode: '300' } }) });
+    expect(dom.masterCode.value).toBe('300');
+    expect(dom.masterDescription.value).toBe('');
+    await dom.masterImportPendingClear.emit('click');
+    expect(dom.masterImportPending.classList.contains('hidden')).toBe(true);
+    expect(dom.masterImportPendingCount.textContent).toBe('0');
+  });
+
+  it('consulta registro já criado usando descrição/categorias atuais, sem sobrescrever com a lista anterior ao envio', async () => {
+    const { dom, controller } = await setup();
+    await controller.showImportPendingProducts([{ codigo_produto: 'OP001', descricao: 'Descrição do arquivo antigo' }]);
+    await dom.masterImportPendingBody.emit('click', { closest: () => ({ dataset: { importPendingCode: 'OP001' } }) });
+    expect(dom.masterCode.value).toBe('OP001');
+    expect(dom.masterCode.disabled).toBe(true);
+    expect(dom.masterDescription.value).toBe('Produto operacional');
+    expect(dom.masterOrigem.value).toBe('op-id-1');
+  });
+
   it('CAD-COM-01 mostra código/descrição comerciais escapados e ausência sem substituir agrupamento operacional', async () => {
     master.produtos[0].agrupamento_comercial_erp_cod = 'C006';
     master.produtos[0].agrupamento_comercial_erp_descricao = '<b>BISCOITO ESPECIAL</b>';

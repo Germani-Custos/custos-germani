@@ -24,6 +24,8 @@ Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação
 
 ### Implementações locais com continuidade de publicação
 
+- IMP-PEND-01: Preview/resultado de Custos identificam códigos únicos ausentes antes do envio, com descrição do arquivo e acesso contextual ao Cadastro Operacional. Sem persistência adicional ou mudança da regra existente. [Contrato e provas](docs/auditoria/robustez-erros-validacao.md#imp-pend-01--produtos-sem-cadastro-identificáveis-22102026).
+
 - CAD-COM-EXEC-01: executor isolado da primeira carga comercial, preservando timestamps/proveniência/logs; validação local do XLS/manifesto e rollback. Execução real bloqueada até autorização própria. [Contrato](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md).
 
 - CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva aplicada em produção na etapa CAD-COM-PROD-01, sem carga. Publicação compatível V3, novo Preview/aprovação e execução continuam dependentes de novas etapas autorizadas. [Prova da migration](docs/auditoria/cadastro-mestre-comercial-producao-etapa1.md).

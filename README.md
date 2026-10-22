@@ -54,7 +54,7 @@ O [Manual Técnico](docs/manuais/manual-tecnico.md) descreve os módulos e o cic
 
 ## 7. Fluxos principais
 
-1. **Custos:** selecionar competência → enviar XLSX → conferir colunas/preview → importar com log → investigar por produto ou cascata → detalhar/exportar.
+1. **Custos:** selecionar competência → enviar XLSX → conferir colunas/preview → importar com log → identificar códigos/descrições sem cadastro antes do envio → consultar/preparar cada item no Cadastro sem redigitar códigos → investigar por produto ou cascata → detalhar/exportar. A lista não salva nem classifica produtos; a rotina existente de importação permanece.
 2. **OP:** enviar CSV MCAP105 com competência → conferir/importar → investigar fila e dossiê derivados da carga local atualizada.
 3. **Cadastro:** consultar/editar classificação operacional ou consultar Master ERP com estado independente. Preview ERP é separado da consulta e da edição manual; decidir/baixar revisão é local. Executar reconstrução exige autorização administrativa, aprovação integral, segunda confirmação e revalidação no servidor.
 4. **Documentação:** consultar os documentos disponibilizados na tela; salvar usa função própria e gera commit no GitHub. Essa ação não faz parte desta reorganização local.

@@ -14,6 +14,7 @@ Node >=22 é necessário para ferramentas/funções. `package.json` tem scripts 
 - `view/ui-controller.js`: bootstrap, sessão e orquestração.
 - `view/ui-charts.js`: comparação/TOP variações/temporal e layout, instâncias em `state.chart`/`state.trendChart`.
 - `view/ui-import.js`: upload, mapeamento, preview e importação de Custos.
+- Pendências: helper puro `listarProdutosSemCadastro` em `core/product-master-engine.js` cruza código normalizado do arquivo com o operacional integral de `getProductMaster()`. Não usar o universo analítico `state.masters.produtos`. A mesma lista fornece warnings/contagem/tabela do Preview/resultado; sem corte de 20 linhas na lista de pendências. Primeira descrição não vazia é rótulo, nunca identidade. Callback leva contexto a `showImportPendingProducts`, que relê o cadastro e prepara formulário sem salvar; API/payload/garantia legada intactos. [Contrato](../arquitetura/matriz-contratos-operacionais.md#importação-de-custos--pendências-identificáveis).
 - `view/ui-filters.js`: cascata, KPIs, chips, ordenação e realtime com debounce.
 - `view/ui-table.js`: fila, detalhe e presenter compartilhado com exportação.
 - `view/ui-drill-through.js`: histórico do produto no recorte ativo.

@@ -11,6 +11,7 @@ import { api } from '../src/services/api.js';
 import { readWorkbook, scanHeaders, countValidMappedColumns, REQUIRED_FIELDS, parseBrazilianNumber, formatBrazilianFinancial, normalizeCodigoProduto } from '../core/spreadsheet-engine.js';
 import { escapeHtml, showToast } from './ui-utils.js';
 import { debugLog } from '../src/config/app-config.js';
+import { listarProdutosSemCadastro } from '../core/product-master-engine.js';
 
 // MNT-07: limite de linhas mostradas na tabela do modal de preview de
 // importação (confirmImportPreview). É só um teto de exibição — não afeta
@@ -19,7 +20,10 @@ import { debugLog } from '../src/config/app-config.js';
 const IMPORT_PREVIEW_DISPLAY_LIMIT = 20;
 
 function buildImportPreview(rows, mapping, produtos = []) {
-  const produtoSet = new Set((produtos || []).map(item => normalizeCodigoProduto(item.codigo_produto)).filter(Boolean));
+  const produtosSemCadastro = listarProdutosSemCadastro(rows.map(row => ({
+    codigo_produto: row[mapping.codigo_produto], descricao: row[mapping.descricao]
+  })), produtos);
+  const codigosSemCadastro = new Set(produtosSemCadastro.map(item => item.codigo_produto));
   const statuses = { valid: 0, warning: 0, error: 0 };
   const normalizacoes = [];
   const analyzedRows = rows.map((row, index) => {
@@ -35,7 +39,7 @@ function buildImportPreview(rows, mapping, produtos = []) {
     if (codigo && String(codigoOriginal ?? '').trim() !== codigo) {
       normalizacoes.push({ linha: index + 1, antes: String(codigoOriginal ?? '').slice(0, 40), depois: codigo });
     }
-    if (codigo && !produtoSet.has(codigo)) issues.push({ level: 'warning', text: 'Produto não encontrado no cadastro' });
+    if (codigo && codigosSemCadastro.has(codigo)) issues.push({ level: 'warning', text: 'Produto não encontrado no cadastro' });
     if (!descricao) issues.push({ level: 'error', text: 'Descrição vazia' });
     if (custoVariavel < 0 || custoDiretoFixo < 0 || custoTotal < 0) issues.push({ level: 'warning', text: 'Valor negativo' });
     if (custoTotal === 0) issues.push({ level: 'warning', text: 'Custo total zerado' });
@@ -68,12 +72,22 @@ function buildImportPreview(rows, mapping, produtos = []) {
   return {
     rows: analyzedRows,
     validRows: analyzedRows.filter(row => row.status !== 'error'),
-    statuses
+    statuses,
+    produtosSemCadastro
   };
 }
 
+function renderProdutosSemCadastro(produtos) {
+  if (!produtos.length) return '';
+  return `<section aria-label="Produtos sem cadastro identificados no arquivo">
+    <p><strong>${produtos.length} ${produtos.length === 1 ? 'produto sem cadastro' : 'produtos sem cadastro'}</strong></p>
+    <p class="help-text">Identificados antes do envio, no cadastro operacional. Linhas com erro não são importadas. Consulte o Cadastro para conferir a situação atual; a rotina existente pode ter criado o registro durante a importação.</p>
+    <div class="master-table-scroll" tabindex="0"><table><thead><tr><th>Código</th><th>Descrição no arquivo</th></tr></thead><tbody>
+    ${produtos.map(item => `<tr><td>${escapeHtml(item.codigo_produto)}</td><td>${escapeHtml(item.descricao || 'Descrição não informada no arquivo')}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
+}
+
 async function confirmImportPreview(preview, totalColunasValidas) {
-  const produtosSemCadastro = preview.rows.filter(row => row.issues.some(issue => issue.text === 'Produto não encontrado no cadastro')).length;
   const previewRows = preview.rows.slice(0, IMPORT_PREVIEW_DISPLAY_LIMIT).map(row => {
     const statusIcon = row.status === 'valid' ? '🟢 válida' : row.status === 'warning' ? '🟡 atenção' : '🔴 erro';
     return `
@@ -102,7 +116,7 @@ async function confirmImportPreview(preview, totalColunasValidas) {
         </table>
       </div>
       <p style="margin-top:10px;">Somente linhas sem erro serão gravadas.</p>
-      ${produtosSemCadastro ? `<p style="margin-top:6px; color:var(--warning);"><b>${produtosSemCadastro}</b> produto(s) sem cadastro: após importar, use <b>Cadastro → Cadastrar produto</b> para resolvê-los sem inventar classificação.</p>` : ''}
+      ${renderProdutosSemCadastro(preview.produtosSemCadastro)}
     `,
     showCancelButton: true,
     confirmButtonText: `Confirmar importação (${preview.validRows.length} linhas)`,
@@ -187,7 +201,7 @@ async function confirmColumnMapping(headers, detectedMapping) {
  * ERR-01) e `fetchMetadata` (recarrega os filtros após importar), preservando
  * o mesmo comportamento do orquestrador. Expõe `bindUpload()` para o `init`.
  */
-export function createImportController({ dom, state, executeOperationalBoundary, fetchMetadata }) {
+export function createImportController({ dom, state, executeOperationalBoundary, fetchMetadata, onViewProducts }) {
   function bindUpload() {
     dom.dropZone.addEventListener('click', () => dom.fileInput.click());
     dom.dropZone.addEventListener('keydown', (e) => {
@@ -238,7 +252,10 @@ export function createImportController({ dom, state, executeOperationalBoundary,
         return;
       }
 
-      const preview = buildImportPreview(rows, state.importMapping, state.masters.produtos || []);
+      const { data: cadastro, error: cadastroError } = await api.getProductMaster();
+      if (cadastroError) throw cadastroError;
+      if (!Array.isArray(cadastro?.produtos)) throw new Error('Não foi possível validar o cadastro operacional.');
+      const preview = buildImportPreview(rows, state.importMapping, cadastro.produtos);
       const confirmed = await confirmImportPreview(preview, countValidMappedColumns(mapping));
       if (!confirmed) return;
 
@@ -268,7 +285,7 @@ export function createImportController({ dom, state, executeOperationalBoundary,
       const errorCount = Number(resumo.linhas_erro || 0);
       const successMessage = `${successCount} itens importados com sucesso`;
       showToast('success', successMessage);
-      await Swal.fire({
+      const resultado = await Swal.fire({
         icon: errorCount > 0 ? 'warning' : 'success',
         title: successMessage,
         html: `
@@ -277,9 +294,19 @@ export function createImportController({ dom, state, executeOperationalBoundary,
             <p><b>Importadas:</b> ${successCount}</p>
             <p><b>Falhas:</b> ${errorCount}</p>
             ${errorCount > 0 ? `<p><b>${errorCount} itens falharam</b></p>` : ''}
+            ${renderProdutosSemCadastro(preview.produtosSemCadastro)}
           </div>
-        `
+        `,
+        confirmButtonText: preview.produtosSemCadastro.length ? 'Ver produtos no Cadastro' : 'OK',
+        showCancelButton: preview.produtosSemCadastro.length > 0,
+        cancelButtonText: 'Fechar'
       });
+
+      if (resultado.isConfirmed && preview.produtosSemCadastro.length) {
+        await executeOperationalBoundary('consultar produtos da importação no Cadastro',
+          () => onViewProducts?.(preview.produtosSemCadastro),
+          { message: 'Importação concluída, mas não foi possível abrir os produtos no Cadastro.' });
+      }
 
       await executeOperationalBoundary('recarregar filtros após importação', () => fetchMetadata(), {
         message: 'Importação concluída, mas não foi possível atualizar os filtros automaticamente.'
