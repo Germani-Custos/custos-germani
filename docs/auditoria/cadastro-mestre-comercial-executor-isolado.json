@@ -1,0 +1,88 @@
+{
+  "data": "2026-10-22",
+  "ambiente": "PGlite local em memoria; nenhuma conexao remota",
+  "limites": "Copia integral do Master/origens/familias da fotografia de 19/10. Outras tabelas e falhas sao cobertas pelos testes sinteticos de 12 tabelas, nao copiadas de producao neste ensaio.",
+  "xls_sha256": "3b0e8ce693038884f5453e2094adf8a0e860d4a0d079d25f8dccbffb15c16c14",
+  "manifesto_fase_a_integral_identico": true,
+  "escritas_sql_executor_local": 1,
+  "resultado_local": {
+    "contrato": "CARGA_COMERCIAL_ISOLADA_V1",
+    "status": "COMMIT_CONFIRMADO",
+    "hash_manifesto": "a80248802de000f0c1be155975d3ad44691659b893cbfebebcdb0bbc62c23dc5",
+    "fotografia_sha256": "77d65229bf40595995793789ccc57e001110f054dba87023679f452b467b9149",
+    "linhas": 6230,
+    "universo": 860,
+    "existentes": 860,
+    "novos": 0,
+    "com_agrupamento": 162,
+    "sem_agrupamento": 698,
+    "codigos_distintos": 29,
+    "conflitos": 0,
+    "campos_inferidos": 0,
+    "produtos_a_atualizar": 162,
+    "produtos_mantem_null": 698,
+    "alteracoes_campos": 324,
+    "limpezas_para_null": 0,
+    "outras_operacoes_no_manifesto_generico": 0,
+    "inserts_manifesto_generico": 0,
+    "remocoes_manifesto_generico": 0,
+    "master_antes_sha256": "0bcc3ae5634963aace4c1307950ce0485f02ced86388df34de8b085c36d170cf",
+    "master_depois_sha256": "640b0ee3622b23680692e079290dd9e3fb00fa3e5ca81c84a996a98962d69298",
+    "outras_tabelas_antes": {
+      "categorias_familia": {
+        "quantidade": 103,
+        "sha256": "6e6b6b8f686ee0e0c7f8c991cb25ee08cf1951564130707dd9689242741a3872"
+      },
+      "categorias_origem": {
+        "quantidade": 50,
+        "sha256": "8bcebc6bea5bf01eaa4d7d2aa6eb5e32bd70f156ea568d603fd707f507136697"
+      }
+    },
+    "outras_tabelas_depois": {
+      "categorias_familia": {
+        "quantidade": 103,
+        "sha256": "6e6b6b8f686ee0e0c7f8c991cb25ee08cf1951564130707dd9689242741a3872"
+      },
+      "categorias_origem": {
+        "quantidade": 50,
+        "sha256": "8bcebc6bea5bf01eaa4d7d2aa6eb5e32bd70f156ea568d603fd707f507136697"
+      }
+    },
+    "campos_escritos": [
+      "agrupamento_comercial_erp_cod",
+      "agrupamento_comercial_erp_descricao"
+    ],
+    "outras_colunas_preservadas": true,
+    "inseridos": 0,
+    "removidos": 0
+  },
+  "exemplos": [
+    {
+      "codigo": "C005",
+      "descricao": "BISCOITO CHAMPAGNE",
+      "produtos": 1
+    },
+    {
+      "codigo": "C006",
+      "descricao": "BISCOITO ESPECIAL",
+      "produtos": 8
+    },
+    {
+      "codigo": "C008",
+      "descricao": "BISCOITO LAMINADO DOCE",
+      "produtos": 7
+    },
+    {
+      "codigo": "C011",
+      "descricao": "BISCOITO RECHEADO",
+      "produtos": 16
+    },
+    {
+      "codigo": "C012",
+      "descricao": "BISCOITO SOLTO DOCE",
+      "produtos": 4
+    }
+  ],
+  "conexoes_producao": 0,
+  "escritas_producao": 0
+}

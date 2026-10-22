@@ -48,6 +48,8 @@ Consulta ERP continua usando SELECT integral `*` e páginas existentes. Núcleo/
 
 ## Executor, snapshot e schema
 
+Para a carga pontual exclusivamente dos dois campos comerciais, usar o [contrato isolado CAD-COM-EXEC-01](cadastro-mestre-comercial-executor-isolado.md). Ele preserva timestamps, proveniência e logs; escrita real ainda depende de autorização. O executor central descrito a seguir permanece destinado à reconstrução geral e não atende ao isolamento absoluto dessa carga pontual.
+
 Executor central inclui ambos os campos na whitelist de INSERT/UPDATE e na comparação final com o Preview. A expressão parametrizada de UPDATE já distingue chave ausente de chave com JSON null: NULL aprovado limpa o campo, sem coalesce para o valor anterior. Proveniência usa o lote geral existente do Master; a proveniência de Agrup. Prod. não é alterada por mudanças comerciais.
 
 `contextoAtual` confirma por SELECT que as duas colunas existem antes de log/snapshot/DML. Locks Master/log/famílias, guardas de dependências, releitura/regeneração integral, aprovação/hash, snapshot durável, SAVEPOINT, provas de tabelas protegidas e rollback permanecem. Imagem integral do Master no snapshot/log já inclui os dois campos novos, sem snapshot paralelo. Rollback reverte também limpeza para NULL. Fatos, operacional, mapa e categorias investigativas continuam protegidos.

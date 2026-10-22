@@ -22,7 +22,7 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 - Gráficos de comparação de importações, TOP variações e evolução por competência.
 - Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
 - Auditoria de OP com decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.
-- Cadastro Operacional para classificação Kustos e consulta independente do Cadastro Mestre ERP; Preview de XLS/XLSX/XLSM com aprovação e execução administrativa explícita.
+- Cadastro Operacional para classificação Kustos e consulta independente do Cadastro Mestre ERP; Preview de XLS/XLSX/XLSM com aprovação e execução administrativa explícita. Carga pontual de Agrup. Com. com [executor isolado](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md), preservando timestamps/proveniência/logs; escrita real ainda bloqueada.
 - Consulta/edição dos documentos permitidos pela tela Documentação.
 
 Procedimentos e limites: [Manual do Usuário](docs/manuais/manual-usuario.md).

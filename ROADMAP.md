@@ -24,6 +24,8 @@ Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação
 
 ### Implementações locais com continuidade de publicação
 
+- CAD-COM-EXEC-01: executor isolado da primeira carga comercial, preservando timestamps/proveniência/logs; validação local do XLS/manifesto e rollback. Execução real bloqueada até autorização própria. [Contrato](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md).
+
 - CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva aplicada em produção na etapa CAD-COM-PROD-01, sem carga. Publicação compatível V3, novo Preview/aprovação e execução continuam dependentes de novas etapas autorizadas. [Prova da migration](docs/auditoria/cadastro-mestre-comercial-producao-etapa1.md).
 
 - CUSTOS-ERP-01: classificação analítica de origem/família pelo Master em memória, fallback fora do Master e agrupamento operacional; validação GET e interface local concluídas, publicação fora desta etapa.

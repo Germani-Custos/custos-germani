@@ -105,6 +105,8 @@ Executor único permite Master/log e somente INSERT/patch de descrição de fam�
 
 ## 8. Ambiente, execução local e qualidade
 
+Para a primeira carga exclusivamente comercial, `scripts/lib/cadastro-mestre-comercial.mjs#executarCargaComercial` exige manifesto/hash/fotografia/XLS revalidados e cliente dedicado, atualiza somente o par comercial e preserva integralmente timestamps/proveniência/logs. Não chama o executor geral nem altera seus consumidores. O CLI `scripts/validar-carga-comercial.mjs` somente valida, sem conexão ou opção de execução. Entrada/saída, limites 860/162/698/324, transação, locks, provas e rollback estão no [contrato isolado](../arquitetura/cadastro-mestre-comercial-executor-isolado.md). Escrita real ainda bloqueada; `data_referencia` continua competência e `criado_em` importação.
+
 Veja [README_SETUP.md](../../README_SETUP.md). O gerador lê variáveis do processo; copiar `.env` sozinho não as carrega. Após configurar o ambiente, gere runtime-config e sirva a raiz por HTTP. Servidor puramente estático não executa `/api`.
 
 Resolução de configuração: `window.__ENV__`/`window.__RUNTIME_CONFIG__` → `import.meta.env` → meta tags `VITE_*`. URL/chave pública são obrigatórias; verbose controla `debugLog`. Falha de configuração mostra diagnóstico de fontes no bootstrap.

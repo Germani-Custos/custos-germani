@@ -1,5 +1,7 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-COM-EXEC-01 — executor isolado local** (22/10/2026): somente UPDATE do par comercial, com fotografia/hash, revalidação pelo adapter e universo 860/162/698, transação e rollback, preservando timestamps/proveniência/logs. Escrita real bloqueada até autorização própria; sem schema/publicação. [Contrato](../arquitetura/cadastro-mestre-comercial-executor-isolado.md) e [provas](cadastro-mestre-comercial-executor-isolado.md).
+
 - [x] **CAD-COM-PROD-01 — somente migration** (19/10/2026): versão remota 20261019173633 aplicada com backup; duas colunas TEXT NULL, 860 produtos sem preenchimento comercial. Contagens e SHA-256 das 12 tabelas públicas idênticos; sem carga, publicação, commit ou push. [Provas](cadastro-mestre-comercial-producao-etapa1.md).
 
 - [x] **VIS-01 — implementação visual local** (19/10/2026): tokens Black + Purple, cards para módulos existentes e apresentação compartilhada de Custos/OP/Cadastro/Documentação/login/modais, com semântica operacional preservada. Conferência sintética em três viewports e 554 testes verdes; sem publicação. Aprovação humana pendente. [Escopo e evidências](identidade-visual.md).

@@ -68,6 +68,12 @@ Snapshot durável contém Master completo e famílias afetadas; catálogo tem pr
 
 Detalhes: [execução web](../arquitetura/cadastro-mestre-execucao-web.md), [famílias](../arquitetura/cadastro-mestre-familias-erp.md) e [preparação/diagnóstico](../arquitetura/cadastro-mestre-preparacao-ambiente.md). Os relatos de 5.706 → 860 são evidências históricas; reconstrução posterior já foi confirmada nos registros de 15/10. Novas propostas de famílias continuam uma etapa distinta.
 
+### Carga pontual de Agrup. Com. ERP
+
+Esta carga possui [executor isolado](../arquitetura/cadastro-mestre-comercial-executor-isolado.md) e **não deve usar a reconstrução geral acima**. Guardar manifesto integral da Fase A, SHA-256 canônico conferido, fotografia original e XLS. O CLI `scripts/validar-carga-comercial.mjs` recebe esses quatro argumentos conforme o contrato e somente revalida localmente; não aceita `--executar` e não acessa o banco. Deve reproduzir 860 produtos, 162 com comercial, 698 pares NULL, 29 códigos, 324 valores e zero conflitos/inferências. Divergência bloqueia, sem saneamento automático.
+
+Nenhuma carga desta etapa está autorizada. Na etapa futura, autorização humana e confirmação do hash são obrigatórias; Master/catálogos serão rechecados sob locks. Preservar resultado e fotografia fora do banco: esta operação não grava lote/log nem timestamps/proveniência. Em falha/COMMIT incerto, não buscar lote da reconstrução nem repetir automaticamente; conferir contra fotografia/manifesto. `data_referencia` continua competência e `criado_em` importação, intactos.
+
 ## 6. Acesso, configuração e publicação
 
 O fluxo principal do checkout chama login antes de masters/metadados e OP; criação administrativa de usuário está em [Autenticação](../arquitetura/autenticacao.md). Isso não comprova RLS ou permissões de produção. Não habilitar políticas por suposição; modelo de acesso e verificações remotas precisam de escopo próprio. Não expor senhas, tokens ou service-role no frontend, logs ou documentação.
