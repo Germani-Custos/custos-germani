@@ -82,3 +82,51 @@ Testes/fixtures: `tests/cadastro-mestre-comercial.test.js`, `tests/fixtures/cada
 Documentação: README, ROADMAP, AGENTS, três manuais, modelo de banco, migrations, contratos de Preview/reconstrução/web/famílias/comercial, matriz/índice de arquitetura, UX do Cadastro, índice/backlog de auditoria e este registro com JSON. VISION foi revisado e continua coerente, sem mudança de missão/direção ou changelog.
 
 As alterações de CUSTOS-ERP-01 já estavam no checkout ao iniciar esta etapa e foram preservadas. Nesta etapa não se editaram `src/services/api.js`, módulos de Custos/OP, `core/custos-classification-engine.js` ou manutenção operacional. **`dicionario_produtos`, Custos, OP e a classificação investigativa não foram alterados.** `data_referencia` continua competência e `criado_em` importação. Nenhuma gravação de schema/dados remotos foi feita.
+
+## CAD-ERP-TABLE-01 — apresentação comercial unificada (22/10/2026)
+
+### Mudança e limites
+
+A tabela do Cadastro Mestre ERP tinha sete colunas: Agrup. Prod., código comercial e descrição comercial ocupavam três células distintas. Agora tem **Código, Descrição, Origem, Família e Agrupamento comercial**. Origem/família mantêm seu formato; a quinta célula reúne os campos comerciais com ` — ` e escape HTML. Código sem descrição aparece somente como código; descrição sem código aparece somente como descrição. Ambos vazios mostram **Não informado**. O estado vazio usa `colspan="5"`.
+
+Somente `index.html` e `view/ui-cadastro-mestre-erp.js` mudaram no runtime. Sem edição de CSS/tokens Black + Purple, modelo, API, campos persistidos, importador, executores, filtros, classificação, operacional, Custos ou OP. Agrup. Prod. permanece no banco/modelo/contrato; os dois campos comerciais continuam independentes. `data_referencia` continua competência e `criado_em` evento de importação. Sem migration, escrita remota, commit, push ou deploy.
+
+### Fotografia real somente leitura
+
+Consultas exclusivamente SELECT pelo conector Supabase no projeto `umpebdovrazzrdndhigc`, em 22/10/2026. A fotografia atual retornou **860 produtos**, **7 com C008**, **16 com C011** e **698 com ambos os campos comerciais NULL**. Confirmação dos exemplos:
+
+- Produto `1002012`: `C008` / `BISCOITO LAMINADO DOCE`, exibido como **C008 — BISCOITO LAMINADO DOCE**.
+- Produto `1002128`: `C011` / `BISCOITO RECHEADO`, exibido como **C011 — BISCOITO RECHEADO**.
+- Produto `1001051P`: código e descrição comerciais NULL, exibido como **Não informado**.
+
+Consulta dos exemplos (separada da consulta agregada de contagens):
+
+```sql
+SELECT codigo_produto, descricao, agrupamento_comercial_erp_cod,
+       agrupamento_comercial_erp_descricao
+FROM (
+  SELECT DISTINCT ON (agrupamento_comercial_erp_cod)
+         codigo_produto, descricao, agrupamento_comercial_erp_cod,
+         agrupamento_comercial_erp_descricao
+  FROM public.dicionario_master_produtos
+  WHERE agrupamento_comercial_erp_cod IN ('C008', 'C011')
+     OR (agrupamento_comercial_erp_cod IS NULL
+         AND agrupamento_comercial_erp_descricao IS NULL)
+  ORDER BY agrupamento_comercial_erp_cod, codigo_produto
+) AS exemplos
+ORDER BY agrupamento_comercial_erp_cod NULLS LAST;
+```
+
+Essa leitura é posterior às fotografias históricas de 19/10 registradas acima e não representa carga realizada nesta tarefa. A apresentação foi conferida pelos controllers reais nos testes locais, com API mockada; não houve teste manual da UI publicada.
+
+### Validação local
+
+- Relacionados: **35/35 testes**, em três arquivos (`ui-cadastro-mestre-erp`, `cadastro-mestre-erp-engine`, `api-cadastro-mestre-erp`), com `--maxWorkers=2`.
+- Suíte completa: **600/600 testes em 40 arquivos**, com `node node_modules/vitest/vitest.mjs run --maxWorkers=2`.
+- Os testes da tela conferem cinco cabeçalhos/células, exemplos comerciais, NULL/vazios/campos parciais, escape dos dois campos, objeto de origem preservado, ausência de Agrup. Prod. na apresentação, Origem/Família preservadas e estado vazio. Paginação, filtros, recuperação de erros, isolamento operacional e proibição de escrita continuam cobertos.
+- Lint passou com `node node_modules/eslint/bin/eslint.js .`. A primeira passagem detectou `structuredClone` fora dos globais do ESLint no teste novo; a cópia da fixture passou a usar JSON, sem mudar a configuração.
+- Typecheck passou com `node node_modules/typescript/bin/tsc --noEmit -p jsconfig.json`.
+- Build passou por `buildWeb`, com URL/chave públicas sintéticas em memória (`https://example.supabase.co` / `public-test-key`), sem alterar configuração versionada ou publicar.
+- `git diff --check` passou.
+
+Documentos de uso, UX/contrato comercial, README, ROADMAP, AGENTS e backlog atualizados; VISION revisado e preservado, pois missão/direção permanecem iguais. Os registros históricos das entregas anteriores foram mantidos com seu escopo datado.

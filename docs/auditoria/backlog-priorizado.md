@@ -1,5 +1,7 @@
 # Backlog Priorizado — Auditoria Técnica
 
+- [x] **CAD-ERP-TABLE-01 — apresentação local** (22/10/2026): cinco colunas no Master ERP; Agrup. Prod. removido somente da tabela e par comercial reunido em Agrupamento comercial. Sem inferências ou mudança de modelo/importação/executor/filtros/classificação. [Provas e leitura real](cadastro-mestre-comercial-validacao.md#cad-erp-table-01--apresentação-comercial-unificada-22102026).
+
 - [x] **IMP-PEND-01 — implementação local** (22/10/2026): lista única de códigos/descrições do arquivo compartilhada com warnings e contagem, deduplicação e acesso contextual ao Cadastro. Momento anterior ao envio explícito por decisão humana; API/garantia legada intactas. Abrir/preparar não salva. Sem classificação nova, escrita remota ou publicação. [Diagnóstico e provas](robustez-erros-validacao.md#imp-pend-01--produtos-sem-cadastro-identificáveis-22102026).
 
 - [x] **CUSTOS-DATA-01 — apresentação local** (22/10/2026): Histórico de Importações do produto exibe Data a partir de `data_referencia` já presente no payload, sem horário/dia fixo. Competência e uma linha por registro mantidas, inclusive 05/10 e 14/10. `criado_em` permanece proveniência; sem API/filtros/cálculos/banco/schema/publicação. [Causa e validação real](robustez-erros-validacao.md#custos-data-01--data-de-referência-no-histórico-do-produto-22102026).

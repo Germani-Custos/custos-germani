@@ -44,7 +44,7 @@ Transporte vigente: `CADASTRO_MESTRE_DADOS_V3`, tupla de onze posições:
 
 Mantém todas as linhas não vazias, metadados/colunas e hashes; JSON até 4 MiB. Não envia binário, SQL, patches, contexto duplicado ou universo previamente filtrado. V1/V2 do transporte e manifesto de reconstrução V1 não são aceitos para nova execução. Novo Preview/aprovação e UI/função compatíveis são obrigatórios. GET de resultados de lotes antigos V1 continua permitido, sem retry de execução.
 
-Consulta ERP continua usando SELECT integral `*` e páginas existentes. Núcleo/renderer expõem os dois campos, com rótulos não informado quando vazios e escape HTML. Consulta não fornece editor comercial e não altera o operacional.
+Consulta ERP continua usando SELECT integral `*` e páginas existentes. Núcleo mantém os dois campos independentes; renderer reúne código — descrição em **Agrupamento comercial**, com escape HTML. Campo parcial mostra somente o valor existente; ambos vazios mostram **Não informado**. Agrup. Prod. permanece no modelo/contrato e deixa de ter coluna nesta tabela (CAD-ERP-TABLE-01). Consulta não fornece editor comercial e não altera o operacional.
 
 ## Executor, snapshot e schema
 

@@ -19,10 +19,8 @@ export function createCadastroMestreErpController({ dom, executeOperationalBound
     dom.erpTableBody.innerHTML = resultado.produtos.length ? resultado.produtos.map(produto => `
       <tr><td>${escapeHtml(produto.codigo_produto)}</td><td>${escapeHtml(produto.descricao || '—')}</td>
       <td>${escapeHtml(produto.origem.label)}</td><td>${escapeHtml(produto.familia.label)}</td>
-      <td>${escapeHtml(produto.agrupamento_erp_valor || 'Não informado')}</td>
-      <td>${escapeHtml(produto.agrupamento_comercial_erp_cod || 'Não informado')}</td>
-      <td>${escapeHtml(produto.agrupamento_comercial_erp_descricao || 'Não informada')}</td></tr>`).join('') :
-      '<tr><td colspan="7" class="empty-state">Nenhum produto encontrado no Master ERP.</td></tr>';
+      <td>${escapeHtml([produto.agrupamento_comercial_erp_cod, produto.agrupamento_comercial_erp_descricao].filter(Boolean).join(' — ') || 'Não informado')}</td></tr>`).join('') :
+      '<tr><td colspan="5" class="empty-state">Nenhum produto encontrado no Master ERP.</td></tr>';
   }
 
   async function reload() {

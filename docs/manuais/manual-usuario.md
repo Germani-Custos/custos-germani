@@ -93,7 +93,7 @@ O aviso **código(s) importado(s) ausente(s) do cadastro operacional** compara c
 
 Consulta independente do universo ERP, sem editar/excluir/cadastrar/classificar. Totais são dinâmicos; busca por código/descrição, origem/família e páginas de 50 consideram todo o universo carregado. Alternar fontes preserva seus filtros/página. **Atualizar consulta** relê os dados, conserva filtros válidos e retorna à primeira página; não sincroniza bases.
 
-Origem/família usam códigos ERP exatos e mostram descrição ou pendência explícita. **Agrup. Prod. (ERP)** é valor bruto. **Agrup. Com. (ERP)** e **Descrição (Agrup. Com.)** são campos próprios e opcionais; ausência aparece como não informado. Classificações de agrupamento provenientes do ERP são dados opcionais e independentes da classificação investigativa do Kustos. Falha de carga não vira zero nem usa o operacional como substituto.
+A tabela mostra **Código, Descrição, Origem, Família e Agrupamento comercial**. Origem/família usam códigos ERP exatos e mostram descrição ou pendência explícita. **Agrupamento comercial** reúne código e descrição, como `C008 — BISCOITO LAMINADO DOCE`; ambos vazios mostram **Não informado**. Campo parcial mostra somente o valor existente, sem completar o ausente. Agrup. Prod. permanece no modelo ERP, sem coluna nesta tabela. Classificações de agrupamento provenientes do ERP são dados opcionais e independentes da classificação investigativa do Kustos. Falha de carga não vira zero nem usa o operacional como substituto.
 
 ### Preview, aprovação e execução
 

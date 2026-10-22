@@ -90,11 +90,33 @@ describe('Cadastro em duas visões independentes', () => {
     master.produtos[0].agrupamento_comercial_erp_cod = 'C006';
     master.produtos[0].agrupamento_comercial_erp_descricao = '<b>BISCOITO ESPECIAL</b>';
     const { dom } = await setup();
-    expect(dom.erpTableBody.innerHTML).toContain('<td>C006</td>');
-    expect(dom.erpTableBody.innerHTML).toContain('&lt;b&gt;BISCOITO ESPECIAL&lt;/b&gt;');
+    expect(dom.erpTableBody.innerHTML).toContain('<td>C006 — &lt;b&gt;BISCOITO ESPECIAL&lt;/b&gt;</td>');
     expect(dom.erpTableBody.innerHTML).toContain('Não informado');
     expect(dom.masterTableBody.innerHTML).toContain('Grupo operacional');
     expect(dom.masterTableBody.innerHTML).not.toContain('C006');
+  });
+
+  it('CAD-ERP-TABLE-01 reúne o comercial em uma célula e preserva campos parciais sem inferir valores', async () => {
+    const comerciais = [
+      ['C008', 'BISCOITO LAMINADO DOCE', 'C008 — BISCOITO LAMINADO DOCE'],
+      ['C011', 'BISCOITO RECHEADO', 'C011 — BISCOITO RECHEADO'],
+      [null, null, 'Não informado'],
+      ['C008', null, 'C008'],
+      [null, 'Descrição isolada', 'Descrição isolada'],
+      [' ', ' ', 'Não informado']
+    ];
+    comerciais.forEach(([codigo, descricao], i) => {
+      master.produtos[i].agrupamento_comercial_erp_cod = codigo;
+      master.produtos[i].agrupamento_comercial_erp_descricao = descricao;
+    });
+    const anterior = JSON.parse(JSON.stringify(master));
+    const { dom } = await setup();
+    const linhas = [...dom.erpTableBody.innerHTML.matchAll(/<tr>([\s\S]*?)<\/tr>/g)];
+    expect(linhas).toHaveLength(50);
+    linhas.forEach(([, linha]) => expect(linha.match(/<td>/g)).toHaveLength(5));
+    comerciais.forEach(([, , esperado], i) => expect(linhas[i][1]).toContain(`<td>${esperado}</td>`));
+    expect(master).toEqual(anterior);
+    expect(dom.erpTableBody.innerHTML).not.toContain('P801');
   });
 
   it('rotula as duas fontes com totais dinâmicos e exibe somente campos ERP no painel de consulta', async () => {
@@ -105,8 +127,9 @@ describe('Cadastro em duas visões independentes', () => {
     expect(dom.masterTableBody.innerHTML).toContain('Produto operacional');
     expect(dom.masterTableBody.innerHTML).not.toContain('Café ERP');
     expect(dom.erpTableBody.innerHTML).toContain('Café ERP');
-    expect(dom.erpTableBody.innerHTML).toContain('<td>P801</td>');
+    expect(dom.erpTableBody.innerHTML).not.toContain('<td>P801</td>');
     expect(dom.erpTableBody.innerHTML).toContain('01 — Produzido ERP');
+    expect(dom.erpTableBody.innerHTML).toContain('F1 — Café');
     expect(dom.erpTableBody.innerHTML).not.toMatch(/M999|M005|Grupo operacional|Produto operacional|<button|Editar/);
     expect(dom.erpPanel.classList.contains('hidden')).toBe(true);
     await dom.erpTab.emit('click');
@@ -134,6 +157,7 @@ describe('Cadastro em duas visões independentes', () => {
     expect(dom.erpSummary.textContent).toContain('0 registro(s)');
     expect(dom.erpPageInfo.textContent).toBe('0–0 de 0 · Página 1 de 1');
     expect(dom.erpTableBody.innerHTML).toContain('Nenhum produto encontrado no Master ERP');
+    expect(dom.erpTableBody.innerHTML).toContain('colspan="5"');
     expect(api.getCadastroMestreErp).toHaveBeenCalledOnce();
   });
 
@@ -188,11 +212,13 @@ describe('Cadastro em duas visões independentes', () => {
 
   it('valores ERP são escapados antes de HTML', async () => {
     master.produtos[0].descricao = '<img src=x onerror=alert(1)>';
-    master.produtos[0].agrupamento_erp_valor = '<script>teste</script>';
+    master.produtos[0].agrupamento_comercial_erp_cod = '<script>teste</script>';
+    master.produtos[0].agrupamento_comercial_erp_descricao = '<b>Comercial</b>';
     const { dom } = await setup();
     expect(dom.erpTableBody.innerHTML).toContain('&lt;img');
     expect(dom.erpTableBody.innerHTML).toContain('&lt;script&gt;');
-    expect(dom.erpTableBody.innerHTML).not.toMatch(/<img|<script/);
+    expect(dom.erpTableBody.innerHTML).toContain('&lt;b&gt;Comercial&lt;/b&gt;');
+    expect(dom.erpTableBody.innerHTML).not.toMatch(/<img|<script|<b>/);
   });
 
   it('HTML mantém Preview comum e cadastro/classificação apenas no painel operacional', () => {
@@ -202,9 +228,10 @@ describe('Cadastro em duas visões independentes', () => {
     expect(html).toContain('Cadastro Mestre ERP —');
     expect(html.match(/id="master-import-btn"/g)).toHaveLength(1);
     expect(html.indexOf('id="master-import-btn"')).toBeLessThan(html.indexOf('id="master-operational-panel"'));
-    expect(erp).toContain('Agrup. Prod. (ERP)');
-    expect(erp).toContain('Agrup. Com. (ERP)');
-    expect(erp).toContain('Descrição (Agrup. Com.)');
+    expect([...erp.matchAll(/<th>(.*?)<\/th>/g)].map(([, label]) => label)).toEqual([
+      'Código', 'Descrição', 'Origem', 'Família', 'Agrupamento comercial'
+    ]);
+    expect(erp).not.toMatch(/Agrup\. Prod\. \(ERP\)|Agrup\. Com\. \(ERP\)|Descrição \(Agrup\. Com\.\)/);
     expect(erp).not.toMatch(/<form|master-new-btn|master-form|Salvar classificação|Excluir|Sincronizar/);
   });
 });

@@ -32,7 +32,7 @@ Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação
 
 - CUSTOS-ERP-01: classificação analítica de origem/família pelo Master em memória, fallback fora do Master e agrupamento operacional; validação GET e interface local concluídas, publicação fora desta etapa.
 - CAD-OP-PAGE-01 e CUSTOS-PAGE-01: paginação integral do Cadastro operacional e da Auditoria de Custos, contagem exata e bloqueio de leitura parcial.
-- CAD-ERP-VIEW-01: consulta do Master ERP com estado independente, filtros por código e páginas visuais de 50.
+- CAD-ERP-VIEW-01: consulta do Master ERP com estado independente, filtros por código e páginas visuais de 50. Apresentação atual em cinco colunas, com Agrupamento comercial reunindo código — descrição (CAD-ERP-TABLE-01), sem mudança de dados.
 - CAD-FAM-01: catálogo de famílias ERP no Preview V2, decisões próprias e executor central com provas/snapshot/rollback conjuntos.
 
 Contratos e evidências: [matriz operacional](docs/arquitetura/matriz-contratos-operacionais.md), [Cadastro](docs/ux/cadastro-mestre.md) e [famílias ERP](docs/arquitetura/cadastro-mestre-familias-erp.md). Contagens e resultados de testes pertencem às evidências datadas, não a itens adicionais deste roadmap.

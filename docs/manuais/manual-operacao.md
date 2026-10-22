@@ -32,7 +32,7 @@ Falha de gravação: procurar `========== IMPORTAÇÃO OP ==========` no console
 
 ## 4. Conferir Cadastro e leituras completas
 
-Cadastro Operacional e Master ERP têm fontes, totais e filtros independentes. A consulta ERP é somente leitura, com busca local, código exato, agrupamento bruto e páginas de 50. **Atualizar consulta** relê o Master e reinicia a página, conservando filtros válidos; alternar painel não sincroniza bases.
+Cadastro Operacional e Master ERP têm fontes, totais e filtros independentes. A consulta ERP é somente leitura, com busca local, código exato e páginas de 50. Confira as cinco colunas Código, Descrição, Origem, Família e Agrupamento comercial; a última reúne código — descrição, sem Agrup. Prod. na tabela. Confira exemplos como `C008 — BISCOITO LAMINADO DOCE` e `C011 — BISCOITO RECHEADO`; ambos os campos vazios mostram **Não informado**, campos parciais mostram apenas o valor existente. Essa apresentação não altera os campos persistidos nem autoriza carga. **Atualizar consulta** relê o Master e reinicia a página, conservando filtros válidos; alternar painel não sincroniza bases.
 
 Após publicação autorizada das correções, confira carga integral e mensagem de ausentes **do cadastro operacional**, sem comparar com o total ERP. Leitura de qualquer página com erro/contagem alterada/incompleta deve falhar explicitamente. Repetir somente a leitura após investigar; não cadastrar/importar/reconstruir para compensar o contador.
 
