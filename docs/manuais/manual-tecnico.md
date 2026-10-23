@@ -1,8 +1,11 @@
 # Manual Técnico — Kustos Germani
 
-Guia de desenvolvimento e contratos implementados no checkout, revisado em **19/10/2026**. Antes de mudar, leia [AGENTS.md](../../AGENTS.md), [Regras Gerais](../regras-gerais.md) e [auditoria/backlog](../auditoria/README.md). Evidências de entregas e contagens de testes ficam nos documentos especializados e na [História](../HISTORIA_DO_PROJETO_KUSTOS.md), sem funcionar como instruções atuais.
+Guia de desenvolvimento e contratos implementados no checkout, revisado quanto ao acesso em **23/10/2026**. Antes de mudar, leia [AGENTS.md](../../AGENTS.md), [Regras Gerais](../regras-gerais.md) e [auditoria/backlog](../auditoria/README.md). Evidências de entregas e contagens de testes ficam nos documentos especializados e na [História](../HISTORIA_DO_PROJETO_KUSTOS.md), sem funcionar como instruções atuais.
 
 ## 1. Stack e fronteiras
+
+O [modelo de acesso vigente](../arquitetura/modelo-acesso-rls.md) exige sessão permanente para ler dados; somente os dois administradores indicados podem importar Custos/OP e criar/editar produtos operacionais. Demais autenticados têm leitura. Não há exclusão operacional, escrita direta de catálogos/Master ou acesso anônimo às tabelas. Reconstrução ERP continua com allowlist/flag e procedimento separados. A autorização é aplicada no banco, mesmo se controles de edição/importação estiverem visíveis na UI de um leitor. Erro de permissão exige conferir sessão/identidade/operação; não conceder ALL, usar service_role no browser ou desabilitar RLS. [Provas e limites](../auditoria/seguranca-rls-validacao.md).
+
 
 Frontend HTML/CSS/JavaScript ES Modules nativo, sem bundler de aplicação. Bibliotecas CDN são declaradas em `index.html`; Supabase fornece PostgreSQL, Auth e Realtime. O frontend estático é publicado em `dist`; funções Node Vercel em `api/` são empacotadas separadamente.
 

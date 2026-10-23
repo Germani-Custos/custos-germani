@@ -1,5 +1,8 @@
 # Auditoria — Robustez, Tratamento de Erros e Correção
 
+> **Leitura atual — 22/10/2026:** este documento conserva diagnósticos e entregas de suas datas. Estados/prioridades vigentes estão no [backlog único](backlog-priorizado.md); a [reconciliação](backlog-reconciliacao-2026-10-22.md) avalia cada ID e registra o que foi resolvido, continua parcial ou perdeu validade. Checkboxes e recomendações históricas abaixo não autorizam repetir correções ou operações.
+
+
 ## IMP-PEND-01 — produtos sem cadastro identificáveis (22/10/2026)
 
 - **Causa:** aviso antigo contava linhas, duplicava códigos e usava `state.masters.produtos` (universo analítico com fatos), não o operacional completo. Faltavam identidades e navegação no resultado. A API já tenta criar ausentes: decisão humana explícita manteve essa regra e definiu que o aviso representa o momento anterior ao envio.

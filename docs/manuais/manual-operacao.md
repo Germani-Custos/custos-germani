@@ -1,6 +1,6 @@
 # Manual de Operação — Kustos Germani
 
-Procedimentos atuais de manutenção e conferência, revisados em **19/10/2026**. O [ROADMAP](../../ROADMAP.md) distingue implementação local de publicação/execução. Quantidades reais e status de ambiente citados nas provas são datados; esta revisão não acessou produção. Uso da tela: [Manual do Usuário](manual-usuario.md). Implementação: [Manual Técnico](manual-tecnico.md).
+Procedimentos atuais de manutenção e conferência, revisados quanto ao acesso em **23/10/2026**. O [ROADMAP](../../ROADMAP.md) distingue implementação local de publicação/execução. Quantidades reais e status de ambiente citados nas provas são datados; a validação remota do acesso está nas provas SEC-03; demais referências mantêm suas datas. Uso da tela: [Manual do Usuário](manual-usuario.md). Implementação: [Manual Técnico](manual-tecnico.md).
 
 ## 1. Rotina mensal de Custos
 
@@ -76,7 +76,10 @@ Nenhuma carga desta etapa está autorizada. Na etapa futura, autorização human
 
 ## 6. Acesso, configuração e publicação
 
-O fluxo principal do checkout chama login antes de masters/metadados e OP; criação administrativa de usuário está em [Autenticação](../arquitetura/autenticacao.md). Isso não comprova RLS ou permissões de produção. Não habilitar políticas por suposição; modelo de acesso e verificações remotas precisam de escopo próprio. Não expor senhas, tokens ou service-role no frontend, logs ou documentação.
+O [modelo de acesso vigente](../arquitetura/modelo-acesso-rls.md) exige sessão permanente para ler dados; somente os dois administradores indicados podem importar Custos/OP e criar/editar produtos operacionais. Demais autenticados têm leitura. Não há exclusão operacional, escrita direta de catálogos/Master ou acesso anônimo às tabelas. Reconstrução ERP continua com allowlist/flag e procedimento separados. A autorização é aplicada no banco, mesmo se controles de edição/importação estiverem visíveis na UI de um leitor. Erro de permissão exige conferir sessão/identidade/operação; não conceder ALL, usar service_role no browser ou desabilitar RLS. [Provas e limites](../auditoria/seguranca-rls-validacao.md).
+
+
+O fluxo principal do checkout chama login antes de masters/metadados e OP; criação administrativa de usuário está em [Autenticação](../arquitetura/autenticacao.md). Isso não comprova RLS ou permissões de produção. O modelo indicado foi aplicado; mudanças futuras de autorização exigem evidência e escopo próprio, preservando a matriz. Não expor senhas, tokens ou service-role no frontend, logs ou documentação.
 
 Build Vercel chama `scripts/build-web.mjs`, publica `dist` por allowlist e gera runtime-config com URL/chave públicas e verbose. Funções `/api` são empacotadas separadamente. Segredos administrativos, scripts, SQL e dependências não são arquivos públicos. Variáveis/configuração: [setup](../../README_SETUP.md) e [deploy](../arquitetura/deploy.md). Ausência de variáveis obrigatórias bloqueia o build/bootstrap.
 

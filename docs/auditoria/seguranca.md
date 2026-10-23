@@ -1,5 +1,10 @@
 # Auditoria — Segurança
 
+> **SEC-03 / SEC-07 — estado de 23/10/2026:** RLS/grants aplicados e verificados, com leitura autenticada e escrita operacional dos dois admins indicados. [Matriz vigente](../arquitetura/modelo-acesso-rls.md) e [provas](seguranca-rls-validacao.md). SEC-06/ERR-04 e SEC-08 permanecem pendentes; o corpo histórico abaixo não reabre o acesso público.
+
+> **Leitura atual — 22/10/2026:** este documento conserva diagnósticos e entregas de suas datas. Estados/prioridades vigentes estão no [backlog único](backlog-priorizado.md); a [reconciliação](backlog-reconciliacao-2026-10-22.md) avalia cada ID e registra o que foi resolvido, continua parcial ou perdeu validade. Checkboxes e recomendações históricas abaixo não autorizam repetir correções ou operações.
+
+
 **Escopo histórico:** evidências e recomendações abaixo descrevem a auditoria de 25/05. O [backlog](backlog-priorizado.md) registra resoluções de SEC-01/04/05 e a decisão SEC-03; o checkout de 16/10 já contém fillSelect por DOM, sanitização de exportação e login no fluxo principal. O handler documental continua fronteira separada sem validação de sessão. SEC-05 tem divergência de critério (versões fixadas no HTML, mas sem SRI e cliente Supabase CDN somente major), preservada em [DOC-DIV-01](reorganizacao-documental.md#contradições-e-tratamento). RLS remoto não foi revalidado. Não tratar o corpo como lista automática de vulnerabilidades atuais.
 
 O arquivo core/text-utils.js citado na sugestão SEC-01 não existe: era exemplo de destino, não contrato implementado. O helper seguro atual está em view/ui-utils.js; a sugestão histórica foi preservada como evidência.

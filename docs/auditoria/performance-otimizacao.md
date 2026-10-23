@@ -1,5 +1,8 @@
 # Auditoria — Performance e Otimização
 
+> **Leitura atual — 22/10/2026:** este documento conserva diagnósticos e entregas de suas datas. Estados/prioridades vigentes estão no [backlog único](backlog-priorizado.md); a [reconciliação](backlog-reconciliacao-2026-10-22.md) avalia cada ID e registra o que foi resolvido, continua parcial ou perdeu validade. Checkboxes e recomendações históricas abaixo não autorizam repetir correções ou operações.
+
+
 **Leitura dos achados em 16/10:** PERF-01 está concluído; PERF-03 consta concluído no backlog e há cache de cascata em `core/report-engine.js`. As evidências originais de ausência de memoização abaixo são históricas. PERF-02 e avaliação futura de PERF-04 continuam no [backlog](backlog-priorizado.md). Caminhos/linhas antigos identificam a base auditada; consultar funções/módulos atuais antes de agir.
 
 Ver legenda e formato em [`README.md`](./README.md). Foco do usuário: **otimizar sobre o que já existe**, sem reescrever. O `AGENTS.md` já fixa boas práticas (debounce em realtime, destruir/recriar Chart.js, evitar refetch) — algumas estão cumpridas, outras não.

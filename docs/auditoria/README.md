@@ -1,5 +1,10 @@
 # Auditoria Técnica — Kustos Germani
 
+> **SEC-03 / SEC-07 — estado de 23/10/2026:** RLS/grants aplicados e verificados, com leitura autenticada e escrita operacional dos dois admins indicados. [Matriz vigente](../arquitetura/modelo-acesso-rls.md) e [provas](seguranca-rls-validacao.md). SEC-06/ERR-04 e SEC-08 permanecem pendentes; o corpo histórico abaixo não reabre o acesso público.
+
+> **Estado vigente em 22/10/2026:** use o [backlog ativo](backlog-priorizado.md) e a [reconciliação por ID](backlog-reconciliacao-2026-10-22.md). O conteúdo temático abaixo preserva a auditoria datada; afirmações de ausência de suíte, XSS em fillSelect e estados antigos não são diagnóstico atual. SEC-01 foi resolvido. A lista anterior está no [arquivo histórico](backlog-historico.md).
+
+
 ## Escopo e navegação atuais
 
 Este conjunto preserva achados e evidências da base analisada em cada data. Não é declaração de que todos os defeitos originais permanecem ativos, nem nova inspeção de produção. Para estados/resoluções, consultar o [backlog](backlog-priorizado.md); para contratos em vigor, a [matriz operacional](../arquitetura/matriz-contratos-operacionais.md).
@@ -41,7 +46,7 @@ ID · Severidade · Local (arquivo:linha) · Evidência · Impacto · Correção
 
 - **ID** estável (ex.: `SEC-01`) — referenciado no backlog e nos commits que o resolverem.
 - **Local** sempre com `arquivo:linha`. As linhas refletem o estado em 2026-05-25; se o código mudou, busque pela função citada.
-- **Critério de aceite** descreve como validar que está resolvido (sem depender de suíte de testes, que hoje não existe — ver `tooling-configuracao.md`).
+- **Critério de aceite:** demonstra como validar o contrato; a suíte atual existe, com limites de cobertura descritos na reconciliação.
 
 ### Legenda de severidade
 
@@ -62,7 +67,7 @@ Durante a auditoria, conferimos o código real e **descartamos** alguns pontos q
 - Drill-through (`view/ui-controller.js:733-773`): só injeta **números/datas formatados**; a descrição vai via `textContent` (linha 730), não `innerHTML`.
 - `updateProductSuggestions` (`view/ui-controller.js:65-67`), chips de filtro (`571-575`), TOP variações (`1015-1021`), preview de importação (`247-260`) e mapeamento de colunas (`295-311`): **todos já usam `escapeHtml`**.
 
-O **único** ponto de XSS realmente explorável é o `fillSelect` em `core/report-engine.js` — ver `SEC-01`.
+Na base histórica de 25/05, o achado explorável identificado foi `fillSelect`. **SEC-01 foi corrigido**; os casos atuais e a defesa em profundidade constam na reconciliação e em SEC-02.
 
 ---
 

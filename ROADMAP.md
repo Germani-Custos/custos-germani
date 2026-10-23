@@ -1,94 +1,46 @@
 # Roadmap Estratégico — Kustos Germani
 
-Recorte documental: **19/10/2026**. Toda iniciativa deve acelerar investigação, reduzir cliques, melhorar contexto ou destacar risco. Conclusão de implementação local e publicação/execução real são estados distintos; a validação GET de CUSTOS-ERP-01 está na auditoria específica e não representa publicação.
+Recorte reconciliado em **22/10/2026**. Este documento reúne capacidades futuras e decisões de produto. Problemas existentes, prioridades P0–P3 e critérios de correção pertencem exclusivamente ao [backlog ativo](docs/auditoria/backlog-priorizado.md). A evolução funcional aguarda a decisão humana após a auditoria; esta organização não autoriza implementação, escrita remota ou publicação.
 
-## Concluído
+## Base disponível e evidência de entregas
 
-### Consolidação operacional e investigação analítica
+Custos oferece busca/cascata, fila, KPIs, gráficos, drill-through e exportação. OP oferece fila/dossiê e decisão por produção, tempo, produtividade e parada. Cadastro separa Operacional de Mestre ERP, com Preview e fronteira administrativa. A implementação dessas capacidades convive com defeitos atuais: consulta de OP parcial, ordenação/narrativa/comparação e salvamento documental estão no backlog; não são entregas futuras opcionais.
 
-- Importação resiliente de custos com reconhecimento/mapeamento de cabeçalhos, parsing brasileiro, preview por linha, normalização canônica, chunking, log e garantia de produtos no dicionário.
-- Busca direta, cascata, ordenação, filtros rápidos, chips e atualização do relatório após mudança de filtros.
-- Alertas canônicos, instabilidade, mudança de regime, comparação de importações, TOP variações e evolução temporal.
-- Recortes Intervalo/Comparação compartilhados com drill-through e exportação XLSX com contexto e campos selecionáveis.
-- Auditoria de OP: persistência MCAP105, decisão investigativa por sinais combinados e carga local renovada após importar (MNT-OP-01 a MNT-OP-04).
-- Fronteiras de erro, contratos tipados, lint/testes/CI e modularização da UI (MNT-01); fila de Custos com janela TOP-200 e delegação de eventos (PERF-01).
+Leitura de produção em 22/10 confirmou 860 produtos ERP, 162 pares comerciais preenchidos, 698 vazios e lote histórico com 65 famílias inseridas. Recursos frontend publicados foram conferidos; saúde autenticada atual de TLS/Storage/flags e causa remota do HTTP 500 continuam sem conclusão. Não manter uma tarefa genérica de repetir publicação/carga dessas entregas com base em textos antigos. O executor comercial isolado foi implementado para uma fotografia inicial específica; o preenchimento atual não prova uso dele nem autoriza executá-lo novamente.
 
-### Cadastro e proveniência ERP
+O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-22.md) avalia cada uma das 38 entradas anteriores e os IDs históricos. O [arquivo histórico](docs/auditoria/backlog-historico.md) preserva integralmente a versão anterior deste roadmap, do README e do backlog. [História do projeto](docs/HISTORIA_DO_PROJETO_KUSTOS.md), contratos e provas continuam responsáveis pelos marcos detalhados; Git é a fonte oficial de commits.
 
-- Dimensão operacional comum a Custos/OP e manutenção manual da classificação, separada dos fatos.
-- Estrutura de proveniência do Master, preservação do agrupamento ERP bruto e primeira carga pontual auditada.
-- Pipeline único XLS/XLSX/XLSM → Preview → manifesto → aprovação integral → reconstrução administrativa explícita, por CLI ou função Vercel, com snapshot/revalidação/transação/rollback.
-- Transporte web compacto, diagnóstico administrativo de leitura e isolamento do frontend em `dist`.
-- Reconstrução real confirmada nos registros posteriores à preparação; [evidência de 15/10](docs/ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026). Isso não representa execução das novas propostas de famílias.
-- Identidade de família por código, com remoção isolada da unicidade da descrição aplicada e documentada em [Migrações](docs/arquitetura/migracoes.md).
-
-### Implementações locais com continuidade de publicação
-
-- IMP-PEND-01: Preview/resultado de Custos identificam códigos únicos ausentes antes do envio, com descrição do arquivo e acesso contextual ao Cadastro Operacional. Sem persistência adicional ou mudança da regra existente. [Contrato e provas](docs/auditoria/robustez-erros-validacao.md#imp-pend-01--produtos-sem-cadastro-identificáveis-22102026).
-
-- CAD-COM-EXEC-01: executor isolado da primeira carga comercial, preservando timestamps/proveniência/logs; validação local do XLS/manifesto e rollback. Execução real bloqueada até autorização própria. [Contrato](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md).
-
-- CAD-COM-01: Agrup. Com. e descrição opcionais no Master; migration aditiva aplicada em produção na etapa CAD-COM-PROD-01, sem carga. Publicação compatível V3, novo Preview/aprovação e execução continuam dependentes de novas etapas autorizadas. [Prova da migration](docs/auditoria/cadastro-mestre-comercial-producao-etapa1.md).
-
-- CUSTOS-ERP-01: classificação analítica de origem/família pelo Master em memória, fallback fora do Master e agrupamento operacional; validação GET e interface local concluídas, publicação fora desta etapa.
-- CAD-OP-PAGE-01 e CUSTOS-PAGE-01: paginação integral do Cadastro operacional e da Auditoria de Custos, contagem exata e bloqueio de leitura parcial.
-- CAD-ERP-VIEW-01: consulta do Master ERP com estado independente, filtros por código e páginas visuais de 50. Apresentação atual em cinco colunas, com Agrupamento comercial reunindo código — descrição (CAD-ERP-TABLE-01), sem mudança de dados.
-- CAD-FAM-01: catálogo de famílias ERP no Preview V2, decisões próprias e executor central com provas/snapshot/rollback conjuntos.
-
-Contratos e evidências: [matriz operacional](docs/arquitetura/matriz-contratos-operacionais.md), [Cadastro](docs/ux/cadastro-mestre.md) e [famílias ERP](docs/arquitetura/cadastro-mestre-familias-erp.md). Contagens e resultados de testes pertencem às evidências datadas, não a itens adicionais deste roadmap.
-
-## Em andamento
-
-Continuidade registrada como pendente nas entregas locais, sem assumir execução ativa por alguém:
-
-- Publicação autorizada das leituras integrais de Cadastro/Custos e da consulta ERP; conferência da UI publicada com sessão de produção.
-- Publicação conjunta de UI/função V2 de famílias, novo Preview, revisão independente de famílias/produtos e diagnóstico. Habilitação/execução real das propostas exige autorização própria; não é teste da consulta.
-- Esclarecimento da divergência histórica de fingerprint operacional registrada na [Fase 3.3](docs/arquitetura/cadastro-mestre-aprovacao.md#ressalva-detectada-na-comparação-real), sem atribuir causa ou autoria por suposição.
-
-Não há publicação, habilitação ou execução autorizada por este documento. Estado remoto de flags/permissões deve ser verificado na operação correspondente.
-
-## Próxima onda
-
-### Prioridade técnica vigente
-
-Seguir o [backlog priorizado](docs/auditoria/backlog-priorizado.md), que mantém critérios e dependências. MNT-01/PERF-01 já estão concluídos; não reiniciar a preparação histórica:
-
-1. **MNT-03:** centralizar cascata; `fillSelect` já tem lar único, mas a iniciativa permanece parcial.
-2. **SEC-02:** padronizar HTML seguro sobre os fluxos separados.
-3. **PERF-02:** cache de masters com invalidação por importação/realtime e diagnóstico explícito de falhas.
-4. **MNT-02 / VAL-02:** separar responsabilidades da API mantendo a fachada e consolidar validação entre preview e persistência.
-5. **LOG-02:** decidir identidade de lote versus timestamp por chunk antes de corrigir comparação de importações. `criado_em` segue importação; `data_referencia` segue competência.
-6. **MNT-08:** avaliar presenter investigativo dedicado e desacoplamento da ordenação de exportação dos rótulos visuais.
-
-### Próxima evolução funcional — Memória operacional
+## Próxima evolução funcional — memória operacional
 
 Planejada, sem implementação declarada por esta reorganização:
 
-- Histórico de alertas por produto, frequência/reincidência e linha do tempo de regime, preservando o alerta canônico ≥ 5%.
-- Comparação entre períodos equivalentes e exportação do drill-through individual.
-- Autocomplete avançado por código/descrição e persistência do filtro de mudança de regime por período.
+- Histórico persistente de alertas por produto, frequência/reincidência e linha do tempo de regime, preservando o alerta canônico ≥5%. A narrativa indevida da fila atual deve ser corrigida por LOG-04 sem exigir essa nova persistência.
+- Comparação ampliada entre períodos equivalentes e exportação do drill-through individual. Corrigir a comparação existente por lote/recorte é LOG-02/03, no backlog.
+- Autocomplete avançado por código/descrição e persistência do filtro de mudança de regime por período, se priorizados por uso. PERF-04 não prova necessidade dessas novas capacidades.
 
-Decisões pendentes: cálculo local versus views para séries longas, retenção de `log_importacao` e suficiência dos índices já documentados. A antiga proposta de indexação não implica ausência dos índices existentes.
+Antes de escolher uma entrega, definir cálculo local versus séries maiores, retenção de evidências e critério de benefício investigativo. Índices existentes e planos reais devem ser conferidos; não assumir ausência de índice a partir de proposta histórica.
 
-## Backlog futuro
+## Evolução futura — inteligência operacional
 
-### Inteligência operacional
+- Ranking de risco composto e sugestões explicáveis de próximos produtos a investigar. Corrigir a prioridade prometida pela janela atual é LOG-05, não depende desse novo motor.
+- Distinguir sazonalidade de ruptura, ampliar insights temporais e avaliar previsão de tendência com base suficiente.
+- Integração direta ERP/SAP e eventual sugestão revisável de classificação por código de negócio, condicionada a contrato empresarial. Não inferir classificação por descrição ou semelhança textual.
+- Acessibilidade e experiência em volumes maiores conforme requisitos e evidências de uso; nenhum gargalo genérico foi confirmado apenas pela existência de datalist.
 
-- Ampliar priorização para ranking de risco composto e sugestões explicáveis de próximos produtos a investigar; a prioridade contextual atual já existe.
-- Distinguir sazonalidade de ruptura, gerar insights textuais de recorrência e avaliar previsão de tendência.
-- Integração direta ERP/SAP e eventual sugestão revisável de classificação por código de negócio.
-- Reavaliar datalist em volumes grandes (PERF-04) e acessibilidade conforme impacto investigativo.
+## Decisões de negócio e dados
 
-### Decisões de negócio e dados
-
-- Reconciliação Master ERP → dimensão operacional somente após decisão explícita de negócio; nenhuma sincronização automática está implícita na existência de duas visões.
+- Reconciliação Master ERP → dimensão operacional somente após decisão explícita; a existência de duas visões não autoriza sincronização automática nem exclusão da dimensão operacional.
 - Ponte empresarial aprovada para agrupamento ERP → categoria Kustos; não converter por família, origem, descrição ou semelhança de códigos.
-- Modelo de acesso/RLS e retenção de evidências conforme necessidade operacional. Login existente não comprova isolamento no banco.
+- Retenção de evidências e eventual autoria detalhada conforme necessidade e contrato aprovado. A correção do risco atual de acesso/RLS tem prioridade própria em SEC-03, fora da espera por multi-tenant/RBAC futuro.
 
-### Não priorizar
+`data_referencia` permanece competência; `criado_em` permanece importação/proveniência. Nenhuma proposta implica nova fonte de verdade, schema ou carga sem decisão específica.
 
-Features decorativas, CRUD complexo, multi-tenant/RBAC burocrático enquanto não houver necessidade de uso, microserviços sem justificativa, abstrações excessivas e IA genérica sem aplicação verificável à auditoria. [Multi-tenant](docs/roadmap/multi-tenant.md) continua proposta futura.
+## Verificações separadas de features
 
-## Documentos de apoio
+PERF-04, divergência de fingerprint da Fase 3.3, saúde administrativa atual e causa remota do save-doc estão na [fila de verificação](docs/auditoria/backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Não são features aprovadas nem defeitos cuja causa já tenha sido provada. A ordem de correções A–E fica somente no backlog.
 
-[VISION](VISION.md) define a direção; [README](README.md) apresenta o estado do checkout; [backlog](docs/auditoria/backlog-priorizado.md) ordena correções técnicas; [História](docs/HISTORIA_DO_PROJETO_KUSTOS.md) explica decisões e marcos anteriores. O histórico oficial de commits permanece no Git.
+## Não priorizar
+
+Features decorativas, CRUD complexo, multi-tenant/RBAC sem necessidade de uso, microserviços sem justificativa, abstrações excessivas e IA genérica sem aplicação verificável à investigação. [Multi-tenant](docs/roadmap/multi-tenant.md) continua proposta futura; essa decisão não adia a proteção do acesso atual.
+
+[VISION](VISION.md) define direção e princípios; [README](README.md) apresenta o sistema e resume a lista ativa; [backlog](docs/auditoria/backlog-priorizado.md) é a única lista priorizada de correções.

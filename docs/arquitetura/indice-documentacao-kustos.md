@@ -61,3 +61,8 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 Contagens, resultados de testes, deployments e status de flags são válidos para o escopo/data da evidência. Sucessões explícitas de contrato resolvem somente os pontos indicados; divergências sem prova permanecem na auditoria. `data_referencia` continua competência e `criado_em` evento de importação.
 
 - [Agrupamento comercial ERP opcional](cadastro-mestre-agrupamento-comercial-erp.md): contrato CAD-COM-01, separação dos agrupamentos e pré-requisitos de aplicação.
+
+## Acesso e RLS
+
+- [Modelo de acesso](modelo-acesso-rls.md): matriz de tabelas/operações/roles, identidades indicadas e fronteira administrativa.
+- [Validação SEC-03](../auditoria/seguranca-rls-validacao.md): migration aplicada, ensaios de segurança, preservação e limites.

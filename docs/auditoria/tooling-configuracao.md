@@ -1,5 +1,8 @@
 # Auditoria — Tooling e Configuração
 
+> **Leitura atual — 22/10/2026:** este documento conserva diagnósticos e entregas de suas datas. Estados/prioridades vigentes estão no [backlog único](backlog-priorizado.md); a [reconciliação](backlog-reconciliacao-2026-10-22.md) avalia cada ID e registra o que foi resolvido, continua parcial ou perdeu validade. Checkboxes e recomendações históricas abaixo não autorizam repetir correções ou operações.
+
+
 **Escopo histórico:** CFG-01 a CFG-05 foram concluídos, conforme [backlog](backlog-priorizado.md). O corpo preserva investigação e recomendações da época; não declara ausência atual de lint/tipos/testes/CI. `package.json` hoje inclui dependencies de servidor para funções administrativas, além de devDependencies; o runtime frontend continua estático/CDN. Build atual usa `scripts/build-web.mjs`/`dist`, sem publicar a raiz administrativa. [Manual Técnico atual](../manuais/manual-tecnico.md).
 
 src/services/validation.js é um destino proposto após MNT-02, ainda inexistente; a referência no corpo não afirma módulo disponível hoje.

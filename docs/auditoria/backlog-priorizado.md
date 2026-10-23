@@ -1,188 +1,522 @@
-# Backlog Priorizado — Auditoria Técnica
+# Backlog ativo de correções — Kustos
+
+Estado vigente em **23/10/2026**, após a entrega SEC-03: **27 itens ativos — P0 = 1, P1 = 10, P2 = 10, P3 = 6.** São 12 IDs históricos e 15 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 20 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03 e SEC-07 foram encerrados com provas abaixo.
+
+Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
+
+A autorização da entrega RLS cobriu SEC-03 e o fechamento da view em SEC-07. Não autoriza os itens restantes. A consolidação de 22/10 foi documental; o hardening subsequente foi aplicado em migration própria, sem carga, commit, push ou deploy de aplicação. Contagens remotas continuam sendo evidência datada.
 
-- [x] **CAD-ERP-TABLE-01 — apresentação local** (22/10/2026): cinco colunas no Master ERP; Agrup. Prod. removido somente da tabela e par comercial reunido em Agrupamento comercial. Sem inferências ou mudança de modelo/importação/executor/filtros/classificação. [Provas e leitura real](cadastro-mestre-comercial-validacao.md#cad-erp-table-01--apresentação-comercial-unificada-22102026).
+## Prioridades e contratos comuns
 
-- [x] **IMP-PEND-01 — implementação local** (22/10/2026): lista única de códigos/descrições do arquivo compartilhada com warnings e contagem, deduplicação e acesso contextual ao Cadastro. Momento anterior ao envio explícito por decisão humana; API/garantia legada intactas. Abrir/preparar não salva. Sem classificação nova, escrita remota ou publicação. [Diagnóstico e provas](robustez-erros-validacao.md#imp-pend-01--produtos-sem-cadastro-identificáveis-22102026).
-
-- [x] **CUSTOS-DATA-01 — apresentação local** (22/10/2026): Histórico de Importações do produto exibe Data a partir de `data_referencia` já presente no payload, sem horário/dia fixo. Competência e uma linha por registro mantidas, inclusive 05/10 e 14/10. `criado_em` permanece proveniência; sem API/filtros/cálculos/banco/schema/publicação. [Causa e validação real](robustez-erros-validacao.md#custos-data-01--data-de-referência-no-histórico-do-produto-22102026).
-
-- [x] **CAD-COM-EXEC-01 — executor isolado local** (22/10/2026): somente UPDATE do par comercial, com fotografia/hash, revalidação pelo adapter e universo 860/162/698, transação e rollback, preservando timestamps/proveniência/logs. Escrita real bloqueada até autorização própria; sem schema/publicação. [Contrato](../arquitetura/cadastro-mestre-comercial-executor-isolado.md) e [provas](cadastro-mestre-comercial-executor-isolado.md).
-
-- [x] **CAD-COM-PROD-01 — somente migration** (19/10/2026): versão remota 20261019173633 aplicada com backup; duas colunas TEXT NULL, 860 produtos sem preenchimento comercial. Contagens e SHA-256 das 12 tabelas públicas idênticos; sem carga, publicação, commit ou push. [Provas](cadastro-mestre-comercial-producao-etapa1.md).
-
-- [x] **VIS-01 — implementação visual local** (19/10/2026): tokens Black + Purple, cards para módulos existentes e apresentação compartilhada de Custos/OP/Cadastro/Documentação/login/modais, com semântica operacional preservada. Conferência sintética em três viewports e 554 testes verdes; sem publicação. Aprovação humana pendente. [Escopo e evidências](identidade-visual.md).
-
-- [x] **CAD-COM-01 — implementação local** (19/10/2026): dois campos comerciais opcionais, limpeza explícita de vazio para NULL, transporte V3/manifesto V2, executor/snapshot/rollback e consulta ERP. XLS real: 860 produtos válidos, 162 com comercial, 698 sem, 29 códigos, zero conflitos; validação local anterior com remoto somente leitura. Migration posteriormente aplicada em CAD-COM-PROD-01, sem carga; os novos campos do Master de produção continuam NULL. Publicação e carga futura dependem de nova etapa autorizada. [Provas](cadastro-mestre-comercial-validacao.md).
-
-## Organização documental — 16/10/2026
-
-- [x] **DOC-ORG-01** — auditar os 53 Markdown versionados, separar apresentação/estratégia/planejamento/contratos/processo/manuais/evidências/história, reaproveitar História e atualizar índice. Somente documentação; sem testes de aplicação, commit, push ou deploy. [Diagnóstico, movimentos e validação](reorganizacao-documental.md).
-- [ ] **DOC-DIV-01 — evidência insuficiente para encerrar divergências**: conferir critério de SRI/versão exata do cliente CDN em SEC-05, destino efetivo da FK de agrupamento (`id` no modelo especializado versus `codigo` em SQL histórico) e alcance RLS remoto. Não alterar checkboxes de segurança ou banco por esta revisão; exige escopo próprio e evidência. [Detalhes](reorganizacao-documental.md#contradições-e-tratamento).
-
-Itens datados abaixo preservam o estado de cada entrega. Afirmações antigas de reconstrução/deploy/bucket pendentes foram sucedidas pelos registros de revisão final e de 15/10; não são tarefas atuais duplicadas. Publicação das entregas locais de 15–16/10 e execução das propostas V2 de famílias permanecem pendências próprias. A reavaliação de 02/07 é fundamento histórico; a sequência vigente considera somente itens abertos.
-
-ERR-02 registra melhoria histórica de degradação; CUSTOS-PAGE-01 exige erro explícito se fonte da hierarquia falhar. Só o diagnóstico isolado permanece indisponível. Não reintroduzir hierarquia parcial pelo critério antigo.
-
-- [x] **CUSTOS-PAGE-01** (2026-10-16): leituras completas da hierarquia/diagnóstico/histórico/comparações/drill-through de Custos, reutilizando paginação do Cadastro, com contagem exata e ordenação total. Erros/páginas incompletas não geram sucesso parcial; enriquecimento antes da cascata e classificações existentes preservados. 25 novas regressões; validação GET real confirmou 6.113 produtos/1.370 fatos/437 códigos encontrados/zero ausentes e 437 pendências de agrupamento. Sem DML, migration, sincronização ERP, alteração de OP ou deploy. [Contrato e evidências](../arquitetura/matriz-contratos-operacionais.md#custos-page-01--leituras-integrais-da-auditoria-de-custos-16102026).
-
-- [x] **CAD-FAM-01 — implementação local** (2026-10-15): rótulo ERP no adapter/transporte V2 e manifesto, catálogo puro apenas do universo, decisões independentes, executor central com proteção específica integral de famílias, snapshot parcial e rollback conjunto. Preview real somente GET: 860 produtos/81 famílias/16 existentes/65 novas/693 impactados, sem conflitos ou escrita. Deploy e execução real ficam pendentes de autorização própria. [Contrato e provas](../arquitetura/cadastro-mestre-familias-erp.md).
-
-- [x] **CAD-FAM-SCHEMA-01** (2026-10-15): remover somente `UNIQUE(descricao)` de `categorias_familia`, permitindo rótulos iguais em códigos diferentes. Migration 20261015182351 aplicada; 38 registros/35 códigos não nulos/38 descrições, PK, código único, NOT NULL e fingerprints protegidos preservados. Backup prévio e rollback manual não executado. Nenhum cadastro automático ou mudança de executor nesta etapa. [SQL e validações](../arquitetura/migracoes.md#cad-fam-schema-01--descrição-de-família-não-é-identidade-15102026).
-
-- [x] **CAD-ERP-VIEW-01** (2026-10-15): acrescentar consulta Master ERP dentro de Cadastro, com fonte/total, busca, filtros exatos, agrupamento bruto e páginas visuais de 50. Reutiliza leitor Supabase de 500; não fixa 860, não mistura estado operacional nem escreve/sincroniza. Cadastro/edição operacional e Preview preservados. 463 testes/35 arquivos (31 novos) passaram com dois workers após timeout inicial preexistente; QA visual sintético e sonda GET real 860/50/18, sem escrita. Publicação depende de revisão/autorização. [Contrato e evidências](../ux/cadastro-mestre.md#cad-erp-view-01--duas-visões-no-cadastro-15102026).
-
-- [x] **CAD-OP-PAGE-01** (2026-10-15): corrigir truncamento de `getProductMaster()` com páginas de 500/count exact/ordenação nas três fontes volumosas; preservar cálculo canônico e impedir sucesso parcial. Aviso explicita cadastro operacional. 23 regressões novas; 432 testes/32 arquivos, lint/typecheck/build/diff check passaram. Sonda real restrita a GET confirmou 6.113/1.370/704 linhas, 501 códigos únicos/zero ausentes, sem escrita ou Master ERP. Deploy pendente. [Contrato](../ux/cadastro-mestre.md#cad-op-page-01--leitura-integral-do-cadastro-operacional-15102026).
-
-- [x] **CAD-PAYLOAD-01 — contrato local** (2026-10-09): original somente no Preview; execução transporta campos ERP compactos de todas as linhas, decisões/hash/confirmacao/lote em JSON até 4 MiB. Hash dos dados vinculado antes da aprovação; servidor regenera filtros/universo/manifesto/contexto e executor repete sob locks. Sem aumento simples de teto XLS, parser/importador paralelo, schema/env/deploy/escrita de produção. [Contrato e confiança](../arquitetura/cadastro-mestre-execucao-web.md#cad-payload-01--transporte-sem-o-xls-bruto).
-- [x] **CAD-PAYLOAD-01 — validação local**: cópia `cadastro mestre 8_10.xls` de 24.307.397 bytes produziu 6.230 linhas/860 válidos/4.853 remoções/dez UPDATEs/517 preservações de campos/zero erros. Equivalência direta/compacta/servidor, corpo local 885.146 bytes e 4.870 decisões; 409 testes/31 arquivos passaram. Sem comprovar identidade com nome `(1)` ou fazer POST/executor em produção. [Registro](./cadastro-mestre-payload-validacao.md).
-- [x] **CAD-PAYLOAD-01 — operação real, concluída anteriormente**: usuário confirmou reconstrução bem-sucedida; diagnóstico somente leitura em 15/10 confirmou Master ERP 860 e operacional 6.113. CAD-OP-PAGE-01 não executa carga nem altera esses registros. A tentativa antiga bloqueada antes do POST permanece distinta da execução posterior bem-sucedida.
-
-- [x] **Revisão final da execução web (2026-10-09)**: administrador informou DIAGNOSTICO_OK/CA válida; Production READY main 04a2412, flag false, UI/transporte/plano publicados iguais ao checkout. 103 regressões locais passaram e nenhum bloqueio concreto encontrado. Somente documentação atualizada, sem código/env/deploy/escrita de produção/commit. 860 exige novo Preview com esse universo. [Evidência e limites](../arquitetura/cadastro-mestre-preparacao-ambiente.md#revisão-final-somente-leitura-09102026). Falha TLS abaixo é histórica.
-
-- [x] **CAD-DIAG-TLS-01 — instrumentação local** (2026-10-09): presença/tamanho/PEM/X.509/fingerprint da CA e parâmetros efetivos sanitizados no GET autorizado. Sem mudar TLS/flag/POST/executor; testes sem rede/DML/upload. [Contrato](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-tls-01--metadados-da-ca-e-do-driver).
-- [x] **CAD-DIAG-TLS-01 — deploy autorizado**: Production READY `9swD3fEMicHbkGRzHKYqjUzDdyra`, GET público 401 sem CA/endpoint e execução false, disponibilidade 503. 369 testes/lint/typecheck/diff check passaram; sem commit/env/DML/upload.
-- [x] **CAD-DIAG-TLS-01 — verificação autenticada Production**: JSON recebido do usuário confirma HTTP 409 TLS `SELF_SIGNED_CERT_IN_CHAIN`, CA presente/aplicada de 1.365 bytes, marcadores PEM presentes mas parsing X.509 inválido/fingerprint null, execução false. Correção da CA depende de ação administrativa posterior, não foi aplicada.
-
-- [x] **CAD-DIAG-01 — diagnóstico local por etapas** (2026-10-09): GET de leitura com catálogo de erros sanitizados, sem credenciais/erro bruto; regressões para conexão/TLS/Storage/bucket/auth e rollback de leitura. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md#cad-diag-01--diagnóstico-de-etapas-sem-escrita).
-- [x] **CAD-DIAG-01 — publicação autorizada**: Production READY B2mVXerHzJjbRjaYHSjZMm3TWPvF; GET público confirma instrumentação/configuração OK e flag false, 401 sem sessão.
-- [x] **CAD-DIAG-01 — confirmar falha remota**: usuário confirmou HTTP 409 `SELF_SIGNED_CERT_IN_CHAIN`, etapa TLS; configuração/origem/auth/autorização OK, PostgreSQL não concluído, Storage não verificado e execução false. CA ainda depende de inspeção.
-
-**Ponto de partida para o agente de desenvolvimento.** Este backlog foi **reavaliado em 2026-07-02** após a conclusão da Onda 2 (tooling), a entrada de CI/lint/typecheck/testes e a estabilização dos contratos VAL-01/LOG-01/ERR-01. A ordem abaixo agora é arquitetural: prioriza itens que reduzem risco de regressão, desbloqueiam refatorações futuras, preservam contratos existentes e aumentam velocidade investigativa sem alterar comportamento funcional desnecessariamente.
-
-Cada item tem um **ID** detalhado no arquivo temático indicado (use Ctrl+F pelo ID). Ao concluir: marque o checkbox, referencie o ID no commit e **atualize a documentação** (ver `docs/regras-gerais.md`).
-
-Esforço: **P** ≈ ≤ meio dia · **M** ≈ 1-2 dias · **G** ≈ 3+ dias / requer decisão.
-
----
-
-## Entrega 2026-08-10 — MNT-OP-04
-
-- [x] Contexto investigativo dinamico. Causa raiz: `allRows` era carregado somente na abertura e a importacao nao o renovava; o dossie tambem ignorava o recorte de competencia. Correcao: renovar a carga apos importar e derivar fila/dossie pelos filtros e por `data_referencia`, sem schema, RPC ou regra nova. `criado_em` permanece rastreabilidade. Regressao cobre dados novos e mudanca de competencia.
-
-- [x] **CUSTOS-ERP-01** (16/10/2026): origem/família analíticas pelo Master com fallback apenas fora dele, projeção em memória antes da cascata e mesmos produtos na fila/gráficos/drill-through/XLSX. Operacional e agrupamento preservados. Implementação e validação GET/interface local concluídas; sem publicação nesta etapa. [Provas e testes](custos-classificacao-erp.md).
-
-- [x] **CAD-VOL-01** (19/10/2026): reproduzido timeout do teste de payload com 6.230 linhas sob concorrência padrão; grafo sem UI e idêntico ao HEAD, medições determinísticas sem regressão associada ao redesign. Limite de 10 s somente no teste de volume, sem alterar fixture/asserções/contrato ou timeout global. Suíte completa com dois workers 554/554. [Causa, evidências e limite de ambiente](cadastro-mestre-payload-validacao.md#cad-vol-01--timeout-local-do-teste-de-volume-19102026).
-
-## Estabilizações operacionais concluídas
-
-- [x] **CAD-ENV-01 — preparação local** (2026-10-09): publicação dist por allowlist, diagnóstico autenticado READ ONLY com flag false, verificação de bucket/permissões/dependências e proteção de segredos. UUID único indicado pelo usuário resolvido por SELECT no Auth. [Guia](../arquitetura/cadastro-mestre-preparacao-ambiente.md).
-- [x] **CAD-ENV-01 — ambiente real**: Production READY main 04a2412 e administrador informou diagnóstico autenticado DIAGNOSTICO_OK com CA/TLS/PostgreSQL/Storage/bucket/guardas válidos. Flag continua false; upload/rollback de produção não testados e habilitação não realizada por esta revisão.
-
-- [x] **CAD-EXEC-WEB-01** 🟠 M (2026-10-09) — Conecta UI ao executor central por função Node Vercel autenticada/autorizada: aprovação integral, confirmação explícita, hash/revalidação, snapshot privado conferido, transação/rollback e consulta de resultado. Configuração/habilitação/deploy/carga real pendentes; zero escrita de produção/schema/RPC/fatos/operacional nesta entrega. → [Contrato](../arquitetura/cadastro-mestre-execucao-web.md).
-
-- [x] **CAD-REBUILD-01** 🟠 M — Reconstrução do universo ERP (2026-10-09): Preview/aprovação substituem preservados fora do conjunto por remoções revisáveis; campos vazios de pertencentes preservados. Executor administrativo opt-in, mesma leitura/filtros, snapshot integral durável/no log existente, transação dedicada com rollback, lote/proveniência e provas de tabelas protegidas. Testes XLS/XLSX/XLSM e PostgreSQL em memória, nenhuma carga real ou alteração de schema/migration/RLS/Custos/OP. Execução real ainda depende da aprovação operacional. → [Contrato](../arquitetura/cadastro-mestre-reconstrucao.md).
-
-- [x] **CAD-XLS-01** 🟠 P — Seletor XLSM/XLSX/XLS ligado ao adapter/motores existentes de Preview/aprovação após esclarecer que a tela anterior executava o legado diretamente. Contagens, preservações, decisões e download são locais; regressões BIFF/UI sem parser paralelo, executor, schema, migration ou carga real. → [Contrato atual](../ux/cadastro-mestre.md#cad-xls-01--preview-e-aprovação-na-tela-08102026).
-
-- [x] **CAD-UX-01** 🟠 P — Usabilidade do Cadastro (2026-10-08): tabela em contêiner único com altura limitada à viewport, barra horizontal acessível e cabeçalho sticky; remoção manual explícita grava `agrupamento_cod = NULL` sem mudar a preservação do importador. Validado em Chrome com 5.706 linhas sintéticas e três viewports; lint/typecheck verdes. Suíte: 247/250 passaram, três falhas CRLF preexistentes no artefato da Fase 3.3, fora deste escopo. → [Causas, contrato e validação](../ux/cadastro-mestre.md).
-
-- [x] **MNT-OP-01** 🟠 P — Diagnosticar e corrigir a persistência da Auditoria de OP. **Causa raiz confirmada:** 119 de 296 valores de OP do CSV real usam ponto de milhar (por exemplo, `2.081`); o conversor inteiro estrito devolvia `null` e a constraint `op NOT NULL` rejeitava o chunk. **Correção:** normalização exclusiva do campo `op` antes do parse inteiro + diagnóstico completo de erro por chunk em `src/services/api.js`, sem migrar o schema. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **MNT-OP-02** 🟠 M — Construir o motor investigativo da Auditoria de OP. **Resolução (2026-07-30):** `core/op-investigation-engine.js` adiciona indicadores calculados e classifica por motivo/provável causa, sem alterar fatos do ERP ou schema. A fila/dossiê de `view/ui-op.js` separam “Dados do ERP (imutáveis)” de “Indicadores calculados pelo Kustos”; `% Tempo (ERP)` é conferência, não penalidade duplicada. Critério atendido: parada isolada não define investigação; combinações de tempo, produtividade, produção e parada definem o motivo.
-- [x] **MNT-OP-03** 🟠 M — Declarar a decisão investigativa e calibrar cenários combinados da OP. **Resolução (2026-08-03):** o motor agora entrega `mereceInvestigacao`, prioridade, ação e evidências, consumidos sem recálculo pela fila/dossiê. Cobertos por regressão: desperdício com entrega, alta eficiência, baixa produção, tempo justificado pelo volume, parada sem impacto e paradas com perda de produtividade/atraso/déficit de produção (prioridade máxima). Sem alteração de schema ou dos fatos do ERP.
-
----
-
-## Reavaliação arquitetural — 2026-07-02
-
-### Decisão principal
-
-A antiga separação rígida “Performance antes de Manutenibilidade” deixou de ser a melhor ordem. Com CI/lint/typecheck/testes já ativos, o maior risco atual não é ausência de ferramenta: é o acoplamento do `view/ui-controller.js`, que concentra renderização, eventos, importação, filtros, relatório, drill-through, exportação e gráficos. Por isso, **MNT-01 passa a ser o eixo destravador** antes das mudanças que mexem em tabela, cascata, HTML seguro e ciclo de cache da UI.
-
-### Validação da hipótese sobre MNT-01
-
-A hipótese está **majoritariamente correta**:
-
-- **Desbloqueia diretamente `PERF-01`**: virtualização/limitação da tabela exige isolar renderização da fila investigativa, estado de ordenação, expansão de detalhes e delegação de eventos. Fazer isso dentro do god module aumenta risco de quebrar filtros, drill-through e exportação.
-- **Desbloqueia diretamente `MNT-03`**: centralizar cascata/`fillSelect` depende de separar fluxos de filtros e relatório das demais responsabilidades de UI. Sem fatiamento, a mudança tende a virar refactor amplo e difícil de revisar.
-- **Desbloqueia diretamente `SEC-02`**: helper de HTML seguro precisa ser aplicado nos pontos que montam HTML dinâmico. Separar componentes/fluxos da UI torna a adoção auditável e reduz exceções de lint.
-- **Desbloqueia parcialmente `PERF-02`**: cache de `masters` com invalidação por realtime/import depende do ciclo de vida da UI (`loadMasters`, `fetchMetadata`, navegação e listeners), hoje dentro do `ui-controller`. O fatiamento ajuda muito, embora a solução também toque estado e API.
-- **Desbloqueia parcialmente `VAL-02`**: o validador único de linha de custo depende mais de `MNT-06` e `MNT-02` (pipeline de importação/API) do que de `MNT-01`; porém separar o fluxo de importação no controller reduz risco ao substituir validações inline no preview.
-
-Conclusão: **MNT-01 deve subir**, mas não sozinho. Antes dele ainda vale eliminar baixo esforço/alto risco que reduz divergência de importação (`MNT-06`) e documentar limites/contratos que serão preservados (`MNT-07`, `MNT-05`).
-
----
-
-## Onda 1 — Concluída: segurança e correção de contrato
-
-- [x] **SEC-01** 🔴 P — Escapar `value`/`label` em `fillSelect` (`core/report-engine.js:9,13`); mover `escapeHtml` para util compartilhada. → [`seguranca.md`](./seguranca.md)
-- [x] **ERR-01** 🔴 M — `try/catch` de fronteira em `init()` e nos `await` de `runReport` (`view/ui-controller.js:16-24,508-524`). Resolvido no commit `fix(ERR-01): adiciona fronteiras operacionais e tratamento robusto de erros`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **VAL-01** 🟠 P — Normalizar código de produto (notação científica) no fluxo ativo, reusando `normalizeCodigoProduto`. Resolvido no commit `fix(VAL-01): unifica normalização de código de produto no pipeline operacional`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **LOG-01** 🟠 P — Unificar critério do KPI "Alertas (>5%)" e do filtro rápido do card. Resolvido no commit `fix(LOG-01): unifica regra operacional dos alertas investigativos`. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **SEC-04** 🟠 M — Limite de tamanho de string + sanitização de fórmula no export + faixa de data em `normalizeISODate`. → [`seguranca.md`](./seguranca.md)
-- [x] **SEC-05** 🟠 P — Fixar versões de `xlsx`/`chart.js` (+ SRI) em `index.html`. → [`seguranca.md`](./seguranca.md)
-- [x] **SEC-03** 🔵 G — Registrar decisão de acesso público + checklist de reativação de RLS/Auth; idealmente RLS de escrita já. → [`seguranca.md`](./seguranca.md)
-
-## Onda 2 — Concluída: rede de segurança de desenvolvimento
-
-- [x] **CFG-04** 🟡 P — `package.json` só com `devDependencies` + scripts (sem tocar no runtime CDN). → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [x] **CFG-01** 🟠 P — ESLint com regra anti-`innerHTML` não escapado e `no-unused-vars`. → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [x] **CFG-03** 🟠 M — Vitest sobre `core/` (testes de regressão para `VAL-01` e `LOG-01`). → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [x] **CFG-02** 🟠 M — `jsconfig.json` + `// @ts-check` + JSDoc inicial adicionados como base para `MNT-05`. → [`tooling-configuracao.md`](./tooling-configuracao.md)
-- [x] **CFG-05** 🟡 P — CI (GitHub Actions) rodando lint/typecheck/test em PR. → [`tooling-configuracao.md`](./tooling-configuracao.md)
-
-## Onda 3 — Preparação de contratos antes de refatorar
-
-Objetivo: reduzir ambiguidade e remover divergências pequenas antes de fatiar módulos grandes.
-
-- [x] **1. MNT-06** 🟠 P — Unificar os dois caminhos de importação; remover `mapRowsToPayload` órfão. **Motivo da subida:** baixo esforço, reduz divergência de payload e protege o contrato VAL-01 antes de mexer no fluxo de importação. Resolvido removendo `mapRowsToPayload`/`parseCurrency`/`normalizeReferenceDate` de `core/spreadsheet-engine.js` (o fluxo vivo em `view/ui-controller.js` já cobria normalização de `codigo_produto` e é o único gerador de payload); teste correspondente removido de `tests/spreadsheet-engine.test.js`. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [x] **2. MNT-07** 🟡 P — Documentar/centralizar limiares e tetos (`.limit(1000)`, limiares de regime). **Motivo da subida:** deixa explícitos limites de negócio/performance que `PERF-01`, `PERF-02` e futuras análises não podem alterar silenciosamente. Resolvido: todos os limiares nomeados e comentados no código (`ALERTA_CRITICO_CONFIG`, `LIMIAR_ESTAVEL`, `LIMIAR_OSCILANDO`, `MIN_PONTOS_REGIME`, `IMPORT_CHUNK_SIZE`, `IMPORT_COMPARISON_LOOKBACK_LIMIT`, `IMPORT_PREVIEW_DISPLAY_LIMIT`) e catalogados em `docs/regras-negocio/glossario.md`. O `.limit(1000)` foi justificado (tabela tem 601 linhas hoje; risco de truncamento documentado no código para revisitar se a base crescer) em vez de redesenhado, para não introduzir mudança de comportamento fora de escopo. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [x] **3. MNT-05** 🟡 M — Completar JSDoc/`@typedef` dos contratos (`Masters`, `HistoricoRow`, `ReportRow`). **Motivo da subida:** aumenta a precisão do typecheck já existente e reduz risco no fatiamento de UI/API. Resolvido: `src/services/api.js` entrou no `jsconfig.json` com `@ts-check`, importa os typedefs de `core/report-engine.js` e documenta `getMasters`, `getHistorico`, `getProductHistory` e `importarHistoricoCustosComLog`. O typecheck expôs e corrigiu 2 bugs reais: `enrichRowsWithDicionario` retornava array puro (não `{data,error}`) quando nenhuma linha tinha `codigo_produto`, e `getMasters` retornava `diagnostico_sem_mapa: []` em vez do formato `{status,rows,error}` esperado pela UI no caminho de erro do histórico. → [`manutenibilidade.md`](./manutenibilidade.md)
-
-## Onda 4 — Fatiamento destravador da UI
-
-Objetivo: decompor `view/ui-controller.js` por fluxo, preservando comportamento e preparando mudanças de performance/segurança sem refactor transversal. Deve ser feito em commits pequenos por fluxo, mantendo `init()`, `runReport()` e handlers críticos sob as fronteiras ERR-01.
-
-- [x] **4. MNT-01** 🟠 G — Fatiar `view/ui-controller.js` por fluxo (bootstrap/navegação, importação, filtros/relatório, fila investigativa, drill-through, exportação/gráficos). **Resolvido no Engineering Freeze v1.0:** `view/ui-table.js` concentra fila/tabela e presenter investigativo, completando o fatiamento iniciado por gráficos, drill-through, importação, filtros e exportação. `ui-controller.js` fica como orquestrador, sem mudança funcional. → [`manutenibilidade.md`](./manutenibilidade.md)
-
-## Onda 5 — Performance e segurança da fila investigativa/UI
-
-Objetivo: melhorar velocidade investigativa percebida e reduzir superfície de XSS com a UI já fatiada.
-
-- [x] **5. PERF-01** 🟠 M — Limitar a fila investigativa à janela TOP-200 já priorizada + delegação de eventos no `tbody`. **Resolução (2026-09-28):** `view/ui-table.js` renderiza somente os primeiros 200 itens recebidos, informa o total e orienta refinar filtros; um único listener delegado preserva drill-through e detalhes sem listeners por linha. Não altera prioridade, KPIs, recorte temporal, API, importação ou exportação. → [`performance-otimizacao.md`](./performance-otimizacao.md)
-- [ ] **6. MNT-03** 🟠 M — Centralizar cascata e `fillSelect`. **Dependência real:** deve vir após separar fluxos de filtros/relatório em `MNT-01`; preserva o contrato de cascata e reduz duplicação. **Progresso parcial registrado em 2026-07-20:** `fillSelect` foi movido para `view/ui-utils.js` no PR #124, mas a cascata ainda não tem helper/módulo único; portanto não marcar como concluído. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [ ] **7. SEC-02** 🟡 M — Helper de "HTML seguro" + endurecimento da regra de lint. **Dependência real:** `CFG-01` já existe; após `MNT-01`, aplicar o helper por componente/fluxo fica revisável. → [`seguranca.md`](./seguranca.md)
-- [ ] **8. PERF-02** 🟠 M — Cachear `masters` com invalidação por realtime/import (parar de recarregar a cada troca de view). **Dependência real:** parcialmente desbloqueado por `MNT-01`; também exige preservar degradação parcial de `ERR-02` e diagnóstico de órfãos. → [`performance-otimizacao.md`](./performance-otimizacao.md)
-- [x] **PERF-03** 🟡 P — Memoizar `calculateCascadeOptions`. → [`performance-otimizacao.md`](./performance-otimizacao.md)
-
-## Onda 6 — Camada de dados/importação e validação compartilhada
-
-Objetivo: consolidar contratos de serviço e validação depois que o fluxo de importação e a UI estiverem menos acoplados.
-
-- [ ] **9. MNT-02** 🟠 M — Fatiar `src/services/api.js` (fachada + validation + enrichment + client). **Motivo da descida relativa:** importante, mas menos destravador para a dor imediata da UI; deve aproveitar `MNT-05` e manter fachada compatível para não quebrar UI→API. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [ ] **10. VAL-02** 🟡 M — Validador de "linha de custo" único (preview = API). **Dependência real:** melhor após `MNT-06` e `MNT-02`, com fluxo de importação isolado por `MNT-01`; preserva VAL-01 e importação tolerante linha a linha. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [ ] **11. LOG-02** 🟠 M — Comparação entre importações pode comparar **dois chunks da mesma importação** em vez de duas importações reais, porque o upsert grava em chunks de 400 e cada chunk recebe um `criado_em` distinto. **Dívida arquitetural conhecida** (registrada em 2026-07-17, sem alteração de comportamento): erro silencioso em `getLatestImportComparison`/`getTopVariacoesImportacao` que afeta a comparação e o TOP variações quando um lote passa de `IMPORT_CHUNK_SIZE`. Toca o contrato temporal `criado_em`; exige decisão entre (a) `criado_em` único por lote no payload ou (b) agrupar por lote/`log_importacao`, antes de implementar. → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **ERR-02** 🟡 P — `Promise.allSettled` em `getMasters` (degradação parcial). → [`robustez-erros-validacao.md`](./robustez-erros-validacao.md)
-- [x] **MNT-04** 🟡 P — Decidir integrar/remover `heuristic-engine`, `getTrendsByProduct`, `upsertHistoricoCustos`. **Decisão (rev. arquitetural A-04):** `heuristic-engine.js` mantido como guardrail somente-documentação; `AGENTS.md` corrigido. → [`manutenibilidade.md`](./manutenibilidade.md)
-- [ ] **12. MNT-08** 🟠 M — Mover `getOperationalPriority`/`buildInvestigativeSummary` de `view/ui-table.js` para um presenter investigativo dedicado; remover a injeção em `ui-export.js`. **Dependência real:** companheiro natural de `MNT-01` (fatiamento da UI). Avaliado e adiado na revisão arquitetural (A-02): destino ambíguo (não é `report-engine`, que reintroduziria vazamento de apresentação; nem `ui-utils`, que não remove a injeção), toca contrato público de `createExportController` e exige reescrever `tests/ui-export.test.js`. → [`manutenibilidade.md`](./manutenibilidade.md)
-
----
-
-## Mudanças de ordem nesta reavaliação
-
-- **`MNT-01` subiu** de Onda 4 para eixo central da nova Onda 4, antes de `PERF-01`, `PERF-02`, `MNT-03` e `SEC-02`, porque o acoplamento da UI é hoje o maior multiplicador de risco.
-- **`PERF-01` desceu para depois de `MNT-01`**, apesar do alto impacto ao usuário, porque virtualizar a tabela sem isolar renderização/eventos tende a misturar mudança funcional e refactor estrutural.
-- **`PERF-02` desceu para depois de `MNT-01` e depois de itens da UI**, porque cache/invalidação depende de navegação, realtime/import e estado de masters; a solução precisa preservar `ERR-02` e o diagnóstico explícito de órfãos.
-- **`MNT-06` subiu para primeiro item aberto**, porque é pequeno, remove caminho morto/divergente e reduz risco sobre `codigo_produto` antes de novas refatorações.
-- **`MNT-07` e `MNT-05` subiram**, porque documentação de limites e tipos torna a rede de segurança (typecheck/testes) mais útil antes de fatiar módulos grandes.
-- **`MNT-02` desceu para Onda 6**, não por menor importância, mas porque a API já tem contratos estabilizados; fatiá-la antes da UI não desbloqueia tanto quanto `MNT-01` e pode aumentar área de regressão simultânea.
-- **`VAL-02` ficou após `MNT-02`**, porque o validador único deve nascer no limite correto entre preview e API, evitando uma terceira fonte de verdade.
-- **`SEC-02` ficou após `MNT-01`/`MNT-03`**, pois a segurança de HTML seguro será mais consistente quando os pontos de renderização e `fillSelect` estiverem centralizados.
-
----
-
-## Regras de execução para o agente
-
-1. **Respeitar contratos do `AGENTS.md`**: separação FATO × DIMENSÃO e semântica `data_referencia` × `criado_em`. Uma "melhoria" que viole isso é regressão.
-2. **Um item por commit** (ou por PR pequeno), com a referência do ID no commit (ex.: `fix(SEC-01): escapar opções de select`). Para `MNT-01`, usar commits menores por fluxo.
-3. **Preservar a rede de segurança da Onda 2**: rodar lint/typecheck/test antes de concluir qualquer item aberto.
-4. **Não alterar comportamento funcional quando o item for estrutural**: refatorações devem manter UX, semântica temporal, cascata, exportação e contratos UI→API existentes.
-5. **Ao concluir**: marcar o checkbox aqui, atualizar manuais/`docs` afetados e registrar no log do `AGENTS.md`.
-## Concluído
-
-- [x] **CAD-EXEC-01** — Fase 3.4 (2026-10-08): carga pontual autorizada, revalidação integral, migration 20261008184501 e lote 1 concluído. Master 5.706, 103 inserções, 312 produtos atualizados (320 campos), zero erros. Preservação integral fora dos filtros e do operacional/mapa/fatos/categorias, sem ponte, RLS ou importer de runtime. → [Contrato e provas](../arquitetura/cadastro-mestre-execucao-fase3-4.md)
-
-- [x] **CAD-APPROVAL-01** — Fase 3.3 (2026-10-08): alias empresarial `Agrup. Prod.` → valor ERP bruto, manifesto determinístico, revisão/decisões locais individuais ou globais e exportação explícita de aprovadas. Lote real entregue pendente; zero escrita pelo fluxo, sem execução, ponte ou ativação no legado. → [Contrato e evidência](../arquitetura/cadastro-mestre-aprovacao.md)
-
-- [x] **CAD-PREVIEW-01** — Fase 3.1 (2026-10-08): núcleo puro e adaptador de Preview XLSM/XLSX/XLS contra `dicionario_master_produtos`, com filtros ordenados, preservação de vazios/ausentes, resolução exclusivamente por código exato e agrupamento ERP sem ponte. Somente leitura, sem migration ou alteração de telas/legado. → [Contrato e limites](../arquitetura/cadastro-mestre-preview.md)
-
-- [x] **CAD-01** — Cadastro mestre em `dicionario_produtos`: XLSM incremental, agrupamento investigativo manual e resolução compartilhada por Custos/OP sem segunda fonte de verdade.
+- **P0 — crítico:** risco de acesso/escrita indevida ou integridade; tratar antes de evolução funcional.
+- **P1 — investigação / operação:** falhas que prejudicam encontrar, interpretar ou importar dados.
+- **P2 — confiabilidade / UX:** lacunas importantes de contrato, clareza e verificação.
+- **P3 — refinamento:** manutenção e defesa em profundidade sem falha crítica demonstrada.
+
+`data_referencia` continua competência operacional; `criado_em` continua importação/proveniência. Seleção de competências é conjunto explícito, sem completar intervalos na comparação. Preservar FATO × DIMENSÃO, fonte canônica, leitura integral/falha explícita, código de negócio e ausência de inferência textual. Ensaios administrativos de escrita exigem escopo autorizado, rollback obrigatório e prova de preservação; cargas reais continuam com procedimento próprio.
+
+Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVIDO**. Risco/configuração confirmada não equivale a exploração demonstrada. Os demais estados ficam no inventário e fora da lista de execução.
+
+## P0
+
+
+### SEC-06
+
+**Gravação documental sem autorização no handler**
+
+- **ID:** SEC-06
+- **Prioridade:** P0
+- **Área:** Segurança / Documentação
+- **Problema:** O handler save-doc possui allowlist de caminhos, porém não verifica sessão nem autorização antes de usar GITHUB_TOKEN para gravar no GitHub.
+- **Evidência:** api/save-doc.js: handler e chamadas GitHub; ausência de validação Auth. GET publicado retorna 500, portanto exploração remota não demonstrada. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Quando o handler voltar a funcionar, clientes sem autorização poderão alcançar a gravação documental e gerar commits.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Teste de handler comprova recusa de requisição ausente/inválida/não autorizada antes de qualquer chamada de escrita; somente identidade autorizada grava caminho permitido. Publicar recuperação do endpoint somente com essa proteção.
+- **Dependências:** Modelo de acesso de SEC-03 já definido; autorização documental própria e coordenação com ERR-04 continuam necessárias.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** A — Segurança e integridade.
+
+## P1
+
+### MNT-OP-05
+
+**Carga de OP truncada sem aviso**
+
+- **ID:** MNT-OP-05
+- **Prioridade:** P1
+- **Área:** OP / API
+- **Problema:** getApontamentosOp faz SELECT sem paginação integral/count; a fila usa o resultado parcial como universo.
+- **Evidência:** src/services/api.js:getApontamentosOp; GET real 206, Content-Range 0-999/1469; SELECT confirmou 1.469 registros. Faltam 469 (296 de junho e 173 de julho) nessa resposta. getProductMaster é outro método, já paginado. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Fila, filtros e dossiês podem omitir OPs e períodos sem informar incompletude.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Leitor integral com ordem total e contagem validada; falha explícita em página incompleta/contagem alterada. Cenário com mais de 1.000 registros preserva todos os registros e recortes; manutenção da carga local e recálculo por filtros.
+- **Dependências:** Preservar MNT-OP-04 e a fonte operacional de classificação.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### LOG-05
+
+**Alertas ficam fora dos 200 itens apresentados**
+
+- **ID:** LOG-05
+- **Prioridade:** P1
+- **Área:** Custos / Fila
+- **Problema:** A ordenação inicial por variação descendente precede slice(0,200); a legenda afirma mostrar os mais prioritários.
+- **Evidência:** view/ui-state.js, view/ui-filters.js e view/ui-table.js; reprodução com outubro: 349 produtos, cinco alertas nas posições 345–349, nenhum entre os 200 exibidos. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** O investigador não vê os alertas negativos relevantes na janela inicial apesar do KPI indicar cinco.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Aplicar prioridade investigativa antes do corte visual na ordenação padrão; o cenário reproduzido apresenta seus cinco alertas. Ordenação manual continua explícita; KPIs, filtros e exportação usam o conjunto completo.
+- **Dependências:** PERF-01 permanece entregue quanto a limite DOM/delegação; corrigir sua premissa de entrada priorizada sem reabrir o desempenho já entregue.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### LOG-04
+
+**Narrativa afirma recorrência sem série suficiente**
+
+- **ID:** LOG-04
+- **Prioridade:** P1
+- **Área:** Custos / Contexto
+- **Problema:** buildInvestigativeSummary declara segunda alta consecutiva com apenas dois pontos e uma variação.
+- **Evidência:** view/ui-table.js; MB014 tem 9,24 → 9,39 e recebe “2ª alta consecutiva”; tests/ui-table.test.js atualmente aceita a frase. Exportação também usa indicador de alerta como reincidência. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Explicação e prioridade comunicam evidência temporal inexistente.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Uma única variação não afirma segunda alta nem reincidência; frases/indicadores derivam do número real de transições no recorte e da semântica escolhida. Testar dois pontos, altas consecutivas, alternância e base insuficiente, inclusive exportação.
+- **Dependências:** Não exige criar persistência de memória de alertas; preservar data_referencia como competência e criado_em como importação.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### LOG-06
+
+**Ordem do XLSX diverge da fila**
+
+- **ID:** LOG-06
+- **Prioridade:** P1
+- **Área:** Custos / Exportação
+- **Problema:** A exportação interpreta sortKey=variacao como ausência de ordenação manual, enquanto a UI ordena por essa coluna; aplica ranking diferente.
+- **Evidência:** view/ui-export.js:hasManualSort/getInvestigationRankScore; view/ui-filters.js:applySort e ui-state.js. Divergência reproduzida no mesmo reportRows. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Relatório exportado muda a ordem de investigação, inclusive após escolha manual de variação.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Distinguir ordenação padrão de escolha manual; para o mesmo recorte e escolha de ordem, XLSX mantém a ordem completa correspondente à fila (que exibe só 200). Seleção manual por variação nos dois sentidos deve ser respeitada.
+- **Dependências:** LOG-05; LOG-04 para rótulos/indicadores compartilhados. MNT-08 não é pré-requisito para uma correção localizada.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### LOG-02
+
+**Chunks são tratados como importações distintas**
+
+- **ID:** LOG-02
+- **Prioridade:** P1
+- **Área:** Custos / Temporalidade
+- **Problema:** Comparações escolhem dois criado_em distintos; importação em chunks não assegura identidade única de lote nos fatos.
+- **Evidência:** src/services/api.js:importarHistoricoCustosComLog, getLatestImportComparison e getTopVariacoesImportacao. Chunk de 400 sem criado_em comum no payload; seleção por timestamp distinto. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Comparação pode opor partes do mesmo envio em vez de duas importações.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Definir identidade de lote e estratégia compatível com fatos históricos antes de implementar. Um envio com múltiplos chunks é uma importação lógica, duas importações são distinguidas e resultados não dependem da quantidade de chunks. Não reatribuir competência nem fabricar proveniência.
+- **Dependências:** Decisão de contrato temporal e eventual persistência somente após aprovação própria; coordenar LOG-03.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#log-02).
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### LOG-03
+
+**Comparação escolhe importações fora do recorte**
+
+- **ID:** LOG-03
+- **Prioridade:** P1
+- **Área:** Custos / Comparação
+- **Problema:** Os dois timestamps mais recentes são escolhidos globalmente antes de filtrar a competência.
+- **Evidência:** src/services/api.js:getLatestImportComparison/getTopVariacoesImportacao; sonda somente GET para abril–junho selecionou dois timestamps de 19/10, ambos com quantidade zero e média/delta zero. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Ausência de base no recorte aparece como comparação numérica sem dados e omite as importações pertinentes.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Selecionar importações elegíveis no recorte de competência definido; distinguir zero real de base ausente, tratar menos de duas importações explicitamente. Verificar comparação/TOP com importações fora e dentro do período.
+- **Dependências:** Contrato LOG-02; testes e seleção do recorte podem ser preparados sem aguardar refatoração de toda a API.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### SEC-04
+
+**Datas impossíveis passam pela validação**
+
+- **ID:** SEC-04
+- **Prioridade:** P1
+- **Área:** Importação / Datas
+- **Problema:** A faixa numérica de dia/mês aceita combinações inválidas no calendário.
+- **Evidência:** src/services/api.js:normalizeISODate; sonda pura devolveu 2026-02-31 e 2026-02-29 como válidas; 2026-02-28 é controle válido. Limites de string e sanitização já existem. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Preview/API podem aceitar uma competência impossível que o banco rejeita durante a gravação.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Rejeitar datas impossíveis sem normalização silenciosa; aceitar anos bissextos válidos e manter YYYY-MM-DD sem conversão UTC. Preview e API concordam, com erro por linha antes do envio.
+- **Dependências:** Coordenar VAL-02 sem exigir fatiamento completo de MNT-02.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#sec-04).
+- **Bloco recomendado:** C — Operação.
+
+### VAL-03
+
+**OP inválida chega ao chunk de persistência**
+
+- **ID:** VAL-03
+- **Prioridade:** P1
+- **Área:** Importação / OP
+- **Problema:** parseMCAP105 converte OP não numérica para null sem acrescentar erro de linha.
+- **Evidência:** core/spreadsheet-engine.js:parseMCAP105; linha de teste com OP=ABC gerou op:null e errors:[]; coluna remota op é NOT NULL. Sem tentativa de INSERT. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Uma linha inválida pode provocar rejeição de um chunk válido e feedback insuficiente.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Preview bloqueia linha com OP inválida/ambígua e explica o erro; linhas válidas permanecem importáveis. Cobrir ABC, vazio, milhar válido e lote misto, sem regredir MNT-OP-01.
+- **Dependências:** Preservar tolerância linha a linha e chunking; coordenar ERR-03.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** C — Operação.
+
+### ERR-03
+
+**Falhas de log e de chunks podem parecer sucesso**
+
+- **ID:** ERR-03
+- **Prioridade:** P1
+- **Área:** Importação / Feedback
+- **Problema:** Custos continua após falha no log e o detalhe log_error fica no debug; OP registra status concluido apesar de falhas de chunks.
+- **Evidência:** src/services/api.js:importarHistoricoCustosComLog/importarApontamentosOp; view/ui-import.js e view/ui-import-op.js: tratamento do resultado. Diagnóstico de caminhos, sem escrita remota. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Usuário pode acreditar que há trilha completa e importação integral quando há falha parcial.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Resultado e mensagem distinguem completo, parcial e falha; log ausente é visível. Testes simulam falha de log, de um chunk e de todos os chunks; contagens/status correspondem ao que foi persistido sem retry duplicador automático.
+- **Dependências:** Coordenar VAL-03; preservar contratos temporais e decidir compatibilidade de status do log antes de alterar.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** C — Operação.
+
+### ERR-04
+
+**save-doc falha e não carrega como ES Module**
+
+- **ID:** ERR-04
+- **Prioridade:** P1
+- **Área:** Documentação / Função Node
+- **Problema:** Endpoint de salvar documentação responde HTTP 500; entrada local usa module.exports em pacote type=module.
+- **Evidência:** GET https://custos-germani.vercel.app/api/save-doc retornou FUNCTION_INVOCATION_FAILED; node api/save-doc.js reproduziu ReferenceError: module is not defined in ES module scope na linha 24. Causa exata do 500 remoto ainda não provada por logs Vercel. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Edição documental não consegue concluir o salvamento; diagnóstico local demonstra incompatibilidade de carregamento.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Obter diagnóstico remoto sanitizado; entrada carrega no runtime configurado e handler responde aos métodos esperados. Validar autenticação e falhas sem criar commit real como teste nesta auditoria; recuperação publicada só após proteção SEC-06.
+- **Dependências:** SEC-06 antes de disponibilizar escrita; acesso de diagnóstico aos logs Vercel para atribuir a causa remota.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** C — Operação.
+
+## P2
+
+### PERF-03
+
+**Cache de cascata sobrevive a mudança de conteúdo**
+
+- **ID:** PERF-03
+- **Prioridade:** P2
+- **Área:** Custos / Cache
+- **Problema:** Chave de memoização usa tamanhos das coleções, sem versão/conteúdo que mude com reclassificação ou rótulo.
+- **Evidência:** core/report-engine.js:getCascadeCacheKey; trocar apenas descrição mantendo cardinalidade devolveu o mesmo objeto com rótulo antigo (1001051). Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Filtros podem apresentar classificação/rótulo antigo após atualização dos masters.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Conteúdo alterado com mesmos tamanhos invalida o resultado; entrada idêntica reutiliza cache. Cobrir descrição, vínculo e reload/import/realtime, sem consulta por linha.
+- **Dependências:** Coordenar versão/invalidação com PERF-02.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#perf-03).
+- **Bloco recomendado:** B — Confiabilidade da investigação.
+
+### VAL-02
+
+**Preview e API validam a linha em caminhos distintos**
+
+- **ID:** VAL-02
+- **Prioridade:** P2
+- **Área:** Importação / Custos
+- **Problema:** Regras de linha de custo estão duplicadas, incluindo tratamento de descrição e limites.
+- **Evidência:** view/ui-import.js e src/services/api.js:normalização/validação do payload; limite de descrição na API não é um contrato único do Preview. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Linha aprovada visualmente pode ser rejeitada depois ou sofrer tratamento diferente na persistência.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Casos válidos e inválidos têm mesma decisão/motivo nos dois pontos, incluindo código, número, texto e data. Validador puro compartilhado preserva payload e tolerância a colunas extras.
+- **Dependências:** SEC-04; MNT-02 pode facilitar extração, mas não bloqueia compartilhamento localizado.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#val-02).
+- **Bloco recomendado:** C — Operação.
+
+### PERF-02
+
+**Masters são reconsultados na navegação**
+
+- **ID:** PERF-02
+- **Prioridade:** P2
+- **Área:** Custos / Carregamento
+- **Problema:** loadMasters chama getMasters antes do guard e entrada na view força fetchMetadata.
+- **Evidência:** view/ui-controller.js:loadMasters, fetchMetadata e bindNavigation. Cache de cascata não evita essas consultas. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Latência e tráfego repetidos sem mudança dos dados.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Navegar entre módulos reutiliza masters válidos; importação/realtime ou atualização explícita invalida e relê. Falha de fonte essencial continua explícita, sem hierarquia parcial. Medir quantidade de chamadas no fluxo.
+- **Dependências:** PERF-03; ERR-02 antigo não autoriza degradar a hierarquia exigida por CUSTOS-PAGE-01.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#perf-02).
+- **Bloco recomendado:** C — Operação.
+
+### CFG-03
+
+**Suíte não protege contratos críticos encontrados**
+
+- **ID:** CFG-03
+- **Prioridade:** P2
+- **Área:** Qualidade / Testes
+- **Problema:** Há regressões existentes, mas os cenários agora confirmados de carga integral OP, prioridade, narrativa, exportação e carregamento save-doc não estão protegidos.
+- **Evidência:** 209 testes atuais passaram apesar desses achados; tests/ui-table.test.js chega a exigir a narrativa indevida de segunda alta. Percentual de cobertura não medido. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Checks verdes podem acompanhar falhas investigativas e de operação.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Cada correção de contrato adiciona cenário que falha no comportamento anterior e passa na solução; cobrir integração relevante, sem metas percentuais inventadas nem testes que apenas espelham helpers.
+- **Dependências:** Acompanhar MNT-OP-05, LOG-03/04/05/06, ERR-03/04 e SEC-06 nas respectivas entregas.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#cfg-03).
+- **Bloco recomendado:** E — Manutenção.
+
+### CFG-06
+
+**view e entradas administrativas fora do typecheck**
+
+- **ID:** CFG-06
+- **Prioridade:** P2
+- **Área:** Qualidade / Tipos e runtime
+- **Problema:** jsconfig exclui a camada view e api/scripts; o check atual não detecta incompatibilidade de carregamento da entrada save-doc.
+- **Evidência:** jsconfig.json include/exclude; package.json type=module; api/save-doc.js. CFG-02 entregou uma base inicial, não essa cobertura adicional. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Contratos UI/API e entradas Node mudam sem esse tipo de verificação automatizada.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Ampliar checagem de contratos dos controllers prioritários e conferir carregamento das entradas administrativas no runtime declarado. Checks detectam exemplos de contrato inválido e CommonJS incompatível sem emitir dist ou acionar I/O remoto.
+- **Dependências:** ERR-04 e CFG-03 para escolher verificação adequada; preservar runtime e dependências necessários.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** E — Manutenção.
+
+### DOC-DIV-02
+
+**Documentos apresentam estados e tipos ultrapassados**
+
+- **ID:** DOC-DIV-02
+- **Prioridade:** P2
+- **Área:** Documentação / Contratos
+- **Problema:** Há declarações de IDs UUID onde o schema usa TEXT e registros de publicação/famílias/comercial pendentes apresentados como estado corrente.
+- **Evidência:** docs/arquitetura/banco-de-dados.md, manuais e evidências históricas; information_schema atual; lote 3 com 65 famílias inseridas e lote 4 com 162 atualizações. README/ROADMAP/backlog são reconciliados nesta etapa; o restante ainda requer revisão. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Operação pode repetir carga já feita, usar contrato de chave incorreto ou planejar a partir de pendência superada.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Revisar referências atuais contra código/schema; rotular explicitamente fatos históricos sem reescrever provas antigas. Corrigir tipos/estados presentes, manter fontes por responsabilidade e separar competência/importação. Não inferir autorização de carga a partir da documentação.
+- **Dependências:** Reconciliar por evidência; não depende de alterar banco ou funcionalidades.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** C — Operação.
+
+### CUSTOS-UX-01
+
+**Percentuais e limiar têm rótulos ambíguos**
+
+- **ID:** CUSTOS-UX-01
+- **Prioridade:** P2
+- **Área:** Custos / Clareza de métricas
+- **Problema:** A linha mostra dois percentuais sem identificar suficientemente os eixos; rótulo >5% diverge do helper que inclui exatamente 5%.
+- **Evidência:** view/ui-table.js: percentuais da linha; index.html/KPI e core/report-engine.js:classifyAlert com abs >=5. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Leitura pode confundir variação por importação com amplitude/instabilidade e excluir mentalmente o limite de 5%.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Rotular métrica/eixo em fila/detalhes e usar ≥5% onde esse é o contrato. Testar clareza para exatamente 5%, variação negativa e série com amplitude diferente; manter cálculos.
+- **Dependências:** Coordenar LOG-04/05/06 para apresentar as mesmas métricas e decisões.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** D — UX.
+
+### CAD-UX-02
+
+**Status e orientação de pendências se contradizem**
+
+- **ID:** CAD-UX-02
+- **Prioridade:** P2
+- **Área:** Cadastro / Classificação
+- **Problema:** Cadastro chama produto de Classificado por origem/família mesmo quando banner o considera pendente por agrupamento; banner orienta categorizar no Supabase apesar do editor operacional.
+- **Evidência:** view/ui-product-master.js:status de classificação; view/ui-controller.js:banner de pendências e orientação. Agrupamentos atuais ausentes são dados reais, não prova de defeito de preenchimento automático. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Usuário recebe sinais incompatíveis e caminho manual externo apesar do fluxo existente.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Explicitar quais dimensões estão completas/pendentes e conduzir ao editor existente com código/contexto, sem salvar automaticamente ou inferir categoria. Estado deve concordar com o motivo do banner.
+- **Dependências:** Preservar fonte operacional, autoridade ERP de Custos e contrato IMP-PEND-01.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** D — UX.
+
+
+### SEC-08
+
+**Funções têm search_path mutável**
+
+- **ID:** SEC-08
+- **Prioridade:** P2
+- **Área:** Segurança / Funções legadas
+- **Problema:** Advisor aponta cinco ocorrências em inserir_custo, duas sobrecargas de fn_upsert_mapa_produtos_por_codigo e dois triggers de categorização.
+- **Evidência:** Advisor function_search_path_mutable e pg_proc em 22/10; funções são invoker. Não há prova de exploração ou uso atual de todos os caminhos. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Resolução de nomes fica dependente do contexto; legado amplia a superfície a revisar no contrato de acesso.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Inventariar assinatura, chamadores e grants; fixar resolução segura ou remover caminho comprovadamente sem contrato após aprovação. Validar triggers/consumidores necessários; não alegar security definer onde não existe.
+- **Dependências:** SEC-03 e inventário MNT-04; nenhuma remoção automática por ausência de consumidor no frontend.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** A — Segurança e integridade.
+
+### SEC-05
+
+**Versões e integridade de CDN incompletas**
+
+- **ID:** SEC-05
+- **Prioridade:** P2
+- **Área:** Segurança / Dependências CDN
+- **Problema:** Versões de parte das bibliotecas estão fixas, porém SRI não está aplicado e cliente Supabase usa @2.
+- **Evidência:** index.html: versões CDN fixadas, sem integrity; src/services/api.js: cliente @supabase/supabase-js@2/+esm. DOC-DIV-01 deixou de ser dúvida. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Artefato carregado pode mudar sem alteração do repositório; falta verificação de integridade. Nenhuma CVE foi inferida.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Definir entrega/versionamento reprodutível das bibliotecas e integridade compatível com o modo de carregamento; validar bootstrap e módulos. Documentar decisão quando SRI não for aplicável ao formato escolhido.
+- **Dependências:** Inventário de recursos; evitar incluir segredos ou código administrativo no frontend.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#sec-05).
+- **Bloco recomendado:** A — Segurança e integridade.
+
+## P3
+
+### MNT-03
+
+**Coordenação da cascata continua distribuída**
+
+- **ID:** MNT-03
+- **Prioridade:** P3
+- **Área:** Manutenção / Cascata
+- **Problema:** fillSelect é único, mas refreshCascade, fetchMetadata e jumpToProduct coordenam atualizações de filtros em caminhos diferentes.
+- **Evidência:** view/ui-utils.js, view/ui-filters.js e view/ui-controller.js. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Regras semelhantes exigem ajustes em múltiplos pontos e aumentam risco de divergência.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Fonte única da transição de cascata preserva busca direta, filtros válidos, autoatualização e falha explícita de fontes essenciais; remover duplicações efetivas sem reescrever a análise.
+- **Dependências:** MNT-01 já entregue; coordenar PERF-02/03.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#mnt-03).
+- **Bloco recomendado:** E — Manutenção.
+
+### SEC-02
+
+**Escape manual e exceções permanecem dispersos**
+
+- **ID:** SEC-02
+- **Prioridade:** P3
+- **Área:** Manutenção / HTML seguro
+- **Problema:** Helper de escape e lint existem, mas componentes mantêm templates e dispensas individuais.
+- **Evidência:** view/ui-utils.js, eslint.config.js e controllers view/. SEC-01 foi corrigido; nenhum novo XSS foi demonstrado. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Defesa depende de disciplina repetida e pode regredir durante manutenção.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Padronizar os pontos de interpolação realmente variáveis e justificar exceções; testes de entrada HTML literal nos componentes alterados e lint coerente. Não substituir markup seguro sem necessidade.
+- **Dependências:** CFG-01 e MNT-01 já entregues; executar por componente sem refatoração geral obrigatória.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#sec-02).
+- **Bloco recomendado:** E — Manutenção.
+
+### MNT-02
+
+**Fachada concentra responsabilidades distintas**
+
+- **ID:** MNT-02
+- **Prioridade:** P3
+- **Área:** Manutenção / API
+- **Problema:** src/services/api.js ainda mistura leitores paginados, validação, enriquecimento e importação em cerca de 1.200 linhas.
+- **Evidência:** Leitura do arquivo atual; fachada pública e shim services/api.js existentes. O tamanho sozinho não é falha funcional. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Alteração localizada tem superfície ampla de regressão e dificulta revisão dos contratos.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Extrair responsabilidades em fatias preservando métodos públicos, chamadas UI→API, ordenação/paginação e semântica temporal. Regressões cobrem consumidores afetados; não condicionar correções P1 à refatoração inteira.
+- **Dependências:** Contratos consolidados em VAL-02, LOG-02/03 e leitores integrais; planejar após estabilizar fluxos críticos.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#mnt-02).
+- **Bloco recomendado:** E — Manutenção.
+
+### MNT-04
+
+**Caminhos sem consumidor não têm destinação completa**
+
+- **ID:** MNT-04
+- **Prioridade:** P3
+- **Área:** Manutenção / Legado
+- **Problema:** Guardrail heuristic-engine está decidido, mas métodos legados da API e caminhos de banco ainda precisam de inventário de responsabilidade.
+- **Evidência:** getTrendsByProduct, upsertHistoricoCustos, suggestCategory e importProductMasterXlsm sem consumidor UI localizado; inserir_custo referencia descricao_na_planilha ausente, sem chamada ativa do frontend demonstrada. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Legado confunde contratos e pode quebrar se um consumidor externo ainda o usar.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Para cada caminho, registrar consumidores/contrato e decidir preservar, adaptar ou remover com evidência. Não remover funções SQL por busca apenas no frontend nem reintroduzir heurística textual.
+- **Dependências:** SEC-08 para funções; MNT-02 pode acomodar módulos preservando a fachada.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#mnt-04).
+- **Bloco recomendado:** E — Manutenção.
+
+### MNT-08
+
+**Ranking depende de texto e emoji**
+
+- **ID:** MNT-08
+- **Prioridade:** P3
+- **Área:** Manutenção / Presenter
+- **Problema:** Exportação converte rótulos visuais em pesos de prioridade; presenter compartilhado é injetado pelo controller.
+- **Evidência:** view/ui-export.js:getInvestigationRankScore; view/ui-table.js:getOperationalPriority/buildInvestigativeSummary. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Mudança de rótulo pode alterar ordenação sem mudança deliberada da regra.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Prioridade possui representação estável separada da apresentação; UI e exportação derivam do mesmo contrato. Alterar apenas texto/emoji não muda peso; mover funções de arquivo sozinho não encerra o item.
+- **Dependências:** LOG-04/05/06 estabilizam comportamento; MNT-01 já entregue.
+- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#mnt-08).
+- **Bloco recomendado:** E — Manutenção.
+
+### PERF-05
+
+**Dois índices equivalentes em data de referência**
+
+- **ID:** PERF-05
+- **Prioridade:** P3
+- **Área:** Manutenção / Índices
+- **Problema:** Banco mantém idx_historico_data e idx_historico_data_referencia com a mesma definição.
+- **Evidência:** Advisor duplicate_index e pg_indexes em 22/10. Índices apenas não usados ou FKs sem índice são avaliações separadas. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Impacto:** Duplicação consome armazenamento e manutenção por escrita sem fornecer acesso distinto.
+- **Estado:** CONFIRMADO
+- **Critério de aceite:** Conferir equivalência, dependências e planos; após autorização própria, manter cobertura e restrições com uma estrutura equivalente. Comparar integridade e consultas; não excluir índices só por ausência de uso na amostra.
+- **Dependências:** Revisão PostgreSQL e autorização para qualquer alteração remota; não exige migration nesta auditoria.
+- **Origem:** achado novo formalizado nesta reconciliação.
+- **Bloco recomendado:** E — Manutenção.
+
+## Ordem recomendada de execução
+
+A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam correções P1 independentes de blocos seguintes. Nenhuma refatoração ampla é pré-requisito artificial para corrigir um contrato localizado.
+
+### Bloco A — Segurança e integridade
+
+1. [SEC-06](#sec-06) — Gravação documental sem autorização no handler.
+2. [SEC-08](#sec-08) — Funções têm search_path mutável.
+3. [SEC-05](#sec-05) — Versões e integridade de CDN incompletas.
+
+### Bloco B — Confiabilidade da investigação
+
+1. [MNT-OP-05](#mnt-op-05) — Carga de OP truncada sem aviso.
+2. [LOG-05](#log-05) — Alertas ficam fora dos 200 itens apresentados.
+3. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
+4. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
+5. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
+6. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
+7. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
+
+### Bloco C — Operação
+
+1. [SEC-04](#sec-04) — Datas impossíveis passam pela validação.
+2. [VAL-03](#val-03) — OP inválida chega ao chunk de persistência.
+3. [ERR-03](#err-03) — Falhas de log e de chunks podem parecer sucesso.
+4. [ERR-04](#err-04) — save-doc falha e não carrega como ES Module.
+5. [VAL-02](#val-02) — Preview e API validam a linha em caminhos distintos.
+6. [PERF-02](#perf-02) — Masters são reconsultados na navegação.
+7. [DOC-DIV-02](#doc-div-02) — Documentos apresentam estados e tipos ultrapassados.
+
+### Bloco D — UX
+
+1. [CUSTOS-UX-01](#custos-ux-01) — Percentuais e limiar têm rótulos ambíguos.
+2. [CAD-UX-02](#cad-ux-02) — Status e orientação de pendências se contradizem.
+
+### Bloco E — Manutenção
+
+1. [CFG-03](#cfg-03) — Suíte não protege contratos críticos encontrados.
+2. [CFG-06](#cfg-06) — view e entradas administrativas fora do typecheck.
+3. [MNT-03](#mnt-03) — Coordenação da cascata continua distribuída.
+4. [SEC-02](#sec-02) — Escape manual e exceções permanecem dispersos.
+5. [MNT-02](#mnt-02) — Fachada concentra responsabilidades distintas.
+6. [MNT-04](#mnt-04) — Caminhos sem consumidor não têm destinação completa.
+7. [MNT-08](#mnt-08) — Ranking depende de texto e emoji.
+8. [PERF-05](#perf-05) — Dois índices equivalentes em data de referência.
+
+SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a proteção da view. SEC-08 permanece aberto quanto a search_path e legado. SEC-06 precisa acompanhar a recuperação de ERR-04 antes de liberar escrita documental. LOG-05 precede alinhamento de exportação; LOG-02 define a unidade temporal para LOG-03. PERF-03 e PERF-02 compartilham invalidação. CFG-03 acompanha cada correção, e não uma campanha de testes somente ao final. Não repetir MNT-01, a renderização entregue de PERF-01 ou cargas históricas para iniciar essas correções.
+
+## Fora da execução automática
+
+PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
+
+## Encerrados após a reconciliação
+
+### SEC-03
+
+**RESOLVIDO — 23/10/2026.** RLS habilitada nas nove tabelas, 21 policies conforme modelo indicado, grants anônimos retirados e operações autenticadas/administrativas validadas. Migration remota 20261022192657. [Provas, aceites e limites](seguranca-rls-validacao.md#sec-03); [matriz de acesso](../arquitetura/modelo-acesso-rls.md). Sai da contagem ativa; descrição histórica preservada na reconciliação de 22/10.
+
+### SEC-07
+
+**RESOLVIDO — 23/10/2026, como dependência do P0.** View de triagem sem grants de cliente e com security_invoker=true; leitura por cliente bloqueada e backend preservado. [Provas](seguranca-rls-validacao.md#sec-07). Sai da contagem ativa; SEC-08 e SEC-06 não foram encerrados por essa entrega.

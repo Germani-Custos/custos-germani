@@ -1,8 +1,11 @@
 # Manual do Usuário — Kustos Germani
 
-Guia do comportamento implementado no checkout, revisado em **19/10/2026**. Publicação das entregas recentes é acompanhada no [ROADMAP](../../ROADMAP.md); este manual não confirma o estado do ambiente remoto. Instalação: [Manual Técnico](manual-tecnico.md). Rotina e recuperação: [Manual de Operação](manual-operacao.md).
+Guia do comportamento implementado no checkout, revisado quanto ao acesso em **23/10/2026**. Publicação das entregas recentes é acompanhada no [ROADMAP](../../ROADMAP.md); as provas datadas do acesso remoto estão no relatório SEC-03. Instalação: [Manual Técnico](manual-tecnico.md). Rotina e recuperação: [Manual de Operação](manual-operacao.md).
 
 ## 1. Acesso e áreas da aplicação
+
+O [modelo de acesso vigente](../arquitetura/modelo-acesso-rls.md) exige sessão permanente para ler dados; somente os dois administradores indicados podem importar Custos/OP e criar/editar produtos operacionais. Demais autenticados têm leitura. Não há exclusão operacional, escrita direta de catálogos/Master ou acesso anônimo às tabelas. Reconstrução ERP continua com allowlist/flag e procedimento separados. A autorização é aplicada no banco, mesmo se controles de edição/importação estiverem visíveis na UI de um leitor. Erro de permissão exige conferir sessão/identidade/operação; não conceder ALL, usar service_role no browser ou desabilitar RLS. [Provas e limites](../auditoria/seguranca-rls-validacao.md).
+
 
 Sem sessão ativa, o fluxo principal de Custos/OP apresenta login antes da carga de masters/metadados e apontamentos. Depois da entrada, o cabeçalho identifica o usuário e oferece saída. A aplicação tem cinco áreas:
 
