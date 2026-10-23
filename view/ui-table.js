@@ -34,6 +34,29 @@ export function getOperationalPriority(row) {
   return { label: '🟢 Estável', className: 'stable', reason: 'Sem sinais relevantes de anomalia no período.' };
 }
 
+// Comparador existente da exportação, compartilhado com a fila antes do corte.
+// getOperationalPriority é recebido por injeção, preservando o contrato do XLSX.
+export function getInvestigationRankScore(row, getOperationalPriority) {
+  const prioridade = getOperationalPriority(row);
+  const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
+  const regimePeso = row.mudouRegime ? 1 : 0;
+  const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
+  const reincidencia = isAlertaCritico(row) ? 1 : 0;
+  const instabilidade = Number(row.scoreInstabilidade || 0);
+  return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
+}
+
+export function compareByInvestigativePriority(a, b, getOperationalPriority) {
+  const ra = getInvestigationRankScore(a, getOperationalPriority);
+  const rb = getInvestigationRankScore(b, getOperationalPriority);
+  if (rb.criticidadePeso !== ra.criticidadePeso) return rb.criticidadePeso - ra.criticidadePeso;
+  if (rb.regimePeso !== ra.regimePeso) return rb.regimePeso - ra.regimePeso;
+  if (rb.magnitude !== ra.magnitude) return rb.magnitude - ra.magnitude;
+  if (rb.reincidencia !== ra.reincidencia) return rb.reincidencia - ra.reincidencia;
+  if (rb.instabilidade !== ra.instabilidade) return rb.instabilidade - ra.instabilidade;
+  return String(a.codigo || '').localeCompare(String(b.codigo || ''), 'pt-BR');
+}
+
 export function buildInvestigativeSummary(row) {
   const signals = [];
   if (row.mudouRegime) signals.push('Mudou regime após estabilidade longa.');
@@ -76,10 +99,13 @@ export function createTableController({ dom, executeOperationalBoundary, renderD
   // PERF-01: um único listener delegado, independente da quantidade de linhas.
   dom.tableBody.addEventListener('click', handleTableClick);
 
-  function renderTable(rows, _options = {}) {
+  function renderTable(rows, options = {}) {
     const visibleRows = rows.slice(0, MAX_VISIBLE_INVESTIGATION_ROWS);
+    const windowDescription = options.manualSort
+      ? `os primeiros ${MAX_VISIBLE_INVESTIGATION_ROWS} de ${rows.length} na ordenação escolhida`
+      : `os ${MAX_VISIBLE_INVESTIGATION_ROWS} itens mais prioritários de ${rows.length}`;
     const limitNotice = rows.length > visibleRows.length
-      ? `<tr class="table-limit-notice"><td colspan="6">Mostrando os ${MAX_VISIBLE_INVESTIGATION_ROWS} itens mais prioritários de ${rows.length}. Refine os filtros para investigar outros itens.</td></tr>`
+      ? `<tr class="table-limit-notice"><td colspan="6">Mostrando ${windowDescription}. Refine os filtros para investigar outros itens.</td></tr>`
       : '';
 
     dom.tableBody.innerHTML = limitNotice + visibleRows.map(row => {

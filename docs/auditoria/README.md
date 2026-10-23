@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-05 — 23/10/2026:** prioridade global aplicada antes do TOP-200, com critérios existentes. Cinco alertas reais de outubro passam de 345–349 para 1–5 na versão local; limite 200 preservado. [Provas e limites](custos-top200-validacao.md). Sem publicação/escrita remota.
+
 > **MNT-OP-05 — 23/10/2026:** leitura integral de OP corrigida e validada localmente com dados reais: 1.469 registros/299 gargalos, sem escrita remota ou publicação. [Provas e limites](op-paginacao-validacao.md).
 
 > **SEC-03 / SEC-07 — estado de 23/10/2026:** RLS/grants aplicados e verificados, com leitura autenticada e escrita operacional dos dois admins indicados. [Matriz vigente](../arquitetura/modelo-acesso-rls.md) e [provas](seguranca-rls-validacao.md). SEC-06/ERR-04 e SEC-08 permanecem pendentes; o corpo histórico abaixo não reabre o acesso público.

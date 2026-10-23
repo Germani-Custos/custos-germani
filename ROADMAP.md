@@ -4,7 +4,7 @@ Recorte reconciliado em **22/10/2026**. Este documento reúne capacidades futura
 
 ## Base disponível e evidência de entregas
 
-Custos oferece busca/cascata, fila, KPIs, gráficos, drill-through e exportação. OP oferece fila/dossiê e decisão por produção, tempo, produtividade e parada; a leitura integral foi validada no checkout em 23/10, aguardando publicação autorizada ([MNT-OP-05](docs/auditoria/op-paginacao-validacao.md)). Cadastro separa Operacional de Mestre ERP, com Preview e fronteira administrativa. A implementação dessas capacidades convive com defeitos atuais: ordenação/narrativa/comparação e salvamento documental estão no backlog; não são entregas futuras opcionais.
+Custos oferece busca/cascata, fila, KPIs, gráficos, drill-through e exportação; a prioridade padrão antes do TOP-200 foi corrigida no checkout ([LOG-05](docs/auditoria/custos-top200-validacao.md)), aguardando publicação autorizada. OP oferece fila/dossiê e decisão por produção, tempo, produtividade e parada; a leitura integral foi validada no checkout em 23/10, aguardando publicação autorizada ([MNT-OP-05](docs/auditoria/op-paginacao-validacao.md)). Cadastro separa Operacional de Mestre ERP, com Preview e fronteira administrativa. A implementação dessas capacidades convive com defeitos atuais: ordenação manual do XLSX/narrativa/comparação e salvamento documental estão no backlog; não são entregas futuras opcionais.
 
 Leitura de produção em 22/10 confirmou 860 produtos ERP, 162 pares comerciais preenchidos, 698 vazios e lote histórico com 65 famílias inseridas. Recursos frontend publicados foram conferidos; saúde autenticada atual de TLS/Storage/flags e causa remota do HTTP 500 continuam sem conclusão. Não manter uma tarefa genérica de repetir publicação/carga dessas entregas com base em textos antigos. O executor comercial isolado foi implementado para uma fotografia inicial específica; o preenchimento atual não prova uso dele nem autoriza executá-lo novamente.
 
@@ -22,7 +22,7 @@ Antes de escolher uma entrega, definir cálculo local versus séries maiores, re
 
 ## Evolução futura — inteligência operacional
 
-- Ranking de risco composto e sugestões explicáveis de próximos produtos a investigar. Corrigir a prioridade prometida pela janela atual é LOG-05, não depende desse novo motor.
+- Ranking de risco composto e sugestões explicáveis de próximos produtos a investigar. A prioridade padrão da janela atual usa os critérios existentes, corrigida localmente em LOG-05; esse futuro motor não é pré-requisito da correção.
 - Distinguir sazonalidade de ruptura, ampliar insights temporais e avaliar previsão de tendência com base suficiente.
 - Integração direta ERP/SAP e eventual sugestão revisável de classificação por código de negócio, condicionada a contrato empresarial. Não inferir classificação por descrição ou semelhança textual.
 - Acessibilidade e experiência em volumes maiores conforme requisitos e evidências de uso; nenhum gargalo genérico foi confirmado apenas pela existência de datalist.

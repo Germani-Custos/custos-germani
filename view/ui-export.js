@@ -2,18 +2,18 @@
    prioridade investigativa, planilha de contexto/metadados e sanitização
    anti-fórmula. Consome de ui-filters.js as funções canônicas de seleção e
    ordenação de linhas (getRowsMatchingQuickFilter, compareRowsBySort). A
-   prioridade de exibição (getOperationalPriority) e o resumo investigativo
-   (buildInvestigativeSummary) permanecem em ui-controller.js — usados também
-   pela tabela — e entram por injeção.
+   prioridade, o ranking e o resumo investigativo ficam em ui-table.js;
+   o orquestrador injeta os presenters usados pela exportação.
    Extraído de view/ui-controller.js (MNT-01) sem alteração de comportamento.
 
    Contratos preservados:
    - SEC-04 (sanitizeCsvFormula): mitigação de formula injection, sem alteração.
    - Nome do arquivo (buildExportFilename) byte-a-byte igual.
    - Ordem de prioridade investigativa (compareByInvestigativePriority) idêntica. */
-import { isAlertaCritico } from '../core/report-engine.js';
 import { formatCurrencyBRL, showToast } from './ui-utils.js';
 import { getRowsMatchingQuickFilter, compareRowsBySort } from './ui-filters.js';
+import { compareByInvestigativePriority, getInvestigationRankScore } from './ui-table.js';
+export { compareByInvestigativePriority, getInvestigationRankScore } from './ui-table.js';
 
 const EXPORT_COLUMNS = Object.freeze([
   { key: 'Prioridade #', label: 'Prioridade', width: 10 },
@@ -66,30 +66,6 @@ export async function chooseExportColumns() {
   });
 
   return result.isConfirmed ? result.value : null;
-}
-
-// getOperationalPriority permanece em ui-controller.js (também usado pela tabela)
-// e é recebido por injeção; aqui entra como parâmetro para manter estas funções
-// puras e testáveis isoladamente.
-export function getInvestigationRankScore(row, getOperationalPriority) {
-  const prioridade = getOperationalPriority(row);
-  const criticidadePeso = { '🔴 Crítico': 4, '🟠 Atenção': 3, '🟡 Monitorar': 2, '🟢 Estável': 1 }[prioridade.label] || 1;
-  const regimePeso = row.mudouRegime ? 1 : 0;
-  const magnitude = Math.abs(Number(row.variacaoTemporal ?? row.variacao ?? 0));
-  const reincidencia = isAlertaCritico(row) ? 1 : 0;
-  const instabilidade = Number(row.scoreInstabilidade || 0);
-  return { criticidadePeso, regimePeso, magnitude, reincidencia, instabilidade };
-}
-
-export function compareByInvestigativePriority(a, b, getOperationalPriority) {
-  const ra = getInvestigationRankScore(a, getOperationalPriority);
-  const rb = getInvestigationRankScore(b, getOperationalPriority);
-  if (rb.criticidadePeso !== ra.criticidadePeso) return rb.criticidadePeso - ra.criticidadePeso;
-  if (rb.regimePeso !== ra.regimePeso) return rb.regimePeso - ra.regimePeso;
-  if (rb.magnitude !== ra.magnitude) return rb.magnitude - ra.magnitude;
-  if (rb.reincidencia !== ra.reincidencia) return rb.reincidencia - ra.reincidencia;
-  if (rb.instabilidade !== ra.instabilidade) return rb.instabilidade - ra.instabilidade;
-  return String(a.codigo || '').localeCompare(String(b.codigo || ''), 'pt-BR');
 }
 
 export function buildExportFilename(dom) {

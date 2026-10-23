@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **23/10/2026**, após SEC-03 e MNT-OP-05: **26 itens ativos — P0 = 1, P1 = 9, P2 = 10, P3 = 6.** São 12 IDs históricos e 14 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 19 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e a implementação local de MNT-OP-05 foram encerrados com provas abaixo; publicação de OP aguarda autorização própria.
+Estado vigente em **23/10/2026**, após SEC-03, MNT-OP-05 e LOG-05: **25 itens ativos — P0 = 1, P1 = 8, P2 = 10, P3 = 6.** São 12 IDs históricos e 13 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 18 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-05 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -38,22 +38,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 
 ## P1
 
-### LOG-05
-
-**Alertas ficam fora dos 200 itens apresentados**
-
-- **ID:** LOG-05
-- **Prioridade:** P1
-- **Área:** Custos / Fila
-- **Problema:** A ordenação inicial por variação descendente precede slice(0,200); a legenda afirma mostrar os mais prioritários.
-- **Evidência:** view/ui-state.js, view/ui-filters.js e view/ui-table.js; reprodução com outubro: 349 produtos, cinco alertas nas posições 345–349, nenhum entre os 200 exibidos. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** O investigador não vê os alertas negativos relevantes na janela inicial apesar do KPI indicar cinco.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Aplicar prioridade investigativa antes do corte visual na ordenação padrão; o cenário reproduzido apresenta seus cinco alertas. Ordenação manual continua explícita; KPIs, filtros e exportação usam o conjunto completo.
-- **Dependências:** PERF-01 permanece entregue quanto a limite DOM/delegação; corrigir sua premissa de entrada priorizada sem reabrir o desempenho já entregue.
-- **Origem:** achado novo formalizado nesta reconciliação.
-- **Bloco recomendado:** B — Confiabilidade da investigação.
-
 ### LOG-04
 
 **Narrativa afirma recorrência sem série suficiente**
@@ -82,7 +66,7 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Impacto:** Relatório exportado muda a ordem de investigação, inclusive após escolha manual de variação.
 - **Estado:** CONFIRMADO
 - **Critério de aceite:** Distinguir ordenação padrão de escolha manual; para o mesmo recorte e escolha de ordem, XLSX mantém a ordem completa correspondente à fila (que exibe só 200). Seleção manual por variação nos dois sentidos deve ser respeitada.
-- **Dependências:** LOG-05; LOG-04 para rótulos/indicadores compartilhados. MNT-08 não é pré-requisito para uma correção localizada.
+- **Dependências:** LOG-05 implementado localmente; LOG-04 para rótulos/indicadores compartilhados. A divergência após escolha manual de variação permanece. MNT-08 não é pré-requisito para uma correção localizada.
 - **Origem:** achado novo formalizado nesta reconciliação.
 - **Bloco recomendado:** B — Confiabilidade da investigação.
 
@@ -455,12 +439,11 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 
 ### Bloco B — Confiabilidade da investigação
 
-1. [LOG-05](#log-05) — Alertas ficam fora dos 200 itens apresentados.
-2. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
-3. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
-4. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
-5. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
-6. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
+1. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
+2. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
+3. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
+4. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
+5. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
 
 ### Bloco C — Operação
 
@@ -507,3 +490,7 @@ PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e
 ### MNT-OP-05
 
 **RESOLVIDO LOCALMENTE — 23/10/2026; publicação pendente de autorização.** A consulta única sem range/count recebia apenas 1.000 dos 1.469 fatos e omitia 296 linhas de junho/173 de julho. Agora reutiliza o leitor de 500/count exact, aplica filtros antes de cada range, acrescenta id à ordem anterior e bloqueia sobreposição de IDs. Enriquecimento operacional também completo. API/motor/fila reais locais: 1.469, IDs únicos 1.469 e 299 gargalos versus 222 no corte anterior. Motor, carga local MNT-OP-04 e critérios preservados; 647 testes e verificações de qualidade aprovados. [Provas, aceites e limites](op-paginacao-validacao.md); [contrato](../arquitetura/matriz-contratos-operacionais.md#mnt-op-05--leitura-integral-da-auditoria-de-op-23102026). Sai da contagem ativa de implementação; não afirma correção publicada nem autoriza deploy/próximo P1. Sem escrita de dados/Auth/RLS/schema, commit ou push.
+
+### LOG-05
+
+**RESOLVIDO LOCALMENTE — 23/10/2026; publicação pendente de autorização.** Outubro real reproduzido com 558 fatos/349 produtos: cinco alertas negativos em 345–349, atrás de 200 estáveis. A fila padrão agora compartilha o comparador investigativo existente antes do corte de 200; os cinco passam a 1–5, sem novos pesos/cálculos. Ordem manual explícita e aviso correspondente preservados; reportRows/KPIs/exportação padrão completos. [Diagnóstico, critérios, comparação e provas](custos-top200-validacao.md); [contrato](../arquitetura/matriz-contratos-operacionais.md#log-05--prioridade-global-antes-do-top-200-23102026). Sai da contagem ativa de implementação; LOG-04 e LOG-06 permanecem abertos. Sem escrita remota, alteração de Auth/RLS/schema, commit, push ou deploy; não autoriza o próximo P1.

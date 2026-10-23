@@ -259,3 +259,7 @@ Novo núcleo puro e adaptador para XLSM/XLSX/XLS: filtros Tipo P/C → Descr(Ori
 ### Atualização 2026-10-23 — universo completo na Auditoria de OP
 
 O MNT-OP-05 corrigiu localmente a consulta que recebia somente 1.000 dos 1.469 apontamentos. Reutilizar a paginação estrita existente fez a mesma investigação alcançar 299 gargalos, contra 222 no recorte truncado, sem mudar o motor ou escrever dados. [Provas reais e regressões](auditoria/op-paginacao-validacao.md) separam a implementação validada da publicação ainda não autorizada. `data_referencia` permanece competência e `criado_em` importação/proveniência; nenhum commit, push ou deploy nesta entrega.
+
+### Atualização 2026-10-23 — prioridade antes da janela de Custos
+
+LOG-05 demonstrou que os cinco alertas negativos de outubro estavam atrás de 200 casos estáveis por causa da ordem inicial por variação com sinal. O comparador investigativo já existia na exportação; compartilhar seus critérios com a fila colocou os cinco em 1–5, preservando TOP-200, fórmulas e dados. [Provas](auditoria/custos-top200-validacao.md). A implementação permanece local, sem commit/push/deploy; narrativa e ordenação manual do XLSX continuam tarefas distintas. `data_referencia` é competência e `criado_em` é importação/proveniência.

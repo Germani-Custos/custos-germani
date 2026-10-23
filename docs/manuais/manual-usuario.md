@@ -54,6 +54,8 @@ Os quatro KPIs são clicáveis: Itens analisados, Alertas (>5%), Mudanças de Re
 
 A fila mostra produto, variação, prioridade, regime e contexto automático; **Detalhes** expande custos, datas e score. Sem ordenação manual, a prioridade orienta a investigação; clicar no cabeçalho muda a ordenação. A janela visual mostra até 200 itens na ordem ativa e informa o excedente. Refine filtros/período para trazer outros itens; KPIs e exportação continuam considerando o relatório completo.
 
+Na correção local LOG-05, a ordem inicial considera criticidade → mudança de regime → magnitude absoluta → flag de alerta → instabilidade → código, antes do TOP-200. Clicar no cabeçalho escolhe uma ordem manual; o aviso diz “ordenação escolhida”, sem prometer prioridade nessa ordem. Os cinco alertas de outubro antes ocultos aparecem no início pelos critérios existentes. A publicação ainda depende de autorização; [validação e limites](../auditoria/custos-top200-validacao.md). A divergência do XLSX ao escolher manualmente variação continua registrada em LOG-06.
+
 Instabilidade é a média das variações percentuais absolutas consecutivas: ESTÁVEL abaixo de 3%, OSCILANDO de 3% até menos de 8%, MUITO INSTÁVEL a partir de 8%. Com pelo menos quatro pontos, estabilidade na primeira metade e instabilidade na segunda sinalizam mudança de regime.
 
 ### Histórico e gráficos

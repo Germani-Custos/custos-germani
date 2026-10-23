@@ -17,7 +17,7 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 ## 4. Principais capacidades
 
 - Busca por código/descrição e cascata Origem → Família → Agrupamento → Produto.
-- Fila investigativa de Custos com prioridade, contexto, instabilidade e mudança de regime; janela visual de até 200 itens, com KPIs e exportação sobre o relatório completo.
+- Fila investigativa de Custos ordenada por prioridade investigativa antes da janela visual de até 200 itens; cabeçalhos permitem ordem manual, com KPIs e exportação sobre o relatório completo.
 - Drill-through por produto com competência (mês/ano), Data de referência (DD/MM/AAAA), custos e deltas; mantém cada registro, inclusive datas diferentes no mesmo mês. Importação (`criado_em`) permanece proveniência, sem exibição na coluna Data; alerta canônico de variação absoluta ≥ 5%.
 - Gráficos de comparação de importações, TOP variações e evolução por competência.
 - Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
@@ -85,7 +85,7 @@ Para mudanças de código, os scripts de qualidade são `npm run lint`, `npm run
 
 ## 10. Backlog ativo e estado verificado
 
-Estado em **23/10/2026**: o [backlog de correções](docs/auditoria/backlog-priorizado.md) é a fonte única, com **26 itens — um P0, nove P1, dez P2 e seis P3**. SEC-03/RLS e a proteção da view foram concluídos; segurança do salvamento documental permanece P0. Leitura integral de OP foi corrigida e validada localmente com 1.469 registros e 299 gargalos; [provas e limites](docs/auditoria/op-paginacao-validacao.md). A versão publicada conserva a carga anterior até publicação autorizada. Confiabilidade da fila/comparação continua pendente. Cada item tem evidência, aceite e dependências; o README mantém somente este resumo.
+Estado em **23/10/2026**: o [backlog de correções](docs/auditoria/backlog-priorizado.md) é a fonte única, com **25 itens — um P0, oito P1, dez P2 e seis P3**. SEC-03/RLS e a proteção da view foram concluídos; segurança do salvamento documental permanece P0. Leitura integral de OP foi validada localmente com 1.469 registros e 299 gargalos; [provas](docs/auditoria/op-paginacao-validacao.md). A prioridade padrão de Custos também foi corrigida localmente: os cinco alertas de outubro passaram de 345–349 para 1–5, mantendo TOP-200 e critérios existentes; [provas LOG-05](docs/auditoria/custos-top200-validacao.md). A versão publicada conserva o comportamento anterior até publicação autorizada. Narrativa, comparação e ordenação manual do XLSX continuam no backlog. Cada item tem evidência, aceite e dependências; o README mantém somente este resumo.
 
 A [reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-22.md) registra os 60 IDs antigos, duplicações, fatos atuais, limites de verificação e conflitos entre fontes. A fotografia de leitura encontrou Master ERP com 860 produtos, 162 pares comerciais preenchidos e 698 vazios; lote histórico de famílias com 65 inserções. Afirmações anteriores de comercial integralmente NULL e famílias ainda por carregar são estados históricos, preservados no [arquivo original](docs/auditoria/backlog-historico.md), e não instruções de repetir carga.
 

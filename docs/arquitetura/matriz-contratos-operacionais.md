@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## LOG-05 — prioridade global antes do TOP-200 (23/10/2026)
+
+`getHistorico` integral/recorte/classificação → `buildReportRows` sobre todos os fatos → `calculateKpis`/`state.reportRows` completos → filtro rápido → ordem global ativa → `renderTable` → `slice(0,200)`. Sem chave manual (`sortKey:null`), usar `compareByInvestigativePriority` existente; criticidade > regime > magnitude absoluta > flag de alerta > instabilidade > código. Comparador transferido sem alterar corpo de `ui-export.js` para `ui-table.js` e reexportado pela entrada anterior. Não fazer o corte no motor, API, candidatos ou exportação.
+
+Cabeçalho define chave/direção explícitas e mantém `compareRowsBySort`; aviso visual passa a “ordenação escolhida”. Essa ordem pode deixar alertas negativos fora da janela por escolha do usuário. A exportação padrão mantém todo o recorte na mesma ordem investigativa. A condição legada que ignora escolha manual por variação na exportação não foi alterada (LOG-06); narrativa/reincidência real não foram corrigidas (LOG-04). O campo legado `reincidencia` do ranking continua indicador canônico de alerta atual, sem cálculo histórico novo.
+
+Não alterar fórmulas, alertas, prioridades, instabilidade, regime, recortes, consultas, KPIs, dados ou limite 200. `data_referencia` permanece competência e `criado_em` importação/proveniência. Validação real local com 558 fatos/349 candidatos e os cinco alertas em 1–5, sem escrita remota/publicação. [Diagnóstico, comparação e regressões](../auditoria/custos-top200-validacao.md).
+
 ## MNT-OP-05 — leitura integral da Auditoria de OP (23/10/2026)
 
 `createOpController.reloadData()` → `api.getApontamentosOp({})` → `lerCompleto(apontamentos_op)` → enriquecimento operacional integral → `allRows` → filtros locais/competência → `buildOpInvestigationQueue` → KPIs/filtro de motivo/fila/dossiê. O callback existente após importação renova a mesma carga; mudar filtro não consulta novamente. Não há exportação de OP neste checkout; a exportação de Custos usa outro fluxo.

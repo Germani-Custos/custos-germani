@@ -12,6 +12,7 @@
 import { api } from '../src/services/api.js';
 import { calculateCascadeOptions, filterAlertRows } from '../core/report-engine.js';
 import { debounce, escapeHtml, fillSelect } from './ui-utils.js';
+import { compareByInvestigativePriority, getOperationalPriority } from './ui-table.js';
 
 // Fonte canônica de "quais linhas" da fila investigativa — compartilhada com ui-export.js.
 export function getRowsMatchingQuickFilter(rows, operation, quickFilter) {
@@ -126,8 +127,11 @@ export function createFiltersController({ dom, state, executeOperationalBoundary
   function applyTableView(options = {}) {
     const { hasSingleItemAnalysis = false } = options;
     const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'filtro rápido Alertas (>5%)', state.reportView.quickFilter);
-    const sortedRows = [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-    renderTable(sortedRows, { hasSingleItemAnalysis });
+    const manualSort = Boolean(state.reportView.sortKey);
+    const sortedRows = [...filteredRows].sort((a, b) => manualSort
+      ? compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection)
+      : compareByInvestigativePriority(a, b, getOperationalPriority));
+    renderTable(sortedRows, { hasSingleItemAnalysis, manualSort });
     renderActiveFilterChips();
     updateKpiCardState();
     updateSortHeaderState();

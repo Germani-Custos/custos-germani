@@ -7,6 +7,6 @@ export function createInitialState() {
     importMapping: null,
     unsubscribeFiltersRealtime: null,
     reportRows: [],
-    reportView: { sortKey: 'variacao', sortDirection: 'desc', quickFilter: 'all' }
+    reportView: { sortKey: null, sortDirection: 'desc', quickFilter: 'all' }
   };
 }
