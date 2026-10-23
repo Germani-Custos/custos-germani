@@ -1,8 +1,8 @@
 # OP × CUSTO — contrato técnico final
 
-**OP-CUSTO-01 · versão 1.0 · 23/10/2026 · implementação não iniciada.**
+**OP-CUSTO-01 · contrato versão 1.0 · 23/10/2026 · Fase 1 local implementada; UI não iniciada.**
 
-Contrato da futura investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões de negócio aprovadas e da inspeção do checkout `fa9c7bb`. A definição não autoriza implementação ou publicação. Esta entrega altera somente documentação; não executa consultas remotas, cargas, SQL, migrations, alterações de dados, schema, RLS ou Auth. O estado de produção não foi revalidado nesta tarefa.
+Contrato da investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões aprovadas e da inspeção do checkout `fa9c7bb`. O fechamento original foi exclusivamente documental. Após autorização específica da Fase 1, o núcleo/API foi implementado sobre `16fc9f8`, sem UI ou acesso remoto. As seções de proposta preservam o contrato base; a seção 16 registra exatamente o subconjunto agora disponível e os complementos pedidos na Fase 1, sem mudar regras de negócio. Publicação e próximas fases não estão autorizadas. O estado de produção não foi revalidado nesta tarefa.
 
 ## 1. Escopo e decisões incorporadas
 
@@ -234,7 +234,7 @@ Fluxo: **UI → API → adaptação dos resultados existentes → engine puro OP
 
 Não refatorar motores legados para viabilizar esta definição. A extensão inicial é um contrato externo de composição; **não é necessário alterar `investigation-contract.js`**, nem criar segunda fonte de prioridades ou de classificação. Tipos JSDoc do novo envelope podem residir no próprio módulo futuro.
 
-### 9.2 API proposta, ainda inexistente
+### 9.2 API — contrato base
 
 `api.getOpCustoContext({ competencia: '2026-10' })`.
 
@@ -385,9 +385,9 @@ As oito decisões da seção 1 **não estão pendentes**. Restam limites para ev
 - Para ampliar a matriz além das células aprovadas, combinar prioridades ou analisar vários meses: novos critérios de negócio aprovados, sem alteração silenciosa dos motores. V1 tem fallback explícito “Sem relação definida”.
 - Início da implementação e eventual publicação continuam sujeitos a autorização própria. Esta entrega encerra na documentação; não inicia a próxima etapa.
 
-## 14. Inventário da futura implementação, não executado
+## 14. Inventário planejado no fechamento do contrato
 
-Arquivos candidatos com responsabilidade delimitada; os caminhos novos abaixo **não foram criados** nesta tarefa:
+Arquivos planejados no fechamento documental, com responsabilidade delimitada. Na Fase 1 foram implementados somente `core/op-custo-engine.js`, `src/services/api.js` e os dois testes de engine/API; os demais caminhos continuam futuros. Estado e uso atuais estão na seção 16.
 
 | Arquivo | Mudança futura prevista |
 |---|---|
@@ -440,3 +440,38 @@ Considerados também a especificação anterior e o fechamento integral fornecid
 - `docs/auditoria/backlog-priorizado.md`: referência fora da lista ativa de correções, sem mudar contagens/prioridades ou encerrar defeitos.
 
 README, VISION, regras gerais, manuais e demais documentos permanecem sem alteração, pois nenhum comportamento funcional foi entregue. Validação realizada: links locais dos documentos alterados sem caminhos quebrados; diff restrito aos cinco Markdown acima; contagens do backlog preservadas em 25 itens; matriz com 32 cenários futuros; `git diff --check` aprovado e novo arquivo também conferido quanto a espaços finais e newline. Testes da funcionalidade estão especificados, não implementados/executados. Sem commit, push, deploy ou qualquer escrita remota.
+
+## 16. Fase 1 — núcleo local implementado
+
+O pedido específico da Fase 1 autorizou engine puro, contexto de leitura da API e seus testes, sem interface. As oito decisões de negócio permanecem intactas. Os registros de “não implementado” nas seções 13/15 delimitam o fechamento documental original, não o estado desta Fase 1. [Validação, arquivos e limites](../auditoria/op-custo-fase1-validacao.md).
+
+### Entrada e uso disponíveis
+
+`api.getOpCustoContext({ competencia: '2026-10', periodo?, produto? })` deriva os limites completos do mês; `periodo`, quando informado, deve ser exatamente `{inicio:'2026-10-01', fimInclusivo:'2026-10-31'}`. `produto` é código de consulta explícita; não reduz as fontes nem A/B/C. Retorno `{data,error}`: sucesso mantém o contexto da seção 9.2 e acrescenta `analisesOp`, `analisesCusto`, `produtoSolicitado`, `cobertura` e `qualidade`. Erro retorna `data:null`, sem resultados parciais ou mensagens brutas do driver.
+
+API adapta OP com o motor original, preservando o ID no objeto analisado e colocando `idFonte` no envelope antes do contrato descartá-lo. Não reconstrói identidade pela chave legada nem faz zip de arrays. Em Custo, reutiliza `buildReportRows`/`classifyAlert` sobre os fatos vinculáveis do mês. `classificacaoCustos` é metadado separado: o snapshot mantém descrição, custos e datas originais; a projeção existente é usada para o resultado analítico. Dimensão compartilhada por carga; nenhum lookup por produto.
+
+```js
+const { data, error } = await api.getOpCustoContext({ competencia: '2026-10' });
+if (error) throw error;
+const resultado = analyzeOpCustoContext({
+  contexto: data,
+  analisesOp: data.analisesOp,
+  analisesCusto: data.analisesCusto,
+  produtoSolicitado: data.produtoSolicitado
+});
+```
+
+Não há consumidor UI desse fluxo nesta fase. O futuro orquestrador poderá enriquecer `analisesCusto` com `prioridadeOriginal` calculada pelo presenter existente antes de chamar o engine. A API entrega `null` e `qualidadePrioridade:'aguarda_presenter_existente'`, pois não importa views nem cria outra regra de prioridade. Resultados OP fornecem `posicaoOriginal` da fila original; o engine usa essa posição para identificar a maior prioridade observada, sem novo ranking.
+
+### Complementos explícitos de entrada/saída
+
+- `relacao.codigo` mantém os códigos estáveis da seção 7.2. `relacao.tipo` é alias solicitado na Fase 1: `temporalmente_compativel`, `sem_confirmacao_por_custo`, `sinal_de_custo_sem_correspondencia_operacional`, `sinais_divergentes`, `evidencia_temporalmente_compativel_favoravel`, `inconclusivo`. Fallbacks permanecem `nao_aplicavel`/`sem_relacao_definida_v1`. Não há mudança de taxonomia ou substituição silenciosa do código aprovado.
+- O engine exporta `analyzeOpCustoContext` e os helpers puros `getOpCustoPeriod`, `assertOpCustoIds`, `inspectOpCustoContext`. A inspeção usada pela API só compõe vínculo/cobertura/diagnóstico; não chama a relação investigativa. Fontes incompletas retornam engine em `estado:'indisponivel'`, `cobertura:null`, `produtos:[]`; ID/adaptação inválidos lançam erro de contrato.
+- Eventos OP mantêm fatos/resultados individuais, distribuição por motivo, presença de favoráveis/desfavoráveis/mistos/sem base, contagens e possíveis reimports. Conteúdo equivalente em IDs diferentes apenas gera aviso; não é deduplicação nem prova de repetição de negócio.
+- Colisão de normalização: divergência de medidas entre grafias distintas do código normalizado na mesma granularidade observada gera inconsistência e relação inconclusiva, sem retirar fatos. Em Custo, essa granularidade é produto/data completa; em OP, data/OP/estágio/origem/unidade para diagnóstico, nunca identidade única de negócio. Mudança de custo em datas distintas ou passagem por estágios diferentes não é, por si só, colisão.
+- Custos mantêm toda a série, candidatos de referência/base, valores e qualidade de campos. Comparação por instante usa precisão suficiente para microssegundos do PostgreSQL; fusos diferentes do mesmo instante continuam empatados. O intermediário de alta precisão não é exposto no payload.
+- Consolidação retorna `estado:'nao_disponivel'`, `valores:null`. Nenhuma quantidade/tempo/parada/apontamento/taxa/percentual é somada ou promediada. Ausência permanece `null`; zero real permanece zero.
+- Os 32 cenários da seção 12 incluem testes de UI que continuam futuros. Nesta fase foram implementados os cenários pertinentes ao engine/API; escolha de inclusão, botão, navegação e retorno não existem ainda.
+
+Sem alterações nos motores originais, parser, UI, index/CSS, TOP-200, ranking, dados remotos, schema, migrations, RLS/Auth. Nenhuma análise multi-mês, carga, commit, push ou deploy.

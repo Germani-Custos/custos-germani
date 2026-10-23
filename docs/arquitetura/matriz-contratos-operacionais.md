@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## OP-CUSTO-F1 — contexto mensal e composição sem UI (23/10/2026)
+
+`api.getOpCustoContext({competencia, periodo?, produto?})` → `lerCompleto` nas duas fontes com limites civis inclusivos → validação de IDs por fonte → dimensão operacional compartilhada/catálogos/Master ERP → adaptação das saídas dos motores originais por identidade → contexto completo. Não há chamada de UI nem análise relacional na API. A composição é chamada separadamente por `analyzeOpCustoContext({contexto, analisesOp, analisesCusto, produtoSolicitado})`, sem I/O/configuração/DOM/views.
+
+OP ordena competência DESC/estágio/origem/OP/ID ASC; Custo competência/ID ASC. Páginas de 500/count exact; erro, contagem ausente/alterada, página curta ou ID ausente/repetido bloqueiam o contexto inteiro. Produto opcional é metadado para D, não filtro dos fatos. A/B/C derivam das fontes completas e válidas para vínculo; inválidos ficam em diagnóstico. Fonte indisponível não vira vazia. Enriquecimento compartilha dimensões por blocos IN, sem N+1 e sem misturar a autoridade operacional de OP com a ERP de Custos.
+
+Resultados OP mantêm envelope por ID com prioridade original/posição da fila. Resultados Custo reutilizam `buildReportRows`/`classifyAlert`, sem ranking da UI: `prioridadeOriginal:null` e `qualidadePrioridade:'aguarda_presenter_existente'` até o futuro orquestrador fornecer o presenter já existente. O engine preserva prioridades fornecidas, snapshots, datas e evidências, sem soma numérica de OP, score conjunto ou causalidade. Empates reais de importação ficam ambíguos; comparação por instante conserva microssegundos. `data_referencia` é competência e `criado_em` importação/proveniência. [Contrato e extensão Fase 1](op-custo.md#16-fase-1--núcleo-local-implementado); [provas](../auditoria/op-custo-fase1-validacao.md).
+
 ## LOG-05 — prioridade global antes do TOP-200 (23/10/2026)
 
 `getHistorico` integral/recorte/classificação → `buildReportRows` sobre todos os fatos → `calculateKpis`/`state.reportRows` completos → filtro rápido → ordem global ativa → `renderTable` → `slice(0,200)`. Sem chave manual (`sortKey:null`), usar `compareByInvestigativePriority` existente; criticidade > regime > magnitude absoluta > flag de alerta > instabilidade > código. Comparador transferido sem alterar corpo de `ui-export.js` para `ui-table.js` e reexportado pela entrada anterior. Não fazer o corte no motor, API, candidatos ou exportação.

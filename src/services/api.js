@@ -5,6 +5,10 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { appConfig, debugLog } from '../config/app-config.js';
 import { classificarCustos } from '../../core/custos-classification-engine.js';
 import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
+import { assertOpCustoIds, getOpCustoPeriod, inspectOpCustoContext } from '../../core/op-custo-engine.js';
+import { buildOpInvestigationQueue } from '../../core/op-investigation-engine.js';
+import { toInvestigationResult } from '../../core/investigation-contract.js';
+import { buildReportRows, classifyAlert } from '../../core/report-engine.js';
 import { buildManualProductMasterPayload, buildProductMasterPayload, createProductMasterIndex, reconcileProductMasterImport, resolveProductClassification } from '../../core/product-master-engine.js';
 import { lerContextoCadastroMestrePreview } from './cadastro-mestre-preview.js';
 import { consultarDisponibilidadeReconstrucao, consultarLoteReconstrucao, executarReconstrucaoPelaAplicacao, verificarAmbienteReconstrucao } from './cadastro-mestre-execution.js';
@@ -40,6 +44,7 @@ const PRODUCT_MASTER_PAGE_SIZE = 500;
 
 // Mesma ordem temporal da consulta analítica, com PK como desempate entre páginas.
 const HISTORICO_PAGE_ORDER = ['data_referencia', 'id'];
+let opCustoReadSequence = 0;
 
 function resolveMasterId(row) {
   return row?.id ?? row?.codigo ?? row?.cod ?? row?.uuid ?? row?.value ?? null;
@@ -904,6 +909,99 @@ export const api = {
    */
   async getHistorico(filters) {
     return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), ...normalizeTemporalFilters(filters) });
+  },
+
+  /**
+   * OP-CUSTO-01 / Fase 1: contexto mensal integral, apenas SELECT.
+   * Produto é metadado de consulta explícita (D), nunca filtro da cobertura global.
+   * Resultados originais são adaptados sem importar presenter/ranking da UI.
+   * @param {{competencia:string, periodo?:{inicio:string, fimInclusivo:string}, produto?:string}} params
+   */
+  async getOpCustoContext(params) {
+    const metodo = 'getOpCustoContext';
+    let etapa = 'entrada';
+    try {
+      const competencia = params?.competencia;
+      const periodo = getOpCustoPeriod(competencia);
+      if (params.periodo && (params.periodo.inicio !== periodo.inicio || params.periodo.fimInclusivo !== periodo.fimInclusivo)) {
+        return fail('Limites devem corresponder à competência completa.', { metodo, code: 'LIMITES_INVALIDOS' });
+      }
+      const produtoSolicitado = params.produto === undefined ? undefined : normalizeCodigoProduto(params.produto);
+      if (params.produto !== undefined && !produtoSolicitado) return fail('Produto consultado inválido.', { metodo, code: 'PRODUTO_INVALIDO' });
+      const iniciadoEm = new Date().toISOString();
+      const idLocal = `OP_CUSTO:${competencia}:${++opCustoReadSequence}:${iniciadoEm}`;
+      const opOrder = [{ column: 'data_referencia', ascending: false }, 'estagio', 'origem', 'op', 'id'];
+      const configurar = query => query.gte('data_referencia', periodo.inicio).lte('data_referencia', periodo.fimInclusivo);
+      etapa = 'fatos';
+      const [opResult, custoResult] = await Promise.all([
+        lerCompleto(TABLES.apontamentosOp, '*', opOrder, configurar),
+        lerCompleto(TABLES.historico, '*', HISTORICO_PAGE_ORDER, configurar)
+      ]);
+      const fonteComErro = opResult.error ? 'op' : custoResult.error ? 'custos' : null;
+      if (fonteComErro) {
+        const upstream = fonteComErro === 'op' ? opResult.error : custoResult.error;
+        const conhecido = upstream?.name === 'OperationalContractError' ? upstream.message : '';
+        const code = conhecido === 'Contagem incompleta ou alterada durante a leitura paginada.' ? 'CONTAGEM_DIVERGENTE'
+          : conhecido === 'Leitura paginada incompleta.' ? 'LEITURA_INCOMPLETA'
+            : fonteComErro === 'op' ? 'FONTE_OP_INDISPONIVEL' : 'FONTE_CUSTO_INDISPONIVEL';
+        return fail('Não foi possível concluir a leitura mensal OP × Custo.', { metodo, fonte: fonteComErro, code, completa: false });
+      }
+      assertOpCustoIds(opResult.data);
+      assertOpCustoIds(custoResult.data);
+      const codigos = [...new Set([
+        ...opResult.data.map(r => normalizeCodigoProduto(r.cod_produto)),
+        ...custoResult.data.map(r => normalizeCodigoProduto(r.codigo_produto))
+      ].filter(Boolean))];
+      etapa = 'enriquecimento';
+      const [produtos, erp, origens, familias] = codigos.length ? await Promise.all([
+        lerDicionarioDosCodigos(codigos),
+        custoResult.data.length ? lerCompleto(TABLES.masterErp, 'codigo_produto, origem_cod, familia_cod', 'codigo_produto') : ok([]),
+        lerCompleto(TABLES.origem, '*', ['descricao', 'id']),
+        lerCompleto(TABLES.familia, '*', ['descricao', 'id'])
+      ]) : [ok([]), ok([]), ok([]), ok([])];
+      if ([produtos, erp, origens, familias].some(r => r.error)) {
+        return fail('Não foi possível concluir o enriquecimento OP × Custo.', { metodo, code: 'ENRIQUECIMENTO_INDISPONIVEL', completa: false });
+      }
+      const productIndex = createProductMasterIndex(produtos.data);
+      const originIndex = new Map(origens.data.map(r => [String(r.id), r.descricao]));
+      const familyIndex = new Map(familias.data.map(r => [String(r.id), r.descricao]));
+      const opEventos = opResult.data.map(row => {
+        const resolved = resolveProductClassification(row, productIndex);
+        return { ...row, classificacaoMestre: { status: resolved.status,
+          origem: resolved.produto ? originIndex.get(String(resolved.produto.origem_id)) ?? null : null,
+          familia: resolved.produto ? familyIndex.get(String(resolved.produto.familia_id)) ?? null : null } };
+      });
+      const projetados = classificarCustos(custoResult.data, produtos.data, { produtos: erp.data, origens: origens.data, familias: familias.data });
+      const custoSnapshots = custoResult.data.map((row, index) => ({ ...row, classificacaoCustos: {
+        origem_id: projetados[index].origem_id, familia_id: projetados[index].familia_id,
+        agrupamento_cod: projetados[index].agrupamento_cod, descricao: projetados[index].descricao
+      } }));
+      const terminadoEm = new Date().toISOString();
+      const fonte = (rows, ordem) => ({ estado: rows.length ? 'completa' : 'completa_vazia', contagem: rows.length,
+        paginas: Math.max(1, Math.ceil(rows.length / PRODUCT_MASTER_PAGE_SIZE)), ordem, lidoEm: terminadoEm });
+      const contexto = { versao: 'OP_CUSTO_V1', competencia, periodo, opEventos, custoSnapshots,
+        fontes: { op: fonte(opEventos, opOrder), custos: fonte(custoSnapshots, HISTORICO_PAGE_ORDER) },
+        leitura: { idLocal, iniciadoEm, terminadoEm, consistencia: 'nao_transacional' } };
+      etapa = 'adaptacao';
+      const inspecao = inspectOpCustoContext(contexto, produtoSolicitado);
+      const rowsOp = [...inspecao.grupos.values()].flatMap(g => g.op);
+      const rowsCusto = [...inspecao.grupos.values()].flatMap(g => g.custos).map(row => ({ ...row, ...row.classificacaoCustos }));
+      // O motor preserva o ID no objeto analisado; nunca fazer zip de arrays ou usar chave legada.
+      const analisesOp = buildOpInvestigationQueue(rowsOp).map((row, posicaoOriginal) => ({
+        idFonte: /** @type {Record<string, any>} */ (row).id, resultadoOriginal: toInvestigationResult(row), posicaoOriginal
+      }));
+      const analisesCusto = buildReportRows(rowsCusto).map(resultadoOriginal => ({
+        codigoNormalizado: resultadoOriginal.codigo, resultadoOriginal, alerta: classifyAlert(resultadoOriginal),
+        prioridadeOriginal: null, qualidadePrioridade: 'aguarda_presenter_existente'
+      }));
+      return ok({ ...contexto, analisesOp, analisesCusto, produtoSolicitado: produtoSolicitado ?? null,
+        cobertura: inspecao.cobertura, qualidade: { completa: true, diagnosticos: inspecao.diagnosticos } });
+    } catch (error) {
+      // Nunca expor mensagem/detail/cause arbitrários do driver no novo contexto.
+      const codes = new Set(['COMPETENCIA_INVALIDA', 'MULTICOMPETENCIA_NAO_SUPORTADA_V1', 'IDENTIDADE_INVALIDA', 'IDENTIDADE_REPETIDA', 'PRODUTO_INVALIDO']);
+      return fail('Não foi possível preparar o contexto OP × Custo.', { metodo, etapa,
+        code: codes.has(error?.code) ? error.code : 'CONTEXTO_INDISPONIVEL', completa: false });
+    }
   },
 
   async getLatestImportComparison(filters = {}) {

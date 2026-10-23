@@ -29,6 +29,7 @@ Node >=22 é necessário para ferramentas/funções. `package.json` tem scripts 
 - `core/spreadsheet-engine.js`: parsing, detecção de colunas e normalização canônica.
 - `core/report-engine.js`: cálculos de Custos, cascata, alerta, instabilidade e regime.
 - `core/op-investigation-engine.js`: indicadores e decisão combinada de OP.
+- `core/op-custo-engine.js`: composição pura OP × CUSTO por código + competência, cobertura e evidência relacional; Fase 1 técnica, sem UI, sem consolidação mensal ou prioridade conjunta.
 - `core/product-master-engine.js`: normalização/reconciliação operacional e payload manual.
 - `core/cadastro-mestre-*.js`: consulta ERP, Preview, catálogo de famílias, manifesto/revisão, transporte e plano de reconstrução; motores sem I/O.
 - `core/heuristic-engine.js`: guardrail somente documental, sem funções exportadas ou sugestão por texto.
@@ -59,6 +60,7 @@ Descrição é exibição, código/FK define relacionamento e UUID é chave téc
 `getMasters()` tem retorno próprio de dimensões/hierarquia/diagnóstico e `error`; os métodos de dados documentados na [matriz operacional](../arquitetura/matriz-contratos-operacionais.md) usam seus contratos explícitos, em geral `{data,error}`. Não presumir um único formato para todos os métodos.
 
 - `getHistorico(filters)`: fatos com recorte temporal, enriquecidos antes da cascata.
+- `getOpCustoContext({competencia, periodo?, produto?})`: fontes mensais completas, resultados originais adaptados, cobertura e proveniência; somente SELECT, sem consumidor UI nesta fase. Produto não restringe cobertura; prioridade Custo aguarda presenter. [Entrada/saída e consumo do engine](../arquitetura/op-custo.md#16-fase-1--núcleo-local-implementado).
 - `getLatestImportComparison(filters)` / `getTopVariacoesImportacao(filters)`: dois timestamps de importação, filtros e dimensão, sujeitos a LOG-02.
 - `getProductHistory(codigo, temporalFilters)`: bloqueia código vazio e aplica o recorte recebido da UI; sem recorte fornecido, o método permite histórico integral. A UI passa o mesmo intervalo/competências do relatório.
 - `importarHistoricoCustosComLog(payload,{dataReferencia})`: validação por linha, garantia de dicionário em lote, chunking e log.
