@@ -196,4 +196,41 @@ describe('createOpController — visualização da Auditoria de OP', () => {
     expect(dom.opDrillBody.innerHTML).toContain('101');
     expect(dom.opDrillPanel.scrollIntoView).toHaveBeenCalled();
   });
+
+  it('1.469 apontamentos chegam à fila, aos filtros e ao histórico, inclusive além da posição 1.000', async () => {
+    const rows = Array.from({ length: 1469 }, (_, i) => ({
+      ...APONTAMENTOS[i % 2], id: i + 1, op: i + 1, cod_produto: '001',
+      data_referencia: i < 1000 ? '2026-02-01' : '2026-01-01'
+    }));
+    api.getApontamentosOp.mockResolvedValue({ data: rows, error: null });
+    const { dom, controller } = setup();
+    dom.opKpiTotal = { textContent: '' };
+    dom.opKpiGargalos = { textContent: '' };
+    await controller.bindOp();
+    await controller.runOpReport();
+    const rendered = () => (dom.opTableBody.innerHTML.match(/<tr class="op-investigation-row/g) || []).length;
+    expect(dom.opKpiTotal.textContent).toBe('1469');
+    expect(rendered()).toBe(1469);
+    expect(dom.opTableBody.innerHTML).toContain('OP 1469');
+    dom.opTableBody.emitDossierClick(0);
+    expect((dom.opDrillBody.innerHTML.match(/<td>\d+<\/td>/g) || []).length).toBe(1469);
+
+    dom.dtOpStart.value = '2026-01';
+    dom.dtOpEnd.value = '2026-01';
+    await controller.runOpReport();
+    expect(dom.opKpiTotal.textContent).toBe('469');
+    expect(rendered()).toBe(469);
+    expect(dom.opTableBody.innerHTML).toContain('OP 1469');
+    expect(dom.opTableBody.innerHTML).not.toContain('OP 1000<');
+
+    dom.selOpMotivo.value = 'gargalo_produtividade';
+    await controller.runOpReport();
+    expect(rendered()).toBe(235);
+    expect(dom.opKpiGargalos.textContent).toBe('235');
+    expect(dom.opKpiTotal.textContent).toBe('469');
+    dom.opTableBody.emitDossierClick(0);
+    expect((dom.opDrillBody.innerHTML.match(/<td>\d+<\/td>/g) || []).length).toBe(469);
+    expect(dom.opDrillBody.innerHTML).not.toContain('fev. de 2026');
+    expect(api.getApontamentosOp).toHaveBeenCalledTimes(1);
+  });
 });

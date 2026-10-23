@@ -70,6 +70,8 @@ Rode a análise e clique **Exportar**. Todos os campos começam marcados; desmar
 
 Na área **OP**, selecione o CSV MCAP105, confira a amostra, informe competência e confirme. OP formatada como `2.081` é gravada como inteiro `2081`. Após importar, a carga local é renovada e fila/dossiê incorporam os novos apontamentos.
 
+A versão local corrigida carrega todos os apontamentos elegíveis, inclusive acima de 1.000, antes da investigação. Falha de uma página impede apresentar essa carga como completa. A publicação dessa correção depende de autorização; [provas MNT-OP-05](../auditoria/op-paginacao-validacao.md).
+
 Filtre Estágio, Origem, OP, Produto, competência e Motivo da investigação. Depois da primeira análise, mudar filtros atualiza a fila. A coluna **Decisão** informa se merece investigação e a prioridade, cruzando produção, tempo, KG/Hora e paradas:
 
 - **Gargalo de produtividade:** tempo alto e produtividade baixa sem parada material que explique o resultado; conferir processo, padrão, matéria-prima ou apontamento.

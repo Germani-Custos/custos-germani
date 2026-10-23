@@ -255,3 +255,7 @@ O Master passou a poder preservar o valor bruto de agrupamento recebido do ERP e
 ### Atualização 2026-10-08 — Fase 3.1: Preview do Cadastro Mestre
 
 Novo núcleo puro e adaptador para XLSM/XLSX/XLS: filtros Tipo P/C → Descr(Origem) Produzido/Revenda → exclusão de inativo/EXLUIR; comparação por código contra `dicionario_master_produtos`. Preview preserva vazios/ausentes, resolve origem/família somente por código exato e guarda agrupamento ERP sem ponte Kustos. Sem gravação, migration, aprovação ou execução, e sem ativação na UI/importador legado. Contrato e exemplo em [Cadastro Mestre — Preview](arquitetura/cadastro-mestre-preview.md).
+
+### Atualização 2026-10-23 — universo completo na Auditoria de OP
+
+O MNT-OP-05 corrigiu localmente a consulta que recebia somente 1.000 dos 1.469 apontamentos. Reutilizar a paginação estrita existente fez a mesma investigação alcançar 299 gargalos, contra 222 no recorte truncado, sem mudar o motor ou escrever dados. [Provas reais e regressões](auditoria/op-paginacao-validacao.md) separam a implementação validada da publicação ainda não autorizada. `data_referencia` permanece competência e `criado_em` importação/proveniência; nenhum commit, push ou deploy nesta entrega.

@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **23/10/2026**, após a entrega SEC-03: **27 itens ativos — P0 = 1, P1 = 10, P2 = 10, P3 = 6.** São 12 IDs históricos e 15 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 20 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03 e SEC-07 foram encerrados com provas abaixo.
+Estado vigente em **23/10/2026**, após SEC-03 e MNT-OP-05: **26 itens ativos — P0 = 1, P1 = 9, P2 = 10, P3 = 6.** São 12 IDs históricos e 14 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 19 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e a implementação local de MNT-OP-05 foram encerrados com provas abaixo; publicação de OP aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -37,22 +37,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Bloco recomendado:** A — Segurança e integridade.
 
 ## P1
-
-### MNT-OP-05
-
-**Carga de OP truncada sem aviso**
-
-- **ID:** MNT-OP-05
-- **Prioridade:** P1
-- **Área:** OP / API
-- **Problema:** getApontamentosOp faz SELECT sem paginação integral/count; a fila usa o resultado parcial como universo.
-- **Evidência:** src/services/api.js:getApontamentosOp; GET real 206, Content-Range 0-999/1469; SELECT confirmou 1.469 registros. Faltam 469 (296 de junho e 173 de julho) nessa resposta. getProductMaster é outro método, já paginado. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Fila, filtros e dossiês podem omitir OPs e períodos sem informar incompletude.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Leitor integral com ordem total e contagem validada; falha explícita em página incompleta/contagem alterada. Cenário com mais de 1.000 registros preserva todos os registros e recortes; manutenção da carga local e recálculo por filtros.
-- **Dependências:** Preservar MNT-OP-04 e a fonte operacional de classificação.
-- **Origem:** achado novo formalizado nesta reconciliação.
-- **Bloco recomendado:** B — Confiabilidade da investigação.
 
 ### LOG-05
 
@@ -471,13 +455,12 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 
 ### Bloco B — Confiabilidade da investigação
 
-1. [MNT-OP-05](#mnt-op-05) — Carga de OP truncada sem aviso.
-2. [LOG-05](#log-05) — Alertas ficam fora dos 200 itens apresentados.
-3. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
-4. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
-5. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
-6. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
-7. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
+1. [LOG-05](#log-05) — Alertas ficam fora dos 200 itens apresentados.
+2. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
+3. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
+4. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
+5. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
+6. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
 
 ### Bloco C — Operação
 
@@ -520,3 +503,7 @@ PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e
 ### SEC-07
 
 **RESOLVIDO — 23/10/2026, como dependência do P0.** View de triagem sem grants de cliente e com security_invoker=true; leitura por cliente bloqueada e backend preservado. [Provas](seguranca-rls-validacao.md#sec-07). Sai da contagem ativa; SEC-08 e SEC-06 não foram encerrados por essa entrega.
+
+### MNT-OP-05
+
+**RESOLVIDO LOCALMENTE — 23/10/2026; publicação pendente de autorização.** A consulta única sem range/count recebia apenas 1.000 dos 1.469 fatos e omitia 296 linhas de junho/173 de julho. Agora reutiliza o leitor de 500/count exact, aplica filtros antes de cada range, acrescenta id à ordem anterior e bloqueia sobreposição de IDs. Enriquecimento operacional também completo. API/motor/fila reais locais: 1.469, IDs únicos 1.469 e 299 gargalos versus 222 no corte anterior. Motor, carga local MNT-OP-04 e critérios preservados; 647 testes e verificações de qualidade aprovados. [Provas, aceites e limites](op-paginacao-validacao.md); [contrato](../arquitetura/matriz-contratos-operacionais.md#mnt-op-05--leitura-integral-da-auditoria-de-op-23102026). Sai da contagem ativa de implementação; não afirma correção publicada nem autoriza deploy/próximo P1. Sem escrita de dados/Auth/RLS/schema, commit ou push.

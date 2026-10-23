@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## MNT-OP-05 — leitura integral da Auditoria de OP (23/10/2026)
+
+`createOpController.reloadData()` → `api.getApontamentosOp({})` → `lerCompleto(apontamentos_op)` → enriquecimento operacional integral → `allRows` → filtros locais/competência → `buildOpInvestigationQueue` → KPIs/filtro de motivo/fila/dossiê. O callback existente após importação renova a mesma carga; mudar filtro não consulta novamente. Não há exportação de OP neste checkout; a exportação de Custos usa outro fluxo.
+
+O leitor compartilhado usa páginas de 500/count exact. Filtros de `dataReferencia`, estágio, origem, OP e produto são reaplicados antes de cada range. Preservar `data_referencia DESC, estagio ASC, origem ASC, op ASC`; acrescentar `id ASC` para ordem total. Página incompleta, erro, contagem ausente/alterada ou ID repetido retornam erro sem dataset parcial. Dimensão por IN em blocos pelo helper existente; origem/família paginadas por id. Não deduplicar silenciosamente fatos nem criar fonte ERP para a OP.
+
+`core/op-investigation-engine.js`, classificação, fórmulas, decisões e critérios investigativos permanecem intactos. `data_referencia` continua competência; `criado_em` continua importação/proveniência. Paginação não equivale a snapshot transacional: mutações de mesma contagem sem repetição de IDs podem escapar. Implementação e validação local com dados reais, sem publicação/escrita remota. [Provas e aceite](../auditoria/op-paginacao-validacao.md).
+
 ## Importação de Custos — pendências identificáveis
 
 Arquivo/mapeamento → `api.getProductMaster()` existente (operacional integral paginado) → helper puro `listarProdutosSemCadastro` → conjunto único de códigos normalizados ausentes → warnings das linhas, quantidade e lista completas no Preview/resultado. Descrição vem do arquivo; primeira não vazia por código, sem inventar ou resolver por texto. Contagem deriva do tamanho da mesma lista; não limitar à amostra de 20 linhas nem usar o universo analítico de Custos como cadastro. Erro de consulta bloqueia validação/envio, sem representar zero.

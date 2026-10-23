@@ -4,7 +4,7 @@ Recorte reconciliado em **22/10/2026**. Este documento reúne capacidades futura
 
 ## Base disponível e evidência de entregas
 
-Custos oferece busca/cascata, fila, KPIs, gráficos, drill-through e exportação. OP oferece fila/dossiê e decisão por produção, tempo, produtividade e parada. Cadastro separa Operacional de Mestre ERP, com Preview e fronteira administrativa. A implementação dessas capacidades convive com defeitos atuais: consulta de OP parcial, ordenação/narrativa/comparação e salvamento documental estão no backlog; não são entregas futuras opcionais.
+Custos oferece busca/cascata, fila, KPIs, gráficos, drill-through e exportação. OP oferece fila/dossiê e decisão por produção, tempo, produtividade e parada; a leitura integral foi validada no checkout em 23/10, aguardando publicação autorizada ([MNT-OP-05](docs/auditoria/op-paginacao-validacao.md)). Cadastro separa Operacional de Mestre ERP, com Preview e fronteira administrativa. A implementação dessas capacidades convive com defeitos atuais: ordenação/narrativa/comparação e salvamento documental estão no backlog; não são entregas futuras opcionais.
 
 Leitura de produção em 22/10 confirmou 860 produtos ERP, 162 pares comerciais preenchidos, 698 vazios e lote histórico com 65 famílias inseridas. Recursos frontend publicados foram conferidos; saúde autenticada atual de TLS/Storage/flags e causa remota do HTTP 500 continuam sem conclusão. Não manter uma tarefa genérica de repetir publicação/carga dessas entregas com base em textos antigos. O executor comercial isolado foi implementado para uma fotografia inicial específica; o preenchimento atual não prova uso dele nem autoriza executá-lo novamente.
 

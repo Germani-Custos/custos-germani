@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **MNT-OP-05 — 23/10/2026:** leitura integral de OP corrigida e validada localmente com dados reais: 1.469 registros/299 gargalos, sem escrita remota ou publicação. [Provas e limites](op-paginacao-validacao.md).
+
 > **SEC-03 / SEC-07 — estado de 23/10/2026:** RLS/grants aplicados e verificados, com leitura autenticada e escrita operacional dos dois admins indicados. [Matriz vigente](../arquitetura/modelo-acesso-rls.md) e [provas](seguranca-rls-validacao.md). SEC-06/ERR-04 e SEC-08 permanecem pendentes; o corpo histórico abaixo não reabre o acesso público.
 
 > **Estado vigente em 22/10/2026:** use o [backlog ativo](backlog-priorizado.md) e a [reconciliação por ID](backlog-reconciliacao-2026-10-22.md). O conteúdo temático abaixo preserva a auditoria datada; afirmações de ausência de suíte, XSS em fillSelect e estados antigos não são diagnóstico atual. SEC-01 foi resolvido. A lista anterior está no [arquivo histórico](backlog-historico.md).

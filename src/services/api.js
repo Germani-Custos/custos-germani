@@ -1179,29 +1179,30 @@ export const api = {
    * @returns {Promise<{data: Array<Record<string, unknown>>|null, error: unknown}>}
    */
   async getApontamentosOp(filters = {}) {
-    let query = supabase.from(TABLES.apontamentosOp).select('*');
-
     const dataReferenciaISO = normalizeISODate(filters?.dataReferencia);
-    if (dataReferenciaISO) query = query.eq('data_referencia', dataReferenciaISO);
-    if (filters?.estagio) query = query.eq('estagio', filters.estagio);
-    if (filters?.origem !== undefined && filters?.origem !== null && filters?.origem !== '') query = query.eq('origem', filters.origem);
-    if (filters?.op !== undefined && filters?.op !== null && filters?.op !== '') query = query.eq('op', filters.op);
-    if (filters?.codProduto) query = query.eq('cod_produto', filters.codProduto);
-
-    const { data, error } = await query
-      .order('data_referencia', { ascending: false })
-      .order('estagio', { ascending: true })
-      .order('origem', { ascending: true })
-      .order('op', { ascending: true });
+    const { data, error } = await lerCompleto(TABLES.apontamentosOp, '*', [
+      { column: 'data_referencia', ascending: false }, 'estagio', 'origem', 'op', 'id'
+    ], query => {
+      if (dataReferenciaISO) query = query.eq('data_referencia', dataReferenciaISO);
+      if (filters?.estagio) query = query.eq('estagio', filters.estagio);
+      if (filters?.origem !== undefined && filters?.origem !== null && filters?.origem !== '') query = query.eq('origem', filters.origem);
+      if (filters?.op !== undefined && filters?.op !== null && filters?.op !== '') query = query.eq('op', filters.op);
+      if (filters?.codProduto) query = query.eq('cod_produto', filters.codProduto);
+      return query;
+    });
 
     if (error) return fail('Falha ao consultar apontamentos de OP.', { metodo: 'getApontamentosOp' }, error);
     const rows = data || [];
+    // Não disfarçar sobreposição de páginas como um universo completo.
+    if (new Set(rows.map(row => row.id)).size !== rows.length) {
+      return fail('Leitura de OP contém registros repetidos.', { metodo: 'getApontamentosOp' });
+    }
     const codigos = [...new Set(rows.map(row => normalizeCodigoProduto(row.cod_produto)).filter(Boolean))];
     if (!codigos.length) return ok(rows);
     const [produtosResult, origensResult, familiasResult] = await Promise.all([
-      supabase.from(TABLES.dicionario).select('codigo_produto, descricao, origem_id, familia_id').in('codigo_produto', codigos),
-      supabase.from(TABLES.origem).select('id, descricao'),
-      supabase.from(TABLES.familia).select('id, descricao')
+      lerDicionarioDosCodigos(codigos),
+      lerCompleto(TABLES.origem, 'id, descricao', 'id'),
+      lerCompleto(TABLES.familia, 'id, descricao', 'id')
     ]);
     const masterError = produtosResult.error || origensResult.error || familiasResult.error;
     if (masterError) return fail('Falha ao enriquecer OP com o cadastro mestre.', { metodo: 'getApontamentosOp', tabela: TABLES.dicionario }, masterError);

@@ -21,7 +21,7 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 - Drill-through por produto com competência (mês/ano), Data de referência (DD/MM/AAAA), custos e deltas; mantém cada registro, inclusive datas diferentes no mesmo mês. Importação (`criado_em`) permanece proveniência, sem exibição na coluna Data; alerta canônico de variação absoluta ≥ 5%.
 - Gráficos de comparação de importações, TOP variações e evolução por competência.
 - Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
-- Auditoria de OP com decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.
+- Auditoria de OP com leitura integral paginada, decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.
 - Cadastro Operacional para classificação Kustos e consulta independente do Cadastro Mestre ERP; Preview de XLS/XLSX/XLSM com aprovação e execução administrativa explícita. [Executor isolado comercial](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md) implementado para a fotografia inicial, preservando timestamps/proveniência/logs; a auditoria atual não autoriza nova execução.
 - Consulta e editor dos documentos permitidos pela tela Documentação; salvamento atualmente bloqueado pelo HTTP 500 ([ERR-04](docs/auditoria/backlog-priorizado.md#err-04)).
 
@@ -85,7 +85,7 @@ Para mudanças de código, os scripts de qualidade são `npm run lint`, `npm run
 
 ## 10. Backlog ativo e estado verificado
 
-Estado em **23/10/2026**: o [backlog de correções](docs/auditoria/backlog-priorizado.md) é a fonte única, com **27 itens — um P0, dez P1, dez P2 e seis P3**. SEC-03/RLS e a proteção da view foram concluídos; segurança do salvamento documental permanece P0. Leitura integral de OP e confiabilidade da fila/comparação continuam pendentes. Cada item tem evidência, aceite e dependências; o README mantém somente este resumo.
+Estado em **23/10/2026**: o [backlog de correções](docs/auditoria/backlog-priorizado.md) é a fonte única, com **26 itens — um P0, nove P1, dez P2 e seis P3**. SEC-03/RLS e a proteção da view foram concluídos; segurança do salvamento documental permanece P0. Leitura integral de OP foi corrigida e validada localmente com 1.469 registros e 299 gargalos; [provas e limites](docs/auditoria/op-paginacao-validacao.md). A versão publicada conserva a carga anterior até publicação autorizada. Confiabilidade da fila/comparação continua pendente. Cada item tem evidência, aceite e dependências; o README mantém somente este resumo.
 
 A [reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-22.md) registra os 60 IDs antigos, duplicações, fatos atuais, limites de verificação e conflitos entre fontes. A fotografia de leitura encontrou Master ERP com 860 produtos, 162 pares comerciais preenchidos e 698 vazios; lote histórico de famílias com 65 inserções. Afirmações anteriores de comercial integralmente NULL e famílias ainda por carregar são estados históricos, preservados no [arquivo original](docs/auditoria/backlog-historico.md), e não instruções de repetir carga.
 
