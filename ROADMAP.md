@@ -10,6 +10,12 @@ Leitura de produção em 22/10 confirmou 860 produtos ERP, 162 pares comerciais 
 
 O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-22.md) avalia cada uma das 38 entradas anteriores e os IDs históricos. O [arquivo histórico](docs/auditoria/backlog-historico.md) preserva integralmente a versão anterior deste roadmap, do README e do backlog. [História do projeto](docs/HISTORIA_DO_PROJETO_KUSTOS.md), contratos e provas continuam responsáveis pelos marcos detalhados; Git é a fonte oficial de commits.
 
+## Investigação cruzada OP × CUSTO — contrato definido
+
+[OP-CUSTO-01 — contrato técnico final](docs/arquitetura/op-custo.md) define a futura relação por produto + competência, preservando eventos OP e snapshots disponíveis de Custo. As decisões de negócio estão incorporadas; **a implementação não começou**. A primeira versão analisará um mês completo, perguntará sobre inclusão dos produtos sem correspondência e manterá prioridades dos dois motores separadas, sem causalidade automática ou consolidação numérica sem prova ERP.
+
+A evolução temporal multi-competência está prevista em seção própria do contrato: seleção explícita de meses, evolução e padrões exigirão novas regras aprovadas. Não pertence à primeira implementação. O contrato não altera TOP-200, não resolve LOG-02/03/04/06 nem autoriza refatoração, escrita remota ou publicação.
+
 ## Próxima evolução funcional — memória operacional
 
 Planejada, sem implementação declarada por esta reorganização:

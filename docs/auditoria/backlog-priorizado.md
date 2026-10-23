@@ -475,6 +475,8 @@ SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a prote
 
 ## Fora da execução automática
 
+**OP-CUSTO-01 — definição concluída, implementação não iniciada:** o [contrato técnico final](../arquitetura/op-custo.md) registra a futura investigação por produto/competência e as oito decisões aprovadas. É capacidade futura do [ROADMAP](../../ROADMAP.md), fora dos 25 itens ativos e sem prioridade P0–P3 atribuída aqui. Os limites de proveniência/comparação de LOG-02/03 e de narrativa/ordem de LOG-04/06 permanecem abertos; a integração não autoriza nem substitui suas correções. O diagnóstico do contrato também registra as particularidades atuais de data OP, identidade de eventos e consolidações sem prova ERP. Esta referência não autoriza código, escrita remota ou publicação.
+
 PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
 
 ## Encerrados após a reconciliação

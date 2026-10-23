@@ -23,6 +23,7 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 - [Stack](stack-tecnologico.md): frontend, funções, dados e ferramentas.
 - [Banco de dados](banco-de-dados.md): fatos, dimensões, Master ERP e proveniência.
 - [Matriz de contratos operacionais](matriz-contratos-operacionais.md): UI ↔ API ↔ banco ↔ motores; inclui completude CUSTOS-PAGE-01.
+- [OP × CUSTO — contrato técnico final](op-custo.md): OP-CUSTO-01, decisões de negócio incorporadas, cobertura/inclusão, agregações, leitura completa e evidência sem causalidade; implementação não iniciada e multi-competência somente futura.
 - [Backend/API](backend-api.md), [services frontend](services-frontend.md), [mapa de endpoints](mapa-endpoints.md) e [controles de fronteira](middlewares.md).
 - [Autenticação](autenticacao.md): gate do checkout e fronteiras distintas de autorização/RLS.
 - [Views de banco](views-banco.md), [migrações](migracoes.md) e [deploy](deploy.md).
