@@ -249,18 +249,12 @@ function normalizeTemporalFilters(filters = {}) {
   };
 }
 
-function applyTemporalFilterInMemory(rows, filters = {}) {
+function applyTemporalFilterToQuery(query, filters = {}) {
   const { start, end, competencias } = normalizeTemporalFilters(filters);
-  if (competencias.length) {
-    const selected = new Set(competencias);
-    return (rows || []).filter(row => selected.has(normalizeISODate(row?.data_referencia)));
-  }
-  return (rows || []).filter(row => {
-    const competencia = String(row?.data_referencia || '');
-    if (start && competencia < start) return false;
-    if (end && competencia > end) return false;
-    return true;
-  });
+  if (competencias.length) return query.in('data_referencia', competencias);
+  if (start) query = query.gte('data_referencia', start);
+  if (end) query = query.lte('data_referencia', end);
+  return query;
 }
 
 /**
@@ -338,11 +332,8 @@ function mapHierarchyRows(dicionario = []) {
 }
 
 async function getHistoricoWithClientFallback(filters) {
-  const temporalFilters = normalizeTemporalFilters(filters);
   const { data: historicoBase, error: historicoError } = await lerCompleto(
-    TABLES.historico, '*', HISTORICO_PAGE_ORDER, query => temporalFilters.competencias.length
-      ? query.in('data_referencia', temporalFilters.competencias)
-      : query.gte('data_referencia', temporalFilters.start).lte('data_referencia', temporalFilters.end));
+    TABLES.historico, '*', HISTORICO_PAGE_ORDER, query => applyTemporalFilterToQuery(query, filters));
 
   if (historicoError) return fail('Falha ao consultar histórico por competência.', { metodo: 'getHistorico', tabela: TABLES.historico }, historicoError);
   if (!historicoBase?.length) return ok([]);
@@ -350,6 +341,31 @@ async function getHistoricoWithClientFallback(filters) {
   const { data, error } = await enrichRowsWithClassificacaoCustos(historicoBase);
   if (error) return fail('Falha ao enriquecer histórico com classificação analítica.', { metodo: 'getHistorico' }, error);
   return ok(applyCascadeFilterInMemory(data, filters));
+}
+
+// Elegibilidade por competência antes da seleção de eventos. O banco ordena
+// TIMESTAMPTZ com precisão integral; id só desempata a paginação, nunca snapshots.
+async function lerContextoComparacao(filters, metodo) {
+  const result = await lerCompleto(TABLES.historico, '*',
+    [{ column: 'criado_em', ascending: false }, 'id'], query => applyTemporalFilterToQuery(query, filters));
+  if (result.error) return fail('Falha ao ler custos pertinentes à comparação.', { metodo }, result.error);
+  const ids = new Set();
+  for (const row of result.data) {
+    if (row.id === null || row.id === undefined || ids.has(String(row.id))) {
+      return fail('Identidade ausente ou repetida na comparação.', { metodo });
+    }
+    ids.add(String(row.id));
+  }
+  const enriched = await enrichRowsWithClassificacaoCustos(result.data);
+  if (enriched.error) return fail('Falha ao enriquecer comparação com dimensão.', { metodo }, enriched.error);
+  const rows = applyCascadeFilterInMemory(enriched.data, normalizeCascadeFilters(filters));
+  if (rows.some(row => row.custo_total === null || row.custo_total === undefined || !Number.isFinite(Number(row.custo_total)))) {
+    return fail('Custo ausente ou inválido na comparação.', { metodo });
+  }
+  const eventos = [...new Set(rows.map(row => row.criado_em).filter(Boolean))];
+  return ok({ rows, imports: eventos.slice(0, 2), totalEventosElegiveis: eventos.length,
+    estadoComparacao: eventos.length >= 2 ? 'disponivel' : 'insuficiente',
+    motivo: eventos.length >= 2 ? null : eventos.length ? 'apenas_um_evento' : 'sem_eventos_no_recorte' });
 }
 
 async function enrichRowsWithClassificacaoCustos(rows = []) {
@@ -1005,48 +1021,31 @@ export const api = {
   },
 
   async getLatestImportComparison(filters = {}) {
-    const { data: importRows, error: importError } = await lerCompleto(TABLES.historico,
-      'criado_em', [{ column: 'criado_em', ascending: false }, 'id']);
-
-    if (importError) return fail('Falha ao listar importações para comparação.', { metodo: 'getLatestImportComparison' }, importError);
-
-    const latestImports = [...new Set((importRows || []).map(row => row?.criado_em).filter(Boolean))].slice(0, 2);
-    if (latestImports.length < 2) {
-      return ok({ imports: [], resumo: null });
-    }
-
-    const [latestImport, previousImport] = latestImports;
-
-    const { data: rows, error } = await lerCompleto(TABLES.historico, '*', HISTORICO_PAGE_ORDER,
-      query => query.in('criado_em', [latestImport, previousImport]));
-
-    if (error) return fail('Falha ao carregar base de comparação entre importações.', { metodo: 'getLatestImportComparison' }, error);
-
-    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithClassificacaoCustos(rows || []);
-    if (enrichError) return fail('Falha ao enriquecer comparação de importações com dimensão.', { metodo: 'getLatestImportComparison' }, enrichError);
-
-    const filteredRows = applyCascadeFilterInMemory(
-      applyTemporalFilterInMemory(rowsEnriched, filters),
-      normalizeCascadeFilters(filters)
-    );
-
-    const statsByImport = [latestImport, previousImport].map(importDate => {
-      const importData = filteredRows.filter(row => row.criado_em === importDate);
-      const total = importData.reduce((acc, row) => acc + Number(row?.custo_total || 0), 0);
+    const context = await lerContextoComparacao(filters, 'getLatestImportComparison');
+    if (context.error) return context;
+    const { rows, imports, estadoComparacao, motivo, totalEventosElegiveis } = context.data;
+    const statsByImport = imports.map(importDate => {
+      const importData = rows.filter(row => row.criado_em === importDate);
+      const total = importData.reduce((acc, row) => acc + Number(row.custo_total), 0);
       const quantidade = importData.length;
-      const media = quantidade ? total / quantidade : 0;
+      const media = total / quantidade; // evento selecionado sempre tem fatos no universo filtrado
       return { criado_em: importDate, quantidade, media: roundTo4(media) };
     });
+    if (estadoComparacao !== 'disponivel') {
+      return ok({ imports: statsByImport, resumo: null, estadoComparacao, motivo, totalEventosElegiveis });
+    }
 
     const latest = statsByImport[0];
     const previous = statsByImport[1];
-    const variacaoPercentual = previous.media === 0 ? 0 : roundTo4(((latest.media - previous.media) / previous.media) * 100);
+    const variacaoPercentual = previous.media === 0 ? null : roundTo4(((latest.media - previous.media) / previous.media) * 100);
 
     return ok({
         imports: statsByImport,
+        estadoComparacao, motivo, totalEventosElegiveis,
         resumo: {
           variacao_percentual_media: variacaoPercentual,
-          delta_media: roundTo4(latest.media - previous.media)
+          delta_media: roundTo4(latest.media - previous.media),
+          motivoPercentual: previous.media === 0 ? 'base_anterior_zero' : null
         }
       });
   },
@@ -1117,49 +1116,46 @@ export const api = {
   },
 
   async getTopVariacoesImportacao(filters = {}) {
-    const { data: importRows, error: importError } = await lerCompleto(TABLES.historico,
-      'criado_em', [{ column: 'criado_em', ascending: false }, 'id']);
-
-    if (importError) return fail('Falha ao listar importações para cálculo de variações.', { metodo: 'getTopVariacoesImportacao' }, importError);
-
-    const latestImports = [...new Set((importRows || []).map(row => row?.criado_em).filter(Boolean))].slice(0, 2);
-    if (latestImports.length < 2) return ok({ aumentos: [], reducoes: [], imports: latestImports });
-
-    const [ultimaImportacao, penultimaImportacao] = latestImports;
-
-    const { data: rows, error } = await lerCompleto(TABLES.historico,
-      'codigo_produto, descricao, custo_total, criado_em, data_referencia', HISTORICO_PAGE_ORDER,
-      query => query.in('criado_em', [ultimaImportacao, penultimaImportacao]));
-    if (error) return fail('Falha ao carregar base de variações por importação.', { metodo: 'getTopVariacoesImportacao' }, error);
-
-    const { data: rowsEnriched, error: enrichError } = await enrichRowsWithClassificacaoCustos(rows || []);
-    if (enrichError) return fail('Falha ao enriquecer variações com dimensão de produtos.', { metodo: 'getTopVariacoesImportacao' }, enrichError);
-
-    const rowsFiltered = applyCascadeFilterInMemory(
-      applyTemporalFilterInMemory(rowsEnriched, filters),
-      normalizeCascadeFilters(filters)
-    );
-
-    const byProduct = new Map();
-    rowsFiltered.forEach(row => {
+    const context = await lerContextoComparacao(filters, 'getTopVariacoesImportacao');
+    if (context.error) return context;
+    const { rows, imports, totalEventosElegiveis } = context.data;
+    if (imports.length < 2) return ok({ imports, totalEventosElegiveis,
+      estadoComparacao: context.data.estadoComparacao, motivo: context.data.motivo,
+      aumentos: [], reducoes: [], semComparativo: [], paresComparaveis: 0 });
+    const [ultimaImportacao, penultimaImportacao] = imports;
+    const byProductAndDate = new Map();
+    for (const row of rows) {
+      if (row.criado_em !== ultimaImportacao && row.criado_em !== penultimaImportacao) continue;
       const codigo = normalizeCodigoProduto(row.codigo_produto);
-      if (!codigo) return;
-      if (!byProduct.has(codigo)) byProduct.set(codigo, { codigo_produto: codigo, descricao: row.descricao || '-', novo: null, antigo: null });
-      const bucket = byProduct.get(codigo);
-      if (row.criado_em === ultimaImportacao) bucket.novo = Number(row.custo_total || 0);
-      if (row.criado_em === penultimaImportacao) bucket.antigo = Number(row.custo_total || 0);
-    });
-
-    const variacoes = [...byProduct.values()]
-      .filter(item => Number.isFinite(item.novo) && Number.isFinite(item.antigo) && item.antigo !== 0)
-      .map(item => ({
-        ...item,
-        variacao_percentual: roundTo4(((item.novo - item.antigo) / item.antigo) * 100)
-      }))
-      .sort((a, b) => b.variacao_percentual - a.variacao_percentual);
+      if (!codigo) return fail('Produto inválido na comparação.', { metodo: 'getTopVariacoesImportacao' });
+      const key = JSON.stringify([codigo, row.data_referencia]);
+      if (!byProductAndDate.has(key)) byProductAndDate.set(key, {
+        codigo_produto: codigo, data_referencia: row.data_referencia, descricao: row.descricao || '-', atual: null, anterior: null
+      });
+      const bucket = byProductAndDate.get(key);
+      const side = row.criado_em === ultimaImportacao ? 'atual' : 'anterior';
+      if (bucket[side]) return fail('Fatos ambíguos para produto, data e evento.', { metodo: 'getTopVariacoesImportacao' });
+      bucket[side] = row; // snapshot inteiro: nunca completar componentes com outro fato
+    }
+    const variacoes = [];
+    const semComparativo = [];
+    for (const item of byProductAndDate.values()) {
+      const novo = item.atual ? Number(item.atual.custo_total) : null;
+      const antigo = item.anterior ? Number(item.anterior.custo_total) : null;
+      const fact = { codigo_produto: item.codigo_produto, data_referencia: item.data_referencia,
+        descricao: item.atual?.descricao || item.descricao, novo, antigo,
+        id_atual: item.atual?.id ?? null, id_anterior: item.anterior?.id ?? null };
+      if (novo === null || antigo === null || antigo === 0) {
+        semComparativo.push({ ...fact, motivo: novo === null || antigo === null ? 'par_ausente' : 'base_anterior_zero' });
+      } else variacoes.push({ ...fact, variacao_percentual: roundTo4(((novo - antigo) / antigo) * 100) });
+    }
+    variacoes.sort((a, b) => b.variacao_percentual - a.variacao_percentual ||
+      a.codigo_produto.localeCompare(b.codigo_produto, 'pt-BR') || a.data_referencia.localeCompare(b.data_referencia));
 
     return ok({
-        imports: latestImports,
+        imports, totalEventosElegiveis, paresComparaveis: variacoes.length, semComparativo,
+        estadoComparacao: variacoes.length ? 'disponivel' : 'insuficiente',
+        motivo: variacoes.length ? null : 'sem_pares_comparaveis',
         aumentos: variacoes.filter(item => item.variacao_percentual > 0).slice(0, 5),
         reducoes: [...variacoes].reverse().filter(item => item.variacao_percentual < 0).slice(0, 5)
       });

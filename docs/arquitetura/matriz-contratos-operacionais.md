@@ -1,5 +1,11 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## LOG-03 — eventos de importação pertinentes ao recorte (26/10/2026)
+
+`getLatestImportComparison`/`getTopVariacoesImportacao` → leitura completa com `data_referencia` filtrado em cada página → enriquecimento/cascata/produto → dois timestamps elegíveis por `criado_em DESC/id ASC` → comparação disponível ou insuficiência explícita. Não selecionar eventos globais antes de recortar; zero/um evento não gera resumo nem 0%. Percentual com base anterior zero é null. Erro/incompletude/IDs repetidos não viram dataset vazio. Mesma aplicação temporal por `normalizeTemporalFilters`/`applyTemporalFilterToQuery`, com conjunto explícito de competências preservado.
+
+Por decisão humana, TOP passa a produto canônico + data completa, preservando ID/custo de cada lado e casos sem comparativo, sem sobrescrever outra data. A unicidade produto/data e o upsert limitam a retenção de versões: normalmente não há par exato em dois eventos, e isso deve permanecer ausência, sem inventar histórico. LOG-02 não foi encerrado; timestamp distinto não certifica lote lógico. Fila/prioridade/TOP-200/exportação/drill-through/OP/OP×CUSTO/alerta intactos. Gráfico rejeita disponibilidade falsa e limpa resultado anterior; série sem base não recebe badge Estável. Sem layout novo, schema, writes ou publicação. [Contrato completo](comparacao-temporal-custos.md); [provas](../auditoria/custos-comparacao-recorte-validacao.md).
+
 ## OP-CUSTO-F2 — apresentação mensal e integração local (23/10/2026)
 
 `createOpCustoController` → `api.getOpCustoContext({competencia})` → contexto completo/analises originais → prioridade Custo pelo presenter `getOperationalPriority` existente → `analyzeOpCustoContext` → overview/qualidade/escolha de inclusão/fila/dossiê. De e Até devem indicar explicitamente o mesmo mês válido; nenhum mês é inferido. O fluxo mantém OP montado como origem e não usa sua fila filtrada nem TOP-200 para compor o cruzamento.
@@ -148,8 +154,8 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.importarHistoricoCustosComLog(payload,{dataReferencia})` | Import resiliente + `log_importacao` + erros linha a linha + `codigo_produto` normalizado por `normalizeCodigoProduto()` | Sim | ✅ |
 | UI → API | `api.getHistorico(filters)` | Retornar histórico por intervalo ou duas competências explícitas, com `data_referencia` + `criado_em` + dimensões para cascata | Sim | ✅ |
 | UI → API | `api.getProductHistory(codigoProduto, temporalFilters)` | Drill-through no mesmo intervalo ou competências explícitas do relatório, com delta e delta% apenas entre elas | Sim | ✅ (fail-fast para código vazio; sem meses intermediários em comparação) |
-| UI → API | `api.getLatestImportComparison(filters)` | Comparar últimas 2 importações (`criado_em`) respeitando filtros cascata | Sim | ✅ (enriquecimento de dimensão corrigido) |
-| UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
+| UI → API | `api.getLatestImportComparison(filters)` | Selecionar eventos após recorte de competência/cascata; média/delta com disponibilidade explícita | Sim | ✅ local (LOG-03; LOG-02 continua aberto) |
+| UI → API | `api.getTopVariacoesImportacao(filters)` | Pares produto + data completa entre eventos elegíveis; ausência/base zero explícitas | Sim | ✅ local (LOG-03; retenção de snapshots limitada) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
 | UI → API | `api.getOpCustoContext({competencia})` | Ler mês completo de OP/Custo, com paginação/integridade; UI apresenta o resultado do engine sem N+1 ou writes | Sim | Implementado localmente (OP-CUSTO-F2), sem publicação |

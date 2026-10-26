@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05 e LOG-04/05/06: **23 itens ativos — P0 = 1, P1 = 6, P2 = 10, P3 = 6.** São 12 IDs históricos e 11 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 16 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-04/05/06 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
+Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05 e LOG-03/04/05/06: **22 itens ativos — P0 = 1, P1 = 5, P2 = 10, P3 = 6.** São 12 IDs históricos e 10 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 15 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -52,22 +52,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Critério de aceite:** Definir identidade de lote e estratégia compatível com fatos históricos antes de implementar. Um envio com múltiplos chunks é uma importação lógica, duas importações são distinguidas e resultados não dependem da quantidade de chunks. Não reatribuir competência nem fabricar proveniência.
 - **Dependências:** Decisão de contrato temporal e eventual persistência somente após aprovação própria; coordenar LOG-03.
 - **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#log-02).
-- **Bloco recomendado:** B — Confiabilidade da investigação.
-
-### LOG-03
-
-**Comparação escolhe importações fora do recorte**
-
-- **ID:** LOG-03
-- **Prioridade:** P1
-- **Área:** Custos / Comparação
-- **Problema:** Os dois timestamps mais recentes são escolhidos globalmente antes de filtrar a competência.
-- **Evidência:** src/services/api.js:getLatestImportComparison/getTopVariacoesImportacao; sonda somente GET para abril–junho selecionou dois timestamps de 19/10, ambos com quantidade zero e média/delta zero. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Ausência de base no recorte aparece como comparação numérica sem dados e omite as importações pertinentes.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Selecionar importações elegíveis no recorte de competência definido; distinguir zero real de base ausente, tratar menos de duas importações explicitamente. Verificar comparação/TOP com importações fora e dentro do período.
-- **Dependências:** Contrato LOG-02; testes e seleção do recorte podem ser preparados sem aguardar refatoração de toda a API.
-- **Origem:** achado novo formalizado nesta reconciliação.
 - **Bloco recomendado:** B — Confiabilidade da investigação.
 
 ### SEC-04
@@ -408,8 +392,7 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 ### Bloco B — Confiabilidade da investigação
 
 1. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
-2. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
-3. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
+2. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
 
 ### Bloco C — Operação
 
@@ -441,11 +424,15 @@ SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a prote
 
 ## Fora da execução automática
 
-**OP-CUSTO-01 — Fases 1/2 implementadas localmente:** o [contrato técnico](../arquitetura/op-custo.md), as [provas do núcleo/API](op-custo-fase1-validacao.md) e as [provas da apresentação](op-custo-fase2-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora dos 23 itens ativos e sem prioridade P0–P3 atribuída aqui. Os limites de proveniência/comparação de LOG-02/03 permanecem abertos; LOG-04/06 foram corrigidos separadamente na fila de Custos. OP e OP×CUSTO não foram modificados nesta correção; validação visual manual da Fase 2 mantém a limitação de ambiente registrada. Escrita remota e publicação não estão autorizadas por esta referência.
+**OP-CUSTO-01 — Fases 1/2 implementadas localmente:** o [contrato técnico](../arquitetura/op-custo.md), as [provas do núcleo/API](op-custo-fase1-validacao.md) e as [provas da apresentação](op-custo-fase2-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora dos 22 itens ativos e sem prioridade P0–P3 atribuída aqui. O limite de proveniência de LOG-02 permanece aberto; LOG-03/04/06 foram corrigidos separadamente em Custos. OP e OP×CUSTO não foram modificados nesta correção; validação visual manual da Fase 2 mantém a limitação de ambiente registrada. Escrita remota e publicação não estão autorizadas por esta referência.
 
 PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
 
 ## Encerrados após a reconciliação
+
+### LOG-03
+
+**RESOLVIDO LOCALMENTE — 26/10/2026; publicação pendente de autorização.** A360-CUS-04: API escolhia os dois timestamps globais e filtrava competência depois, produzindo dois eventos vazios como comparação. Agora lê o universo completo recortado por data_referencia, enriquece/aplica cascata/produto e só então identifica os dois criado_em elegíveis. Zero/um evento retorna insuficiência e resumo null; denominador zero não vira 0%. Por decisão humana, TOP usa produto canônico + data completa, com IDs por lado e ausência explícita. Unicidade produto/data e upsert limitam a retenção de pares; nenhuma versão anterior é fabricada. Leitura e consumidores rejeitam incompletude/erro/números fictícios; fallback sem base não diz Estável. PostgreSQL local reproduz abril–junho versus outubro, microssegundos, paginação e unicidade; suíte completa e qualidade registradas nas [provas](custos-comparacao-recorte-validacao.md). [Contrato](../arquitetura/comparacao-temporal-custos.md). LOG-02 permanece aberto; não certifica lotes lógicos nem snapshots não retidos. Sem escrita remota, schema/migration/RLS/Auth, commit/push/deploy; fila/OP/OP×CUSTO preservados.
 
 ### LOG-04
 

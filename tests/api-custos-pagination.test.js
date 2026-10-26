@@ -222,6 +222,52 @@ describe('Custos — leitura temporal completa antes de enriquecer e filtrar', (
 });
 
 describe('Custos — gráficos e drill-through sem teto de fatos', () => {
+  it('TOP por produto+data preserva dois pares, sem sobrescrever datas ou completar snapshots', async () => {
+    // Contrato em memória com snapshots retidos; a unicidade de produção não
+    // retém versões do mesmo produto+data (limite coberto no ensaio PostgreSQL).
+    base(0);
+    tables.historico_custos = [
+      { id: 1, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-01T00:00:00Z', custo_total: 100, custo_variavel: 10, custo_direto_fixo: 90 },
+      { id: 2, codigo_produto: '001', data_referencia: '2026-05-14', criado_em: '2026-07-01T00:00:00Z', custo_total: 200, custo_variavel: 20, custo_direto_fixo: 180 },
+      { id: 3, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-02T00:00:00Z', custo_total: 110, custo_variavel: 100, custo_direto_fixo: 10 },
+      { id: 4, codigo_produto: '001', data_referencia: '2026-05-14', criado_em: '2026-07-02T00:00:00Z', custo_total: 180, custo_variavel: 170, custo_direto_fixo: 10 }
+    ];
+    const before = globalThis.structuredClone(tables);
+    const result = await api.getTopVariacoesImportacao(filters);
+    expect(result.data).toMatchObject({ estadoComparacao: 'disponivel', paresComparaveis: 2 });
+    expect(result.data.aumentos[0]).toMatchObject({ codigo_produto: '001', data_referencia: '2026-04-05', novo: 110, antigo: 100, id_atual: 3, id_anterior: 1, variacao_percentual: 10 });
+    expect(result.data.reducoes[0]).toMatchObject({ codigo_produto: '001', data_referencia: '2026-05-14', novo: 180, antigo: 200, id_atual: 4, id_anterior: 2, variacao_percentual: -10 });
+    tables.historico_custos.reverse();
+    expect((await api.getTopVariacoesImportacao(filters)).data).toEqual(result.data);
+    tables.historico_custos.reverse();
+    expect(tables).toEqual(before);
+    somenteLeituras();
+  });
+
+  it('TOP preserva zero atual; base zero é indisponível, sem percentual fabricado', async () => {
+    base(0);
+    tables.historico_custos = [
+      { id: 1, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-01T00:00:00Z', custo_total: 100 },
+      { id: 2, codigo_produto: '002', data_referencia: '2026-05-14', criado_em: '2026-07-01T00:00:00Z', custo_total: 0 },
+      { id: 3, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-02T00:00:00Z', custo_total: 0 },
+      { id: 4, codigo_produto: '002', data_referencia: '2026-05-14', criado_em: '2026-07-02T00:00:00Z', custo_total: 10 }
+    ];
+    const result = await api.getTopVariacoesImportacao(filters);
+    expect(result.data.reducoes[0]).toMatchObject({ codigo_produto: '001', novo: 0, antigo: 100, variacao_percentual: -100 });
+    expect(result.data.semComparativo[0]).toMatchObject({ codigo_produto: '002', novo: 10, antigo: 0, motivo: 'base_anterior_zero' });
+  });
+
+  it('dois fatos do mesmo produto+data+evento são ambíguos; ID não escolhe vencedor', async () => {
+    base(0);
+    tables.historico_custos = [
+      { id: 1, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-01T00:00:00Z', custo_total: 100 },
+      { id: 2, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-02T00:00:00Z', custo_total: 110 },
+      { id: 3, codigo_produto: '001', data_referencia: '2026-04-05', criado_em: '2026-07-02T00:00:00Z', custo_total: 120 }
+    ];
+    const result = await api.getTopVariacoesImportacao(filters);
+    expect(result.data).toBeNull();
+    expect(result.error.message).toContain('ambíguos');
+  });
   it.each(['getLatestImportComparison', 'getTopVariacoesImportacao'])('%s alcança a importação anterior após mais de 1.000 fatos e enriquece a base completa', async method => {
     base(1501);
     const previous = tables.historico_custos.map(row => ({ ...row, id: row.id + 1501, criado_em: '2026-05-10T10:00:00Z', custo_total: 80 }));
@@ -231,7 +277,7 @@ describe('Custos — gráficos e drill-through sem teto de fatos', () => {
     expect(result.data.imports).toHaveLength(2);
     if (method === 'getLatestImportComparison') {
       expect(result.data.imports.map(r => r.quantidade)).toEqual([1501, 1501]);
-      expect(result.data.resumo).toEqual({ variacao_percentual_media: 25, delta_media: 20 });
+      expect(result.data.resumo).toEqual({ variacao_percentual_media: 25, delta_media: 20, motivoPercentual: null });
     } else {
       expect(result.data.aumentos).toHaveLength(5);
       expect(result.data.aumentos.every(r => r.variacao_percentual === 25)).toBe(true);
@@ -317,7 +363,10 @@ describe('CUSTOS-ERP-01 — autoridade ERP apenas na projeção analítica', () 
     expect(comparison.data.imports.map(r => r.quantidade)).toEqual([2, 2]);
     const top = await api.getTopVariacoesImportacao(selection);
     expect(top.error).toBeNull();
-    expect(top.data.aumentos.map(r => r.codigo_produto).sort()).toEqual(selectedCodes);
+    // Decisão humana LOG-03: datas de referência distintas não formam pares no TOP.
+    expect(top.data.aumentos).toEqual([]);
+    expect(top.data.estadoComparacao).toBe('insuficiente');
+    expect(top.data.semComparativo.map(r => r.codigo_produto).sort()).toEqual([...selectedCodes, ...selectedCodes].sort());
 
     const sheets = [];
     const xlsx = { utils: { json_to_sheet: data => { sheets.push(data); return {}; },

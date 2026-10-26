@@ -74,6 +74,8 @@ Descrição é exibição, código/FK define relacionamento e UUID é chave téc
 
 `getTrendsByProduct()` não é usado pela UI atual; a série usa dados já carregados. Paginação de Custos não altera `getApontamentosOp()` nem os motores puros.
 
+LOG-03: `getLatestImportComparison` e `getTopVariacoesImportacao` usam `lerContextoComparacao`: recorte `data_referencia` aplicado em cada página, `criado_em DESC/id ASC`, integridade, enriquecimento/cascata/produto, só então seleção dos dois timestamps distintos elegíveis. Compartilham `normalizeTemporalFilters`/`applyTemporalFilterToQuery` com o histórico. Envelope `{data,error}` preservado, com disponibilidade explícita; zero/um evento não gera resumo, base anterior zero gera percentual null. TOP usa produto + data integral por decisão humana e informa pares ausentes; a unicidade produto/data limita snapshots retidos, sem fabricar comparação. Gráfico limpa resultado anterior e não aceita eventos vazios; fallback temporal sem base não diz Estável. [Contrato completo](../arquitetura/comparacao-temporal-custos.md) e [provas](../auditoria/custos-comparacao-recorte-validacao.md). LOG-02 continua pendente; `data_referencia` é competência e `criado_em` importação/proveniência. Fila, motores, KPIs, exportação e drill-through não dependem desses retornos e não mudaram.
+
 ## 5. Contratos de cálculo, validação e erro
 
 `normalizeCodigoProduto()` é a única normalização canônica; não substituir por `Number`, `parseFloat` ou trim isolado. Trata notação científica, espaços invisíveis e zeros preserváveis; identidade inválida/ambígua bloqueia a linha.

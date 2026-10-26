@@ -46,12 +46,15 @@ function renderTopVariationItems(items, type) {
   if (!items.length) {
     return '<li><span class="product">Sem dados comparáveis entre as 2 últimas importações.</span><span class="variation">-</span></li>';
   }
-  return items.map(item => `
+  return items.map(item => {
+    const reference = String(item.data_referencia || '').split('-').reverse().join('/') || '—';
+    return `
     <li class="${type}">
-      <span class="product" title="${escapeHtml(item.codigo_produto)} - ${escapeHtml(item.descricao)}">${escapeHtml(item.codigo_produto)} - ${escapeHtml(item.descricao)}</span>
+      <span class="product" title="${escapeHtml(item.codigo_produto)} - ${escapeHtml(item.descricao)} · Referência ${escapeHtml(reference)}">${escapeHtml(item.codigo_produto)} - ${escapeHtml(item.descricao)} · ${escapeHtml(reference)}</span>
       <span class="variation">${item.variacao_percentual >= 0 ? '+' : ''}${item.variacao_percentual.toFixed(2)}%</span>
     </li>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function buildTemporalSeries(rows = [], filters = {}) {
@@ -112,6 +115,8 @@ function getTrendStatus(values = []) {
  */
 export function createChartsController({ dom, state }) {
   async function renderImportComparisonChart(filters) {
+    if (state.chart) state.chart.destroy();
+    state.chart = null;
     const { data, error } = await api.getLatestImportComparison(filters);
     if (error) {
       showToast('error', 'Falha ao buscar comparação entre importações.');
@@ -119,15 +124,15 @@ export function createChartsController({ dom, state }) {
     }
 
     const imports = data?.imports || [];
-    if (imports.length < 2) {
-      if (state.chart) state.chart.destroy();
+    if (data?.estadoComparacao !== 'disponivel' || !data.resumo || imports.length !== 2 ||
+        imports.some(item => !(item.quantidade > 0) || item.media === null || !Number.isFinite(Number(item.media)))) {
       return false;
     }
 
     const labels = imports.map(item => new Date(item.criado_em).toLocaleString('pt-BR'));
-    const values = imports.map(item => Number(item.media || 0));
-    const counts = imports.map(item => Number(item.quantidade || 0));
-    const variacao = Number(data?.resumo?.variacao_percentual_media || 0);
+    const values = imports.map(item => Number(item.media));
+    const counts = imports.map(item => Number(item.quantidade));
+    const variacao = data?.resumo?.variacao_percentual_media;
     const baseA11yOptions = getReadableChartOptions();
 
     if (state.chart) state.chart.destroy();
@@ -164,7 +169,8 @@ export function createChartsController({ dom, state }) {
               afterBody: items => {
                 const idx = items?.[0]?.dataIndex ?? 0;
                 if (idx !== 0) return '';
-                return `Variação média vs anterior: ${variacao.toFixed(2)}%`;
+                return Number.isFinite(variacao) ? `Variação média vs anterior: ${variacao.toFixed(2)}%`
+                  : 'Variação percentual indisponível: base anterior zero.';
               }
             }
           }
@@ -184,7 +190,7 @@ export function createChartsController({ dom, state }) {
 
     const aumentos = data?.aumentos || [];
     const reducoes = data?.reducoes || [];
-    if (!aumentos.length && !reducoes.length) {
+    if (data?.estadoComparacao !== 'disponivel' || (!aumentos.length && !reducoes.length)) {
       dom.topVariationsPanel.classList.add('hidden');
       return;
     }
@@ -207,8 +213,8 @@ export function createChartsController({ dom, state }) {
       dom.trendFallback.textContent = 'Histórico insuficiente para análise temporal';
       dom.trendFallback.classList.remove('hidden');
       dom.trendChart.classList.add('hidden');
-      dom.trendBadge.textContent = '🟢 Estável';
-      dom.trendBadge.className = 'badge trend stable';
+      dom.trendBadge.textContent = 'Base temporal insuficiente';
+      dom.trendBadge.className = 'badge trend';
       return false;
     }
 

@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-03 / A360-CUS-04 — 26/10/2026:** comparação seleciona eventos depois do recorte de competência e distingue ausência de zero. TOP por produto + data completa conforme decisão humana; retenção atual limita pares históricos. [Provas e limites](custos-comparacao-recorte-validacao.md). Correção local, sem publicação/escrita remota; LOG-02 continua pendente.
+
 > **LOG-04/06 — 26/10/2026:** contexto sem recorrência inferida e XLSX na mesma ordem ativa completa da fila, inclusive variação manual. Prioridade e TOP-200 preservados; retorno explícito à prioridade padrão. [Provas e limites](custos-fila-validacao.md). Correção local, sem publicação ou acesso remoto.
 
 > **LOG-05 — 23/10/2026:** prioridade global aplicada antes do TOP-200, com critérios existentes. Cinco alertas reais de outubro passam de 345–349 para 1–5 na versão local; limite 200 preservado. [Provas e limites](custos-top200-validacao.md). Sem publicação/escrita remota.
