@@ -1,7 +1,7 @@
 /* Responsabilidade: exportação da fila investigativa para XLSX — ordenação por
    prioridade investigativa, planilha de contexto/metadados e sanitização
    anti-fórmula. Consome de ui-filters.js as funções canônicas de seleção e
-   ordenação de linhas (getRowsMatchingQuickFilter, compareRowsBySort). A
+   ordenação de linhas (getOrderedInvestigationRows). A
    prioridade, o ranking e o resumo investigativo ficam em ui-table.js;
    o orquestrador injeta os presenters usados pela exportação.
    Extraído de view/ui-controller.js (MNT-01) sem alteração de comportamento.
@@ -11,8 +11,8 @@
    - Nome do arquivo (buildExportFilename) byte-a-byte igual.
    - Ordem de prioridade investigativa (compareByInvestigativePriority) idêntica. */
 import { formatCurrencyBRL, showToast } from './ui-utils.js';
-import { getRowsMatchingQuickFilter, compareRowsBySort } from './ui-filters.js';
-import { compareByInvestigativePriority, getInvestigationRankScore } from './ui-table.js';
+import { getOrderedInvestigationRows } from './ui-filters.js';
+import { isAlertaCritico } from '../core/report-engine.js';
 export { compareByInvestigativePriority, getInvestigationRankScore } from './ui-table.js';
 
 const EXPORT_COLUMNS = Object.freeze([
@@ -25,7 +25,7 @@ const EXPORT_COLUMNS = Object.freeze([
   { key: 'Variação no período (%)', label: 'Variação no período (%)', width: 14 },
   { key: 'Delta monetário última importação (R$)', label: 'Delta em R$ (última importação)', width: 16 },
   { key: 'Contexto investigativo', label: 'Contexto investigativo', width: 50 },
-  { key: 'Reincidência de alerta', label: 'Reincidência de alerta', width: 16 },
+  { key: 'Alerta atual (≥5%)', label: 'Alerta atual (≥5%)', width: 18 },
   { key: 'Score de instabilidade (%)', label: 'Score de instabilidade (%)', width: 16 },
   { key: 'Regime', label: 'Regime', width: 16 },
   { key: 'Competência de referência (data_referencia)', label: 'Competência de referência', width: 16 },
@@ -96,14 +96,7 @@ export function sanitizeCsvFormula(value) {
  */
 export function createExportController({ dom, state, executeOperationalBoundary, getOperationalPriority, buildInvestigativeSummary }) {
   function getRowsFromCurrentInvestigationState() {
-    const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'exportação da fila investigativa', state.reportView.quickFilter);
-
-    const hasManualSort = state.reportView.sortKey && state.reportView.sortKey !== 'variacao';
-    if (hasManualSort) {
-      return [...filteredRows].sort((a, b) => compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection));
-    }
-
-    return [...filteredRows].sort((a, b) => compareByInvestigativePriority(a, b, getOperationalPriority));
+    return getOrderedInvestigationRows(state.reportRows, state.reportView, 'exportação da fila investigativa', getOperationalPriority);
   }
 
   async function exportReport() {
@@ -131,13 +124,14 @@ export function createExportController({ dom, state, executeOperationalBoundary,
         { Campo: 'Gerado em (criado_em do relatório)', Valor: new Date().toISOString() },
         { Campo: 'Período de competência (data_referencia)', Valor: `${dom.dtStart.value || '-'} até ${dom.dtEnd.value || '-'}` },
         { Campo: 'Filtros ativos', Valor: filtrosAtivos },
-        { Campo: 'Ordenação aplicada', Valor: 'Criticidade > Mudança de regime > Magnitude > Reincidência > Instabilidade (ou ordenação ativa manual)' },
+        { Campo: 'Ordenação aplicada', Valor: state.reportView.sortKey
+          ? `Manual: ${state.reportView.sortKey} (${state.reportView.sortDirection})`
+          : 'Prioridade investigativa: Criticidade > Mudança de regime > Magnitude absoluta > Alerta atual > Instabilidade > Código' },
         { Campo: 'Total de itens exportados', Valor: String(investigationRows.length) }
       ];
 
       const exportData = investigationRows.map((row, idx) => {
         const prioridade = getOperationalPriority(row);
-        const rank = getInvestigationRankScore(row, getOperationalPriority);
         const completeRow = {
           'Prioridade #': idx + 1,
           'Produto (código)': sanitizeCsvFormula(row.codigo),
@@ -148,7 +142,7 @@ export function createExportController({ dom, state, executeOperationalBoundary,
           'Variação no período (%)': row.variacao.toFixed(2),
           'Delta monetário última importação (R$)': row.diferenca ?? '—',
           'Contexto investigativo': sanitizeCsvFormula(buildInvestigativeSummary(row)),
-          'Reincidência de alerta': rank.reincidencia ? 'SIM' : 'NÃO',
+          'Alerta atual (≥5%)': row.variacaoTemporal === null ? 'SEM COMPARATIVO' : isAlertaCritico(row) ? 'SIM' : 'NÃO',
           'Score de instabilidade (%)': row.scoreInstabilidade.toFixed(2),
           'Regime': row.classificacaoInstabilidade,
           'Competência de referência (data_referencia)': row.dataCompetencia || '—',

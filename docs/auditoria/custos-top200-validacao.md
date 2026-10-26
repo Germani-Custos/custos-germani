@@ -1,5 +1,7 @@
 # LOG-05 — prioridade investigativa antes do TOP-200
 
+> Continuidade em 26/10/2026: LOG-04/06 foram corrigidos separadamente; [relatório atual da fila](custos-fila-validacao.md). As referências a pendências abaixo descrevem o alcance desta entrega de 23/10 e permanecem como evidência datada.
+
 Validação em **23/10/2026**, checkout inicialmente limpo no HEAD `fe531a2`. Entrega local para revisão, sem commit, push, deploy, escrita no Supabase, importação, criação de conta, mudança de Auth/RLS/policies/schema ou avanço para outro P1. A versão publicada permanece anterior até autorização própria.
 
 ## Diagnóstico e fluxo real antes da correção

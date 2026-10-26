@@ -46,9 +46,9 @@ describe('ui-table — presenter investigativo', () => {
     expect(getOperationalPriority({ ...baseRow, variacaoTemporal: 0, variacao: 1, classificacaoInstabilidade: 'ESTÁVEL' }).label).toBe('🟢 Estável');
   });
 
-  it('mantém o resumo operacional sem depender do controller principal', () => {
-    expect(buildInvestigativeSummary({ ...baseRow, variacao: 10, variacaoTemporal: 6 })).toContain('2ª alta consecutiva');
-    expect(buildInvestigativeSummary({ ...baseRow, variacao: -10, variacaoTemporal: -6 })).toContain('2ª queda consecutiva');
+  it('descreve o alerta atual sem inventar uma segunda ocorrência', () => {
+    expect(buildInvestigativeSummary({ ...baseRow, variacao: 10, variacaoTemporal: 6 })).toContain('Alerta de alta');
+    expect(buildInvestigativeSummary({ ...baseRow, variacao: -10, variacaoTemporal: -6 })).toContain('Alerta de queda');
   });
 });
 

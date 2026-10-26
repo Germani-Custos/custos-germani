@@ -54,7 +54,9 @@ Os quatro KPIs são clicáveis: Itens analisados, Alertas (>5%), Mudanças de Re
 
 A fila mostra produto, variação, prioridade, regime e contexto automático; **Detalhes** expande custos, datas e score. Sem ordenação manual, a prioridade orienta a investigação; clicar no cabeçalho muda a ordenação. A janela visual mostra até 200 itens na ordem ativa e informa o excedente. Refine filtros/período para trazer outros itens; KPIs e exportação continuam considerando o relatório completo.
 
-Na correção local LOG-05, a ordem inicial considera criticidade → mudança de regime → magnitude absoluta → flag de alerta → instabilidade → código, antes do TOP-200. Clicar no cabeçalho escolhe uma ordem manual; o aviso diz “ordenação escolhida”, sem prometer prioridade nessa ordem. Os cinco alertas de outubro antes ocultos aparecem no início pelos critérios existentes. A publicação ainda depende de autorização; [validação e limites](../auditoria/custos-top200-validacao.md). A divergência do XLSX ao escolher manualmente variação continua registrada em LOG-06.
+Na versão local corrigida, a ordem inicial considera criticidade → mudança de regime → magnitude absoluta → flag de alerta → instabilidade → código, antes do TOP-200. Clicar no cabeçalho escolhe uma ordem manual; o aviso diz “ordenação escolhida”, sem prometer prioridade nessa ordem. **Restaurar prioridade investigativa** retorna à ordem padrão sem perder filtros/período. Os cinco alertas de outubro antes ocultos aparecem no início pelos critérios existentes. A publicação ainda depende de autorização; [provas LOG-05](../auditoria/custos-top200-validacao.md) e [LOG-04/06](../auditoria/custos-fila-validacao.md).
+
+Contexto indica alta/queda no período ou alerta atual entre os dois registros mais recentes por importação. Não afirma segunda ocorrência ou reincidência: o resumo agregado não contém contagem histórica comprovada. Ausência de comparativo é informada explicitamente. Detalhes e drill-through permitem conferir os fatos originais.
 
 Instabilidade é a média das variações percentuais absolutas consecutivas: ESTÁVEL abaixo de 3%, OSCILANDO de 3% até menos de 8%, MUITO INSTÁVEL a partir de 8%. Com pelo menos quatro pontos, estabilidade na primeira metade e instabilidade na segunda sinalizam mudança de regime.
 
@@ -66,7 +68,7 @@ O gráfico temporal usa competência: custo unitário do produto selecionado ou 
 
 ### Exportar
 
-Rode a análise e clique **Exportar**. Todos os campos começam marcados; desmarque os indesejados e confirme. Cancelar não gera arquivo. O XLSX conserva a ordem canônica das colunas e tem abas **Contexto** e **Fila Investigativa**. Respeita filtros, fila rápida e ordenação ativa; sem ordenação manual, usa criticidade → regime → magnitude → reincidência → instabilidade. O nome inclui o período analisado.
+Rode a análise e clique **Exportar**. Todos os campos começam marcados; desmarque os indesejados e confirme. Cancelar não gera arquivo. O XLSX conserva a ordem canônica das colunas e tem abas **Contexto** e **Fila Investigativa**. Exporta a fila completa filtrada, na mesma ordem ativa da UI, inclusive variação manual crescente/decrescente; só a tela limita a janela a 200. Sem chave manual, usa criticidade → regime → magnitude absoluta → alerta atual → instabilidade → código. Contexto registra a ordem efetivamente aplicada. **Alerta atual (≥5%)** informa SIM/NÃO/SEM COMPARATIVO, sem contagem de reincidência. O nome inclui o período analisado.
 
 ## 5. Importar e investigar OP
 

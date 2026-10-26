@@ -32,6 +32,14 @@ export function compareRowsBySort(a, b, key, direction) {
   return String(valueA || '').localeCompare(String(valueB || ''), 'pt-BR') * order;
 }
 
+// Mesma fila completa na UI e no XLSX; o corte visual pertence só à tabela.
+export function getOrderedInvestigationRows(rows, reportView, operation, priorityPresenter = getOperationalPriority) {
+  const filteredRows = getRowsMatchingQuickFilter(rows, operation, reportView.quickFilter);
+  return [...filteredRows].sort((a, b) => reportView.sortKey
+    ? compareRowsBySort(a, b, reportView.sortKey, reportView.sortDirection)
+    : compareByInvestigativePriority(a, b, priorityPresenter));
+}
+
 /**
  * Cria o controlador de filtros ligado ao `dom`/`state` compartilhados.
  * Recebe por injeção a fronteira operacional (`executeOperationalBoundary`,
@@ -49,6 +57,11 @@ export function createFiltersController({ dom, state, executeOperationalBoundary
     [dom.temporalMode, dom.dtStart, dom.dtEnd].filter(Boolean).forEach(input => input.addEventListener('change', () => autoRefreshReport()));
     dom.analyzeBtn.addEventListener('click', () => runReport());
     dom.exportBtn.addEventListener('click', () => exportReport());
+    dom.investigationSortBtn?.addEventListener('click', () => {
+      state.reportView.sortKey = null;
+      state.reportView.sortDirection = 'desc';
+      applyTableView();
+    });
     dom.drillClose.addEventListener('click', () => dom.drillPanel.classList.add('hidden'));
     bindInteractiveTableControls();
 
@@ -126,11 +139,8 @@ export function createFiltersController({ dom, state, executeOperationalBoundary
 
   function applyTableView(options = {}) {
     const { hasSingleItemAnalysis = false } = options;
-    const filteredRows = getRowsMatchingQuickFilter(state.reportRows, 'filtro rápido Alertas (>5%)', state.reportView.quickFilter);
     const manualSort = Boolean(state.reportView.sortKey);
-    const sortedRows = [...filteredRows].sort((a, b) => manualSort
-      ? compareRowsBySort(a, b, state.reportView.sortKey, state.reportView.sortDirection)
-      : compareByInvestigativePriority(a, b, getOperationalPriority));
+    const sortedRows = getOrderedInvestigationRows(state.reportRows, state.reportView, 'filtro rápido Alertas (≥5%)');
     renderTable(sortedRows, { hasSingleItemAnalysis, manualSort });
     renderActiveFilterChips();
     updateKpiCardState();

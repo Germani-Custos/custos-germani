@@ -29,7 +29,7 @@ export function getOperationalPriority(row) {
     return { label: '🟠 Atenção', className: 'attention', reason: 'Variação relevante com potencial impacto operacional.' };
   }
   if (reincidencia || absVariacao >= 3) {
-    return { label: '🟡 Monitorar', className: 'monitor', reason: 'Oscilação recorrente de menor magnitude.' };
+    return { label: '🟡 Monitorar', className: 'monitor', reason: 'Variação de menor magnitude no período.' };
   }
   return { label: '🟢 Estável', className: 'stable', reason: 'Sem sinais relevantes de anomalia no período.' };
 }
@@ -59,17 +59,17 @@ export function compareByInvestigativePriority(a, b, getOperationalPriority) {
 
 export function buildInvestigativeSummary(row) {
   const signals = [];
-  if (row.mudouRegime) signals.push('Mudou regime após estabilidade longa.');
-  if ((row.variacao ?? 0) > 0 && (row.variacaoTemporal ?? 0) > 0) signals.push('2ª alta consecutiva entre importações.');
-  if ((row.variacao ?? 0) < 0 && (row.variacaoTemporal ?? 0) < 0) signals.push('2ª queda consecutiva entre importações.');
-  if (Math.abs(Number(row.variacao || 0)) > Math.abs(Number(row.variacaoTemporal || 0)) + 2 && row.classificacaoInstabilidade !== 'ESTÁVEL') {
-    signals.push('Oscilação crescente no recorte atual.');
-  }
+  if (row.mudouRegime) signals.push('Mudança de regime no recorte analisado.');
+  // O ReportRow não contém contagem/prova de transições históricas de alerta.
+  if (isAlertaCritico(row)) signals.push(row.variacaoTemporal > 0
+    ? 'Alerta de alta entre os dois registros mais recentes por importação.'
+    : 'Alerta de queda entre os dois registros mais recentes por importação.');
+  else if (row.variacao > 0) signals.push(`Alta no período de ${row.variacao.toFixed(2)}%.`);
+  else if (row.variacao < 0) signals.push(`Queda no período de ${Math.abs(row.variacao).toFixed(2)}%.`);
+  if (row.classificacaoInstabilidade === 'MUITO INSTÁVEL') signals.push('Comportamento muito instável no recorte analisado.');
+  else if (row.classificacaoInstabilidade === 'OSCILANDO') signals.push('Comportamento oscilante no recorte analisado.');
   if (signals.length) return signals.slice(0, 2).join(' ');
-  if (row.mudouRegime) return 'Mudou regime após fase estável; priorizar investigação temporal.';
-  if (row.classificacaoInstabilidade === 'MUITO INSTÁVEL') return 'Oscilação crescente com comportamento instável no período.';
-  if (Math.abs(Number(row.variacao || 0)) >= 10) return `Variação expressiva de ${row.variacao.toFixed(2)}% no recorte analisado.`;
-  if (isAlertaCritico(row)) return 'Nova variação relevante na última importação (reincidência).';
+  if (row.variacaoTemporal === null) return 'Sem comparativo entre registros por importação; conferir o histórico.';
   return 'Comportamento sem ruptura relevante; manter monitoramento contínuo.';
 }
 

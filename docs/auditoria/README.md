@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-04/06 — 26/10/2026:** contexto sem recorrência inferida e XLSX na mesma ordem ativa completa da fila, inclusive variação manual. Prioridade e TOP-200 preservados; retorno explícito à prioridade padrão. [Provas e limites](custos-fila-validacao.md). Correção local, sem publicação ou acesso remoto.
+
 > **LOG-05 — 23/10/2026:** prioridade global aplicada antes do TOP-200, com critérios existentes. Cinco alertas reais de outubro passam de 345–349 para 1–5 na versão local; limite 200 preservado. [Provas e limites](custos-top200-validacao.md). Sem publicação/escrita remota.
 
 > **MNT-OP-05 — 23/10/2026:** leitura integral de OP corrigida e validada localmente com dados reais: 1.469 registros/299 gargalos, sem escrita remota ou publicação. [Provas e limites](op-paginacao-validacao.md).

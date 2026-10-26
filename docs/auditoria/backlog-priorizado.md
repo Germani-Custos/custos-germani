@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **23/10/2026**, após SEC-03, MNT-OP-05 e LOG-05: **25 itens ativos — P0 = 1, P1 = 8, P2 = 10, P3 = 6.** São 12 IDs históricos e 13 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 18 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-05 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
+Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05 e LOG-04/05/06: **23 itens ativos — P0 = 1, P1 = 6, P2 = 10, P3 = 6.** São 12 IDs históricos e 11 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 16 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-04/05/06 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -37,38 +37,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Bloco recomendado:** A — Segurança e integridade.
 
 ## P1
-
-### LOG-04
-
-**Narrativa afirma recorrência sem série suficiente**
-
-- **ID:** LOG-04
-- **Prioridade:** P1
-- **Área:** Custos / Contexto
-- **Problema:** buildInvestigativeSummary declara segunda alta consecutiva com apenas dois pontos e uma variação.
-- **Evidência:** view/ui-table.js; MB014 tem 9,24 → 9,39 e recebe “2ª alta consecutiva”; tests/ui-table.test.js atualmente aceita a frase. Exportação também usa indicador de alerta como reincidência. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Explicação e prioridade comunicam evidência temporal inexistente.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Uma única variação não afirma segunda alta nem reincidência; frases/indicadores derivam do número real de transições no recorte e da semântica escolhida. Testar dois pontos, altas consecutivas, alternância e base insuficiente, inclusive exportação.
-- **Dependências:** Não exige criar persistência de memória de alertas; preservar data_referencia como competência e criado_em como importação.
-- **Origem:** achado novo formalizado nesta reconciliação.
-- **Bloco recomendado:** B — Confiabilidade da investigação.
-
-### LOG-06
-
-**Ordem do XLSX diverge da fila**
-
-- **ID:** LOG-06
-- **Prioridade:** P1
-- **Área:** Custos / Exportação
-- **Problema:** A exportação interpreta sortKey=variacao como ausência de ordenação manual, enquanto a UI ordena por essa coluna; aplica ranking diferente.
-- **Evidência:** view/ui-export.js:hasManualSort/getInvestigationRankScore; view/ui-filters.js:applySort e ui-state.js. Divergência reproduzida no mesmo reportRows. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Relatório exportado muda a ordem de investigação, inclusive após escolha manual de variação.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Distinguir ordenação padrão de escolha manual; para o mesmo recorte e escolha de ordem, XLSX mantém a ordem completa correspondente à fila (que exibe só 200). Seleção manual por variação nos dois sentidos deve ser respeitada.
-- **Dependências:** LOG-05 implementado localmente; LOG-04 para rótulos/indicadores compartilhados. A divergência após escolha manual de variação permanece. MNT-08 não é pré-requisito para uma correção localizada.
-- **Origem:** achado novo formalizado nesta reconciliação.
-- **Bloco recomendado:** B — Confiabilidade da investigação.
 
 ### LOG-02
 
@@ -439,11 +407,9 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 
 ### Bloco B — Confiabilidade da investigação
 
-1. [LOG-04](#log-04) — Narrativa afirma recorrência sem série suficiente.
-2. [LOG-06](#log-06) — Ordem do XLSX diverge da fila.
-3. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
-4. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
-5. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
+1. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
+2. [LOG-03](#log-03) — Comparação escolhe importações fora do recorte.
+3. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
 
 ### Bloco C — Operação
 
@@ -475,11 +441,19 @@ SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a prote
 
 ## Fora da execução automática
 
-**OP-CUSTO-01 — Fase 1 implementada localmente, UI não iniciada:** o [contrato técnico](../arquitetura/op-custo.md) e as [provas do núcleo/API](op-custo-fase1-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora dos 25 itens ativos e sem prioridade P0–P3 atribuída aqui. Os limites de proveniência/comparação de LOG-02/03 e de narrativa/ordem de LOG-04/06 permanecem abertos; a integração não autoriza nem substitui suas correções. OP legado, identidade, parser e consolidações sem prova ERP não foram alterados. Continuidade de UI, escrita remota e publicação não estão autorizadas por esta referência.
+**OP-CUSTO-01 — Fases 1/2 implementadas localmente:** o [contrato técnico](../arquitetura/op-custo.md), as [provas do núcleo/API](op-custo-fase1-validacao.md) e as [provas da apresentação](op-custo-fase2-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora dos 23 itens ativos e sem prioridade P0–P3 atribuída aqui. Os limites de proveniência/comparação de LOG-02/03 permanecem abertos; LOG-04/06 foram corrigidos separadamente na fila de Custos. OP e OP×CUSTO não foram modificados nesta correção; validação visual manual da Fase 2 mantém a limitação de ambiente registrada. Escrita remota e publicação não estão autorizadas por esta referência.
 
 PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
 
 ## Encerrados após a reconciliação
+
+### LOG-04
+
+**RESOLVIDO LOCALMENTE — 26/10/2026; publicação pendente de autorização.** A360-CUS-02: sinais de período/última transição eram tratados como duas ocorrências; MB014 9,24 → 9,39 ilustrava a afirmação falsa. Contexto agora descreve somente direção/alerta atual/regime/instabilidade, sem segunda alta, reincidência ou duração não comprovada. O motivo textual de Monitorar também perde “recorrente”, mantendo sua classificação. XLSX usa Alerta atual (≥5%) por função canônica, com ausência de comparativo explícita. Sem contrato de contagem/proveniência no ReportRow, não se anuncia recorrência nem para séries suficientes; memória/contagem histórica permanece evolução própria. Testes de dois pontos, duas altas comprováveis nos fatos, alternância, base insuficiente, motivo e workbook; [provas e limites](custos-fila-validacao.md). Sai da contagem ativa, sem alteração de motores/alerta/prioridade/dados.
+
+### LOG-06
+
+**RESOLVIDO LOCALMENTE — 26/10/2026; publicação pendente de autorização.** A360-CUS-03: a condição que excluía sortKey=variacao foi removida em favor da seleção/ordenação completa compartilhada entre UI/XLSX. Padrão investigativo e toda chave manual, inclusive variação asc/desc, conservam a mesma sequência; só a UI corta em 200. Metadados identificam a ordem ativa e o botão de restauração limpa chave/direção sem perder filtros/recorte. Testes com workbook real, download substituído, mais de 200 linhas e troca/restauração de ordem; [provas](custos-fila-validacao.md). Sai da contagem ativa; nenhuma refatoração do ranking ou nova regra de prioridade.
 
 ### SEC-03
 
@@ -495,4 +469,4 @@ PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e
 
 ### LOG-05
 
-**RESOLVIDO LOCALMENTE — 23/10/2026; publicação pendente de autorização.** Outubro real reproduzido com 558 fatos/349 produtos: cinco alertas negativos em 345–349, atrás de 200 estáveis. A fila padrão agora compartilha o comparador investigativo existente antes do corte de 200; os cinco passam a 1–5, sem novos pesos/cálculos. Ordem manual explícita e aviso correspondente preservados; reportRows/KPIs/exportação padrão completos. [Diagnóstico, critérios, comparação e provas](custos-top200-validacao.md); [contrato](../arquitetura/matriz-contratos-operacionais.md#log-05--prioridade-global-antes-do-top-200-23102026). Sai da contagem ativa de implementação; LOG-04 e LOG-06 permanecem abertos. Sem escrita remota, alteração de Auth/RLS/schema, commit, push ou deploy; não autoriza o próximo P1.
+**RESOLVIDO LOCALMENTE — 23/10/2026; publicação pendente de autorização.** Outubro real reproduzido com 558 fatos/349 produtos: cinco alertas negativos em 345–349, atrás de 200 estáveis. A fila padrão compartilha o comparador investigativo existente antes do corte de 200; os cinco passam a 1–5, sem novos pesos/cálculos. Ordem manual explícita e aviso correspondente preservados; reportRows/KPIs/exportação padrão completos. [Diagnóstico, critérios, comparação e provas](custos-top200-validacao.md); [contrato](../arquitetura/matriz-contratos-operacionais.md#log-05--prioridade-global-antes-do-top-200-23102026). Sai da contagem ativa de implementação; LOG-04/06 foram encerrados separadamente em 26/10, com as provas acima. Sem escrita remota, alteração de Auth/RLS/schema, commit, push ou deploy; não autoriza o próximo P1.
