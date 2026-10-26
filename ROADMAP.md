@@ -10,9 +10,9 @@ Leitura de produção em 22/10 confirmou 860 produtos ERP, 162 pares comerciais 
 
 O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-22.md) avalia cada uma das 38 entradas anteriores e os IDs históricos. O [arquivo histórico](docs/auditoria/backlog-historico.md) preserva integralmente a versão anterior deste roadmap, do README e do backlog. [História do projeto](docs/HISTORIA_DO_PROJETO_KUSTOS.md), contratos e provas continuam responsáveis pelos marcos detalhados; Git é a fonte oficial de commits.
 
-## Investigação cruzada OP × CUSTO — núcleo local, UI futura
+## Investigação cruzada OP × CUSTO — implementação local mensal
 
-[OP-CUSTO-01 — contrato técnico final](docs/arquitetura/op-custo.md) define a relação por produto + competência, preservando eventos OP e snapshots disponíveis de Custo. **A Fase 1 possui engine e API implementados localmente; a UI não foi iniciada.** O núcleo analisa um mês completo e mantém prioridades separadas, sem causalidade automática ou consolidação numérica sem prova ERP. A futura UI perguntará sobre inclusão dos produtos sem correspondência; a existência do núcleo não autoriza criar esse fluxo agora. [Provas e limites](docs/auditoria/op-custo-fase1-validacao.md).
+[OP-CUSTO-01 — contrato técnico final](docs/arquitetura/op-custo.md) define a relação por produto + competência, preservando eventos OP e snapshots disponíveis de Custo. **Engine/API e a apresentação mensal da Fase 2 estão implementados localmente, sem publicação.** A entrada exige uma competência explícita na tela OP; o relatório apresenta cobertura, escolha humana de inclusão de produtos sem correspondência, fila e dossiê, com retorno ao contexto anterior. Mantém prioridades separadas, sem causalidade automática ou consolidação numérica sem prova ERP. [Núcleo e limites da Fase 1](docs/auditoria/op-custo-fase1-validacao.md); [escopo e validação da Fase 2](docs/auditoria/op-custo-fase2-validacao.md).
 
 A evolução temporal multi-competência está prevista em seção própria do contrato: seleção explícita de meses, evolução e padrões exigirão novas regras aprovadas. Não pertence à primeira implementação. O contrato não altera TOP-200, não resolve LOG-02/03/04/06 nem autoriza refatoração, escrita remota ou publicação.
 

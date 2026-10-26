@@ -70,6 +70,35 @@ body {
 .user-box { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
 
 .nav { display: grid; gap: 10px; }
+
+/* OP × CUSTO: superfície mensal isolada; não altera as filas existentes. */
+.opc-panel .panel { margin-block: 16px; }
+.opc-panel small { display: block; color: var(--muted); margin-top: 5px; }
+.opc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.opc-kpis > div { padding: 14px; border: 1px solid var(--line); border-radius: 8px; }
+.opc-kpis span { display: block; color: var(--muted); font-size: 13px; }
+.opc-kpis strong { font-size: 28px; }
+.opc-relations { display: flex; flex-wrap: wrap; gap: 8px; }
+.opc-choice { border-color: var(--primary-purple); }
+.opc-scroll { max-height: 62vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.opc-scroll table { min-width: 1050px; margin: 0; }
+.opc-scroll th { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+.opc-scroll td { vertical-align: top; max-width: 340px; overflow-wrap: anywhere; }
+.opc-scroll td:nth-child(5) { min-width: 220px; }
+.opc-panel .actions-row { flex-wrap: wrap; gap: 12px; margin-block: 14px; }
+.opc-panel input { min-width: 0; }
+.opc-status[data-state="error"] { border-left: 4px solid var(--critical); }
+.opc-status[data-state="loading"], .opc-status[data-state="pending"] { border-left: 4px solid var(--primary-purple); }
+.opc-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.opc-facts div { min-width: 0; }
+.opc-facts dt { color: var(--muted); font-size: 12px; }
+.opc-facts dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+.opc-event, .opc-conclusion { border: 1px solid var(--line); border-left: 3px solid var(--primary-purple); border-radius: 8px; padding: 16px; margin-block: 16px; }
+.opc-panel h4 { margin-top: 24px; }
+.opc-panel h5 { font-size: 15px; margin: 0 0 16px; }
+.opc-panel summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 800px) { .opc-kpis, .opc-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .opc-kpis, .opc-facts { grid-template-columns: 1fr; } .opc-pagination { align-items: flex-start; } }
 .nav-item {
   border: 1px solid transparent;
   border-radius: 12px;

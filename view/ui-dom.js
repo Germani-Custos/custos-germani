@@ -19,6 +19,7 @@ export function getDomRefs() {
     dropZoneOp: document.getElementById('dropZoneOp'), importOpInput: document.getElementById('importOpInput'),
     selOpEstagio: document.getElementById('sel-op-estagio'), selOpOrigem: document.getElementById('sel-op-origem'), selOpOp: document.getElementById('sel-op-op'), selOpProduto: document.getElementById('sel-op-produto'), selOpMotivo: document.getElementById('sel-op-motivo'),
     dtOpStart: document.getElementById('dt-op-start'), dtOpEnd: document.getElementById('dt-op-end'),
+    opSourcePanel: document.getElementById('op-source-panel'), opCustoPanel: document.getElementById('op-custo-panel'), opCustoBtn: document.getElementById('op-custo-btn'), opCustoHint: document.getElementById('op-custo-hint'),
     analisarOpBtn: document.getElementById('analisar-op-btn'), opTableBody: document.getElementById('op-table-body'),
     opKpiTotal: document.getElementById('op-kpi-total'), opKpiGargalos: document.getElementById('op-kpi-gargalos'), opKpiParadas: document.getElementById('op-kpi-paradas'), opKpiAltaEficiencia: document.getElementById('op-kpi-alta-eficiencia'), opKpiCards: Array.from(document.querySelectorAll('[data-op-reason]')),
     opDrillPanel: document.getElementById('op-drill-panel'), opDrillTitle: document.getElementById('op-drill-title'), opDrillBody: document.getElementById('op-drill-body'),

@@ -1,5 +1,13 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## OP-CUSTO-F2 — apresentação mensal e integração local (23/10/2026)
+
+`createOpCustoController` → `api.getOpCustoContext({competencia})` → contexto completo/analises originais → prioridade Custo pelo presenter `getOperationalPriority` existente → `analyzeOpCustoContext` → overview/qualidade/escolha de inclusão/fila/dossiê. De e Até devem indicar explicitamente o mesmo mês válido; nenhum mês é inferido. O fluxo mantém OP montado como origem e não usa sua fila filtrada nem TOP-200 para compor o cruzamento.
+
+Cobertura A/B/C é a do engine após ambas as fontes completas. B/C exigem decisão explícita antes da fila, sem preencher ausência com zero; excluir conserva contagens e informa a escolha. A fila oferece modos independentes de prioridade OP/Custo, filtros locais explícitos e páginas visuais de 50 sobre o conjunto completo. Consulta de código e D reutilizam o engine localmente; dossiê não chama API por produto. Erro/integridade/incompletude bloqueia relatório parcial e não vira fonte vazia. Nova leitura renova a escolha; geração invalida resposta obsoleta. Retorno restaura DOM/estado, foco e rolagem OP. Datas integrais e eventos/snapshots preservados; hipóteses OP e relação sem causalidade permanecem distintas.
+
+Implementação local, sem publicação. API/engines/parser/TOP-200/ranking/RLS/Auth/dados/schema permanecem intactos. `data_referencia` é competência; `criado_em` é importação/proveniência. [Contrato Fase 2](op-custo.md#17-fase-2--apresentação-e-integração-local); [validação e limites](../auditoria/op-custo-fase2-validacao.md). A seção F1 abaixo registra o núcleo no escopo anterior sem consumidor UI.
+
 ## OP-CUSTO-F1 — contexto mensal e composição sem UI (23/10/2026)
 
 `api.getOpCustoContext({competencia, periodo?, produto?})` → `lerCompleto` nas duas fontes com limites civis inclusivos → validação de IDs por fonte → dimensão operacional compartilhada/catálogos/Master ERP → adaptação das saídas dos motores originais por identidade → contexto completo. Não há chamada de UI nem análise relacional na API. A composição é chamada separadamente por `analyzeOpCustoContext({contexto, analisesOp, analisesCusto, produtoSolicitado})`, sem I/O/configuração/DOM/views.
@@ -142,6 +150,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Top aumentos/reduções entre últimas 2 importações com cascata válida | Sim | ✅ (enriquecimento de dimensão corrigido) |
 | UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
+| UI → API | `api.getOpCustoContext({competencia})` | Ler mês completo de OP/Custo, com paginação/integridade; UI apresenta o resultado do engine sem N+1 ou writes | Sim | Implementado localmente (OP-CUSTO-F2), sem publicação |
 | UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` operacional; Custos usa a projeção CUSTOS-ERP-01 | Sim | ✅ (TAREFA-3) |
 | UI → API | `api.getCadastroMestrePreviewContext()` | SELECT integral/paginado do Master ERP/categorias para XLSM/XLSX/XLS, sem escrita ou fallback vazio | Sim | ✅ (CAD-XLS-01) |
 | UI → API | `api.getCadastroMestreErp()` | Consulta integral Master/origens/famílias, sem operacional/fatos/mapa; estado ERP independente | Sim | ✅ (CAD-ERP-VIEW-01) |

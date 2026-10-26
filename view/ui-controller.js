@@ -15,6 +15,7 @@ import { createDrillThroughController } from './ui-drill-through.js';
 import { createImportController } from './ui-import.js';
 import { createImportOpController } from './ui-import-op.js';
 import { createOpController } from './ui-op.js';
+import { createOpCustoController } from './ui-op-custo.js';
 import { createFiltersController } from './ui-filters.js';
 import { createExportController } from './ui-export.js';
 import { createTableController } from './ui-table.js';
@@ -39,6 +40,7 @@ const table = createTableController({
   renderDrillThrough: codigo => drillThrough.renderDrillThrough(codigo, getTemporalFilters(dom.dtStart.value, dom.dtEnd.value)),
   rerunReportForProduct: codigo => runReport({ silent: true, selectedProduct: codigo })
 });
+const opCusto = createOpCustoController({ dom });
 const exporter = createExportController({
   dom,
   state,
@@ -96,6 +98,7 @@ async function executeOperationalBoundary(operation, action, options = {}) {
 
 async function init() {
   bindNavigation();
+  opCusto.bind();
   importer.bindUpload();
   importerOp.bindUpload();
   productMaster.bind();

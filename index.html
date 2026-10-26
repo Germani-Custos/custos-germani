@@ -275,6 +275,7 @@
 
       <!-- ===== VIEW: OP ===== -->
       <section id="view-op" class="view hidden">
+        <div id="op-source-panel">
         <header class="view-header">
           <h2>Auditoria de OP</h2>
           <p>O ERP fornece os fatos; o Kustos cruza os indicadores para decidir se a OP merece investigação, com prioridade, motivo, provável causa e evidências auditáveis.</p>
@@ -303,7 +304,9 @@
           </div>
           <div class="actions-row">
             <button id="analisar-op-btn" class="btn-primary"><i class="ri-search-line"></i> Analisar</button>
+            <button type="button" id="op-custo-btn" class="btn-outline" hidden disabled>OP × CUSTO</button>
           </div>
+          <p id="op-custo-hint" class="help-text">Selecione De = Até para OP × CUSTO.</p>
         </div>
 
         <!-- Fila investigativa: cartões filtram por motivo, não por indicador isolado. -->
@@ -344,6 +347,33 @@
             <tbody id="op-table-body"></tbody>
           </table>
         </div>
+        </div>
+        <section id="op-custo-panel" class="opc-panel hidden" aria-labelledby="opc-title" aria-busy="false">
+          <header class="view-header"><div class="actions-row"><h2 id="opc-title">OP × CUSTO</h2><button type="button" id="opc-back" class="btn-outline">Voltar à OP</button><button type="button" id="opc-reload" class="btn-outline">Atualizar leitura</button></div>
+            <p>Cruzamento da competência completa; filtros da tela OP preservados para retorno. Evidência temporal exige investigação e não comprova causalidade.</p>
+          </header>
+          <p id="opc-status" class="panel opc-status" role="status" aria-live="polite"></p>
+          <section id="opc-overview" class="panel hidden" aria-label="Visão geral OP × Custo"></section>
+          <section id="opc-quality" class="panel hidden" aria-label="Qualidade dos dados"></section>
+          <section id="opc-choice" class="panel opc-choice hidden" aria-labelledby="opc-choice-text">
+            <h3>Produtos sem correspondência</h3><p id="opc-choice-text"></p><div class="actions-row">
+              <button type="button" id="opc-include" class="btn-primary">Incluir sem correspondência</button><button type="button" id="opc-only-both" class="btn-outline">Somente OP + Custo</button>
+            </div><p class="help-text">Voltar à OP cancela a escolha; nenhuma exclusão é feita automaticamente.</p>
+          </section>
+          <button type="button" id="opc-change-inclusion" class="btn-outline hidden">Alterar inclusão</button>
+          <section id="opc-report" class="panel hidden" aria-label="Fila investigativa OP × Custo">
+            <h3>Fila investigativa</h3><p class="help-text">Filtros abaixo afetam apenas esta fila. A visão geral mantém o universo mensal completo. Prioridades OP e Custo têm escalas independentes.</p>
+            <div class="filters-grid">
+              <div class="field"><label for="opc-search">Filtrar código ou descrição</label><input type="search" id="opc-search" placeholder="Filtro local da fila" /></div>
+              <div class="field"><label for="opc-coverage">Cobertura</label><select id="opc-coverage"><option value="">Todos os incluídos</option></select></div>
+              <div class="field"><label for="opc-order">Ordenação de um domínio</label><select id="opc-order"><option value="op">Prioridade OP</option><option value="custo">Prioridade Custo</option></select></div>
+            </div>
+            <form id="opc-code-form" class="actions-row"><label for="opc-code">Investigar código exato no mês</label><input id="opc-code" placeholder="Inclusive fora da fila" /><button type="submit" class="btn-outline">Abrir dossiê</button></form>
+            <div class="opc-scroll" tabindex="0" aria-label="Fila OP × Custo: rolagem horizontal e vertical"><table><thead><tr><th>Produto / Descrição</th><th>OP</th><th>Custo</th><th>Relação</th><th>Evidência</th><th>Prioridade OP observada</th><th>Prioridade Custo original</th></tr></thead><tbody id="opc-body"></tbody></table></div>
+            <div class="actions-row opc-pagination"><button type="button" id="opc-prev" class="btn-outline">Anterior</button><span id="opc-page" class="help-text"></span><button type="button" id="opc-next" class="btn-outline">Próxima</button></div>
+          </section>
+          <section id="opc-dossier" class="panel hidden" aria-labelledby="opc-dossier-title"><div class="actions-row"><h3 id="opc-dossier-title" tabindex="-1">Dossiê do produto</h3><button type="button" id="opc-dossier-back" class="btn-outline">Voltar à fila</button></div><div id="opc-dossier-body"></div></section>
+        </section>
       </section>
 
       <!-- ===== VIEW: CADASTRO MESTRE ===== -->

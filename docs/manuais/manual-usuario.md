@@ -86,6 +86,18 @@ Filtre Estágio, Origem, OP, Produto, competência e Motivo da investigação. D
 
 Abra **Ver dossiê** para conferir decisão e evidências. **Dados do ERP (imutáveis)** ficam separados de **Indicadores calculados pelo Kustos**. `% Tempo (ERP)` é conferência, nunca sentença isolada. Competência e importação são rastreabilidade, sem entrar nas fórmulas de execução.
 
+### Cruzar OP e Custo da competência
+
+O checkout local oferece **OP × CUSTO**, ainda sem publicação. Na tela OP, selecione explicitamente o mesmo mês em **De** e **Até**. O botão passa a mostrar, por exemplo, **OP × CUSTO — Outubro/2026**. Sem mês único, a ação fica indisponível e explica a limitação; nenhum mês é aberto automaticamente.
+
+O relatório considera a competência completa de `data_referencia`. Os filtros OP ficam guardados para retorno, sem serem aplicados silenciosamente aos custos. A visão geral informa os produtos com ambos os lados (A), somente OP (B), somente Custo (C), registros sem vínculo válido e qualidade das fontes. Se houver B/C, escolha **Incluir sem correspondência** ou **Somente OP + Custo**. É possível alterar essa decisão; voltar sem decidir não exclui produtos automaticamente. Uma fonte vazia confirmada difere de falha de leitura, que impede apresentar o relatório como completo.
+
+Na fila, filtre texto/cobertura e escolha **Prioridade OP** ou **Prioridade Custo**, sempre em escalas separadas. A paginação de 50 produtos é apenas visual. Clique no código para abrir o dossiê com eventos OP individuais, resultados originais, hipóteses OP identificadas, snapshots de custo, datas integrais, referência/base e evidências. Nenhuma soma mensal de OP ou prioridade conjunta é calculada.
+
+Ausência aparece explicitamente como **OP ausente** ou **Custo ausente**, sem preencher valores com zero. A busca exata de código consulta o contexto carregado; um produto sem nenhum lado recebe D, somente por essa consulta explícita. Relações e motivos são os do engine: coincidência temporal não comprova causalidade. `criado_em` indica importação e não escolhe a competência.
+
+Voltar do dossiê restaura a fila cruzada; **Voltar para OP** conserva competência, filtros, motivo, produto, dossiê e posição de origem quando aplicável. **Atualizar leitura** descarta a consulta anterior e pergunta novamente sobre B/C quando necessário. [Contrato e limites](../arquitetura/op-custo.md#17-fase-2--apresentação-e-integração-local); [validação da Fase 2](../auditoria/op-custo-fase2-validacao.md).
+
 ## 6. Cadastro
 
 ### Cadastro Operacional

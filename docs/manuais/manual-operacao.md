@@ -34,6 +34,14 @@ Triagem começa pela coluna Decisão e pelo motivo, conferindo fatos ERP versus 
 
 Falha de gravação: procurar `========== IMPORTAÇÃO OP ==========` no console. O diagnóstico inclui chunk, quantidade, primeiro registro e resposta Supabase; violação NOT NULL identifica registros/campo. Use essas evidências para investigar o formato, sem converter falha em mudança de schema. Competência/importação ficam distintas e não entram nas fórmulas operacionais.
 
+### Conferir OP × CUSTO mensal
+
+Recurso implementado no checkout local, ainda não publicado. Na OP, escolha explicitamente o mesmo mês em **De** e **Até** e abra **OP × CUSTO — [Mês/Ano]**. A ação lê o mês completo de `data_referencia`, inclusive datas diferentes do dia 01. Os filtros OP são preservados para retorno e não restringem silenciosamente o cruzamento.
+
+Confira primeiro o status de cada fonte, A (OP + Custo), B (OP sem Custo), C (Custo sem OP) e registros não relacionáveis. Se existirem B/C, escolha incluir esses produtos ou somente A. Sem essa escolha, a fila não é liberada. Fonte vazia confirmada é diferente de erro/incompletude; uma falha impede a apresentação de relatório parcial. Repita somente a leitura, sem importar ou alterar dados para compensar a falha.
+
+Examine os dois modos independentes de prioridade e o dossiê: todos os eventos OP, snapshots da competência, referência/base, ambiguidades e evidências. Ausência não é zero, e simultaneidade não prova causa. Busca exata de código pode mostrar D (nenhum lado), sem novo acesso remoto. Páginas visuais de 50 não limitam o conjunto mensal nem alteram TOP-200. **Atualizar leitura** exige nova decisão de inclusão quando houver B/C; **Voltar para OP** restaura filtros/motivo/produto/dossiê e rolagem/foco mantidos na origem. [Contrato](../arquitetura/op-custo.md#17-fase-2--apresentação-e-integração-local); [validação local e limites](../auditoria/op-custo-fase2-validacao.md). `criado_em` permanece importação/proveniência.
+
 ## 4. Conferir Cadastro e leituras completas
 
 Cadastro Operacional e Master ERP têm fontes, totais e filtros independentes. A consulta ERP é somente leitura, com busca local, código exato e páginas de 50. Confira as cinco colunas Código, Descrição, Origem, Família e Agrupamento comercial; a última reúne código — descrição, sem Agrup. Prod. na tabela. Confira exemplos como `C008 — BISCOITO LAMINADO DOCE` e `C011 — BISCOITO RECHEADO`; ambos os campos vazios mostram **Não informado**, campos parciais mostram apenas o valor existente. Essa apresentação não altera os campos persistidos nem autoriza carga. **Atualizar consulta** relê o Master e reinicia a página, conservando filtros válidos; alternar painel não sincroniza bases.

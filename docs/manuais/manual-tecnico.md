@@ -23,13 +23,14 @@ Node >=22 é necessário para ferramentas/funções. `package.json` tem scripts 
 - `view/ui-drill-through.js`: histórico do produto no recorte ativo.
 - `view/ui-export.js`: seleção de colunas, contexto XLSX, ordenação e sanitização anti-fórmula.
 - `view/ui-op.js` / `view/ui-import-op.js`: carga/fila/dossiê de OP e importação MCAP105.
+- `view/ui-op-custo.js`: subpainel mensal de OP × CUSTO, adaptação do presenter de prioridade Custo, escolha de inclusão, fila/dossiê e preservação do contexto OP; consome somente a API existente e o engine da Fase 1.
 - `view/ui-product-master.js` / `view/ui-cadastro-mestre-erp.js` / `view/ui-cadastro-mestre-preview.js`: operacional, consulta ERP e Preview/aprovação/execução explícita.
 - `view/ui-state.js`, `view/ui-dom.js`, `view/ui-utils.js`: estado, referências DOM, formatadores, debounce, escape e `fillSelect` seguro por DOM.
 - `view/documentation-controller.js`: leitura/edição dos documentos permitidos.
 - `core/spreadsheet-engine.js`: parsing, detecção de colunas e normalização canônica.
 - `core/report-engine.js`: cálculos de Custos, cascata, alerta, instabilidade e regime.
 - `core/op-investigation-engine.js`: indicadores e decisão combinada de OP.
-- `core/op-custo-engine.js`: composição pura OP × CUSTO por código + competência, cobertura e evidência relacional; Fase 1 técnica, sem UI, sem consolidação mensal ou prioridade conjunta.
+- `core/op-custo-engine.js`: composição pura OP × CUSTO por código + competência, cobertura e evidência relacional; consumido pela UI mensal, sem consolidação numérica mensal ou prioridade conjunta.
 - `core/product-master-engine.js`: normalização/reconciliação operacional e payload manual.
 - `core/cadastro-mestre-*.js`: consulta ERP, Preview, catálogo de famílias, manifesto/revisão, transporte e plano de reconstrução; motores sem I/O.
 - `core/heuristic-engine.js`: guardrail somente documental, sem funções exportadas ou sugestão por texto.
@@ -60,7 +61,7 @@ Descrição é exibição, código/FK define relacionamento e UUID é chave téc
 `getMasters()` tem retorno próprio de dimensões/hierarquia/diagnóstico e `error`; os métodos de dados documentados na [matriz operacional](../arquitetura/matriz-contratos-operacionais.md) usam seus contratos explícitos, em geral `{data,error}`. Não presumir um único formato para todos os métodos.
 
 - `getHistorico(filters)`: fatos com recorte temporal, enriquecidos antes da cascata.
-- `getOpCustoContext({competencia, periodo?, produto?})`: fontes mensais completas, resultados originais adaptados, cobertura e proveniência; somente SELECT, sem consumidor UI nesta fase. Produto não restringe cobertura; prioridade Custo aguarda presenter. [Entrada/saída e consumo do engine](../arquitetura/op-custo.md#16-fase-1--núcleo-local-implementado).
+- `getOpCustoContext({competencia, periodo?, produto?})`: fontes mensais completas, resultados originais adaptados, cobertura e proveniência; somente SELECT. A UI chama com `{competencia}` e fornece a prioridade Custo pelo presenter existente fora da API/core. Produto não restringe cobertura. [Entrada/saída](../arquitetura/op-custo.md#16-fase-1--núcleo-local-implementado) e [integração UI](../arquitetura/op-custo.md#17-fase-2--apresentação-e-integração-local).
 - `getLatestImportComparison(filters)` / `getTopVariacoesImportacao(filters)`: dois timestamps de importação, filtros e dimensão, sujeitos a LOG-02.
 - `getProductHistory(codigo, temporalFilters)`: bloqueia código vazio e aplica o recorte recebido da UI; sem recorte fornecido, o método permite histórico integral. A UI passa o mesmo intervalo/competências do relatório.
 - `importarHistoricoCustosComLog(payload,{dataReferencia})`: validação por linha, garantia de dicionário em lote, chunking e log.
@@ -100,6 +101,14 @@ As cinco colunas de Custos são Produto, Descrição, Custo Variável, Custo Dir
 `createOpController` deriva fila/histórico de carga local e filtros/competência; callback de importação renova a carga. Não há período fixo nem refetch por filtro. `data_referencia` é recorte, `criado_em` é rastreabilidade; ambos ficam fora das fórmulas.
 
 `getApontamentosOp(filters)` reutiliza `lerCompleto` em páginas de 500/count exact. Repete os filtros existentes antes de cada range e preserva a ordem `data_referencia DESC, estagio ASC, origem ASC, op ASC`, com `id ASC` como desempate. Não libera resultado com página incompleta, erro, contagem ausente/alterada ou IDs repetidos. Enriquecimento usa `lerDicionarioDosCodigos` e catálogos paginados; classificação continua operacional. Não há teto total nem mudança no motor. A paginação não é snapshot transacional; alterações concorrentes com mesma contagem e sem repetição podem não ser detectadas. [Contrato e provas MNT-OP-05](../auditoria/op-paginacao-validacao.md). Implementação local; publicação ainda depende de autorização.
+
+### OP × CUSTO mensal — apresentação local
+
+`createOpCustoController` mantém o controller e o DOM OP montados, ocultando o painel de origem durante o cruzamento. `getOpCustoPeriod` valida De = Até; nenhum mês é inferido da carga, de `criado_em` ou do calendário. A API fornece o contexto mensal completo; o controller acrescenta `getOperationalPriority(resultadoOriginal)` a cada análise Custo e chama `analyzeOpCustoContext`. Não importa narrativa de recorrência, reclassifica sinais ou soma métricas.
+
+Overview/qualidade vêm do contrato completo. B/C exigem escolha explícita antes da fila; filtros locais por texto/cobertura e modos de ordem OP/Custo operam depois, com páginas visuais de 50. Ordenação OP usa a posição original; Custo usa `compareByInvestigativePriority`, sem combinar escalas. Busca de código reutiliza `normalizeCodigoProduto` e chama o engine localmente com `produtoSolicitado`; não produz N+1 nem consulta nova para o dossiê/D.
+
+Nova leitura limpa o resultado e renova a escolha; geração local invalida respostas atrasadas. Erro/incompletude não renderiza fila parcial ou cobertura zero. Retorno conserva os filtros, motivo, produto e dossiê OP no próprio DOM, restaurando foco/rolagem; voltar do dossiê cruzado conserva sua fila. Datas de referência são integrais; importação é proveniência, nunca seleção de mês. [Contrato Fase 2](../arquitetura/op-custo.md#17-fase-2--apresentação-e-integração-local); [validação e limites locais](../auditoria/op-custo-fase2-validacao.md). Publicação não realizada.
 
 ## 7. Cadastro Operacional e Master ERP
 

@@ -22,6 +22,7 @@ Os dois eixos temporais são distintos: **`data_referencia` é competência oper
 - Gráficos de comparação de importações, TOP variações e evolução por competência.
 - Exportação XLSX com seleção de campos e abas `Contexto` e `Fila Investigativa`.
 - Auditoria de OP com leitura integral paginada, decisão, prioridade, provável causa e evidências combinando produção, tempo, KG/Hora e paradas.
+- OP × CUSTO mensal no checkout local: entrada pela OP com De = Até explícito, cobertura dos dois domínios, escolha de inclusão dos produtos sem correspondência, fila e dossiê por produto. Preserva prioridades separadas e eventos/snapshots, sem inferir causalidade. Publicação ainda depende de autorização.
 - Cadastro Operacional para classificação Kustos e consulta independente do Cadastro Mestre ERP; Preview de XLS/XLSX/XLSM com aprovação e execução administrativa explícita. [Executor isolado comercial](docs/arquitetura/cadastro-mestre-comercial-executor-isolado.md) implementado para a fotografia inicial, preservando timestamps/proveniência/logs; a auditoria atual não autoriza nova execução.
 - Consulta e editor dos documentos permitidos pela tela Documentação; salvamento atualmente bloqueado pelo HTTP 500 ([ERR-04](docs/auditoria/backlog-priorizado.md#err-04)).
 
@@ -31,7 +32,7 @@ A interface usa a identidade **Black + Purple**: superfícies grafite, acentos v
 
 ## 5. Arquitetura resumida
 
-O núcleo [OP × CUSTO — Fase 1](docs/arquitetura/op-custo.md#16-fase-1--núcleo-local-implementado) reúne engine puro e contexto API mensal somente leitura, com testes locais. Ainda não possui botão, tela ou fluxo de usuário; as auditorias atuais continuam independentes. [Escopo e validação](docs/auditoria/op-custo-fase1-validacao.md).
+O [OP × CUSTO](docs/arquitetura/op-custo.md#17-fase-2--apresentação-e-integração-local) combina o engine puro e a API mensal da Fase 1 com um subpainel na tela OP. A UI consome o contexto completo e os resultados originais, com paginação visual própria de 50 produtos, sem alterar TOP-200 ou os motores existentes. Os domínios continuam independentes e suas prioridades permanecem separadas. A superfície está implementada localmente, ainda não publicada; [escopo e validação da Fase 2](docs/auditoria/op-custo-fase2-validacao.md).
 
 Frontend estático em HTML/CSS/JavaScript ES Modules, com bibliotecas CDN. `view/` apresenta e orquestra; `core/` calcula sem I/O; `src/services/api.js` concentra o acesso Supabase e delega o HTTP administrativo. Funções Vercel em `api/` tratam gravação documental e execução autorizada do Master. O executor PostgreSQL administrativo é compartilhado com o CLI e permanece fora do browser.
 
@@ -57,7 +58,7 @@ O [Manual Técnico](docs/manuais/manual-tecnico.md) descreve os módulos e o cic
 ## 7. Fluxos principais
 
 1. **Custos:** selecionar competência → enviar XLSX → conferir colunas/preview → importar com log → identificar códigos/descrições sem cadastro antes do envio → consultar/preparar cada item no Cadastro sem redigitar códigos → investigar por produto ou cascata → detalhar/exportar. A lista não salva nem classifica produtos; a rotina existente de importação permanece.
-2. **OP:** enviar CSV MCAP105 com competência → conferir/importar → investigar fila e dossiê derivados da carga local atualizada.
+2. **OP:** enviar CSV MCAP105 com competência → conferir/importar → investigar fila e dossiê derivados da carga local atualizada. Para cruzamento mensal, selecionar De = Até → OP × CUSTO → conferir cobertura → escolher a inclusão de produtos sem correspondência → fila/dossiê → voltar ao contexto OP preservado.
 3. **Cadastro:** consultar/editar classificação operacional ou consultar Master ERP com estado independente. A tabela ERP mostra Código, Descrição, Origem, Família e Agrupamento comercial (código — descrição), sem coluna Agrup. Prod.; os campos persistidos permanecem. Preview ERP é separado da consulta e da edição manual; decidir/baixar revisão é local. Executar reconstrução exige autorização administrativa, aprovação integral, segunda confirmação e revalidação no servidor.
 4. **Documentação:** consultar os documentos disponibilizados na tela. O salvamento foi projetado para gerar commit no GitHub; a função retorna HTTP 500 e requer revisão de autorização antes da recuperação (ERR-04/SEC-06 no backlog).
 

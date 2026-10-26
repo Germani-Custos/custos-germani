@@ -1,8 +1,8 @@
 # OP × CUSTO — contrato técnico final
 
-**OP-CUSTO-01 · contrato versão 1.0 · 23/10/2026 · Fase 1 local implementada; UI não iniciada.**
+**OP-CUSTO-01 · contrato versão 1.0 · 23/10/2026 · Fases 1 e 2 implementadas localmente; sem publicação.**
 
-Contrato da investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões aprovadas e da inspeção do checkout `fa9c7bb`. O fechamento original foi exclusivamente documental. Após autorização específica da Fase 1, o núcleo/API foi implementado sobre `16fc9f8`, sem UI ou acesso remoto. As seções de proposta preservam o contrato base; a seção 16 registra exatamente o subconjunto agora disponível e os complementos pedidos na Fase 1, sem mudar regras de negócio. Publicação e próximas fases não estão autorizadas. O estado de produção não foi revalidado nesta tarefa.
+Contrato da investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões aprovadas e da inspeção do checkout `fa9c7bb`. O fechamento original foi exclusivamente documental. Após autorização específica da Fase 1, o núcleo/API foi implementado sobre `16fc9f8`, sem UI ou acesso remoto. As seções de proposta preservam o contrato base; a seção 16 registra o núcleo da Fase 1. A seção 17 registra a apresentação mensal autorizada na Fase 2, sem mudar regras de negócio. Publicação e próximas fases não estão autorizadas. O estado de produção não foi revalidado nesta tarefa.
 
 ## 1. Escopo e decisões incorporadas
 
@@ -387,7 +387,7 @@ As oito decisões da seção 1 **não estão pendentes**. Restam limites para ev
 
 ## 14. Inventário planejado no fechamento do contrato
 
-Arquivos planejados no fechamento documental, com responsabilidade delimitada. Na Fase 1 foram implementados somente `core/op-custo-engine.js`, `src/services/api.js` e os dois testes de engine/API; os demais caminhos continuam futuros. Estado e uso atuais estão na seção 16.
+Arquivos planejados no fechamento documental, com responsabilidade delimitada. Na Fase 1 foram implementados somente `core/op-custo-engine.js`, `src/services/api.js` e os dois testes de engine/API. A seção 17 registra os caminhos efetivamente necessários à UI da Fase 2; esta tabela preserva o planejamento original, sem afirmar que todos foram alterados.
 
 | Arquivo | Mudança futura prevista |
 |---|---|
@@ -475,3 +475,41 @@ Não há consumidor UI desse fluxo nesta fase. O futuro orquestrador poderá enr
 - Os 32 cenários da seção 12 incluem testes de UI que continuam futuros. Nesta fase foram implementados os cenários pertinentes ao engine/API; escolha de inclusão, botão, navegação e retorno não existem ainda.
 
 Sem alterações nos motores originais, parser, UI, index/CSS, TOP-200, ranking, dados remotos, schema, migrations, RLS/Auth. Nenhuma análise multi-mês, carga, commit, push ou deploy.
+
+## 17. Fase 2 — apresentação e integração local
+
+**OP-CUSTO-F2:** apresentação mensal implementada localmente após autorização específica. O engine, a API e seus contratos da Fase 1 permanecem intactos. Os trechos das seções 13–16 que descrevem ausência de UI delimitam as entregas anteriores; não revogam esta integração. [Escopo, verificações e limites da Fase 2](../auditoria/op-custo-fase2-validacao.md). Não houve publicação.
+
+### 17.1 Entrada e composição
+
+`view/ui-op-custo.js:createOpCustoController` é um subpainel da view OP existente, integrado pelo controller principal e referências DOM. `view/ui-op.js` não precisa ser alterado: seu DOM e estado permanecem montados durante a navegação. Não há nova área global ou dashboard.
+
+O botão **OP × CUSTO — [Mês/Ano]** aparece apenas quando De e Até estão preenchidos com a mesma competência válida, conferida pelo helper `getOpCustoPeriod`. Sem seleção única, o texto de ajuda explica o bloqueio e a evolução multi-mês futura. Não inferir competência de data atual, importação, produto ou primeira linha. Presença de OP não é condição para abrir um mês válido.
+
+Fluxo efetivo: seleção mensal explícita → `api.getOpCustoContext({competencia})` → adaptação da prioridade Custo com `getOperationalPriority(resultadoOriginal)` existente → `analyzeOpCustoContext` com contexto e análises originais → apresentação. O comparador Custo existente é usado somente na ordenação daquele domínio. A UI não importa a narrativa de recorrência, não recalcula classificação/relação e não altera pesos ou limiares. Nenhum acesso Supabase direto ou nova consulta por produto/evento é introduzido.
+
+### 17.2 Cobertura, inclusão e integridade
+
+O carregamento oculta resultados anteriores. A UI só apresenta o relatório quando API e engine confirmam contexto completo da competência pedida. Erro de leitura, página incompleta, contagem divergente ou identidade inválida/repetida impede relatório parcial. Falha não vira fonte vazia ou cobertura zero. Estados e mensagens de indisponibilidade são explícitos.
+
+Overview mostra status/contagem das fontes, A/B/C, diagnósticos de registros não relacionáveis, relações já classificadas e limites de qualidade. Cobertura é a recebida do engine; contagens de rótulos são somente apresentação dos resultados existentes, sem classificador paralelo. Totais mensais são anteriores à escolha de inclusão e aos filtros visuais.
+
+Se houver B/C, a fila aguarda **Incluir sem correspondência** ou **Somente OP + Custo**. Voltar sem decidir não equivale a excluir; a decisão pode ser alterada após a leitura. Exclusão escolhida é indicada na fila e os totais B/C permanecem na visão geral. Ausência de lado permanece `null`/texto explícito; números reais zero continuam zero. Atualização da leitura limpa a decisão e pergunta novamente quando necessário.
+
+### 17.3 Fila, dossiê e busca
+
+A fila usa todos os produtos do resultado mensal e oferece busca textual, filtro de cobertura e dois modos independentes de ordem. **Prioridade OP** usa a posição original observada; **Prioridade Custo** reutiliza o comparador original de Custo. As prioridades aparecem em colunas separadas; lado sem prioridade é identificado, sem atribuição de valor zero ou score conjunto. Nenhuma relação altera a prioridade de um domínio.
+
+Paginação visual de **50 produtos** ocorre depois da escolha, filtro e ordem sobre o conjunto completo. Ela não corta a fonte de análise, não usa os primeiros 1.000 nem a janela TOP-200 existente. Filtros OP são guardados para retorno e não são aplicados silenciosamente aos fatos de Custo. O relatório identifica seu escopo mensal completo e seus filtros locais.
+
+O dossiê exibe todos os eventos OP do produto na competência, ID técnico, OP, estágio, origem, unidade, lote disponível, fatos ERP e resultados/indicadores/prioridades originais; hipótese aparece como **Hipótese do motor OP**. Preserva todos os snapshots de Custo, datas de referência integrais DD/MM/AAAA e timestamps originais de importação, componentes, total, referência/candidatos/base, comparação e ambiguidades. A relação e evidências vêm do engine, com IDs e limitações; não se afirma causalidade ou consolidação mensal de OP.
+
+Consulta exata por código usa `normalizeCodigoProduto` existente e uma nova chamada **local** ao engine com `produtoSolicitado`, sobre o mesmo contexto completo. Não há GET adicional. Um código válido sem fatos pode apresentar D somente nessa consulta explícita, sem alterar a cobertura A/B/C mensal. Código inválido recebe mensagem; descrição não é chave.
+
+### 17.4 Retorno e validade da leitura
+
+Durante o cruzamento, a superfície OP de origem fica oculta, conservando competência, filtros, motivo, produto, fila e dossiê no DOM/estado original. Voltar restaura a superfície, foco e rolagem de origem; voltar do dossiê cruzado conserva a fila e posição cruzadas. Não se recarrega OP apenas para retornar.
+
+Uma geração local identifica a leitura em curso. Fechar ou mudar competência invalida a geração; resposta obsoleta não reabre a tela nem substitui outro contexto. Atualizar leitura inicia novo contexto e nova decisão de inclusão quando aplicável. Filtro local, paginação e clique no dossiê não fazem refetch.
+
+Esta fase não muda engines OP/Custo/relacional, parser, API, TOP-200, ranking, exportação, dados, schema, migrations, RLS/Auth ou executores. Não implementa multi-competência, causa automática, score ou prioridade conjunta. VISION, regras gerais e estados do backlog não mudam por esta entrega. As verificações executadas e eventuais limitações estão somente no relatório de validação, sem presumir contagens ou provas remotas.
