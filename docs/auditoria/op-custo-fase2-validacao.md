@@ -2,7 +2,7 @@
 
 **OP-CUSTO-F2 · conferência em 26/10/2026 · base `44a4b64` · implementação local, sem publicação.**
 
-**Estado do aceite:** implementação e verificações automatizadas aprovadas; validação visual/manual ainda pendente por bloqueio da ferramenta de navegador. Não declarar a Fase 2 integralmente concluída até conferir essa etapa. A autorização humana para a origem local já foi dada, mas a ferramenta continua informando bloqueio por permissão salva/política gerenciada.
+**Estado do aceite após a auditoria final sobre `e4a5c48`, em 26/10/2026:** Fase 2 tecnicamente concluída pela auditoria estática/automatizada adicional; aceite visual manual pendente por limitação de ambiente. Isso não equivale a validação visual realizada. A autorização humana para a origem local já foi dada, mas o navegador/preview permanece indisponível para essa conferência. Escopo, resultados e limites da revalidação estão na seção 6.
 
 ## 1. Arquivos e componentes
 
@@ -24,7 +24,7 @@ Alterados:
 - `docs/arquitetura/op-custo.md`, `docs/arquitetura/matriz-contratos-operacionais.md`, `docs/arquitetura/indice-documentacao-kustos.md`.
 - `docs/manuais/manual-operacao.md`, `docs/manuais/manual-tecnico.md`, `docs/manuais/manual-usuario.md`.
 
-O diff contém 18 arquivos. `view/ui-op.js`, `view/ui-table.js`, todos os engines, API, parser e arquivos de SQL/migrations permanecem sem alterações. VISION, regras gerais e backlog também permanecem intactos; nenhum item de correção mudou de status.
+A implementação original da Fase 2 envolveu os 18 arquivos acima. A revalidação final altera somente este relatório. `view/ui-op.js`, `view/ui-table.js`, todos os engines, API, parser e arquivos de SQL/migrations permanecem sem alterações funcionais. VISION, regras gerais e backlog também permanecem intactos; nenhum item de correção mudou de status.
 
 ## 2. Consumo da Fase 1
 
@@ -93,4 +93,79 @@ O bloqueio restante depende da permissão efetiva da ferramenta ou dessa confer�
 
 Nenhuma divergência exigiu mudar regra ou contrato de engine. Os nomes apresentados seguem o contrato real da Fase 1; prioridade Custo é fornecida pelo presenter existente, conforme previsto. Nenhuma soma de OP, média de taxa/percentual, score/ranking conjunto, causalidade ou comparação multi-mês foi acrescentada.
 
-Implementação local disponível para revisão, **com aceite visual pendente**. Não declarar “FASE 2 CONCLUÍDA LOCALMENTE” enquanto essa pendência permanecer. Sem alteração de Supabase/dados/schema/migrations/RLS/Auth, motores, parser, API ou TOP-200. Sem commit, push ou deploy, e sem início automático de outra fase.
+Implementação local tecnicamente pronta para aceite conforme a auditoria adicional da seção 6, **com aceite visual manual pendente**. A conclusão técnica não encerra a conferência visual. Sem alteração de Supabase/dados/schema/migrations/RLS/Auth, motores, parser, API ou TOP-200. Sem commit, push ou deploy, e sem início automático de outra fase.
+
+## 6. Validação final estática/automatizada, sem alteração funcional
+
+**Data:** 26/10/2026. **Checkout inspecionado:** `e4a5c48`, inicialmente sem alterações locais. Por solicitação expressa, nenhum recurso, regra, teste ou arquivo de implementação foi criado, modificado ou refatorado nesta revalidação. Somente este relatório foi atualizado. O build gera seu artefato local ignorado pelo Git.
+
+> Validação visual manual não realizada devido à indisponibilidade do navegador/preview no ambiente de execução. A implementação foi submetida a auditoria estática/automatizada adicional.
+
+### 6.1 Arquivos analisados e confronto com o contrato
+
+Foram inspecionados os 18 arquivos da seção 1: controller novo, integração/controller/refs DOM, HTML/CSS, teste UI, duas fixtures de validação e documentação afetada. O confronto documental incluiu expressamente `docs/arquitetura/op-custo.md` (contrato e seção 17), `docs/auditoria/op-custo-fase1-validacao.md` e este relatório.
+
+Também foram conferidos os pontos de contrato/dependência em `core/op-custo-engine.js`, `src/services/api.js`, `view/ui-op.js`, `view/ui-table.js`, `view/ui-utils.js`, `tests/op-custo-engine.test.js`, `tests/api-op-custo-context.test.js`, `jsconfig.json`, `package.json` e `vitest.config.js`. Essas dependências foram somente lidas/exercitadas; não foram alteradas. O diff entre a base da Fase 1 `44a4b64` e o checkout atual não contém modificações em engines, API, parser, OP original, presenter/ranking, SQL ou migrations.
+
+| Ponto de auditoria | Evidência estática/automatizada | Resultado |
+|---|---|---|
+| Entrada pela OP | `index.html:view-op`, refs de `ui-dom.js` e `createOpCustoController`/`opCusto.bind()` no controller principal | Integrado ao subpainel, mantendo a OP montada |
+| Competência explícita e botão | `selectedMonth` exige De e Até preenchidos/iguais e usa `getOpCustoPeriod`; `updateEntry` controla rótulo, ocultação e disabled | Mês selecionado pelo usuário; sem escolha automática; multi-mês bloqueado |
+| Contexto mensal | `reload` chama somente `getOpCustoContext({competencia})`, sem transportar filtros ou linhas visíveis de OP | Fonte completa da Fase 1; sem TOP-200/primeiros 1.000 como universo |
+| Loading e integridade | `hideResults` antecede a leitura; erro da API, versão/mês/qualidade incompatíveis ou engine incompleto impedem apresentação | Loading explícito; nenhum contexto rejeitado tratado como relatório válido |
+| Erro de leitura/página/count/ID | Testes da API exercitam falhas nas duas fontes; testes UI exercitam códigos de erro, rejeição de transporte e contexto incompleto | Sem dataset parcial, escolha de inclusão ou cobertura zero fictícia |
+| Fonte vazia versus indisponível | Metadata `completa_vazia` é exibida apenas no resultado completo; qualquer erro segue o tratamento de indisponibilidade | Vazio confirmado é distinguido de falha de leitura |
+| Inclusão A/B/C | `askInclusion` impede fila até escolha; `choose` e `Alterar inclusão` permitem incluir B/C ou somente A; visão geral mantém totais mensais | Escolha explícita e reversível; nenhuma exclusão silenciosa |
+| Fila e paginação | Filtro/ordem aplicados a `resultado.produtos`, seguidos de paginação visual de 50; testes com 1.201 produtos e com 1.001 A/2.002 snapshots | Contexto completo preservado; página visual não reduz análise |
+| Busca D | `searchProduct` reutiliza normalizador canônico e chama o engine local com `produtoSolicitado`; teste confirma um único GET | D somente por consulta explícita; A/B/C globais preservados |
+| Dossiê OP | `p.op.eventos.map(event)` mostra IDs, OP, produto, estágio/código, origem, unidade, lote, fatos, indicadores e resultados individuais | Eventos preservados, sem criar OP mensal nem somar apontamentos/tempos |
+| Dossiê Custo | `p.custo.snapshots.map` mostra cada ID/data/importação/componentes, referência/candidatos/base e qualidade/comparação | Série preservada; empate não recebe referência principal fictícia |
+| Relações, evidências e limites | UI apresenta `relacao.rotulo`, `motivos`, `evidencias`, IDs e limitações recebidos; testes confrontam com a saída real do engine | Sem classificador paralelo, causalidade automática ou narrativa de recorrência legada |
+| Prioridades | Adaptação reutiliza `getOperationalPriority`; ordem OP usa posição original; ordem Custo usa seu comparador existente | Escalas separadas, sem score, peso ou ranking conjunto novo |
+| Retorno e concorrência | `close` restaura superfície/foco/scroll; retorno do dossiê conserva fila; `generation` invalida respostas antigas | Estado/campos preservados em código e testes; apresentação/foco reais ainda dependem de navegador |
+| Segurança da apresentação | Escape dos rótulos/fatos e teste de XSS; inspeção de IDs/refs da marcação | Sem HTML ERP cru; controles ligados ao HTML existente |
+
+### 6.2 Ausência de dados — confirmação A/B/C/D
+
+- **A — OP + Custo:** ambos os domínios permanecem presentes com suas métricas/resultados/prioridades originais. Múltiplos eventos e snapshots continuam individuais.
+- **B — OP sem Custo:** `custo:null` é apresentado como **Custo ausente / Sem custo correspondente nesta competência**. Não recebe R$ 0,00, estabilidade ou prioridade de custo fictícia.
+- **C — Custo sem OP:** `op:null` é apresentado como **OP ausente / Sem apontamento OP correspondente nesta competência**. Não recebe quantidade, tempo ou prioridade OP zero.
+- **D — nenhum dos dois:** nasce somente de busca explícita de código válido; apresenta ambos ausentes e o motivo original do engine. Não cria linhas D para todo o cadastro.
+
+Os guardas de formatação distinguem `null`/`undefined`/vazio de zero real antes de usar `Number`/formatadores. Testes específicos confirmam custo total real zero e custo total ausente em snapshot existente. Ausência de comparação fica sem base; não vira variação percentual zero. Produtos sem um lado usam o motivo de ausência do contrato, sem converter isso em normalidade ou evidência relacional inventada.
+
+### 6.3 Checks executados nesta auditoria final
+
+```powershell
+node node_modules/vitest/vitest.mjs run --maxWorkers=2
+node node_modules/vitest/vitest.mjs run tests/op-custo-engine.test.js tests/api-op-custo-context.test.js tests/ui-op-custo.test.js --maxWorkers=2
+node node_modules/eslint/bin/eslint.js .
+node node_modules/typescript/bin/tsc --noEmit -p jsconfig.json
+node scripts/build-web.mjs
+git diff --check
+```
+
+- **Suíte completa:** 782/782 testes, 46/46 arquivos; execução de 45,48 s, sem falhas.
+- **OP × CUSTO específico:** 116/116 testes, três arquivos — engine 48, API 31, UI 37; execução de 5,76 s, sem falhas.
+- **DOM:** os 37 testes UI existentes foram executados, assim como as demais suítes UI incluídas na execução completa. O harness é DOM simulado, com eventos/markup e motores reais; não é navegador, renderização visual ou prova de layout.
+- **Lint:** aprovado, sem erros/warnings.
+- **Typecheck:** aprovado no escopo vigente do `jsconfig.json`; `view/` não está incluído nessa configuração. A aprovação não deve ser descrita como checagem estática de tipos de toda a UI.
+- **Build:** aprovado, usando somente URL/chave públicas de teste no processo, sem publicação. Nenhuma dependência ou configuração de produção foi alterada.
+- **Verificação estrutural adicional:** 24 referências diretas de controles conferidas no HTML, IDs únicos, refs de integração e `opCusto.bind()` presentes; sem acesso Supabase/RPC direto, chamada de classificação legada ou uso da fila TOP-200 no novo controller.
+- **Diff check:** aprovado. Escopo final restrito a `docs/auditoria/op-custo-fase2-validacao.md`; código, testes, engine/API/TOP-200 e demais documentos preservados.
+
+Não há suíte de screenshot/browser configurada em `package.json`/`vitest.config.js`. Nenhum browser, screenshot, preview visual, consulta autenticada ou escrita Supabase foi utilizado nesta auditoria. As execuções usaram testes e fixtures locais existentes, sem adicionar testes nem simular que houve conferência visual.
+
+### 6.4 Divergências e riscos visuais residuais
+
+**Nenhuma divergência funcional foi identificada nos pontos inspecionados e cenários executados em relação ao contrato vigente da Fase 1 e à seção 17 da arquitetura.** As diferenças de nomenclatura por alias e a prioridade Custo fornecida pelo presenter já estão documentadas; não exigiram nova regra. Os textos anteriores que tratam a UI como futura registram as fases históricas e são explicitamente sucedidos pela seção 17, sem alterar os motores.
+
+O limite de cobertura do typecheck e o uso de DOM simulado são limitações de verificação, não foram tratados como provas visuais nem corrigidos oportunisticamente. Nenhuma divergência foi usada para justificar alteração funcional.
+
+Sem navegador não é possível comprovar: aparência final, alinhamento/altura de linhas, truncamento ou sobreposição de conteúdo extenso, contraste/legibilidade percebida, responsividade nos breakpoints, comportamento real de cabeçalhos sticky/rolagem horizontal, foco visível, navegação por teclado/leitor de tela, controle nativo de competência e restauração perceptível de scroll/foco entre browsers. O CSS e as intenções de acessibilidade foram lidos; esses resultados visuais permanecem **não verificados**, sem serem apresentados como defeitos confirmados.
+
+### 6.5 Conclusão técnica
+
+**FASE 2 TECNICAMENTE CONCLUÍDA — aceite visual manual pendente por limitação de ambiente.**
+
+A implementação está tecnicamente pronta para aceite com a ressalva visual expressa acima. Esta conclusão não afirma que a validação visual ocorreu, não autoriza publicação e não inicia outra fase. Somente este relatório foi alterado; nenhuma mudança funcional, feature, refatoração, alteração de engine/API/TOP-200, banco/schema/migration/RLS/Auth, commit, push ou deploy.
