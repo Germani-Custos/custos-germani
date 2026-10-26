@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-02 parcial — 26/10/2026:** identidade da execução reutiliza a PK confirmada do log e acompanha o controle dos chunks; falta vínculo persistido nos fatos. [Provas e limites](custos-identidade-lote-validacao.md), [contrato](../arquitetura/identidade-lote-custos.md) e [proposta documental de vínculo](../arquitetura/proposta-vinculo-lote-custos.md). Não encerra o item nem resolve retenção histórica. Sem migration, escrita remota ou publicação.
+
 > **LOG-03 / A360-CUS-04 — 26/10/2026:** comparação seleciona eventos depois do recorte de competência e distingue ausência de zero. TOP por produto + data completa conforme decisão humana; retenção atual limita pares históricos. [Provas e limites](custos-comparacao-recorte-validacao.md). Correção local, sem publicação/escrita remota; LOG-02 continua pendente.
 
 > **LOG-04/06 — 26/10/2026:** contexto sem recorrência inferida e XLSX na mesma ordem ativa completa da fila, inclusive variação manual. Prioridade e TOP-200 preservados; retorno explícito à prioridade padrão. [Provas e limites](custos-fila-validacao.md). Correção local, sem publicação ou acesso remoto.

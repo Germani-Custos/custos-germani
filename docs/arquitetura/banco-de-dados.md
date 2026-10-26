@@ -64,7 +64,9 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 - Registro operacional obrigatório: `SEM_AGRUPAMENTO`
 
 ### `log_importacao`
+- `id` BIGINT/IDENTITY/PK existente: identidade reutilizada da execução de Custos (`batchId` textual no retorno).
 - rastreabilidade de execução de import (`status`, volumes, `iniciado_em`, `finalizado_em`, `data_referencia`)
+- LOG-02 parcial: o schema versionado não possui vínculo equivalente do fato `historico_custos` para esse log. O controle do chunk contém o ID, mas o payload do fato não recebe coluna inexistente. Legado não é associado por horário/competência. [Contrato](identidade-lote-custos.md) e [proposta documental separada](proposta-vinculo-lote-custos.md); nenhuma migration aplicada ou retenção de snapshots criada. Catálogo remoto precisa ser conferido antes de qualquer futura alteração autorizada.
 
 ### `apontamentos_op` e `log_importacao_op`
 - `apontamentos_op` guarda cada evento do relatório de apontamentos de OP, associado opcionalmente a `log_importacao_op`.

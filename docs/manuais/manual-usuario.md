@@ -31,6 +31,8 @@ Em Custos, **Intervalo** inclui todas as competências entre início e fim. **Co
 4. Revise o preview: válida será gravada; atenção exige conferência, mas pode ser gravada; erro bloqueia a linha. A amostra mostra as primeiras 20 linhas; todas as linhas do arquivo são validadas.
 5. Confirme a importação e confira Total / Importadas / Falhas. Código inválido ou ambíguo é erro de linha; não é substituído por um código aproximado.
 
+No resultado local, **Execução no log** identifica aquela chamada de importação, inclusive quando há falhas de linhas/chunks. Uma nova importação recebe outra identidade, mesmo com a mesma competência ou horário. Se a identidade não puder ser confirmada no início, a execução não grava registros. O resultado informa que a associação individual dos registros ao lote ainda não está disponível; essa identidade não recupera versões substituídas pelo upsert. [Limites LOG-02](../arquitetura/identidade-lote-custos.md). Não usar competência ou timestamp para inventar uma associação ausente.
+
 A normalização trata espaços, caracteres invisíveis e notação científica; preserva zeros à esquerda quando a origem textual permite. Valores monetários brasileiros são convertidos com precisão de até quatro casas decimais.
 
 Reimportar produto/competência atualiza o registro, em vez de duplicá-lo. O banner sinaliza produtos sem classificação; não invente categoria para eliminá-lo. **“Não foi possível validar produtos sem agrupamento.”** significa diagnóstico indisponível, e não ausência de pendências.

@@ -737,6 +737,7 @@ export const api = {
   /**
    * Importa um lote de histórico de custos, registrando log_importacao,
    * validando linha a linha e persistindo em chunks (IMPORT_CHUNK_SIZE).
+   * batchId reutiliza a PK confirmada do log; o schema atual não persiste vínculo no fato.
    * @param {Array<Pick<HistoricoRow, 'codigo_produto'|'descricao'|'custo_variavel'|'custo_direto_fixo'|'custo_total'|'data_referencia'>>} payload
    * @param {{dataReferencia?: string}} [options]
    */
@@ -754,13 +755,23 @@ export const api = {
       data_referencia: dataReferenciaSelecionada
     };
 
-    const { data: createdLog, error: createLogError } = await supabase
-      .from(TABLES.logImportacao)
-      .insert(baseLog)
-      .select('*')
-      .single();
-
+    let logResult;
+    try {
+      logResult = await supabase.from(TABLES.logImportacao).insert(baseLog).select('*').single();
+    } catch (error) {
+      return fail('Importação não iniciada: identidade de lote indisponível.', { metodo: 'importarHistoricoCustosComLog', batchId: null }, error);
+    }
+    const { data: createdLog, error: createLogError } = logResult;
     const logId = createdLog?.id ?? null;
+    const validLogId = typeof logId === 'number' ? Number.isSafeInteger(logId) && logId > 0
+      : typeof logId === 'string' && /^[1-9]\d*$/.test(logId);
+    if (createLogError || !validLogId) {
+      return fail('Importação não iniciada: identidade de lote não confirmada.',
+        { metodo: 'importarHistoricoCustosComLog', batchId: null }, createLogError);
+    }
+    // Reutiliza a PK persistida; não gera UUID/timestamp concorrente nem identidade por chunk.
+    const lote = Object.freeze({ batchId: String(logId), logId });
+    const chunks = [];
     let linhasImportadas = 0;
     let linhasErro = 0;
     const erros = [];
@@ -835,14 +846,23 @@ export const api = {
 
     if (payloadValido.length > 0) {
       for (let i = 0; i < payloadValido.length; i += IMPORT_CHUNK_SIZE) {
-        const chunk = payloadValido.slice(i, i + IMPORT_CHUNK_SIZE);
-        const { data, error } = await supabase
-          .from(TABLES.historico)
-          .upsert(chunk, { onConflict: 'codigo_produto,data_referencia' });
+        const chunk = { batchId: lote.batchId, indice: i / IMPORT_CHUNK_SIZE + 1,
+          registros: payloadValido.slice(i, i + IMPORT_CHUNK_SIZE) };
+        let chunkResult;
+        try {
+          // O schema atual não tem FK de lote no fato: não enviar coluna inexistente.
+          chunkResult = await supabase.from(TABLES.historico)
+            .upsert(chunk.registros, { onConflict: 'codigo_produto,data_referencia' });
+        } catch (error) {
+          chunkResult = { data: null, error };
+        }
+        const { data, error } = chunkResult;
+        chunks.push({ batchId: chunk.batchId, indice: chunk.indice,
+          total_linhas: chunk.registros.length, status: error ? 'erro' : 'gravado' });
 
         if (error) {
-          linhasErro += chunk.length;
-          chunk.forEach(registro => {
+          linhasErro += chunk.registros.length;
+          chunk.registros.forEach(registro => {
             erros.push({
               linha: null,
               tipo: 'historico',
@@ -855,13 +875,14 @@ export const api = {
             details: error.details,
             hint: error.hint,
             code: error.code,
-            chunkSize: chunk.length,
+            batchId: chunk.batchId,
+            chunkSize: chunk.registros.length,
             data
           });
           continue;
         }
 
-        linhasImportadas += chunk.length;
+        linhasImportadas += chunk.registros.length;
       }
     }
 
@@ -878,14 +899,21 @@ export const api = {
     };
 
     let updateLogError = null;
-    if (logId) {
-      const { error } = await supabase.from(TABLES.logImportacao).update(fechamentoLog).eq('id', logId);
+    try {
+      const { error } = await supabase.from(TABLES.logImportacao).update(fechamentoLog).eq('id', lote.logId);
+      updateLogError = error;
+    } catch (error) {
       updateLogError = error;
     }
 
     return {
       data: {
         log_id: logId,
+        batchId: lote.batchId,
+        chunks,
+        rastreabilidade: { identidade: 'log_importacao.id', persistencia_log: true,
+          persistencia_fatos: false, motivo: 'SCHEMA_SEM_VINCULO_LOTE_NO_FATO',
+          fechamento_log: updateLogError ? 'nao_confirmado' : 'confirmado' },
         resumo,
         erros,
         log_error: createLogError || updateLogError || null

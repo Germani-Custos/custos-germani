@@ -1,5 +1,11 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## LOG-02 — identidade da execução, implementação parcial (26/10/2026)
+
+Preview confirmado → `importarHistoricoCustosComLog` → INSERT único do log → PK confirmada → `batchId` textual/contexto local → validação/preparação existente → chunks com mesma identidade no controle → fechamento pelo mesmo ID. Sem ID ou com erro de criação, bloquear operações seguintes. Erro/rejeição de chunk não cria lote novo; rejeição de fechamento conserva ID e informa falta de confirmação. Resultado expõe a execução e o limite de associação dos fatos.
+
+O schema versionado não possui FK de Custos para o log: identidade está persistida em `log_importacao.id`, mas o pertencimento individual dos fatos não está. Nenhuma coluna inexistente é enviada. [Proposta de vínculo](proposta-vinculo-lote-custos.md) somente documental, sem migration/produção; LOG-02 permanece ativo/parcial. `data_referencia` é competência, `criado_em` timestamp existente, lote é execução. Upsert/produto+data preservados, sem retenção artificial. Comparadores LOG-03/A360-CUS-04 e todos os contratos de fila/TOP-200/OP/OP×CUSTO permanecem intactos. [Contrato](identidade-lote-custos.md); [provas](../auditoria/custos-identidade-lote-validacao.md).
+
 ## LOG-03 — eventos de importação pertinentes ao recorte (26/10/2026)
 
 `getLatestImportComparison`/`getTopVariacoesImportacao` → leitura completa com `data_referencia` filtrado em cada página → enriquecimento/cascata/produto → dois timestamps elegíveis por `criado_em DESC/id ASC` → comparação disponível ou insuficiência explícita. Não selecionar eventos globais antes de recortar; zero/um evento não gera resumo nem 0%. Percentual com base anterior zero é null. Erro/incompletude/IDs repetidos não viram dataset vazio. Mesma aplicação temporal por `normalizeTemporalFilters`/`applyTemporalFilterToQuery`, com conjunto explícito de competências preservado.

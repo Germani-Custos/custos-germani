@@ -290,6 +290,8 @@ export function createImportController({ dom, state, executeOperationalBoundary,
         title: successMessage,
         html: `
           <div style="text-align:left;">
+            <p><b>Execução no log:</b> ${resultadoImportacao?.batchId ? escapeHtml(resultadoImportacao.batchId) : 'Identidade de lote não disponível'}</p>
+            ${resultadoImportacao?.rastreabilidade?.persistencia_fatos === false ? '<p>A associação individual dos registros ao lote ainda não está disponível.</p>' : ''}
             <p><b>Total de linhas:</b> ${resumo.total_linhas}</p>
             <p><b>Importadas:</b> ${successCount}</p>
             <p><b>Falhas:</b> ${errorCount}</p>

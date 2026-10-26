@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05 e LOG-03/04/05/06: **22 itens ativos — P0 = 1, P1 = 5, P2 = 10, P3 = 6.** São 12 IDs históricos e 10 novos da reconciliação ainda pendentes; sete parcialmente resolvidos e 15 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; publicação dessas correções de frontend aguarda autorização própria.
+Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05, LOG-03/04/05/06 e a entrega parcial LOG-02: **22 itens ativos — P0 = 1, P1 = 5, P2 = 10, P3 = 6.** São 12 IDs históricos e 10 novos da reconciliação ainda pendentes; oito parcialmente resolvidos e 14 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; LOG-02 permanece ativo. Publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -45,12 +45,12 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **ID:** LOG-02
 - **Prioridade:** P1
 - **Área:** Custos / Temporalidade
-- **Problema:** Comparações escolhem dois criado_em distintos; importação em chunks não assegura identidade única de lote nos fatos.
-- **Evidência:** src/services/api.js:importarHistoricoCustosComLog, getLatestImportComparison e getTopVariacoesImportacao. Chunk de 400 sem criado_em comum no payload; seleção por timestamp distinto. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
+- **Problema:** A execução já recebe identidade confirmada de log no controle dos chunks, mas o schema atual versionado não persiste vínculo de lote nos fatos; comparações continuam por timestamps elegíveis, que podem ser chunks do mesmo envio.
+- **Evidência:** `importarHistoricoCustosComLog` reutiliza `log_importacao.id`, bloqueia escrita sem ID confirmado e devolve batchId/chunks/rastreabilidade limitada. Fotografia do schema não tem FK de lote em `historico_custos`. [Provas locais LOG-02](custos-identidade-lote-validacao.md), [contrato](../arquitetura/identidade-lote-custos.md) e [proposta documental de vínculo](../arquitetura/proposta-vinculo-lote-custos.md). A evidência histórica de comparação por timestamp permanece na reconciliação.
 - **Impacto:** Comparação pode opor partes do mesmo envio em vez de duas importações.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Definir identidade de lote e estratégia compatível com fatos históricos antes de implementar. Um envio com múltiplos chunks é uma importação lógica, duas importações são distinguidas e resultados não dependem da quantidade de chunks. Não reatribuir competência nem fabricar proveniência.
-- **Dependências:** Decisão de contrato temporal e eventual persistência somente após aprovação própria; coordenar LOG-03.
+- **Estado:** PARCIALMENTE RESOLVIDO
+- **Critério de aceite:** Identidade por execução, independente de timestamp/competência, compartilhada no controle de todos os chunks inclusive falhas, entregue localmente. Encerramento integral depende do vínculo persistido para registros que precisem da rastreabilidade e leitura posterior sem inferência de legado; proposta exige autorização própria. Não resolver retenção de snapshots, reatribuir competência ou fabricar proveniência. Comparadores não foram alterados nesta entrega; migrá-los para lote requer contrato/etapa próprios.
+- **Dependências:** Conferência de catálogo e futura migration de vínculo somente após aprovação; proposta sem arquivo SQL ou execução. LOG-03/A360-CUS-04 preservado. Retenção histórica é dívida separada, não critério de conclusão desta identidade.
 - **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#log-02).
 - **Bloco recomendado:** B — Confiabilidade da investigação.
 
