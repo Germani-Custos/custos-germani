@@ -366,6 +366,42 @@ function parseMcap105Int(value) {
   return parseInt(str, 10);
 }
 
+/** Validação estrutural dos fatos OP; não interpreta indicadores do ERP.
+ * @param {Record<string, unknown>} row
+ * @returns {Array<{campo:string, codigo:string, mensagem:string}>}
+ */
+export function validateApontamentoOpRow(row) {
+  const errors = [];
+  for (const campo of ['origem', 'op', 'cod_estagio', 'qtd_apontamentos']) {
+    const value = row?.[campo];
+    if (campo === 'qtd_apontamentos' && value == null) continue;
+    if (typeof value !== 'number' || !Number.isInteger(value)) {
+      errors.push({ campo, codigo: 'INTEIRO_INVALIDO', mensagem: `${campo} inválida: esperado inteiro obrigatório, sem formato ambíguo` });
+    } else if (value < -2147483648 || value > 2147483647) {
+      errors.push({ campo, codigo: 'INTEGER_OVERFLOW', mensagem: `${campo} fora dos limites de INTEGER` });
+    }
+  }
+  for (const campo of ['cod_produto', 'descricao', 'estagio', 'unidade']) {
+    if (typeof row?.[campo] !== 'string' || (campo === 'cod_produto' && !row[campo].trim())) {
+      errors.push({ campo, codigo: 'CAMPO_OBRIGATORIO', mensagem: `${campo} obrigatório${campo === 'cod_produto' ? ' (não pode ser vazio)' : ''}` });
+    }
+  }
+  for (const campo of ['qtd_prevista', 'qtd_produzida', 'tempo_previsto', 'tempo_real', 'tempo_parada', 'kg_hora_previsto', 'kg_hora_real', 'perc_tempo']) {
+    const value = row?.[campo];
+    if (value != null && (typeof value !== 'number' || !Number.isFinite(value))) {
+      errors.push({ campo, codigo: 'NUMERO_INVALIDO', mensagem: `${campo} deve ser número finito ou ausente` });
+    }
+  }
+  return errors;
+}
+
+/** Preserva o inteiro do MCAP105, validando o agrupamento antes de removê-lo. */
+function parseMcap105Op(value) {
+  const str = String(value ?? '').trim();
+  return /^-?(?:\d+|\d{1,3}(?:\.\d{3})+)$/.test(str)
+    ? parseMcap105Int(str.replace(/\./g, '')) : null;
+}
+
 /**
  * Normaliza uma linha do relatório antes do parse de campos.
  *
@@ -426,13 +462,14 @@ function isMcap105DataLine(line) {
  * string). Função pura: não toca no DOM nem na API e nunca lança exceção —
  * linhas inválidas vão para `errors[]`.
  * @param {string} text - Conteúdo do arquivo lido com FileReader (ISO-8859-1)
- * @returns {{ rows: Mcap105Row[], errors: { linha: number, mensagem: string }[] }}
+ * @returns {{ rows: Mcap105Row[], errors: Array<{linha:number, campo:string, codigo:string, mensagem:string, valorOriginal:string, problemas:Array<{campo:string, codigo:string, mensagem:string, valorOriginal:string}>}>, origens:number[] }}
  */
 export function parseMCAP105(text) {
   /** @type {Mcap105Row[]} */
   const rows = [];
-  /** @type {{ linha: number, mensagem: string }[]} */
+  /** @type {Array<{linha:number, campo:string, codigo:string, mensagem:string, valorOriginal:string, problemas:Array<{campo:string, codigo:string, mensagem:string, valorOriginal:string}>}>} */
   const errors = [];
+  const origens = [];
 
   const lines = String(text ?? '').replace(/\r/g, '').split('\n');
 
@@ -443,18 +480,6 @@ export function parseMCAP105(text) {
     const linha = index + 1;
     const fields = splitCsvLine(line);
 
-    const origem = parseMcap105Int(fields[0]);
-    if (origem === null) {
-      errors.push({ linha, mensagem: 'origem inválida (esperado inteiro)' });
-      return;
-    }
-
-    const codProduto = String(fields[2] ?? '').trim();
-    if (!codProduto) {
-      errors.push({ linha, mensagem: 'cod_produto vazio' });
-      return;
-    }
-
     /** @type {Record<string, unknown>} */
     const row = {};
     MCAP105_COLUMNS.forEach((field, pos) => {
@@ -462,18 +487,24 @@ export function parseMCAP105(text) {
       if (MCAP105_TEXT_FIELDS.has(field)) {
         row[field] = String(raw ?? '').trim();
       } else if (MCAP105_INT_FIELDS.has(field)) {
-        // A coluna OP do relatório pode vir com ponto de milhar (ex.: 2.081).
-        // É inteira, portanto remove-se apenas esse separador antes do parse.
         row[field] = field === 'op'
-          ? parseMcap105Int(String(raw ?? '').replace(/\./g, ''))
+          ? parseMcap105Op(raw)
           : parseMcap105Int(raw);
       } else {
         row[field] = parseMcap105Number(raw);
       }
     });
 
+    const problemas = validateApontamentoOpRow(row).map(problem => ({
+      ...problem, valorOriginal: String(fields[MCAP105_COLUMNS.indexOf(problem.campo)] ?? '')
+    }));
+    if (problemas.length) {
+      errors.push({ linha, ...problemas[0], problemas });
+      return;
+    }
     rows.push(/** @type {Mcap105Row} */ (row));
+    origens.push(linha);
   });
 
-  return { rows, errors };
+  return { rows, errors, origens };
 }

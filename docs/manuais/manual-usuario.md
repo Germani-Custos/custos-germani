@@ -78,6 +78,10 @@ Rode a análise e clique **Exportar**. Todos os campos começam marcados; desmar
 
 Na área **OP**, selecione o CSV MCAP105, confira a amostra, informe competência e confirme. OP formatada como `2.081` é gravada como inteiro `2081`. Após importar, a carga local é renovada e fila/dossiê incorporam os novos apontamentos.
 
+Na implementação local A360-OP-02, o preview separa registros lidos, válidos e rejeitados; cabeçalhos/linhas em branco não entram nesse total. Abra os diagnósticos para ver linha original, campo, valor e motivo. OP vazia/textual, milhar malformado ou inteiro fora dos limites é rejeitada; as outras linhas continuam importáveis. Arquivo totalmente rejeitado não é enviado. O resultado informa enviadas, persistidas confirmadas, falhas operacionais, indeterminadas e não enviadas, além do fechamento do log. Persistência indeterminada exige conferência do lote antes de nova importação. Detalhes por linha/chunk ficam disponíveis nesta sessão, sem persistência desses detalhes no log.
+
+Enquanto o fluxo estiver aberto, upload/drop simultâneos são bloqueados. Selecionar novamente o mesmo conteúdo/competência reapresenta a tentativa anterior sem gravar outra vez. Outras abas ou recarregamento não compartilham essa proteção: uma nova importação pode duplicar os eventos pelo contrato existente. Erro de atualização da consulta não desfaz gravação nem autoriza reimportar.
+
 A versão local corrigida carrega todos os apontamentos elegíveis, inclusive acima de 1.000, antes da investigação. Falha de uma página impede apresentar essa carga como completa. A publicação dessa correção depende de autorização; [provas MNT-OP-05](../auditoria/op-paginacao-validacao.md).
 
 Filtre Estágio, Origem, OP, Produto, competência e Motivo da investigação. Depois da primeira análise, mudar filtros atualiza a fila. A coluna **Decisão** informa se merece investigação e a prioridade, cruzando produção, tempo, KG/Hora e paradas:

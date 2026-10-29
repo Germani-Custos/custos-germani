@@ -3,6 +3,58 @@
 > **Leitura atual — 22/10/2026:** este documento conserva diagnósticos e entregas de suas datas. Estados/prioridades vigentes estão no [backlog único](backlog-priorizado.md); a [reconciliação](backlog-reconciliacao-2026-10-22.md) avalia cada ID e registra o que foi resolvido, continua parcial ou perdeu validade. Checkboxes e recomendações históricas abaixo não autorizam repetir correções ou operações.
 
 
+## A360-OP-02 / VAL-03 — Validação antes do INSERT (29/10/2026)
+
+**Implementação local; sem publicação ou importação real.** Alias A360-OP-02 = VAL-03. Corrige entrada/validação/persistência de OP e somente o alcance OP de ERR-03. Não encerra ERR-03 no restante do sistema. MNT-OP-01/02/03/05 não foram reabertos nem reimplementados.
+
+### Diagnóstico confirmado
+
+`parseMCAP105` convertia ABC/vazio em `op:null` sem erro; removia qualquer ponto (`2..081` → 2081; `1.2.3` → 123) e aceitava overflow de INTEGER. A API enviava a linha no mesmo INSERT dos válidos. Um NOT NULL rejeita atomicamente o chunk; o diagnóstico posterior identificava a causa sem recuperar os demais. Erros já reconhecidos pelo parser não chegavam à API/log. O fechamento usava concluido mesmo com falha total/parcial; falha de fechamento aparecia somente no debug.
+
+Catálogo remoto consultado na etapa de auditoria: op/origem/cod_estagio INTEGER NOT NULL; produto/descrição/estágio/unidade TEXT NOT NULL; fato com PK e FK nullable para log_importacao_op. Sem chave natural única de OP. Log tem contagens/status TEXT/timestamps, sem coluna de motivos ou chunks. Esta implementação não consultou nem escreveu dados de produção.
+
+### Fluxo corrigido e validação
+
+CSV MCAP105 lido em ISO-8859-1 → parser puro → normalização/validação → rows/errors/origens → preview/competência → API com defesa compartilhada → ID de log confirmado → payload válido → chunks de 400 → INSERT existente → reconciliação/log → recarga existente → motor investigativo inalterado.
+
+OP aceita inteiro sem pontos ou grupos de milhar de três dígitos, com sinal negativo opcional conforme domínio anterior. Validar sintaxe antes de remover separadores. `2.081` → 2081; `2.081.000` → 2081000; zeros à esquerda seguem a conversão INTEGER existente. Vazio/null/texto, frações, exponencial, pontuação malformada e valores fora de −2147483648…2147483647 são rejeitados, nunca substituídos por zero. Zero e negativos continuam permitidos pelo contrato atual. A normalização de produto não é substituída por conversão numérica.
+
+`validateApontamentoOpRow` no módulo puro existente valida OP/origem/estágio/inteiros, obrigatórios e tipos finitos presentes do payload, sem inventar obrigatoriedade de bases previstas nem recalcular indicadores. Parser e API a compartilham. Cada rejeição contém linha física/campo/código/valor original/motivos; vários motivos contam uma linha. `origens` é paralelo aos aprovados; cabeçalhos/brancos e rejeições anteriores não deslocam a linha original. Sem origem fornecida pela chamada direta, retornar linha null e posição do registro, sem chamar isso de linha física. Contexto inválido/repetido/sobreposto é recusado antes do I/O. Metadados não entram no fato.
+
+O preview mostra total de registros de dados reconhecidos, válidos, rejeitados e todos os motivos; antes da execução, persistência/falhas operacionais são explicitamente não executadas. Amostra de cinco válidos não limita processamento. Arquivo vazio/integralmente rejeitado não oferece importação nem cria log/fatos remotos. Chamada direta da API com rejeições pode registrar somente log. Não há tentativa de corrigir/salvar automaticamente um inválido.
+
+### Chunks, resultado e log
+
+Filtrar antes de dividir: 399 válidos + 1 inválido → [399]; 400 + 1 → [400]; 401 + 1 → [400,1]. O exemplo do pedido que dizia simultaneamente “802 válidos + 3 inválidos” e “799 válidos” foi tratado aritmeticamente: **802 registros totais, 3 inválidos → 799 válidos → [400,399]**. Também há prova de **802 válidos + 3 inválidos → total 805 → [400,400,2]**. Nenhum dado é subtraído silenciosamente.
+
+API mantém `{data,error}`, inseridos/erros/logId; acrescenta estado/resumo/chunks/logFinalizado/logError. `tipo:validacao` identifica rejeições; `tipo:operacional` identifica persistência/log. Falha operacional de um chunk válido não vira erro de validação e não tenta INSERT individual/retry. Fontes de cada chunk e diagnósticos residuais completos MNT-OP-01 são preservados. Retorno de erro definitivo permite prosseguir nos chunks seguintes; transporte/resposta incerta interrompe o restante sem presumir rollback.
+
+N = recebidas; V = válidas; R = rejeitadas; I = importadas confirmadas; F = falhas de fatos comprovadas; U = persistência indeterminada; P = não enviadas. Invariantes: **N=V+R; V=I+F+U+P; linhas_erro=R+F**. No caso determinado, P=U=0 e N=I+linhas_erro. `total_linhas=N`, `linhas_importadas=I`, `linhas_erro=R+F`; erro de fechamento não transforma um fato confirmado em rejeição/falha. Cabeçalhos/brancos ignorados não são registros de dados.
+
+Status persistidos no TEXT existente: processando; concluido (integral sem rejeições/falhas); parcial (alguma persistência e rejeições/falhas); rejeitado (nenhum válido); erro (falha operacional sem persistência confirmada); indeterminado (resposta não confiável). Indeterminado mantém finalizado_em NULL, U/P explícitos no retorno e nenhum falso balanço fechado. Sem ID confirmado ou com falha de criação do log, não enviar fatos. Fechamento exige retorno do mesmo ID por select/single; erro/ausência é mostrado sem ocultar os fatos confirmados.
+
+Contagens/status persistem nas colunas existentes. **Motivos por linha, fontes e controle de chunks permanecem transitórios no retorno/UI. Não há trilha detalhada durável no schema atual.** Arquivo rejeitado no preview não cria tentativa remota automaticamente. Esses limites não são resolvidos por migration nesta entrega.
+
+### Concorrência, retry e preservação
+
+Uma trava do controller cobre desde leitura/preview até resultado para upload/change/drop. Após confirmação, conteúdo + competência identificam a tentativa somente na memória desse controller. Nova seleção idêntica reapresenta resultado ou alerta de tentativa sem resposta, sem chamar de novo a API. Cancelar não reserva tentativa e não grava nada. Falha da consulta após persistência orienta repetir só leitura; não reimporta. As mensagens distinguem gravação e confirmação do log.
+
+Isso **não é idempotência persistida**: outras abas/controllers/reloads continuam podendo duplicar fatos, conforme INSERT simples existente. Não há mudança de chave de conflito, sincronização entre usuários ou retry automático. Uma resposta indeterminada exige conferência do lote antes de nova execução; não é correto alegar que o banco necessariamente rejeitou o chunk.
+
+Fatos aprovados, competência/data_referencia, criado_em/default, produto, OP, origem, estágio, unidade, lote e métricas são preservados. A UI continua escolhendo competência mensal no fluxo já existente; não se alterou a identidade temporal. Nenhum indicador ERP é recalculado na importação; core/op-investigation-engine.js, OP×CUSTO, paginação de leitura MNT-OP-05 e parser/fluxos de Custos não foram alterados.
+
+### Testes e verificação
+
+Testes de entrada em tests/spreadsheet-engine.test.js, tests/api-op-import.test.js e tests/ui-import-op.test.js. Cobrem OP válida/texto/ausência/null/espaços, milhar válido/malformado/múltiplos grupos, limites/overflow/fração/exponencial/zero/negativo/zeros iniciais; latin-1/acentos/CRLF/aspas/dialeto existente; linha física; várias causas sem contagem dupla; inválido no começo/meio/fim; todos inválidos; limites 399/400/401 e múltiplos chunks; igualdade dos fatos aprovados; parser real ligado à API; contexto inconsistente; criação/ausência de ID/fechamento de log; falha de um/vários/todos chunks; resposta incerta sem retry; preview/resultado/escape; cancelamento/vazio/concorrência/reapresentação e falha da consulta posterior.
+
+Verificação final: suíte completa **967/967 em 51 arquivos**, com dois workers; **870 casos preexistentes e 97 novos** (26 parser, 58 API, 13 UI). Os três arquivos de entrada somam **128/128** (52/60/16), incluindo regressões. MCAP105/MNT-OP-01/02/03/05 e OP×CUSTO passaram. Lint e typecheck aprovados; build local aprovado com configuração pública de teste, sem publicação; git diff --check aprovado e escopo revisado. Comandos equivalentes aos scripts do package.json: `node node_modules/vitest/vitest.mjs run --maxWorkers=2`, `node node_modules/eslint/bin/eslint.js .`, `node node_modules/typescript/bin/tsc --noEmit -p jsconfig.json`, `node scripts/build-web.mjs`, `git diff --check`.
+
+Testes usam mocks e os ambientes locais isolados já existentes na suíte. Nenhuma importação produtiva foi usada para validar esta entrega; a prova de persistência remota não é alegada. UI foi verificada por harness automatizado; não houve validação visual em navegador real nesta tarefa. A inspeção de escopo também compara o parser Custos e os métodos API externos ao importador OP com HEAD; sem alteração funcional fora do item.
+
+### Arquivos e limites de escopo
+
+Runtime: somente core/spreadsheet-engine.js, src/services/api.js e view/ui-import-op.js. Testes: os três arquivos de entrada acima. Documentação: README/AGENTS, três manuais, backlog ativo, matriz operacional e este relatório. ROADMAP/VISION não precisaram mudar. Nenhuma alteração em engine investigativo, OP×CUSTO, controller da fila, estilos, parser Custos, banco/schema/RLS/Auth/migration. Sem carga real, commit, push ou deploy. VAL-03 encerrado localmente; ERR-03 continua parcial e a publicação requer autorização própria.
+
 ## IMP-PEND-01 — produtos sem cadastro identificáveis (22/10/2026)
 
 - **Causa:** aviso antigo contava linhas, duplicava códigos e usava `state.masters.produtos` (universo analítico com fatos), não o operacional completo. Faltavam identidades e navegação no resultado. A API já tenta criar ausentes: decisão humana explícita manteve essa regra e definiu que o aviso representa o momento anterior ao envio.

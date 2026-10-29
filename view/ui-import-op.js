@@ -6,9 +6,7 @@
    showToast para feedback e FileReader para leitura. O encoding ISO-8859-1 é
    obrigatório na leitura do CSV do MCAP105 (acentos e cabeçalhos do ERP).
 
-   Nesta fase o controller ainda não é ligado ao init (isso é da Fase 3): se o
-   input de upload não existir no DOM, `bind()` é um no-op — a aba Custos
-   permanece intacta. */
+   Rejeições conservam linha física; só fatos válidos seguem para a API. */
 import { api } from '../src/services/api.js';
 import { parseMCAP105 } from '../core/spreadsheet-engine.js';
 import { escapeHtml, showToast } from './ui-utils.js';
@@ -31,6 +29,16 @@ function lerArquivoLatin1(file) {
   });
 }
 
+function buildErrorsHtml(errors) {
+  if (!errors.length) return '';
+  return `<details open><summary>Diagnósticos (${errors.length})</summary><div style="max-height:260px;overflow:auto;text-align:left;"><ul>${errors.map(error => {
+    const local = error.linha != null ? `Linha ${error.linha}` : error.registro ? `Registro ${error.registro} (linha física não informada)` : error.chunk ? `Chunk ${error.chunk}` : 'Execução';
+    const problemas = error.problemas || [error];
+    const fontes = error.fontes?.map(f => f.linha != null ? `linha ${f.linha}` : `registro ${f.registro} (linha física não informada)`).join(', ');
+    return `<li>${escapeHtml(local)} — ${escapeHtml(error.tipo === 'operacional' ? 'falha operacional' : 'validação')}: ${problemas.map(p => `${escapeHtml(p.campo || error.etapa || '')}: ${escapeHtml(p.mensagem)}${p.valorOriginal !== undefined ? ` (original: ${escapeHtml(p.valorOriginal)})` : ''}`).join('; ')}${fontes ? `<p>Registros afetados: ${escapeHtml(fontes)}</p>` : ''}</li>`;
+  }).join('')}</ul></div></details>`;
+}
+
 function buildPreviewHtml(rows, errors) {
   const linhasPreview = rows.slice(0, PREVIEW_ROW_LIMIT).map(row => `
     <tr>
@@ -42,23 +50,20 @@ function buildPreviewHtml(rows, errors) {
     </tr>
   `).join('');
 
-  const avisoErros = errors.length
-    ? `<p style="color:var(--warning);"><b>${errors.length}</b> linha(s) ignorada(s) por erro de leitura.</p>`
-    : '';
-
   return `
-    <p>Linhas de dados encontradas: <b>${rows.length}</b>${errors.length ? ` | Erros: <b>${errors.length}</b>` : ''}</p>
-    ${avisoErros}
+    <p>Linhas de dados lidas: <b>${rows.length + errors.length}</b> | Válidas: <b>${rows.length}</b> | Rejeitadas por validação: <b>${errors.length}</b></p>
+    <p>Persistência e falhas operacionais: ainda não executadas.</p>
+    ${buildErrorsHtml(errors)}
     <div style="max-height:260px; overflow:auto;">
       <table style="width:100%; border-collapse:collapse; font-size:12px;">
         <thead><tr><th>Ori.</th><th>OP</th><th>Cód. Prod.</th><th>Descrição</th><th>Estágio</th></tr></thead>
         <tbody>${linhasPreview}</tbody>
       </table>
     </div>
-    <p style="margin-top:12px; text-align:left;">
+    ${rows.length ? `<p style="margin-top:12px; text-align:left;">
       <label for="op-import-mes" style="display:block; font-weight:600; margin-bottom:4px;">Competência (mês de referência)</label>
       <input type="month" id="op-import-mes" class="swal2-input" style="margin:0;">
-    </p>
+    </p>` : ''}
   `;
 }
 
@@ -68,6 +73,34 @@ function buildPreviewHtml(rows, errors) {
  * @returns {{ bindUpload: Function }}
  */
 export function createImportOpController({ dom, executeOperationalBoundary, onImported = async () => {} }) {
+  let running = false;
+  // Cache somente desta sessão/controller: reapresenta uma tentativa, nunca a reenvia.
+  // Não altera o lote persistido nem promete idempotência entre abas/reloads.
+  const submissions = new Map();
+
+  async function showResult({ data, error }) {
+    if (error) {
+      const r = error.details?.resumo;
+      await Swal.fire({ icon: 'error', title: 'Importação OP não iniciada',
+        html: `<p>${escapeHtml(error.message || 'Falha operacional; nenhum reenvio automático.')}</p>
+          ${r ? `<p>Linhas lidas: ${r.total_linhas} | Válidas: ${r.linhas_validas} | Rejeitadas: ${r.linhas_rejeitadas} | Enviadas: 0 | Persistidas: 0</p>` : ''}
+          ${buildErrorsHtml(error.details?.erros || [])}` });
+      return;
+    }
+    const r = data.resumo;
+    const titles = { concluido: 'Importação OP concluída', parcial: 'Importação OP parcial', erro: 'Falha operacional na importação OP', rejeitado: 'Arquivo rejeitado por validação', indeterminado: 'Persistência OP indeterminada' };
+    await Swal.fire({
+      icon: data.estado === 'concluido' && !data.logError ? 'success' : data.estado === 'erro' ? 'error' : 'warning',
+      title: data.logError ? 'Resultado OP — fechamento do log não confirmado' : titles[data.estado] || 'Resultado da importação OP',
+      html: `<p>Lote: ${escapeHtml(data.logId)}</p><p>Linhas lidas: ${r.total_linhas} | Válidas: ${r.linhas_validas} | Rejeitadas por validação: ${r.linhas_rejeitadas}</p>
+        <p>Enviadas: ${r.linhas_enviadas} | Persistidas confirmadas: ${r.linhas_importadas} | Falhas operacionais de fatos: ${r.linhas_falha_operacional}</p>
+        <p>Persistência indeterminada: ${r.linhas_indeterminadas} | Não enviadas: ${r.linhas_nao_enviadas}</p>
+        <p>Log: ${data.logFinalizado ? 'fechamento confirmado' : 'fechamento não confirmado'}. Detalhes por linha/chunk disponíveis nesta sessão; não persistidos no log.</p>
+        ${data.estado === 'indeterminado' ? '<p>Confira os fatos pelo lote antes de qualquer nova importação. Não repita o envio.</p>' : ''}
+        ${buildErrorsHtml(data.erros)}`
+    });
+  }
+
   async function handleFile(file) {
     if (!isCsvFile(file)) {
       showToast('warning', 'Selecione um arquivo CSV de apontamentos (extensão .csv).');
@@ -75,10 +108,11 @@ export function createImportOpController({ dom, executeOperationalBoundary, onIm
     }
 
     const text = await lerArquivoLatin1(file);
-    const { rows, errors } = parseMCAP105(text);
+    const { rows, errors, origens } = parseMCAP105(text);
 
     if (!rows.length) {
-      showToast('warning', 'Nenhuma linha de dados válida encontrada no arquivo.');
+      if (errors.length) await Swal.fire({ icon: 'warning', title: 'Arquivo rejeitado por validação', html: buildPreviewHtml(rows, errors) });
+      else showToast('warning', 'Nenhuma linha de dados encontrada no arquivo.');
       return;
     }
 
@@ -94,7 +128,7 @@ export function createImportOpController({ dom, executeOperationalBoundary, onIm
       preConfirm: () => {
         const input = document.getElementById('op-import-mes');
         const mes = input ? String(input.value || '') : '';
-        if (!mes) {
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)) {
           Swal.showValidationMessage('Selecione a competência (mês de referência).');
           return false;
         }
@@ -106,24 +140,41 @@ export function createImportOpController({ dom, executeOperationalBoundary, onIm
     if (!result.isConfirmed) return;
     const dataReferencia = result.value;
 
-    const { data, error } = await api.importarApontamentosOp({
-      rows,
-      dataReferencia,
-      arquivoNome: file.name
-    });
-
-    if (error) {
-      showToast('error', `Erro na importação: ${error.message || 'falha desconhecida'}`);
+    const submissionKey = `${dataReferencia}\u0000${text}`;
+    if (submissions.has(submissionKey)) {
+      const previous = submissions.get(submissionKey);
+      if (previous) await showResult(previous);
+      else showToast('warning', 'Tentativa anterior sem resultado confirmado. Confira o lote; não repita o envio.');
       return;
     }
-
-    const inseridos = data?.inseridos ?? 0;
-    const houveFalha = (data?.erros?.length ?? 0) > 0;
-    await onImported();
-    showToast(houveFalha ? 'warning' : 'success', `${inseridos} apontamento(s) de OP importado(s).`);
+    submissions.set(submissionKey, null);
+    const response = await api.importarApontamentosOp({
+      rows,
+      dataReferencia,
+      arquivoNome: file.name,
+      origens,
+      errosLeitura: errors
+    });
+    submissions.set(submissionKey, response);
+    if (response.data?.resumo.linhas_enviadas > 0) {
+      try { await onImported(); }
+      catch { showToast('warning', 'Resultado de gravação preservado; falha ao atualizar a consulta OP. Repita somente a leitura.'); }
+    }
+    await showResult(response);
   }
 
-  const MENSAGEM_ERRO = 'Falha ao importar o relatório de OP. Confira o arquivo e tente novamente.';
+  const MENSAGEM_ERRO = 'Falha no fluxo de OP. Confira o resultado/lote antes de repetir qualquer envio.';
+
+  async function runFile(file) {
+    if (running) return;
+    running = true;
+    try {
+      await executeOperationalBoundary('importação de apontamentos de OP', () => handleFile(file), { message: MENSAGEM_ERRO });
+    } finally {
+      running = false;
+      if (dom?.importOpInput) dom.importOpInput.value = '';
+    }
+  }
 
   function bindUpload() {
     const input = dom?.importOpInput;
@@ -133,9 +184,7 @@ export function createImportOpController({ dom, executeOperationalBoundary, onIm
     input.addEventListener('change', async () => {
       const file = input.files?.[0];
       if (!file) return;
-      await executeOperationalBoundary('importação de apontamentos de OP', () => handleFile(file), { message: MENSAGEM_ERRO });
-      // Libera o mesmo arquivo para nova seleção (dispara change de novo).
-      input.value = '';
+      await runFile(file);
     });
 
     if (!dropZone) return;
@@ -153,7 +202,7 @@ export function createImportOpController({ dom, executeOperationalBoundary, onIm
     dropZone.addEventListener('drop', async (e) => {
       const file = e.dataTransfer?.files?.[0];
       if (!file) return;
-      await executeOperationalBoundary('importação de apontamentos de OP (arrastar)', () => handleFile(file), { message: MENSAGEM_ERRO });
+      await runFile(file);
     });
   }
 

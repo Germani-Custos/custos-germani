@@ -1,4 +1,5 @@
 import { describe, expect, it, afterEach } from 'vitest';
+import { TextDecoder } from 'node:util';
 import { normalizeCodigoProduto, parseBrazilianNumber, formatBrazilianFinancial, scanHeaders, countValidMappedColumns, readWorkbook, parseMCAP105 } from '../core/spreadsheet-engine.js';
 
 describe('normalizeCodigoProduto (VAL-01)', () => {
@@ -236,8 +237,8 @@ describe('parseMCAP105 — parser do relatório de OP (MCAP105)', () => {
   });
 
   it('nunca lança — entrada vazia ou não-string retorna estrutura vazia', () => {
-    expect(parseMCAP105('')).toEqual({ rows: [], errors: [] });
-    expect(parseMCAP105(undefined)).toEqual({ rows: [], errors: [] });
+    expect(parseMCAP105('')).toEqual({ rows: [], errors: [], origens: [] });
+    expect(parseMCAP105(undefined)).toEqual({ rows: [], errors: [], origens: [] });
   });
 
   // Dialeto real do export do ERP: arquivo delimitado por `;`, cada registro é
@@ -270,5 +271,44 @@ describe('parseMCAP105 — parser do relatório de OP (MCAP105)', () => {
     expect(rows).toHaveLength(5);
     expect(errors).toHaveLength(0);
     expect(rows.map(row => row.op)).toEqual([738, 752, 757, 732, 736]);
+  });
+
+  describe('A360-OP-02 — validação antes do payload', () => {
+    const withOp = op => LINHA_OP738.replace('        738', op);
+    it.each(['ABC', '', '   ', 'null', 'undefined', '2..081', '1.2.3', '.2081', '2081.', '2.08', '2e3', '2E3', '"2,5"', '2147483648', '-2147483649'])('isola OP inválida %j com motivo e linha física', op => {
+      const { rows, errors, origens } = parseMCAP105(['Título', LINHA_OP738, '', HEADER_1, withOp(op), LINHA_OP752].join('\r\n'));
+      expect(rows.map(r => r.op)).toEqual([738, 752]);
+      expect(origens).toEqual([2, 6]);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatchObject({ linha: 5, campo: 'op', mensagem: expect.any(String), codigo: expect.any(String) });
+      expect(errors[0].problemas[0].valorOriginal).toBe(op === '"2,5"' ? '2,5' : op);
+    });
+
+    it.each([['2.081', 2081], ['2.081.000', 2081000], ['0002081', 2081], ['0', 0], ['-1', -1], ['-2.081', -2081], ['2147483647', 2147483647], ['-2147483648', -2147483648]])('normaliza %s sem alterar o domínio INTEGER', (raw, expected) => {
+      const { rows, errors } = parseMCAP105(withOp(raw));
+      expect(errors).toEqual([]); expect(rows[0].op).toBe(expected);
+    });
+
+    it('preserva fatos, acentos, aspas escapadas e dialeto MCAP105', () => {
+      const original = parseMCAP105(LINHA_OP738).rows[0];
+      const accented = withOp('2.081').replace('GERMANI BISCOITO BROA MILHO 20 X 300 G', 'PRODUÇÃO AÇÚCAR');
+      const decoded = new TextDecoder('windows-1252').decode(Buffer.from(quoteRecord(accented), 'latin1'));
+      const parsed = parseMCAP105(decoded);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.rows[0]).toEqual({ ...original, op: 2081, descricao: 'PRODUÇÃO AÇÚCAR' });
+    });
+
+    it('uma linha com múltiplos problemas não duplica rejeições', () => {
+      const invalid = withOp('ABC').replace('  12,BISCOITO', 'ABC,BISCOITO');
+      const parsed = parseMCAP105([invalid, LINHA_OP738].join('\n'));
+      expect(parsed.errors).toHaveLength(1); expect(parsed.errors[0].problemas).toHaveLength(2);
+      expect(parsed.rows).toHaveLength(1); expect(parsed.origens).toEqual([2]);
+    });
+
+    it('todo arquivo inválido conserva cada erro e não produz fatos', () => {
+      const parsed = parseMCAP105(['Título', withOp('ABC'), '', withOp(''), withOp('2..081')].join('\n'));
+      expect(parsed.rows).toEqual([]); expect(parsed.origens).toEqual([]);
+      expect(parsed.errors.map(e => e.linha)).toEqual([2, 4, 5]);
+    });
   });
 });

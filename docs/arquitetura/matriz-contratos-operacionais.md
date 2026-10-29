@@ -162,7 +162,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | UI → API | `api.getProductHistory(codigoProduto, temporalFilters)` | Drill-through no mesmo intervalo ou competências explícitas do relatório, com delta e delta% apenas entre elas | Sim | ✅ (fail-fast para código vazio; sem meses intermediários em comparação) |
 | UI → API | `api.getLatestImportComparison(filters)` | Selecionar eventos após recorte de competência/cascata; média/delta com disponibilidade explícita | Sim | ✅ local (LOG-03; LOG-02 continua aberto) |
 | UI → API | `api.getTopVariacoesImportacao(filters)` | Pares produto + data completa entre eventos elegíveis; ausência/base zero explícitas | Sim | ✅ local (LOG-03; retenção de snapshots limitada) |
-| UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome})` | Registrar lote e inserir apontamentos de OP; `op` já normalizada para inteiro pelo parser | Sim | ✅ (MNT-OP-01) |
+| UI → API | `api.importarApontamentosOp({rows,dataReferencia,arquivoNome,origens,errosLeitura})` | Validar antes do payload, conservar linha física/rejeições, registrar lote e inserir somente válidos; retorno conciliável | Sim | ✅ local (A360-OP-02; MNT-OP-01 preservado) |
 | UI → API | `api.getApontamentosOp(filters)` | Consultar fatos da Auditoria de OP por competência, estágio, origem, OP e produto; a interpretação é local | Sim | ✅ (MNT-OP-02) |
 | UI → API | `api.getOpCustoContext({competencia})` | Ler mês completo de OP/Custo, com paginação/integridade; UI apresenta o resultado do engine sem N+1 ou writes | Sim | Implementado localmente (OP-CUSTO-F2), sem publicação |
 | UI → API | `api.getProductMaster()` / `api.upsertProductMaster(payload)` | Consultar e manter `dicionario_produtos` operacional; Custos usa a projeção CUSTOS-ERP-01 | Sim | ✅ (TAREFA-3) |
@@ -181,7 +181,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | API → DB | `upsert` em `historico_custos` com `onConflict(codigo_produto,data_referencia)` | Deduplicação por competência | Sim | ✅ |
 | API → DB | Consultas por importação com `ORDER BY criado_em` explícito | Temporalidade de import garantida | Sim | ✅ |
 | API → DB | `apontamentos_op`: `origem,op,cod_produto,descricao,cod_estagio,estagio,unidade,...` | Eventos operacionais; `op` é inteiro obrigatório, `data_referencia` é competência e `criado_em` é importação | Sim | ✅ (MNT-OP-01) |
-| API → DB | `log_importacao_op` | Rastrear total, linhas importadas/em erro e fechamento do lote de OP | Sim | ✅ |
+| API → DB | `log_importacao_op` | Total inclui rejeições do parser; importadas confirmadas e erros conhecidos; status e fechamento verificáveis | Sim | ✅ local A360-OP-02; detalhes por linha/chunk não persistidos |
 
 ## 3) Matriz report-engine → API/dados
 
@@ -201,6 +201,7 @@ Eliminar desalinhamentos entre camadas para preservar velocidade investigativa, 
 | importação | tolerância a colunas extras (normalização) | Não quebrar lote por excesso de coluna | Sim | ✅ |
 | importação | produtos sem dicionário → criação/órfão visível | Sem silenciamento; criação usa o mesmo código normalizado do histórico | Sim | ✅ |
 | importação OP | erro de `.insert()` por chunk | Log obrigatório de chunk, primeiro registro e resposta Supabase; violação `NOT NULL` identifica registros/campo | Sim | ✅ (MNT-OP-01) |
+| importação OP | validação antes de chunks de 400 | Rejeitados fora do payload; erro de linha distinto de falha operacional; ID de log obrigatório | Sim | ✅ local (A360-OP-02) |
 
 ### Normalização de código de produto (`VAL-01`)
 
@@ -279,6 +280,16 @@ Formato mínimo esperado em todos os métodos API:
 - View `vw_produtos_orfaos_agrupamento` adicionada para auditoria contínua.
 
 ## 7) Contrato investigativo da Auditoria de OP (MNT-OP-02 / MNT-OP-03)
+
+### Entrada OP — A360-OP-02 / VAL-03
+
+MCAP105 latin-1 → parser puro `rows/errors/origens` → preview/competência → API com validação estrutural compartilhada → ID de log confirmado → payload somente válido → chunks de 400 → reconciliação/log → recarga existente → motor inalterado. Sintaxe de OP validada antes de remover milhar: inteiro sem pontos ou grupos de três; domínio INTEGER assinado, zero/negativos aceitos; sem fração/exponencial/pontuação malformada. Metadados de linha física não são fatos nem entram no INSERT. Origem/código de estágio/obrigatórios/tipos numéricos do payload são defendidos sem reinterpretar indicadores.
+
+`N=V+R`, `V=I+F+U+P`, com recebidas/válidas/rejeitadas/importadas confirmadas/falhas conhecidas/indeterminadas/não enviadas. `total_linhas=N`, `linhas_importadas=I`, `linhas_erro=R+F`; várias causas de rejeição não multiplicam R. Retorno conserva `{data,error}`/inseridos/erros/logId e acrescenta resumo/chunks/estado/logFinalizado/logError. Estados: processando; concluido sem rejeições/falhas; parcial com alguma persistência e erros; rejeitado sem válidos; erro por falha operacional sem persistência; indeterminado com resposta incerta, interrompendo envios e sem finalizado_em. Fechamento só confirmado por retorno do mesmo ID; sua falha é explícita e não apaga I. Sem retry automático ou log confirmado, não iniciar/repetir gravações.
+
+Arquivo totalmente inválido/vazio no preview não grava log/fatos. API direta com rejeições pode criar somente log. Schema existente guarda contagens/status, não motivos/chunks; esses detalhes ficam na sessão. UI trava concorrência e reapresenta tentativa idêntica por conteúdo/competência no controller, sem reenvio. INSERT/reimportação e ausência de chave natural permanecem; outras abas/reloads não têm garantia de idempotência. `data_referencia` continua competência e `criado_em` timestamp/default, sem alteração. [Provas/limites](../auditoria/robustez-erros-validacao.md#a360-op-02--val-03--validação-antes-do-insert-29102026). ERR-03 tem somente seu alcance OP tratado nesta entrega.
+
+### Interpretação preservada
 
 - **ERP:** `apontamentos_op` é a fonte imutável de quantidades, tempos, produtividade, parada e `% Tempo`; não há migration nem escrita de indicadores calculados.
 - **Kustos:** `core/op-investigation-engine.js` calcula `atendimentoProducaoPct`, `desvioTempoPct`, `desvioProdutividadePct` e `indiceParadasPct`; acrescenta `mereceInvestigacao`, `decisao` e `evidencias`; `view/ui-op.js` consome somente esse contrato para fila, filtro e dossiê.

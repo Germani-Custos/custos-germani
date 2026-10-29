@@ -4,7 +4,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 import { appConfig, debugLog } from '../config/app-config.js';
 import { classificarCustos } from '../../core/custos-classification-engine.js';
-import { normalizeCodigoProduto } from '../../core/spreadsheet-engine.js';
+import { normalizeCodigoProduto, validateApontamentoOpRow } from '../../core/spreadsheet-engine.js';
 import { assertOpCustoIds, getOpCustoPeriod, inspectOpCustoContext } from '../../core/op-custo-engine.js';
 import { buildOpInvestigationQueue } from '../../core/op-investigation-engine.js';
 import { toInvestigationResult } from '../../core/investigation-contract.js';
@@ -1189,46 +1189,65 @@ export const api = {
   },
 
   /**
-   * Importa um lote de apontamentos de OP (relatório MCAP105), registrando o
-   * ciclo de vida em log_importacao_op (processando → concluido).
+   * Importa apontamentos de OP (MCAP105) com log e validação antes dos chunks.
+   * Erros de linha e falhas operacionais são distintos.
    *
    * Diferente do histórico de custos (upsert por codigo_produto,data_referencia),
    * aqui usamos INSERT simples: o mesmo produto pode ter várias OPs na mesma
    * competência, então não há chave de conflito natural. Reimportar o mesmo
    * arquivo duplica os registros — comportamento aceito e documentado.
    *
-   * @param {{ rows?: Array<Record<string, unknown>>, dataReferencia?: string, arquivoNome?: string }} params
-   * @returns {Promise<{data: {inseridos: number, erros: Array<Record<string, unknown>>, logId: number|null}|null, error: unknown}>}
+   * @param {{ rows?: Array<Record<string, unknown>>, dataReferencia?: string, arquivoNome?: string, origens?:number[], errosLeitura?:Array<Record<string, any>> }} params
    */
-  async importarApontamentosOp({ rows, dataReferencia, arquivoNome } = {}) {
+  async importarApontamentosOp({ rows, dataReferencia, arquivoNome, origens, errosLeitura = [] } = {}) {
     const dataReferenciaISO = normalizeISODate(dataReferencia);
     if (!dataReferenciaISO) {
       return fail('data_referencia é obrigatória para importar apontamentos de OP.', { metodo: 'importarApontamentosOp' });
     }
 
+    if ((rows !== undefined && !Array.isArray(rows)) || !Array.isArray(errosLeitura) ||
+        (origens !== undefined && !Array.isArray(origens))) {
+      return fail('Contexto de linhas do MCAP105 inválido.', { metodo: 'importarApontamentosOp' });
+    }
     const lista = Array.isArray(rows) ? rows : [];
-    const totalLinhas = lista.length;
+    const localizacoes = [...(origens || []), ...errosLeitura.map(e => e?.linha)];
+    if ((origens !== undefined && origens.length !== lista.length) || (errosLeitura.length > 0 && lista.length > 0 && !origens) ||
+        localizacoes.some(n => !Number.isSafeInteger(n) || n < 1) || new Set(localizacoes).size !== localizacoes.length ||
+        errosLeitura.some(e => typeof e?.mensagem !== 'string' || !e.mensagem || typeof e?.campo !== 'string' || !e.campo)) {
+      return fail('Contexto de linhas do MCAP105 inválido ou duplicado.', { metodo: 'importarApontamentosOp' });
+    }
+    const totalLinhas = lista.length + errosLeitura.length;
+    /** @type {Array<Record<string, any>>} */
+    const erros = errosLeitura.map(e => ({ ...e, tipo: 'validacao', etapa: 'parser' }));
+    const validos = [];
+    const fontes = [];
+    lista.forEach((row, index) => {
+      const problemas = validateApontamentoOpRow(row).map(p => ({ ...p, valorOriginal: row?.[p.campo] }));
+      const fonte = { linha: origens?.[index] ?? null, registro: index + 1 };
+      if (problemas.length) erros.push({ ...fonte, ...problemas[0], problemas, tipo: 'validacao', etapa: 'api' });
+      else { validos.push(row); fontes.push(fonte); }
+    });
+    const rejeitadas = erros.length;
+    const resumo = { total_linhas: totalLinhas, linhas_validas: validos.length, linhas_rejeitadas: rejeitadas,
+      linhas_enviadas: 0, linhas_importadas: 0, linhas_falha_operacional: 0, linhas_indeterminadas: 0,
+      linhas_nao_enviadas: validos.length, linhas_erro: rejeitadas };
+    if (!totalLinhas) return ok({ inseridos: 0, erros, logId: null, estado: 'vazio', resumo, chunks: [], logFinalizado: false, logError: null });
 
-    const { data: createdLog, error: createLogError } = await supabase
-      .from(TABLES.logImportacaoOp)
-      .insert({
-        data_referencia: dataReferenciaISO,
-        total_linhas: totalLinhas,
-        arquivo_nome: arquivoNome ?? null,
-        status: 'processando',
-        linhas_importadas: 0,
-        linhas_erro: 0
-      })
-      .select('id')
-      .single();
-
-    if (createLogError) {
-      return fail('Falha ao registrar log de importação de apontamentos de OP.', { metodo: 'importarApontamentosOp' }, createLogError);
+    let logId;
+    try {
+      const { data: createdLog, error } = await supabase.from(TABLES.logImportacaoOp).insert({
+        data_referencia: dataReferenciaISO, total_linhas: totalLinhas, arquivo_nome: arquivoNome ?? null,
+        status: 'processando', linhas_importadas: 0, linhas_erro: rejeitadas
+      }).select('id').single();
+      logId = createdLog?.id;
+      if (error || !/^[1-9]\d*$/.test(String(logId ?? '')) || (typeof logId === 'number' && !Number.isSafeInteger(logId))) {
+        return fail('Importação OP não iniciada: ID do log não confirmado.', { metodo: 'importarApontamentosOp', resumo, erros }, error);
+      }
+    } catch (error) {
+      return fail('Importação OP não iniciada: falha ao criar log.', { metodo: 'importarApontamentosOp', resumo, erros }, error);
     }
 
-    const logId = createdLog?.id ?? null;
-
-    const registros = lista.map(row => ({
+    const registros = validos.map(row => ({
       data_referencia: dataReferenciaISO,
       log_importacao_op_id: logId,
       origem: row?.origem ?? null,
@@ -1249,16 +1268,38 @@ export const api = {
       perc_tempo: row?.perc_tempo ?? null
     }));
 
-    let inseridos = 0;
-    const erros = [];
-
+    const chunks = [];
     for (let i = 0; i < registros.length; i += IMPORT_CHUNK_SIZE) {
       const chunk = registros.slice(i, i + IMPORT_CHUNK_SIZE);
-      const { error } = await supabase.from(TABLES.apontamentosOp).insert(chunk);
+      const chunkAtual = Math.floor(i / IMPORT_CHUNK_SIZE) + 1;
+      const localizacao = fontes.slice(i, i + IMPORT_CHUNK_SIZE);
+      resumo.linhas_enviadas += chunk.length;
+      resumo.linhas_nao_enviadas -= chunk.length;
+      let response;
+      let thrown = false;
+      try {
+        response = await supabase.from(TABLES.apontamentosOp).insert(chunk);
+      } catch (error) {
+        response = { error };
+        thrown = true;
+      }
+      const error = response?.error;
+      // Transporte sem resposta confiável não prova rollback nem autoriza retry.
+      const incerto = thrown || !response || !Object.hasOwn(response, 'error') || response.status === 0 ||
+        (error && !error.code && (response.status === undefined || response.status >= 500));
+      const status = incerto ? 'indeterminado' : error ? 'erro' : 'gravado';
+      chunks.push({ chunk: chunkAtual, tamanho: chunk.length, status, fontes: localizacao });
+      if (incerto) {
+        resumo.linhas_indeterminadas += chunk.length;
+        erros.push({ tipo: 'operacional', etapa: 'persistencia', chunk: chunkAtual, tamanho: chunk.length,
+          fontes: localizacao, mensagem: 'Persistência indeterminada; confira os fatos pelo lote antes de qualquer nova importação.' });
+        break;
+      }
       if (error) {
-        const chunkAtual = Math.floor(i / IMPORT_CHUNK_SIZE) + 1;
         const validationErrors = findOpChunkValidationErrors(chunk, i, error);
+        resumo.linhas_falha_operacional += chunk.length;
         erros.push({
+          tipo: 'operacional', etapa: 'persistencia', fontes: localizacao,
           chunk: chunkAtual,
           tamanho: chunk.length,
           mensagem: error.message,
@@ -1269,28 +1310,26 @@ export const api = {
         });
         logOpImportFailure({ chunkAtual, chunk, error, validationErrors });
       } else {
-        inseridos += chunk.length;
+        resumo.linhas_importadas += chunk.length;
       }
     }
 
-    const linhasErro = totalLinhas - inseridos;
-
-    if (logId) {
-      const { error: updateLogError } = await supabase
-        .from(TABLES.logImportacaoOp)
-        .update({
-          status: 'concluido',
-          linhas_importadas: inseridos,
-          linhas_erro: linhasErro,
-          finalizado_em: new Date().toISOString()
-        })
-        .eq('id', logId);
-      if (updateLogError) {
-        debugLog('Falha controlada ao fechar log de importação de OP', { message: updateLogError.message || String(updateLogError) });
-      }
+    resumo.linhas_erro = rejeitadas + resumo.linhas_falha_operacional;
+    const estado = resumo.linhas_indeterminadas ? 'indeterminado' : resumo.linhas_importadas
+      ? (resumo.linhas_erro ? 'parcial' : 'concluido') : validos.length ? 'erro' : 'rejeitado';
+    let logError = null;
+    try {
+      const { data: closedLog, error } = await supabase.from(TABLES.logImportacaoOp).update({
+        status: estado, linhas_importadas: resumo.linhas_importadas, linhas_erro: resumo.linhas_erro,
+        finalizado_em: estado === 'indeterminado' ? null : new Date().toISOString()
+      }).eq('id', logId).select('id').single();
+      logError = error || (String(closedLog?.id) !== String(logId) ? new Error('Fechamento do log OP não confirmado.') : null);
+    } catch (error) {
+      logError = error;
     }
-
-    return ok({ inseridos, erros, logId });
+    if (logError) erros.push({ tipo: 'operacional', etapa: 'log', mensagem: 'Falha ao confirmar fechamento do log; os fatos já confirmados permanecem gravados.' });
+    return ok({ inseridos: resumo.linhas_importadas, erros, logId, estado, resumo, chunks,
+      logFinalizado: !logError && estado !== 'indeterminado', logError: logError ? 'Fechamento do log OP não confirmado.' : null });
   },
 
   /**

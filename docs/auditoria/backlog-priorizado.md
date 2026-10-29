@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **26/10/2026**, após SEC-03, MNT-OP-05, LOG-03/04/05/06 e a entrega parcial LOG-02: **22 itens ativos — P0 = 1, P1 = 5, P2 = 10, P3 = 6.** São 12 IDs históricos e 10 novos da reconciliação ainda pendentes; oito parcialmente resolvidos e 14 confirmados. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; LOG-02 permanece ativo. Publicação dessas correções de frontend aguarda autorização própria.
+Estado vigente em **29/10/2026**, após a implementação local A360-OP-02/VAL-03: **21 itens ativos — P0 = 1, P1 = 4, P2 = 10, P3 = 6.** VAL-03 passa aos encerrados localmente; ERR-03 permanece parcial, com o alcance OP corrigido nesta entrega. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; LOG-02 permanece ativo. Publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -71,22 +71,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#sec-04).
 - **Bloco recomendado:** C — Operação.
 
-### VAL-03
-
-**OP inválida chega ao chunk de persistência**
-
-- **ID:** VAL-03
-- **Prioridade:** P1
-- **Área:** Importação / OP
-- **Problema:** parseMCAP105 converte OP não numérica para null sem acrescentar erro de linha.
-- **Evidência:** core/spreadsheet-engine.js:parseMCAP105; linha de teste com OP=ABC gerou op:null e errors:[]; coluna remota op é NOT NULL. Sem tentativa de INSERT. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Uma linha inválida pode provocar rejeição de um chunk válido e feedback insuficiente.
-- **Estado:** CONFIRMADO
-- **Critério de aceite:** Preview bloqueia linha com OP inválida/ambígua e explica o erro; linhas válidas permanecem importáveis. Cobrir ABC, vazio, milhar válido e lote misto, sem regredir MNT-OP-01.
-- **Dependências:** Preservar tolerância linha a linha e chunking; coordenar ERR-03.
-- **Origem:** achado novo formalizado nesta reconciliação.
-- **Bloco recomendado:** C — Operação.
-
 ### ERR-03
 
 **Falhas de log e de chunks podem parecer sucesso**
@@ -95,9 +79,10 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Prioridade:** P1
 - **Área:** Importação / Feedback
 - **Problema:** Custos continua após falha no log e o detalhe log_error fica no debug; OP registra status concluido apesar de falhas de chunks.
+- **Alcance corrigido em 29/10/2026:** OP diferencia concluido/parcial/rejeitado/erro/indeterminado, exige ID do log e torna fechamento não confirmado visível. Isso não encerra as pendências de Custos deste item; o diagnóstico acima preserva a origem histórica e não afirma o estado atual de cada etapa já alterada por LOG-02.
 - **Evidência:** src/services/api.js:importarHistoricoCustosComLog/importarApontamentosOp; view/ui-import.js e view/ui-import-op.js: tratamento do resultado. Diagnóstico de caminhos, sem escrita remota. Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
 - **Impacto:** Usuário pode acreditar que há trilha completa e importação integral quando há falha parcial.
-- **Estado:** CONFIRMADO
+- **Estado:** PARCIALMENTE RESOLVIDO — alcance OP local concluído; restante aberto.
 - **Critério de aceite:** Resultado e mensagem distinguem completo, parcial e falha; log ausente é visível. Testes simulam falha de log, de um chunk e de todos os chunks; contagens/status correspondem ao que foi persistido sem retry duplicador automático.
 - **Dependências:** Coordenar VAL-03; preservar contratos temporais e decidir compatibilidade de status do log antes de alterar.
 - **Origem:** achado novo formalizado nesta reconciliação.
@@ -398,12 +383,11 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 ### Bloco C — Operação
 
 1. [SEC-04](#sec-04) — Datas impossíveis passam pela validação.
-2. [VAL-03](#val-03) — OP inválida chega ao chunk de persistência.
-3. [ERR-03](#err-03) — Falhas de log e de chunks podem parecer sucesso.
-4. [ERR-04](#err-04) — save-doc falha e não carrega como ES Module.
-5. [VAL-02](#val-02) — Preview e API validam a linha em caminhos distintos.
-6. [PERF-02](#perf-02) — Masters são reconsultados na navegação.
-7. [DOC-DIV-02](#doc-div-02) — Documentos apresentam estados e tipos ultrapassados.
+2. [ERR-03](#err-03) — Falhas de log e de chunks podem parecer sucesso (restante fora de OP).
+3. [ERR-04](#err-04) — save-doc falha e não carrega como ES Module.
+4. [VAL-02](#val-02) — Preview e API validam a linha em caminhos distintos.
+5. [PERF-02](#perf-02) — Masters são reconsultados na navegação.
+6. [DOC-DIV-02](#doc-div-02) — Documentos apresentam estados e tipos ultrapassados.
 
 ### Bloco D — UX
 
@@ -430,6 +414,10 @@ SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a prote
 PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
 
 ## Encerrados após a reconciliação
+
+### VAL-03
+
+**RESOLVIDO LOCALMENTE — 29/10/2026; publicação não autorizada.** Alias A360-OP-02. OP inválida/ambígua/overflow é rejeitada no parser e na defesa canônica da API antes do payload. Milhar legítimo e inteiro assinado preservados; linha física e motivos seguem ao preview/resultado. Chunks de 400 somente após filtragem, contagens conciliadas e falhas operacionais/log separadas. Proteção contra concorrência/reenvio no mesmo controller, sem idempotência entre abas/reloads. MNT-OP-01/02/03/05 e OP×CUSTO preservados. [Contrato, testes e limites](robustez-erros-validacao.md#a360-op-02--val-03--validação-antes-do-insert-29102026). Nenhuma carga real, schema, migration, RLS/Auth, commit/push/deploy. ERR-03 não foi encerrado integralmente.
 
 ### LOG-03
 
