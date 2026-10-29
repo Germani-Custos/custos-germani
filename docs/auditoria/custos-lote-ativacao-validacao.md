@@ -116,3 +116,11 @@ Os ensaios reais atualizaram chaves existentes; inserção de novo ID técnico �
 Manter controle de clientes antigos/admin e usar somente recursos compatíveis; igualdade dos módulos publicados não comprova que toda aba antiga carregou a versão nova. A pausa é operacional, não um bloqueio global criado no banco. Não se alterou flag, RLS/Auth ou rotina externa para contornar essa condição.
 
 **Resultado: migration/schema/FK/importação/upsert de um chunk validados; LOG-02 permanece PARCIAL pelo aceite multichunk produtivo pendente. Sem commit, push ou deploy executados pelo agente.**
+
+## 11. Busca posterior do original multichunk — 29/10/2026
+
+A [busca somente leitura](custos-lote-busca-multichunk.md) conferiu integralmente a primeira aba de 194 arquivos Excel na origem autorizada pedro, identificando 53 candidatos, sem erros. Nenhum ultrapassa 400 válidos; maior candidato 357 com nome de teste, original já autorizado 349. Nenhum original alterado/concatenado, nenhuma nova importação ou consulta/escrita Supabase. Os lotes 30/31 acima permanecem evidência desta ativação anterior, não de multichunk.
+
+> Persistência de lote e upsert real comprovados em produção. Teste de múltiplos chunks permanece pendente por ausência de arquivo original autorizado com mais de 400 registros válidos.
+
+**LOG-02 = PARCIAL.** Caminhos, competências não confirmadas e compatibilidade técnica no relatório da busca. Não fabricar teste ou reabrir o banco para suprir essa ausência.

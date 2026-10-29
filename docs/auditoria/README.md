@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-02 — busca do original multichunk (29/10/2026):** 194 arquivos Excel lidos na origem autorizada, 53 candidatos, nenhum >400 válidos. Maior candidato 357 com nome de teste; original já autorizado 349. Sem nova importação, acesso/escrita Supabase ou alteração funcional. [Inventário e resultado](custos-lote-busca-multichunk.md). LOG-02 PARCIAL; múltiplos chunks produtivos não foram simulados nem declarados validados.
+
 > **LOG-02 — ativação controlada em 29/10/2026:** migration 20261029165515 aplicada, schema/FK/legado preservados; arquivo original de 349 linhas importado e repetido por upsert, lotes 30→31 sem duplicidade/alteração de custos/datas/timestamps. **Um chunk por execução; múltiplos chunks em produção PENDENTES**, não confundir duas execuções com multichunk. [Provas da ativação](custos-lote-ativacao-validacao.md). Item continua PARCIAL; sem commit/push/deploy nesta tarefa. Notas anteriores descrevem suas fases datadas.
 
 > **LOG-02 preparado localmente — 29/10/2026:** lote no mesmo upsert dos fatos, retorno conferido e API legada bloqueada; migration ensaiada, **não aplicada ao Supabase** por decisão humana (writers sem pausa atual). Item continua PARCIAL; não usar writer novo com schema antigo. [Provas atuais e pendências](custos-lote-persistencia-validacao.md). Sem DDL/DML remoto, commit/push/deploy. Sucede o limite de preparação local da nota anterior.
