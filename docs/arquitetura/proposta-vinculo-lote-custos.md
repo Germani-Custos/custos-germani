@@ -1,10 +1,14 @@
 # LOG-02 — vínculo entre fato de Custos e execução
 
-## Estado vigente — preparação local de 29/10/2026
+## Estado vigente — migration aplicada, ativação em validação (29/10/2026)
+
+Após nova autorização/pausa explícita dos writers, aplicada a migration abaixo como **20261029165515 / custos_proveniencia_lote** no Custos-Germani. Schema validado: BIGINT NULL/FK RESTRICT/índice parcial; 2.481 legados NULL imediatamente após DDL, provas anteriores das 12 tabelas/permissões idênticas. Depois, original autorizado validado pelo cliente oficial local em lotes 30 e 31 (349 sucessos cada, zero falhas, um chunk cada); mesmas chaves preservam custos/IDs/datas/criado_em e passam ao lote 31, sem novos fatos. Restam 2.132 legados não tocados NULL; sem backfill. **Múltiplos chunks produtivos pendentes** por falta de original autorizado maior que 400, conforme decisão humana. Sem publicação/liberação geral de writers antigos. [Provas atuais](../auditoria/custos-lote-ativacao-validacao.md); LOG-02 PARCIAL, não reaplicar migration.
+
+## Registro da preparação local — 29/10/2026, antes da nova janela
 
 **LOG-02 PARCIAL.** Proposta aprovada e implementada no checkout; migration gerada por `supabase migration new custos_proveniencia_lote` em 26/10: [`20261026185939_custos_proveniencia_lote.sql`](../../sql/20261026185939_custos_proveniencia_lote.sql). Ensaio PostgreSQL isolado aprovado. **Não aplicada remotamente:** em 29/10 o usuário informou writers não pausados e pediu concluir somente preparação local. Não executar writer novo contra schema antigo nem declarar garantia ativa em produção.
 
-Catálogo Supabase Custos-Germani (`umpebdovrazzrdndhigc`), conexão **Supabase** escolhida pelo usuário, reconfirmado por SELECT em 29/10 às 16:36 UTC: PK `log_importacao.id` BIGINT IDENTITY ALWAYS; PK dos fatos; UNIQUE `unique_produto_data(codigo_produto,data_referencia)`; nenhuma coluna equivalente de lote nos fatos; 2.481 fatos/29 logs; 21 policies existentes. Código e `criado_em` são nullable no catálogo, contrariando NOT NULL em descrições antigas; numerics não têm a precisão fixa descrita no manual antigo. Essas diferenças ficam preservadas, sem saneamento. Fixture histórica IDENTITY BY DEFAULT não é cópia exata do catálogo: ensaio novo cobre ALWAYS.
+Catálogo Supabase Custos-Germani (`umpebdovrazzrdndhigc`), conexão Supabase escolhida pelo usuário, reconfirmado por SELECT em 29/10: PKs BIGINT IDENTITY ALWAYS e UNIQUE produto/data preservadas. Antes da aplicação eram 2.481 fatos/29 logs, sem coluna equivalente de lote; 21 policies. Código e criado_em são nullable. **Correção de diagnóstico:** `custo_total` é NUMERIC(15,2); apenas componentes são NUMERIC sem escala fixa. data_type=NUMERIC não demonstra a escala. Nulabilidades/precisão e identidade foram preservadas, sem saneamento; a fixture histórica BY DEFAULT não é cópia exata de ALWAYS remoto. [Provas posteriores da aplicação e dos lotes](../auditoria/custos-lote-ativacao-validacao.md).
 
 ### Migration preparada
 

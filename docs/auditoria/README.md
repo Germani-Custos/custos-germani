@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-02 — ativação controlada em 29/10/2026:** migration 20261029165515 aplicada, schema/FK/legado preservados; arquivo original de 349 linhas importado e repetido por upsert, lotes 30→31 sem duplicidade/alteração de custos/datas/timestamps. **Um chunk por execução; múltiplos chunks em produção PENDENTES**, não confundir duas execuções com multichunk. [Provas da ativação](custos-lote-ativacao-validacao.md). Item continua PARCIAL; sem commit/push/deploy nesta tarefa. Notas anteriores descrevem suas fases datadas.
+
 > **LOG-02 preparado localmente — 29/10/2026:** lote no mesmo upsert dos fatos, retorno conferido e API legada bloqueada; migration ensaiada, **não aplicada ao Supabase** por decisão humana (writers sem pausa atual). Item continua PARCIAL; não usar writer novo com schema antigo. [Provas atuais e pendências](custos-lote-persistencia-validacao.md). Sem DDL/DML remoto, commit/push/deploy. Sucede o limite de preparação local da nota anterior.
 
 > **LOG-02 parcial — 26/10/2026:** identidade da execução reutiliza a PK confirmada do log e acompanha o controle dos chunks; falta vínculo persistido nos fatos. [Provas e limites](custos-identidade-lote-validacao.md), [contrato](../arquitetura/identidade-lote-custos.md) e [proposta documental de vínculo](../arquitetura/proposta-vinculo-lote-custos.md). Não encerra o item nem resolve retenção histórica. Sem migration, escrita remota ou publicação.

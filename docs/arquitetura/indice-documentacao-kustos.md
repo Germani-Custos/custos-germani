@@ -49,7 +49,7 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 
 ## Auditoria — diagnósticos, backlog e provas
 
-- [LOG-02 — proveniência preparada localmente](../auditoria/custos-lote-persistencia-validacao.md): implementação/testes, schema confirmado e migration não aplicada; ativação produtiva pendente. [Contrato](identidade-lote-custos.md), [migration/condições](proposta-vinculo-lote-custos.md).
+- [LOG-02 — ativação controlada](../auditoria/custos-lote-ativacao-validacao.md): migration aplicada e importação/upsert reais de um chunk, com legado/provas preservados; multichunk produtivo pendente, item PARCIAL. [Contrato](identidade-lote-custos.md), [migration](proposta-vinculo-lote-custos.md), [preparação histórica](../auditoria/custos-lote-persistencia-validacao.md).
 
 - [Índice de auditoria](../auditoria/README.md): escopo/datas dos achados.
 - [Backlog priorizado](../auditoria/backlog-priorizado.md): estados, critérios, dependências e divergências ainda abertas.

@@ -2,7 +2,7 @@
 
 ## Contrato vigente — persistência preparada em 29/10/2026
 
-**LOG-02 permanece PARCIAL.** Código/migration/testes preparados localmente; **migration não aplicada ao Supabase**, por decisão humana em 29/10 (writers não pausados, concluir somente preparação local). Não executar esse writer contra o schema antigo. Aplicação/ativação/publicação exigem nova janela controlada e revalidação. [Provas atuais](../auditoria/custos-lote-persistencia-validacao.md); [migration e ativação](proposta-vinculo-lote-custos.md). Esta seção sucede a ausência de coluna no payload da fase anterior; o registro abaixo é histórico de 26/10.
+**LOG-02 permanece PARCIAL.** Em janela posterior de 29/10, humano confirmou writers pausados; catálogo/backup revalidados e migration aplicada como **20261029165515**, com schema/FK/legado/dados/permissões conferidos. Importador oficial local autenticado validou o original autorizado em duas execuções: lotes **30 e 31**, 349 sucessos/zero falhas cada, um chunk por execução. Mesmas 349 chaves passam ao lote 31; custos/IDs/datas/criado_em preservados, sem linha nova, com 2.132 legados não tocados NULL. **Múltiplos chunks em produção pendentes**, explicitamente reconhecidos pelo usuário; sem publicação ou liberação geral de clientes antigos. Não declarar conclusão por esses ensaios. [Provas da ativação](../auditoria/custos-lote-ativacao-validacao.md), [preparação histórica](../auditoria/custos-lote-persistencia-validacao.md) e [migration](proposta-vinculo-lote-custos.md). Contrato de escrita abaixo preservado.
 
 ### Identidade e escrita
 

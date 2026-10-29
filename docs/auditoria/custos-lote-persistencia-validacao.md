@@ -1,5 +1,7 @@
 # LOG-02 — proveniência persistida: preparação local e validação
 
+**Estado posterior de 29/10:** em nova janela com writers pausados, a migration foi aplicada e duas importações reais de um chunk foram validadas (lotes 30/31, 349 linhas cada). LOG-02 permanece PARCIAL: múltiplos chunks em produção pendentes por decisão humana. [Provas da ativação](custos-lote-ativacao-validacao.md). O relatório abaixo preserva a fase anterior de preparação, em que o usuário não autorizara aplicação. **Correção de diagnóstico:** custo_total remoto é NUMERIC(15,2), componentes NUMERIC sem escala fixa; a inferência anterior a partir de data_type=NUMERIC era incorreta. Nenhuma precisão foi alterada.
+
 Data: **29/10/2026**. **Status final do item: PARCIAL.** Implementação/migration/testes preparados no checkout; **migration NÃO aplicada ao Supabase**. O usuário escolheu a conexão **Supabase** e havia confirmado pausa em 26/10; em 29/10, ao retomar, informou **“Não; concluir somente a preparação local”**. Essa decisão limita a execução atual: nenhuma aplicação remota, importação real, ativação ou publicação.
 
 Não usar o writer novo contra o schema antigo. Não existe fallback silencioso para NULL. A próxima janela exige controle dos writers, revalidação do catálogo/backup, aplicação autorizada e ativação de clientes compatíveis. Não encerrar LOG-02 somente por testes locais.
