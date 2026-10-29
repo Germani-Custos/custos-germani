@@ -1,4 +1,27 @@
-# Proposta separada — persistir o vínculo entre fato de Custos e execução
+# LOG-02 — vínculo entre fato de Custos e execução
+
+## Estado vigente — preparação local de 29/10/2026
+
+**LOG-02 PARCIAL.** Proposta aprovada e implementada no checkout; migration gerada por `supabase migration new custos_proveniencia_lote` em 26/10: [`20261026185939_custos_proveniencia_lote.sql`](../../sql/20261026185939_custos_proveniencia_lote.sql). Ensaio PostgreSQL isolado aprovado. **Não aplicada remotamente:** em 29/10 o usuário informou writers não pausados e pediu concluir somente preparação local. Não executar writer novo contra schema antigo nem declarar garantia ativa em produção.
+
+Catálogo Supabase Custos-Germani (`umpebdovrazzrdndhigc`), conexão **Supabase** escolhida pelo usuário, reconfirmado por SELECT em 29/10 às 16:36 UTC: PK `log_importacao.id` BIGINT IDENTITY ALWAYS; PK dos fatos; UNIQUE `unique_produto_data(codigo_produto,data_referencia)`; nenhuma coluna equivalente de lote nos fatos; 2.481 fatos/29 logs; 21 policies existentes. Código e `criado_em` são nullable no catálogo, contrariando NOT NULL em descrições antigas; numerics não têm a precisão fixa descrita no manual antigo. Essas diferenças ficam preservadas, sem saneamento. Fixture histórica IDENTITY BY DEFAULT não é cópia exata do catálogo: ensaio novo cobre ALWAYS.
+
+### Migration preparada
+
+- Transação com limites de lock 5s/execução 30s, locks de log/fatos e guardas de PK/tipo/UNIQUE/coluna ainda ausente. Drift/reexecução recusa, sem mascarar estrutura divergente.
+- `historico_custos.log_importacao_id BIGINT NULL`, sem default/backfill. FK validada para `log_importacao(id)`, DELETE/UPDATE RESTRICT, não diferível.
+- Índice parcial não único `idx_historico_log_importacao_id WHERE log_importacao_id IS NOT NULL`: referências presentes e manutenção referencial, sem indexar legado NULL ou mudar chave funcional. Índices anteriores preservados.
+- Nenhum INSERT/UPDATE/DELETE de negócio; nenhuma alteração de log/chaves/`data_referencia`/`criado_em`/RLS/Auth/grants/funções/triggers anteriores. Testes demonstram preservação/FK/recusa de drift, não aplicação produtiva.
+
+Writer local já envia lote no mesmo upsert, confere retorno e bloqueia API legada. [Contrato vigente](identidade-lote-custos.md#contrato-vigente--persistência-preparada-em-29102026); [inventário/provas/pendências](../auditoria/custos-lote-persistencia-validacao.md).
+
+### Aplicação futura
+
+Nova janela com todos os writers pausados/controlados; reler catálogo, contagens/provas e backup antes de aplicar. Não reutilizar pausa de 26/10 como evidência atual. Conferir depois: NULL em todo legado, dados anteriores idênticos, somente coluna/FK/índice adicionais, constraints/RLS/policies/grants preservados. Ativar/publicar apenas clientes compatíveis sob autorização própria e impedir gravação de abas/builds antigos. Não retomar cliente antigo como rollback mantendo alegação de última escrita rastreada. Não apagar coluna/FK automaticamente após uso: preservar vínculos antes de reversão aprovada. Sem controle integral, LOG-02 permanece PARCIAL.
+
+## Registro histórico — fechamento documental de 26/10/2026
+
+O restante preserva a decisão original anterior à implementação. Limites “somente documental/sem migration/schema não confirmado” descrevem aquela fase e foram sucedidos pela preparação local acima; não são o estado atual do checkout.
 
 **Somente proposta documental — 26/10/2026. Não é migration executável nem autorização para DDL/DML.** Nenhum arquivo de migration foi criado. Não aplicada localmente ao projeto nem no Supabase. [Contrato parcial LOG-02](identidade-lote-custos.md).
 

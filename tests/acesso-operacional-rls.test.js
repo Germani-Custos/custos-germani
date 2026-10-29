@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
 const migration = readFileSync(new URL('../sql/20261022191744_hardening_acesso_operacional_rls.sql', import.meta.url), 'utf8');
+const loteMigration = readFileSync(new URL('../sql/20261026185939_custos_proveniencia_lote.sql', import.meta.url), 'utf8');
 const schema = readFileSync(new URL('./fixtures/acesso-operacional-schema.sql', import.meta.url), 'utf8');
 const admins = ['14f1b3ff-0b22-495b-a1c3-9aebae13dc36', '72334848-f7d5-41bb-9e5d-eb4933d9d41c'];
 const reader = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -19,7 +20,8 @@ const inserts = {
   categorias_familia: "INSERT INTO public.categorias_familia(descricao) VALUES ('Outra família')",
   categorias_origem: "INSERT INTO public.categorias_origem(descricao) VALUES ('Outra origem')",
   dicionario_produtos: "INSERT INTO public.dicionario_produtos(codigo_produto,descricao) VALUES ('300','Novo produto')",
-  historico_custos: "INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia) VALUES ('200',20,'2026-10-01')",
+  // Ensaios de autorização sobre legado explícito; não são o writer oficial da aplicação.
+  historico_custos: "INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia,log_importacao_id) VALUES ('200',20,'2026-10-01',NULL)",
   log_importacao: "INSERT INTO public.log_importacao(data_referencia) VALUES ('2026-10-01')",
   log_importacao_op: "INSERT INTO public.log_importacao_op(data_referencia) VALUES ('2026-10-01')",
   mapa_produtos: "INSERT INTO public.mapa_produtos(codigo_produto) VALUES ('300')"
@@ -50,12 +52,13 @@ describe('SEC-03 — migration real em PostgreSQL local com roles, RLS e trigger
   beforeAll(async () => {
     db = await PGlite.create();
     await db.exec(schema);
+    await db.exec(loteMigration);
     await db.exec(`INSERT INTO public.categorias_origem(id,codigo,descricao) VALUES ('o1','O1','Origem');
       INSERT INTO public.categorias_familia(id,codigo,descricao) VALUES ('f1','F1','Família'),('f2','F2','Família 2');
       INSERT INTO public.categorias_agrupamento(id,descricao) VALUES ('g1','Grupo');
       INSERT INTO public.dicionario_produtos(codigo_produto,descricao,origem_id,familia_id,agrupamento_cod)
         VALUES ('100','Produto','o1','f1','g1'),('200','Outro','o1','f1','g1');
-      INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia) VALUES ('100',10,'2026-09-01');
+      INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia,log_importacao_id) VALUES ('100',10,'2026-09-01',NULL);
       INSERT INTO public.log_importacao(data_referencia) VALUES ('2026-09-01');
       INSERT INTO public.log_importacao_op(data_referencia) VALUES ('2026-09-01');
       INSERT INTO public.apontamentos_op(data_referencia,origem,op,cod_produto,descricao,cod_estagio,estagio,unidade)
@@ -117,11 +120,27 @@ describe('SEC-03 — migration real em PostgreSQL local com roles, RLS e trigger
           expect((await db.query(`UPDATE public.${table} SET ${textColumn[table]}=${textColumn[table]} RETURNING *`)).rows.length).toBeGreaterThan(0);
         }
         await db.query("UPDATE public.dicionario_produtos SET familia_id='f2' WHERE codigo_produto='200'");
-        await db.query("INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia) VALUES ('200',21,'2026-10-01') ON CONFLICT(codigo_produto,data_referencia) DO UPDATE SET codigo_produto=excluded.codigo_produto,custo_total=excluded.custo_total");
+        await db.query("INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia,log_importacao_id) VALUES ('200',21,'2026-10-01',NULL) ON CONFLICT(codigo_produto,data_referencia) DO UPDATE SET codigo_produto=excluded.codigo_produto,custo_total=excluded.custo_total");
         await db.exec('RESET ROLE');
         expect((await db.query("SELECT familia_id FROM public.mapa_produtos WHERE codigo_produto='200'")).rows[0].familia_id).toBe('f2');
       });
       expect(await snapshot()).toEqual(before);
+    });
+  }
+
+  for (const admin of admins) {
+    it(`LOG-02: administrador ${admin.slice(0, 8)} grava e lê FK no mesmo upsert sob as policies existentes`, async () => {
+      await as('authenticated', claims(admin), async () => {
+        const { rows: [log] } = await db.query("INSERT INTO public.log_importacao(data_referencia) VALUES ('2026-10-14') RETURNING id::text");
+        const { rows: [fact] } = await db.query(`INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia,log_importacao_id)
+          VALUES ('100',21,'2026-09-01',$1) ON CONFLICT(codigo_produto,data_referencia)
+          DO UPDATE SET custo_total=excluded.custo_total,log_importacao_id=excluded.log_importacao_id
+          RETURNING id::text,log_importacao_id::text`, [log.id]);
+        expect(fact.log_importacao_id).toBe(log.id);
+      });
+      expect(await snapshot()).toEqual(before);
+      await as('authenticated', claims(admin), () => expect(db.query(`INSERT INTO public.historico_custos(codigo_produto,custo_total,data_referencia,log_importacao_id)
+        VALUES ('100',21,'2026-10-14',999999)`)).rejects.toMatchObject({ code: '23503' }));
     });
   }
 

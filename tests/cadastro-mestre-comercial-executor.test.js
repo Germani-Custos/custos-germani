@@ -26,8 +26,8 @@ describe('Carga comercial isolada — PostgreSQL local/PGlite, volume integral',
       CREATE TABLE categorias_familia (id text PRIMARY KEY,codigo text,descricao text);
       INSERT INTO categorias_origem VALUES ('o1','01','Produzido');
       INSERT INTO categorias_familia VALUES ('f1','F1','Família');
-      ${protegidas.map(t => `CREATE TABLE ${t} (codigo text PRIMARY KEY,agrupamento_cod text,data_referencia date,criado_em timestamptz);
-        INSERT INTO ${t} VALUES ('100000','KUSTOS','2026-09-01','2026-10-01');`).join('\n')}
+      ${protegidas.map(t => `CREATE TABLE ${t} (codigo text PRIMARY KEY,agrupamento_cod text,data_referencia date,criado_em timestamptz${t === 'historico_custos' ? ',log_importacao_id bigint NULL' : ''});
+        INSERT INTO ${t} VALUES ('100000','KUSTOS','2026-09-01','2026-10-01'${t === 'historico_custos' ? ',NULL' : ''});`).join('\n')}
       INSERT INTO dicionario_master_produtos
         SELECT (100000+i)::text,'Produto '||i,'01','F1','P005',17,'2026-09-01','2026-10-01',18,NULL,NULL FROM generate_series(0,859) i;`);
     contexto = await ctx();

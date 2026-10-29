@@ -1,6 +1,35 @@
 # LOG-02 — identidade da execução de importação de Custos
 
-Contrato local de **26/10/2026**. **Implementação parcial:** identidade da execução confirmada no log e propagada no controle dos chunks; associação persistida lote → fato ainda indisponível no schema versionado. Não encerra LOG-02 nem altera a comparação temporal. [Provas](../auditoria/custos-identidade-lote-validacao.md); [proposta de vínculo persistido](proposta-vinculo-lote-custos.md).
+## Contrato vigente — persistência preparada em 29/10/2026
+
+**LOG-02 permanece PARCIAL.** Código/migration/testes preparados localmente; **migration não aplicada ao Supabase**, por decisão humana em 29/10 (writers não pausados, concluir somente preparação local). Não executar esse writer contra o schema antigo. Aplicação/ativação/publicação exigem nova janela controlada e revalidação. [Provas atuais](../auditoria/custos-lote-persistencia-validacao.md); [migration e ativação](proposta-vinculo-lote-custos.md). Esta seção sucede a ausência de coluna no payload da fase anterior; o registro abaixo é histórico de 26/10.
+
+### Identidade e escrita
+
+1. `data_referencia` é competência operacional completa; `criado_em` conserva timestamp/default existente, inclusive o valor anterior em conflito. Nenhum dos dois é identidade de lote.
+2. Uma chamada confirma `log_importacao.id` antes de dimensão/fatos. `select('id::text')` preserva precisão BIGINT; ID ausente/erro/número inseguro bloqueia. Contexto imutável por chamada `{batchId:String(logId),logId}`, sem estado global compartilhado.
+3. Todos os chunks (até 400) enviam `log_importacao_id:batchId` na whitelist do mesmo upsert dos custos, conflito `codigo_produto,data_referencia`. Planilha/opções não podem fornecer o lote efetivo. Sem update posterior do FK ou N+1.
+4. No próprio upsert: `select('id::text,codigo_produto,data_referencia,log_importacao_id::text')`. Só confirmar linhas se quantidade, IDs técnicos únicos, chaves únicas esperadas e FK textual conferirem. Erro/retorno insuficiente ou divergente não confirma o chunk; valores possivelmente já gravados não são declarados revertidos.
+5. Contexto → payload → FK retornado é consistência da aplicação oficial, ensaiada em PostgreSQL isolado; não autentica intenção de admin malicioso. FK nullable só prova existência referenciada, não autoria.
+6. O FK identifica a **última execução que efetivamente gravou a versão atual**, inclusive custo igual. Conflito atualiza custo/lote juntos, sem segunda linha/snapshot ou mudança de `criado_em`. Em concorrência vale a última escrita efetiva, não maior ID/horário/ordem de início. Legado não tocado permanece NULL, sem atribuição por proximidade.
+
+### Falhas, retorno e retry
+
+Campos legados preservados: `log_id`, `resumo`, `erros`, `log_error`; também `batchId`, `chunks` e `rastreabilidade`. `persistencia_log:true` significa ID inicial confirmado; `persistencia_fatos:true` declara o contrato do writer novo e **não confirma todas as gravações**. `confirmacao_fatos`: `confirmada` para todos os chunks confirmados, `parcial_ou_nao_confirmada` havendo erro/divergência, `sem_fatos` se nenhum chunk foi enviado. Validações de linha/contagens continuam explícitas.
+
+Falha de chunk conserva lote e permite próximos chunks; fechamento usa o mesmo ID, com `fechamento_log`/`log_error` se incerto. **Sem retry automático novo.** Reenvio tecnicamente controlado do mesmo chunk dentro da execução conserva payload/lote; o transporte de teste ensaia esse caso após rollback conhecido. Não há UI/endpoint de retomada nem promessa de idempotência após perda de resposta/COMMIT incerto. Nova chamada explícita cria outro log/execução mesmo com data/horário iguais. Recuperação transacional e fechamento continuam limites próprios.
+
+### Writers e ativação
+
+`importarHistoricoCustosComLog` é o writer oficial local; `view/ui-import.js` o chama e apresenta a confirmação. `upsertHistoricoCustos` mantém nome compatível, mas retorna `CONTEXTO_LOTE_OBRIGATORIO` antes de I/O, inclusive com lote externo. Shim só reexporta.
+
+Função SQL antiga continua sem EXECUTE para PUBLIC/anon/authenticated conforme catálogo, sem reexposição/RPC. Transformação de precisão/saneamento/sondas históricas não estão autorizados em produção nesta etapa; exigem revisão própria. Seeds SQL isolados declaram legado NULL ou lote real conforme objetivo; nunca são exceção produtiva. Builds/abas antigos e acessos externos/admin precisam de controle efetivo durante aplicação/ativação: **nullable não os bloqueia**. Sem controle integral/publicação compatível autorizada, não declarar adesão de todos os writers produtivos.
+
+Comparadores LOG-03/A360-CUS-04, fila/prioridade/TOP-200/exportação/OP/OP×CUSTO/parser/Cadastro permanecem intactos. Não migrar seleção de eventos para lote nem criar retenção histórica nesta tarefa.
+
+## Registro da fase anterior — 26/10/2026
+
+As seções a seguir descrevem o escopo parcial anterior ao FK/payload acima; suas afirmações de “schema atual/sem vínculo” não descrevem a capacidade do novo writer local nem autorizam aplicação remota. [Provas históricas](../auditoria/custos-identidade-lote-validacao.md).
 
 ## Três conceitos independentes
 

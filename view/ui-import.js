@@ -292,6 +292,7 @@ export function createImportController({ dom, state, executeOperationalBoundary,
           <div style="text-align:left;">
             <p><b>Execução no log:</b> ${resultadoImportacao?.batchId ? escapeHtml(resultadoImportacao.batchId) : 'Identidade de lote não disponível'}</p>
             ${resultadoImportacao?.rastreabilidade?.persistencia_fatos === false ? '<p>A associação individual dos registros ao lote ainda não está disponível.</p>' : ''}
+            ${resultadoImportacao?.rastreabilidade?.persistencia_fatos === true ? `<p>Vínculo dos registros ao lote: ${resultadoImportacao.rastreabilidade.confirmacao_fatos === 'confirmada' ? 'confirmado nos chunks gravados.' : resultadoImportacao.rastreabilidade.confirmacao_fatos === 'sem_fatos' ? 'nenhum fato enviado nesta execução.' : 'confirmação parcial ou pendente; confira os erros e não repita automaticamente.'}</p>` : ''}
             <p><b>Total de linhas:</b> ${resumo.total_linhas}</p>
             <p><b>Importadas:</b> ${successCount}</p>
             <p><b>Falhas:</b> ${errorCount}</p>

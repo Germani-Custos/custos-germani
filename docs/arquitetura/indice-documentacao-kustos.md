@@ -4,6 +4,7 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 
 ## Entrada, estratégia e processo
 
+
 - [README](../../README.md): o que é o Kustos, capacidades, estrutura, fluxos e estado do checkout.
 - [VISION](../../VISION.md): identidade, missão, princípios e direção estratégica.
 - [ROADMAP](../../ROADMAP.md): iniciativas concluídas, continuidade, próxima onda e futuro.
@@ -47,6 +48,8 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 - [Multi-tenant](../roadmap/multi-tenant.md): proposta futura, sem isolamento implementado declarado.
 
 ## Auditoria — diagnósticos, backlog e provas
+
+- [LOG-02 — proveniência preparada localmente](../auditoria/custos-lote-persistencia-validacao.md): implementação/testes, schema confirmado e migration não aplicada; ativação produtiva pendente. [Contrato](identidade-lote-custos.md), [migration/condições](proposta-vinculo-lote-custos.md).
 
 - [Índice de auditoria](../auditoria/README.md): escopo/datas dos achados.
 - [Backlog priorizado](../auditoria/backlog-priorizado.md): estados, critérios, dependências e divergências ainda abertas.

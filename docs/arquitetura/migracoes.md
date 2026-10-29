@@ -1,5 +1,11 @@
 # Capítulo 15 — Migrações
 
+## LOG-02 — migration preparada, NÃO aplicada (29/10/2026)
+
+[`20261026185939_custos_proveniencia_lote.sql`](../../sql/20261026185939_custos_proveniencia_lote.sql), gerada por Supabase CLI em 26/10 e ensaiada em PostgreSQL isolado. Acrescenta `historico_custos.log_importacao_id BIGINT NULL` sem default/backfill, FK para `log_importacao(id)` com DELETE/UPDATE RESTRICT não diferível e índice parcial não único nas referências não nulas. Transação/locks/timeouts/guardas recusam drift e reexecução. PK/UNIQUE produto+data, custos, datas, log e RLS/Auth não mudam. Legado permanece NULL; upsert futuro grava lote da última versão no mesmo comando dos custos, preservando `criado_em`; `data_referencia` é competência.
+
+Catálogo real confirmado por SELECT em 29/10, mas o usuário informou writers não pausados e solicitou **somente preparação local**. Não aplicar/reexecutar/ativar com base na pausa histórica de 26/10. Nova janela exige revalidação e backup atual, writers controlados, aplicação autorizada e conferência dos dados/NULL/constraints/permissões antes de ativação/publicação compatível. Nenhuma versão remota desta migration foi criada nesta tarefa; LOG-02 continua PARCIAL. Não usar writer novo contra schema antigo. Backup anterior e provas/pendências em [validação](../auditoria/custos-lote-persistencia-validacao.md). Reversão futura exige preservar vínculos e revisão própria, sem DROP automático.
+
 ## SEC-03 — hardening RLS aplicado (22/10/2026; validação encerrada 23/10)
 
 [20261022191744_hardening_acesso_operacional_rls.sql](../../sql/20261022191744_hardening_acesso_operacional_rls.sql), criado pelo Supabase CLI 2.121.0 e aplicado remotamente como **20261022192657 / hardening_acesso_operacional_rls** em Custos-Germani / umpebdovrazzrdndhigc. Nove tabelas passam a RLS, três já protegidas conservam RLS; grants mínimos nas 12 tabelas/view, 21 policies explícitas e sequências/EXECUTEs reduzidos. Leitura de permanentes autenticados; escrita operacional somente pelos dois UUIDs indicados. Trigger invoker do mapa e backend administrativo preservados; nenhuma alteração de dados na migration, coluna de negócio, role/schema/helper/RPC ou autorização de reconstrução nova.

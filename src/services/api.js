@@ -671,29 +671,10 @@ export const api = {
     };
   },
 
-  async upsertHistoricoCustos(payload) {
-    const rows = Array.isArray(payload) ? payload : [];
-    const sanitized = rows.map(row => ({
-      codigo_produto: normalizeCodigoProduto(row?.codigo_produto),
-      descricao: row?.descricao ?? null,
-      custo_variavel: normalizeMoneyValue(row?.custo_variavel),
-      custo_direto_fixo: normalizeMoneyValue(row?.custo_direto_fixo),
-      custo_total: normalizeMoneyValue(row?.custo_total),
-      data_referencia: normalizeISODate(row?.data_referencia)
-    }));
-
-    const invalidRows = sanitized.filter(row => !validateHistoricoRow(row).valido);
-    if (invalidRows.length) {
-      return fail('Payload de upsert inválido para historico_custos.', { metodo: 'upsertHistoricoCustos', invalidRows: invalidRows.length });
-    }
-
-    const { data, error } = await supabase
-      .from(TABLES.historico)
-      .upsert(sanitized, { onConflict: 'codigo_produto,data_referencia' })
-      .select('codigo_produto, data_referencia, criado_em');
-
-    if (error) return fail('Falha ao realizar upsert no histórico de custos.', { metodo: 'upsertHistoricoCustos' }, error);
-    return ok(data || []);
+  async upsertHistoricoCustos(_payload) {
+    // Compatibilidade de nome, sem writer paralelo que aceite lote arbitrário.
+    return fail('Gravação legada bloqueada: utilize importarHistoricoCustosComLog com contexto de execução.',
+      { metodo: 'upsertHistoricoCustos', motivo: 'CONTEXTO_LOTE_OBRIGATORIO' });
   },
 
   async signIn(login, password) {
@@ -737,7 +718,7 @@ export const api = {
   /**
    * Importa um lote de histórico de custos, registrando log_importacao,
    * validando linha a linha e persistindo em chunks (IMPORT_CHUNK_SIZE).
-   * batchId reutiliza a PK confirmada do log; o schema atual não persiste vínculo no fato.
+   * batchId reutiliza a PK confirmada do log e acompanha cada fato no mesmo upsert.
    * @param {Array<Pick<HistoricoRow, 'codigo_produto'|'descricao'|'custo_variavel'|'custo_direto_fixo'|'custo_total'|'data_referencia'>>} payload
    * @param {{dataReferencia?: string}} [options]
    */
@@ -757,7 +738,7 @@ export const api = {
 
     let logResult;
     try {
-      logResult = await supabase.from(TABLES.logImportacao).insert(baseLog).select('*').single();
+      logResult = await supabase.from(TABLES.logImportacao).insert(baseLog).select('id::text').single();
     } catch (error) {
       return fail('Importação não iniciada: identidade de lote indisponível.', { metodo: 'importarHistoricoCustosComLog', batchId: null }, error);
     }
@@ -821,7 +802,8 @@ export const api = {
         custo_variavel: normalizeMoneyValue(rowNormalizada.custo_variavel),
         custo_direto_fixo: normalizeMoneyValue(rowNormalizada.custo_direto_fixo),
         custo_total: custoTotal,
-        data_referencia: dataReferencia
+        data_referencia: dataReferencia,
+        log_importacao_id: lote.batchId
       });
     }
 
@@ -850,13 +832,28 @@ export const api = {
           registros: payloadValido.slice(i, i + IMPORT_CHUNK_SIZE) };
         let chunkResult;
         try {
-          // O schema atual não tem FK de lote no fato: não enviar coluna inexistente.
           chunkResult = await supabase.from(TABLES.historico)
-            .upsert(chunk.registros, { onConflict: 'codigo_produto,data_referencia' });
+            .upsert(chunk.registros, { onConflict: 'codigo_produto,data_referencia' })
+            .select('id::text,codigo_produto,data_referencia,log_importacao_id::text');
         } catch (error) {
           chunkResult = { data: null, error };
         }
-        const { data, error } = chunkResult;
+        const { data } = chunkResult;
+        let { error } = chunkResult;
+        // Confirma o RETURNING do próprio comando; sem leitura por linha ou patch posterior.
+        const expectedKeys = new Set(chunk.registros.map(r => JSON.stringify([r.codigo_produto, r.data_referencia])));
+        const returnedKeys = new Set();
+        const returnedIds = new Set();
+        const confirmed = Array.isArray(data) && data.length === chunk.registros.length && data.every(row => {
+          const key = JSON.stringify([row.codigo_produto, row.data_referencia]);
+          const id = row.id;
+          if (typeof id !== 'string' || !/^[1-9]\d*$/.test(id) || returnedIds.has(id)
+            || row.log_importacao_id !== lote.batchId || !expectedKeys.has(key) || returnedKeys.has(key)) return false;
+          returnedIds.add(id);
+          returnedKeys.add(key);
+          return true;
+        });
+        if (!error && !confirmed) error = new Error('Proveniência do chunk não confirmada pelo retorno da gravação; não repetir automaticamente.');
         chunks.push({ batchId: chunk.batchId, indice: chunk.indice,
           total_linhas: chunk.registros.length, status: error ? 'erro' : 'gravado' });
 
@@ -912,7 +909,9 @@ export const api = {
         batchId: lote.batchId,
         chunks,
         rastreabilidade: { identidade: 'log_importacao.id', persistencia_log: true,
-          persistencia_fatos: false, motivo: 'SCHEMA_SEM_VINCULO_LOTE_NO_FATO',
+          persistencia_fatos: true,
+          confirmacao_fatos: !chunks.length ? 'sem_fatos'
+            : chunks.some(chunk => chunk.status === 'erro') ? 'parcial_ou_nao_confirmada' : 'confirmada',
           fechamento_log: updateLogError ? 'nao_confirmado' : 'confirmado' },
         resumo,
         erros,

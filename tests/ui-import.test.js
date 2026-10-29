@@ -99,6 +99,18 @@ describe('createImportController — fluxo de importação', () => {
     expect(result.html).not.toContain('Execução no log:</b> 2026-03-01');
   });
 
+  it.each(['confirmada', 'parcial_ou_nao_confirmada'])('exibe a confirmação de proveniência %s sem inventar associação', async confirmacao => {
+    api.importarHistoricoCustosComLog.mockResolvedValue({ error: null, data: {
+      batchId: '41', rastreabilidade: { persistencia_fatos: true, confirmacao_fatos: confirmacao },
+      resumo: { total_linhas: 1, linhas_importadas: 1, linhas_erro: 0 }
+    } });
+    const { dom } = setup();
+    await dom.fileInput.emit('change');
+    const result = global.Swal.fire.mock.calls.find(([opts]) => opts.title === '1 itens importados com sucesso')[0];
+    expect(result.html).toContain(confirmacao === 'confirmada' ? 'confirmado nos chunks gravados' : 'confirmação parcial ou pendente');
+    expect(result.html).not.toContain('associação individual dos registros ao lote ainda não está disponível');
+  });
+
   it('normaliza o código (VAL-01), descarta linha inválida e envia payload com data_referencia', async () => {
     const { dom, state, fetchMetadata } = setup({ refDate: '2026-03-01' });
 

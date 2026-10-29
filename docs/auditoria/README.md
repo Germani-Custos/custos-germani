@@ -1,5 +1,7 @@
 # Auditoria Técnica — Kustos Germani
 
+> **LOG-02 preparado localmente — 29/10/2026:** lote no mesmo upsert dos fatos, retorno conferido e API legada bloqueada; migration ensaiada, **não aplicada ao Supabase** por decisão humana (writers sem pausa atual). Item continua PARCIAL; não usar writer novo com schema antigo. [Provas atuais e pendências](custos-lote-persistencia-validacao.md). Sem DDL/DML remoto, commit/push/deploy. Sucede o limite de preparação local da nota anterior.
+
 > **LOG-02 parcial — 26/10/2026:** identidade da execução reutiliza a PK confirmada do log e acompanha o controle dos chunks; falta vínculo persistido nos fatos. [Provas e limites](custos-identidade-lote-validacao.md), [contrato](../arquitetura/identidade-lote-custos.md) e [proposta documental de vínculo](../arquitetura/proposta-vinculo-lote-custos.md). Não encerra o item nem resolve retenção histórica. Sem migration, escrita remota ou publicação.
 
 > **LOG-03 / A360-CUS-04 — 26/10/2026:** comparação seleciona eventos depois do recorte de competência e distingue ausência de zero. TOP por produto + data completa conforme decisão humana; retenção atual limita pares históricos. [Provas e limites](custos-comparacao-recorte-validacao.md). Correção local, sem publicação/escrita remota; LOG-02 continua pendente.

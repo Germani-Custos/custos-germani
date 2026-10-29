@@ -13,6 +13,10 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 ## Tabelas centrais e contratos
 
 ### `historico_custos` (FATO)
+
+**Conferência do catálogo em 29/10/2026:** a lista histórica abaixo não descreve todas as nulabilidades/tipos reais. O remoto tem `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `codigo_produto TEXT NULL`, `criado_em TIMESTAMPTZ NULL DEFAULT now()` e custos NUMERIC sem precisão/escala fixadas. `custo_total` e `data_referencia` permanecem NOT NULL; `unique_produto_data` está presente. LOG-02 preserva essas diferenças sem saneamento. Nova coluna **somente preparada localmente, não aplicada**: `log_importacao_id BIGINT NULL` sem default, FK para `log_importacao(id)` (DELETE/UPDATE RESTRICT não diferível), índice parcial não único. Legado NULL sem backfill; upsert grava lote da última execução junto dos custos, sem alterar produto/data/`criado_em` ou criar snapshots. Não usar novo writer antes de migration/ativação controlada. [Contrato e limites](proposta-vinculo-lote-custos.md).
+
+Estrutura descrita no saneamento histórico:
 - `codigo_produto` TEXT NOT NULL
 - `descricao` TEXT
 - `custo_variavel` NUMERIC(18,4)

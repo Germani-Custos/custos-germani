@@ -72,7 +72,8 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
         criado_em timestamptz DEFAULT now(),atualizado_em timestamptz DEFAULT now());
       CREATE TABLE categorias_origem (id text PRIMARY KEY,codigo text,descricao text);
       CREATE TABLE categorias_familia (id text PRIMARY KEY DEFAULT gen_random_uuid(),codigo text UNIQUE,descricao text NOT NULL,criado_em timestamptz DEFAULT now());
-      ${protegidas.map(t => `CREATE TABLE ${t} (codigo text PRIMARY KEY,conteudo jsonb); INSERT INTO ${t} VALUES ('003','{"fato":"intacto"}');`).join('\n')}`);
+      ${protegidas.map(t => `CREATE TABLE ${t} (codigo text PRIMARY KEY,conteudo jsonb${t === 'historico_custos' ? ',log_importacao_id bigint NULL' : ''});
+        INSERT INTO ${t} VALUES ('003','{"fato":"intacto"}'${t === 'historico_custos' ? ',NULL' : ''});`).join('\n')}`);
     for (const table of ['categorias_origem', 'categorias_familia']) {
       const rows = table === 'categorias_origem' ? contexto.origens : contexto.familias;
       await db.query(`INSERT INTO ${table} (id,codigo,descricao) SELECT * FROM jsonb_to_recordset($1::jsonb) AS x(id text,codigo text,descricao text)`, [JSON.stringify(rows)]);
@@ -130,7 +131,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(log.metadados_origem.snapshot_referencia).toBe(res.body.snapshot_referencia);
     expect(log.metadados_origem.snapshot_master).toEqual(before.produtos);
     expect(storage.upload.mock.calls[0][2].upsert).toBe(false);
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
     const consulta = respostaWeb();
     await (await chamadaHandlerSomenteConsulta(storage))({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { lote: res.body.identificador_lote } }, consulta);
     expect(consulta.body.resultado.status).toBe('concluido');
@@ -155,7 +156,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect((await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows).toEqual([]);
     expect(storage.upload).not.toHaveBeenCalled();
     expect(storage.download).not.toHaveBeenCalled();
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it.each(['upload', 'download', 'publico'])('falha de snapshot %s reverte log antes de qualquer alteração no Master', async etapa => {
@@ -241,7 +242,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(result).toMatchObject({ antes: 8, depois: 4, inseridos: 1, atualizados: 1, removidos: 5 });
     expect(snapshot).toHaveBeenCalledOnce();
     expect((await ctx()).produtos.find(p => p.codigo_produto === '002')).toEqual(before.produtos.find(p => p.codigo_produto === '002'));
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it('executor compacto recusa dados incompatíveis com o manifesto sob locks sem snapshot', async () => {
@@ -270,7 +271,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(consulta.body.resultado.status).toBe('falhou');
     expect(consulta.body.resultado.inseridos).toBe(0);
     expect(consulta.body.resultado.snapshot_referencia).toContain('storage://');
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it('insere novo, atualiza existente, remove filtrados/ausente e registra snapshot/lote', async () => {
@@ -285,7 +286,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(lote.metadados_origem.registros_removidos).toBe(5);
     expect(lote.metadados_origem.snapshot_sha256).toBe(hashReconstrucao(before.produtos));
     expect(snapshot.mock.calls[0][0].snapshot_master).toEqual(before.produtos);
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it('origem/família ERP preenchidas atualizam os códigos brutos do Master', async () => {
@@ -296,7 +297,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     const result = await executar();
     expect(result.atualizados).toBe(1);
     expect((await ctx()).produtos.find(p => p.codigo_produto === '001')).toMatchObject({ origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: 'P801' });
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it('ERP vazio preserva origem/família mesmo quando descrição e agrupamento do produto são atualizados', async () => {
@@ -449,7 +450,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     expect(client.query.mock.calls.filter(([sql]) => sql === 'BEGIN')).toHaveLength(1);
     expect(client.query.mock.calls.at(-1)[0]).toBe('COMMIT');
     expect(client.query.mock.calls.some(([sql]) => /LOCK TABLE .*categorias_familia IN EXCLUSIVE MODE NOWAIT/.test(sql))).toBe(true);
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
     const consulta = respostaWeb();
     await handler({ method: 'GET', headers: { authorization: 'Bearer test' }, query: { lote: pedido.lote } }, consulta);
     expect(consulta.body.resultado).toMatchObject({ familias_inseridas: 2, familias_atualizadas: 1 });
@@ -473,7 +474,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
       const log = (await db.query('SELECT * FROM log_importacao_cadastro_mestre')).rows[0];
       expect(log).toMatchObject({ status: 'falhou', registros_inseridos: 0, registros_atualizados: 0, registros_erro: 1 });
       expect(log.metadados_origem.catalogo_familias).toMatchObject({ registros_inseridos: 0, registros_atualizados: 0 });
-      for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+      for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
     });
 
   it('constraint real em família aborta a reconstrução depois do DML do Master, sem estado parcial', async () => {
@@ -573,7 +574,7 @@ describe('Executor — PostgreSQL real em memória, sem Supabase', () => {
     const log = (await db.query('SELECT metadados_origem FROM log_importacao_cadastro_mestre')).rows[0].metadados_origem;
     expect(log.snapshot_master.find(p => p.codigo_produto === '002').agrupamento_comercial_erp_cod).toBe('C012');
     expect(log.protegidas_antes).toEqual(log.protegidas_depois);
-    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' } }]);
+    for (const t of protegidas) expect((await db.query(`SELECT * FROM ${t}`)).rows).toEqual([{ codigo: '003', conteudo: { fato: 'intacto' }, ...(t === 'historico_custos' ? { log_importacao_id: null } : {}) }]);
   });
 
   it('CAD-COM-01 erro após atualizar comercial reverte também a limpeza para NULL', async () => {

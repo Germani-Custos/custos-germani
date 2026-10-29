@@ -26,6 +26,7 @@ beforeAll(async () => {
   await db.exec(`
     CREATE TABLE historico_custos(id integer PRIMARY KEY, codigo_produto text, descricao text,
       data_referencia date NOT NULL, criado_em timestamptz, custo_total numeric, custo_variavel numeric, custo_direto_fixo numeric,
+      log_importacao_id bigint NULL,
       CONSTRAINT unique_produto_data UNIQUE(codigo_produto,data_referencia));
     CREATE TABLE dicionario_produtos(codigo_produto text PRIMARY KEY, descricao text, origem_id text, familia_id text, agrupamento_cod text);
     CREATE TABLE dicionario_master_produtos(codigo_produto text PRIMARY KEY, origem_cod text, familia_cod text);
@@ -75,8 +76,8 @@ beforeEach(async () => {
 
 async function add(id, date, imported, cost = 100, code = '001') {
   await db.query(`INSERT INTO historico_custos
-    (id,codigo_produto,descricao,data_referencia,criado_em,custo_total,custo_variavel,custo_direto_fixo)
-    VALUES ($1,$2,'Produto',$3,$4,$5,$6,$7)`, [id, code, date, imported, cost, cost * 0.6, cost * 0.4]);
+    (id,codigo_produto,descricao,data_referencia,criado_em,custo_total,custo_variavel,custo_direto_fixo,log_importacao_id)
+    VALUES ($1,$2,'Produto',$3,$4,$5,$6,$7,NULL)`, [id, code, date, imported, cost, cost * 0.6, cost * 0.4]);
 }
 
 async function auditFixture() {
@@ -188,8 +189,8 @@ describe('LOG-03 — recorte executado no PostgreSQL local antes da seleção de
   });
 
   it.each(methods)('%s: >1000 fatos, recorte/ordem repetidos em todas as páginas, sem N+1', async method => {
-    await db.exec(`INSERT INTO historico_custos(id,codigo_produto,data_referencia,criado_em,custo_total)
-      SELECT i, lpad(i::text,5,'0'), '2026-06-14', CASE WHEN i > 500 THEN '2026-10-02'::timestamptz ELSE '2026-10-01'::timestamptz END, 100
+    await db.exec(`INSERT INTO historico_custos(id,codigo_produto,data_referencia,criado_em,custo_total,log_importacao_id)
+      SELECT i, lpad(i::text,5,'0'), '2026-06-14', CASE WHEN i > 500 THEN '2026-10-02'::timestamptz ELSE '2026-10-01'::timestamptz END, 100, NULL
       FROM generate_series(1,1201) i`);
     const result = await api[method](period);
     expect(result.error).toBeNull();
@@ -201,8 +202,8 @@ describe('LOG-03 — recorte executado no PostgreSQL local antes da seleção de
   });
 
   it.each(['erro', 'pagina_incompleta', 'count_divergente', 'id_repetido', 'rejeicao'])('%s bloqueia retorno parcial de ambos os métodos', async mode => {
-    await db.exec(`INSERT INTO historico_custos(id,codigo_produto,data_referencia,criado_em,custo_total)
-      SELECT i,i::text,'2026-06-14','2026-10-01',100 FROM generate_series(1,501) i`);
+    await db.exec(`INSERT INTO historico_custos(id,codigo_produto,data_referencia,criado_em,custo_total,log_importacao_id)
+      SELECT i,i::text,'2026-06-14','2026-10-01',100,NULL FROM generate_series(1,501) i`);
     fault = (r, response) => {
       if (r.table !== 'historico_custos' || r.range[0] !== 500) return response;
       if (mode === 'erro') return { data: null, count: null, error: new Error('Leitura falhou') };
