@@ -52,7 +52,7 @@ const filters = createFiltersController({
   dom,
   state,
   executeOperationalBoundary,
-  fetchMetadata,
+  fetchMetadata: () => loadMasters({ force: true }),
   renderTable: table.renderTable,
   runReport,
   exportReport: exporter.exportReport
@@ -364,6 +364,8 @@ async function runReport(options = {}) {
     });
     if (error) throw new Error(error.message || 'Erro na consulta do histórico de custos.');
     if (!data?.length) {
+      state.reportRows = [];
+      await drillThrough.refreshActive(temporalFilters, []);
       dom.reportContent.classList.add('hidden');
       if (!silent) showToast('info', 'Sem dados para os filtros selecionados.');
       return;
@@ -404,7 +406,7 @@ async function runReport(options = {}) {
 
     // Se o drill-through permanecer aberto, o recorte temporal recém-alterado
     // deve atualizar o painel sem esperar outro clique na fila.
-    if (!selectedProduct) await drillThrough.refreshActive(temporalFilters);
+    if (!selectedProduct) await drillThrough.refreshActive(temporalFilters, rows.map(row => row.codigo));
 
     const hasTrendData = await executeOperationalBoundary(
       'renderizar análise temporal',

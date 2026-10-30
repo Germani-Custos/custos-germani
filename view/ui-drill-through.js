@@ -87,8 +87,13 @@ export function createDrillThroughController({ dom }) {
     dom.drillPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  async function refreshActive(temporalFilters) {
+  async function refreshActive(temporalFilters, eligibleCodes = null) {
     if (!activeCodigoProduto) return;
+    if (eligibleCodes && !eligibleCodes.includes(activeCodigoProduto)) {
+      activeCodigoProduto = null;
+      dom.drillPanel.classList.add('hidden');
+      return;
+    }
     await renderDrillThrough(activeCodigoProduto, temporalFilters);
   }
 

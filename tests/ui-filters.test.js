@@ -92,7 +92,7 @@ function setupCascade() {
     runReport,
     exportReport: vi.fn()
   });
-  return { dom, refreshCascade, runReport };
+  return { dom, state, refreshCascade, runReport };
 }
 
 describe('createFiltersController — refreshCascade em cadeia', () => {
@@ -131,5 +131,48 @@ describe('createFiltersController — refreshCascade em cadeia', () => {
     dom.dtEnd.value = '2026-03-31';
     refreshCascade('agrupamento');
     expect(runReport).toHaveBeenCalledWith({ silent: true });
+  });
+
+  it('reload/realtime: grupo removido volta a TODOS e produtos usam o valor aceito no mesmo refresh', () => {
+    const { dom, state, refreshCascade, runReport } = setupCascade();
+    dom.selI.replaceChildren = (...options) => { dom.selI.options = options; };
+    refreshCascade();
+    state.masters.hierarquia[0].agrupamento_cod = null;
+    state.masters.hierarquia[1].agrupamento_cod = null;
+    dom.dtStart.value = '2026-01-01';
+    dom.dtEnd.value = '2026-03-31';
+    refreshCascade();
+    expect(dom.selA.value).toBe('TODOS');
+    expect(dom.selI.options.map(o => o.value)).toEqual(['TODOS', '001', '002']);
+    expect(dom.selI.value).toBe('001');
+    expect(runReport).toHaveBeenLastCalledWith({ silent: true });
+  });
+
+  it('grupo ainda válido após reload invalida produto que saiu do recorte', () => {
+    const { dom, state, refreshCascade } = setupCascade();
+    state.masters.agrupamentos.push({ id: 'G2', descricao: 'Grp2' });
+    state.masters.hierarquia[0].agrupamento_cod = 'G2';
+    dom.selI.replaceChildren = (...options) => { dom.selI.options = options; };
+    refreshCascade();
+    expect(dom.selA.value).toBe('G1');
+    expect(dom.selI.value).toBe('TODOS');
+    expect(dom.selI.options.map(o => o.value)).toEqual(['TODOS', '002']);
+  });
+
+  it.each(['familia', 'origem'])('%s recalcula as opções e limpa seleções dependentes', trigger => {
+    const { dom, state, refreshCascade } = setupCascade();
+    state.masters.familias.push({ id: '20', descricao: 'F20' });
+    state.masters.agrupamentos.push({ id: 'G2', descricao: 'Grp2' });
+    Object.assign(state.masters.hierarquia[1], { origem_id: '2', familia_id: '20', agrupamento_cod: 'G2' });
+    dom.selA.replaceChildren = (...options) => { dom.selA.options = options; };
+    dom.selI.replaceChildren = (...options) => { dom.selI.options = options; };
+    dom.selO.value = trigger === 'origem' ? '2' : 'TODAS';
+    dom.selF.value = '20';
+    refreshCascade(trigger);
+    expect(dom.selA.value).toBe('TODOS');
+    expect(dom.selI.value).toBe('TODOS');
+    expect(dom.selA.options.map(o => o.value)).toEqual(['TODOS', 'G2']);
+    expect(dom.selI.options.map(o => o.value)).toEqual(['TODOS', '002']);
+    expect(dom.selF.value).toBe(trigger === 'origem' ? 'TODAS' : '20');
   });
 });

@@ -1,6 +1,6 @@
 # Backlog ativo de correções — Kustos
 
-Estado vigente em **29/10/2026**, após a implementação local A360-OP-02/VAL-03: **21 itens ativos — P0 = 1, P1 = 4, P2 = 10, P3 = 6.** VAL-03 passa aos encerrados localmente; ERR-03 permanece parcial, com o alcance OP corrigido nesta entrega. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; LOG-02 permanece ativo. Publicação dessas correções de frontend aguarda autorização própria.
+Estado vigente em **30/10/2026**, após CUS-AGR-01/PERF-03: **20 itens ativos — P0 = 1, P1 = 4, P2 = 9, P3 = 6.** PERF-03 passa aos encerrados localmente; a ausência real de vínculos de Agrupamento em produtos com custos foi diagnosticada, sem preencher dados ou certificar seleção positiva na UI. VAL-03 já está encerrado localmente; ERR-03 permanece parcial fora do alcance OP. A fotografia original de 22/10 permanece na reconciliação. SEC-03/SEC-07 e as implementações locais de MNT-OP-05/LOG-03/04/05/06 foram encerrados com provas abaixo; LOG-02 permanece ativo. Publicação dessas correções de frontend aguarda autorização própria.
 
 Esta é a fonte única da lista ativa. [Reconciliação e evidências](backlog-reconciliacao-2026-10-22.md) explicam a classificação de todos os itens antigos; [arquivo histórico](backlog-historico.md) conserva as listas anteriores integralmente. Novas capacidades pertencem ao [ROADMAP](../../ROADMAP.md). Checkboxes e rótulos antigos nos documentos temáticos são registros datados, não o estado vigente.
 
@@ -105,22 +105,6 @@ Cada item abaixo tem um único estado: **CONFIRMADO** ou **PARCIALMENTE RESOLVID
 - **Bloco recomendado:** C — Operação.
 
 ## P2
-
-### PERF-03
-
-**Cache de cascata sobrevive a mudança de conteúdo**
-
-- **ID:** PERF-03
-- **Prioridade:** P2
-- **Área:** Custos / Cache
-- **Problema:** Chave de memoização usa tamanhos das coleções, sem versão/conteúdo que mude com reclassificação ou rótulo.
-- **Evidência:** core/report-engine.js:getCascadeCacheKey; trocar apenas descrição mantendo cardinalidade devolveu o mesmo objeto com rótulo antigo (1001051). Ver também [protocolo e limites](backlog-reconciliacao-2026-10-22.md#evidências-e-limites).
-- **Impacto:** Filtros podem apresentar classificação/rótulo antigo após atualização dos masters.
-- **Estado:** PARCIALMENTE RESOLVIDO
-- **Critério de aceite:** Conteúdo alterado com mesmos tamanhos invalida o resultado; entrada idêntica reutiliza cache. Cobrir descrição, vínculo e reload/import/realtime, sem consulta por linha.
-- **Dependências:** Coordenar versão/invalidação com PERF-02.
-- **Origem:** ID histórico preservado; descrição e decisão anteriores no [inventário](backlog-reconciliacao-2026-10-22.md#perf-03).
-- **Bloco recomendado:** B — Confiabilidade da investigação.
 
 ### VAL-02
 
@@ -378,7 +362,6 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 ### Bloco B — Confiabilidade da investigação
 
 1. [LOG-02](#log-02) — Chunks são tratados como importações distintas.
-2. [PERF-03](#perf-03) — Cache de cascata sobrevive a mudança de conteúdo.
 
 ### Bloco C — Operação
 
@@ -405,15 +388,19 @@ A ordem combina risco e dependências; itens P2 do mesmo bloco não atrasam corr
 7. [MNT-08](#mnt-08) — Ranking depende de texto e emoji.
 8. [PERF-05](#perf-05) — Dois índices equivalentes em data de referência.
 
-SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a proteção da view. SEC-08 permanece aberto quanto a search_path e legado. SEC-06 precisa acompanhar a recuperação de ERR-04 antes de liberar escrita documental. LOG-05 precede alinhamento de exportação; LOG-02 define a unidade temporal para LOG-03. PERF-03 e PERF-02 compartilham invalidação. CFG-03 acompanha cada correção, e não uma campanha de testes somente ao final. Não repetir MNT-01, a renderização entregue de PERF-01 ou cargas históricas para iniciar essas correções.
+SEC-03 teve o modelo decidido e aplicado; SEC-07 foi encerrado junto com a proteção da view. SEC-08 permanece aberto quanto a search_path e legado. SEC-06 precisa acompanhar a recuperação de ERR-04 antes de liberar escrita documental. LOG-05 precede alinhamento de exportação; LOG-02 define a unidade temporal para LOG-03. PERF-03 foi corrigido localmente por conteúdo; PERF-02 continua responsável pelo ciclo geral de carregamento dos masters. CFG-03 acompanha cada correção, e não uma campanha de testes somente ao final. Não repetir MNT-01, a renderização entregue de PERF-01 ou cargas históricas para iniciar essas correções.
 
 ## Fora da execução automática
 
-**OP-CUSTO-01 — Fases 1/2 implementadas localmente:** o [contrato técnico](../arquitetura/op-custo.md), as [provas do núcleo/API](op-custo-fase1-validacao.md) e as [provas da apresentação](op-custo-fase2-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora dos 22 itens ativos e sem prioridade P0–P3 atribuída aqui. O limite de proveniência de LOG-02 permanece aberto; LOG-03/04/06 foram corrigidos separadamente em Custos. OP e OP×CUSTO não foram modificados nesta correção; validação visual manual da Fase 2 mantém a limitação de ambiente registrada. Escrita remota e publicação não estão autorizadas por esta referência.
+**OP-CUSTO-01 — Fases 1/2 implementadas localmente:** o [contrato técnico](../arquitetura/op-custo.md), as [provas do núcleo/API](op-custo-fase1-validacao.md) e as [provas da apresentação](op-custo-fase2-validacao.md) registram a investigação por produto/competência, preservando as oito decisões aprovadas. É capacidade do [ROADMAP](../../ROADMAP.md), fora da lista de itens ativos e sem prioridade P0–P3 atribuída aqui. O limite de proveniência de LOG-02 permanece aberto; LOG-03/04/06 foram corrigidos separadamente em Custos. OP e OP×CUSTO não foram modificados nesta correção; validação visual manual da Fase 2 mantém a limitação de ambiente registrada. Escrita remota e publicação não estão autorizadas por esta referência.
 
 PERF-04, fingerprint histórico, saúde autenticada do ambiente administrativo e atribuição da causa remota do HTTP 500 ficam na [fila de verificação](backlog-reconciliacao-2026-10-22.md#verificações-pendentes). Agrupamento ausente, origem ERP sem catálogo e produto fora do operacional exigem diagnóstico/decisão de dados; não autorizam preenchimento, sincronização ou nova fonte de classificação. Features estão no ROADMAP.
 
 ## Encerrados após a reconciliação
+
+### PERF-03
+
+**[x] RESOLVIDO LOCALMENTE — 30/10/2026; publicação pendente de autorização.** Cache agora fotografa o conteúdo efetivamente consumido, inclusive fallback dicionário, vínculos, códigos/rótulos e produtos. Alterações com mesmos tamanhos invalidam; conteúdo idêntico reutiliza. Callback realtime recebido relê masters completos. CUS-AGR-01 também corrige recálculo de produtos após grupo invalidado, fechamento do drill-through excluído e limpeza da fonte do XLSX em recorte vazio. Não altera política de retenção/carregamento geral de masters (PERF-02), importadores ou classificação. Leitura atual confirmou 34 categorias, 447 produtos com custos e zero vínculos entre eles; tela 12 origens/37 famílias/zero agrupamentos. Caminho positivo comprovado com fixtures locais, **sem cenário produtivo para selecionar agrupamento real**. 990 testes/qualidade e UI autenticada local conferidos; [provas e limites](custos-agrupamento-validacao.md). Histórico do defeito no [inventário](backlog-reconciliacao-2026-10-22.md#perf-03). Sem escrita remota, importação real, schema/RLS/Auth, commit/push/deploy.
 
 ### VAL-03
 

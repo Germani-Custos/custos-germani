@@ -1,5 +1,15 @@
 # Matriz de Contratos Operacionais (UI ↔ API ↔ Banco ↔ Engines)
 
+## CUS-AGR-01 / PERF-03 — cascata de Agrupamento de Custos (30/10/2026)
+
+`getMasters()` → SELECTs completos existentes → projeção analítica (origem/família ERP e agrupamento operacional preservados) → hierarquia somente de produtos com custos → `calculateCascadeOptions` → selects → `getHistorico`/comparações com código selecionado. No catálogo real, `categorias_agrupamento.id` TEXT é código de negócio; quando houver `codigo` separado, a normalização existente o prioriza. Nunca resolver descrição ou UUID como código. Categoria sem produto com custos e vínculo sem catálogo não geram opção.
+
+Cache em `core/report-engine.js` fotografa os campos efetivamente consumidos: filtros, vínculos/códigos da hierarquia ou fallback dicionário, IDs/rótulos de famílias/agrupamentos e códigos/descrições de produtos. Serialização de tuplas estruturadas detecta mudanças com a mesma cardinalidade e evita colisão por delimitador; conteúdo idêntico reutiliza a referência. A comparação custa O(n) sobre os campos da cascata e não faz I/O. Não exige revisão mantida por outro writer.
+
+`refreshCascade` mantém resets Origem → Família → Agrupamento → Produto e usa o grupo aceito após `fillSelect` para os produtos. Realtime recebido chama a carga completa de masters, sem alteração das fontes de eventos/publicação. Relatório/KPIs/gráficos compartilham o filtro existente; `refreshActive(temporalFilters, eligibleCodes)` fecha produto excluído do relatório, preservando a leitura temporal dos elegíveis. Recorte vazio limpa `state.reportRows` antes de retornar, impedindo exportação de uma fila anterior. Exportador/comparadores/prioridade/TOP-200 não mudam.
+
+Leitura real e UI autenticada local/publicada: 12 origens, 37 famílias, zero agrupamentos; nenhum dos 447 produtos com custos tem vínculo operacional. Selecionar grupo real e comparar TODOS permanece sem cenário produtivo elegível. Fixtures locais cobrem o caminho positivo sem gravar dados remotos. `data_referencia` permanece competência; `criado_em` evento/importação. Sem schema/RLS/Auth/importadores/parser/OP/OP×CUSTO, importação real, commit/push/deploy. [Provas e limitações](../auditoria/custos-agrupamento-validacao.md); [contrato da cascata](../regras-negocio/relacionamentos-cascata.md).
+
 ## LOG-02 — proveniência preparada localmente, ativação pendente (29/10/2026)
 
 Preview confirmado → `importarHistoricoCustosComLog` → INSERT único do log/ID textual confirmado → contexto imutável local → validação/preparação existente → chunks de 400 com `log_importacao_id` em cada registro → mesmo upsert dos custos → retorno ID/chave/FK conferido → fechamento do mesmo log. Sem ID ou com erro inicial, bloquear operações seguintes. Lote externo não tem autoridade. Erro/rejeição/integridade do retorno não confirma chunk nem cria lote/retry novo. Resultado distingue vínculo confirmado, parcial/pendente ou nenhum fato enviado. `upsertHistoricoCustos` legado recusa antes de I/O.

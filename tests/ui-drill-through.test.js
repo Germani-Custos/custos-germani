@@ -153,4 +153,24 @@ describe('createDrillThroughController — renderDrillThrough', () => {
     expect(dom.drillPanel.classList.removed).not.toContain('hidden');
     expect(global.Swal.fire).toHaveBeenCalled(); // showToast('error', ...)
   });
+
+  it.each([[[]], [['002']]])('fecha produto excluído pelo recorte %j sem consultar novamente', async eligibleCodes => {
+    api.getProductHistory.mockResolvedValue({ data: [{ data_referencia: '2026-06-01', custo_total: 3, delta: null, deltaPerc: null }], error: null });
+    const dom = fakeDom();
+    const controller = createDrillThroughController({ dom });
+    await controller.renderDrillThrough('001');
+    await controller.refreshActive({ start: '2026-06-01' }, eligibleCodes);
+    expect(dom.drillPanel.classList.added).toContain('hidden');
+    expect(api.getProductHistory).toHaveBeenCalledOnce();
+    await controller.refreshActive({}, ['001']);
+    expect(api.getProductHistory).toHaveBeenCalledOnce();
+  });
+
+  it('produto que permanece no agrupamento conserva o histórico temporal', async () => {
+    api.getProductHistory.mockResolvedValue({ data: [{ data_referencia: '2026-06-01', custo_total: 3, delta: null, deltaPerc: null }], error: null });
+    const controller = createDrillThroughController({ dom: fakeDom() });
+    await controller.renderDrillThrough('001');
+    await controller.refreshActive({ competencias: ['2026-06-01'] }, ['001']);
+    expect(api.getProductHistory).toHaveBeenLastCalledWith('001', { competencias: ['2026-06-01'] });
+  });
 });

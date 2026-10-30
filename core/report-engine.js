@@ -210,12 +210,26 @@ function classifyInstability(score) {
   return 'MUITO INSTÁVEL';
 }
 
-// PERF-03: cache de cascata — evita recalcular quando estado não mudou
+// PERF-03: memoização pelo conteúdo consumido, inclusive em reload/realtime.
+// Masters é mutável: identidade do objeto/cardinalidade não prova igualdade.
 let _cascadeCache = null;
 let _cascadeCacheKey = '';
 
 function getCascadeCacheKey(state, masters) {
-  return `${state.origem}|${state.familia}|${state.agrupamento}|${(masters.hierarquia || []).length}`;
+  const hierarchy = (masters.hierarquia || []).length ? masters.hierarquia : (masters.dicionario || []);
+  // Tuplas estruturadas evitam colisões por delimitador e cobrem somente as
+  // dependências das opções. A string guarda uma fotografia, não referências
+  // que possam mudar depois do cache. Não há I/O nem revisão externa exigida.
+  return JSON.stringify([
+    [state.origem, state.familia, state.agrupamento],
+    hierarchy.map(item => [
+      normalizeCodigoProduto(item?.codigo_produto ?? item?.produto ?? item?.codigo),
+      item?.origem_id, item?.familia_id, item?.agrupamento_cod
+    ]),
+    (masters.familias || []).map(item => [item.id, item.descricao]),
+    (masters.agrupamentos || []).map(item => [item.id, item.descricao]),
+    (masters.produtos || []).map(item => [normalizeCodigoProduto(item?.codigo_produto), item?.descricao])
+  ]);
 }
 
 /**

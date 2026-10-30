@@ -119,14 +119,20 @@ export function createFiltersController({ dom, state, executeOperationalBoundary
     const { familyOptions } = calculateCascadeOptions({ origem: dom.selO.value, familia: familyValue }, state.masters);
     fillSelect(dom.selF, familyOptions, { value: 'TODAS', label: 'TODAS' }, familyValue);
 
-    const { groupOptions, productOptions } = calculateCascadeOptions({
+    const cascadeState = {
       origem: dom.selO.value,
       familia: dom.selF.value || 'TODAS',
       agrupamento: dom.selA.value || 'TODOS'
-    }, state.masters);
+    };
+    const options = calculateCascadeOptions(cascadeState, state.masters);
     const groupValue = ['origem', 'familia'].includes(trigger) ? 'TODOS' : currentGroup;
     const itemValue = ['origem', 'familia', 'agrupamento'].includes(trigger) ? 'TODOS' : currentItem;
-    fillSelect(dom.selA, groupOptions, { value: 'TODOS', label: 'TODOS' }, groupValue);
+    fillSelect(dom.selA, options.groupOptions, { value: 'TODOS', label: 'TODOS' }, groupValue);
+    // Reload/realtime pode remover o grupo selecionado. Produtos devem usar
+    // o valor aceito pelo select (TODOS), nunca o grupo que acabou de cair.
+    const { productOptions } = dom.selA.value === cascadeState.agrupamento ? options : calculateCascadeOptions({
+      ...cascadeState, agrupamento: dom.selA.value || 'TODOS'
+    }, state.masters);
     fillSelect(dom.selI, productOptions, { value: 'TODOS', label: 'TODOS' }, itemValue);
     autoRefreshReport();
   }

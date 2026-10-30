@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createExportController } from '../view/ui-export.js';
-import { calculateCascadeOptions, buildReportRows } from '../core/report-engine.js';
+import { calculateCascadeOptions, buildReportRows, calculateKpis } from '../core/report-engine.js';
 
 const client = vi.hoisted(() => ({ from: vi.fn(), insert: vi.fn(), update: vi.fn(), delete: vi.fn(), upsert: vi.fn(), rpc: vi.fn() }));
 vi.mock('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm', () => ({ createClient: () => client }));
@@ -8,6 +8,97 @@ vi.mock('../src/config/app-config.js', () => ({
   appConfig: { supabase: { url: 'https://example.supabase.co', anonKey: 'test-key' }, enableVerboseLogs: false }, debugLog: vi.fn()
 }));
 import { api } from '../src/services/api.js';
+
+describe('Cascata de Custos — agrupamento operacional completo', () => {
+  function prepararAgrupamentos() {
+    base(4, 5); // Quinto produto tem categoria, mas nenhum fato de custo.
+    tables.categorias_familia.push({ id: 'f2', descricao: 'Outra família' });
+    tables.categorias_agrupamento = [
+      { id: 'M005', descricao: 'Mesmo rótulo' },
+      { id: 'M006', descricao: 'Mesmo rótulo' },
+      { id: 'SEM_CUSTO', descricao: 'Somente cadastro' }
+    ];
+    tables.dicionario_produtos[1].agrupamento_cod = 'M006';
+    Object.assign(tables.dicionario_produtos[2], { familia_id: 'f2', agrupamento_cod: 'M006' });
+    tables.dicionario_produtos[3].agrupamento_cod = 'SEM_CATALOGO';
+    tables.dicionario_produtos[4].agrupamento_cod = 'SEM_CUSTO';
+    tables.historico_custos.push(...tables.historico_custos.map(r => ({ ...r, id: r.id + 10,
+      data_referencia: '2026-05-01', criado_em: '2026-05-10T10:00:00Z', custo_total: 80 })));
+  }
+
+  it('getMasters mantém códigos na projeção/hierarquia e exclui categorias sem custos ou sem catálogo', async () => {
+    prepararAgrupamentos();
+    const masters = await api.getMasters();
+    expect(masters.error).toBeNull();
+    expect(masters.agrupamentos.map(g => g.id)).toEqual(['M005', 'M006']);
+    expect(masters.dicionario.find(p => p.codigo_produto === codigo(0)).agrupamento_cod).toBe('M005');
+    expect(masters.hierarquia.find(p => p.codigo_produto === codigo(0)).agrupamento_cod).toBe('M005');
+    const all = { origem: 'TODAS', familia: 'TODAS', agrupamento: 'TODOS' };
+    expect(calculateCascadeOptions(all, masters).groupOptions.map(g => g.value)).toEqual(['M005', 'M006']);
+    expect(calculateCascadeOptions({ ...all, familia: 'f2' }, masters).groupOptions).toEqual([{ value: 'M006', label: 'Mesmo rótulo' }]);
+    expect(calculateCascadeOptions({ ...all, agrupamento: 'M005' }, masters).productOptions.map(p => p.value)).toEqual([codigo(0)]);
+    somenteLeituras();
+  });
+
+  it('codigo é a chave quando id técnico difere; descrição não resolve vínculo', async () => {
+    prepararAgrupamentos();
+    tables.categorias_agrupamento[0] = { id: 'uuid-tecnico', codigo: 'M005', descricao: 'Mesmo rótulo' };
+    const masters = await api.getMasters();
+    expect(masters.agrupamentos.find(g => g.codigo === 'M005').id).toBe('M005');
+    expect(calculateCascadeOptions({ origem: 'TODAS', familia: 'TODAS', agrupamento: 'M005' }, masters).productOptions.map(p => p.value)).toEqual([codigo(0)]);
+    const history = await api.getHistorico({ ...filters, agrupamento: 'Mesmo rótulo' });
+    expect(history.data).toEqual([]);
+    somenteLeituras();
+  });
+
+  it('base sem vínculos retorna zero agrupamentos, sem usar categorias soltas ou inferir pelo ERP', async () => {
+    prepararAgrupamentos();
+    tables.dicionario_produtos.forEach(p => { p.agrupamento_cod = null; });
+    tables.dicionario_produtos[4].agrupamento_cod = 'SEM_CUSTO';
+    const masters = await api.getMasters();
+    expect(masters.agrupamentos).toEqual([]);
+    expect(masters.hierarquia.every(p => p.agrupamento_cod === null)).toBe(true);
+    expect(masters.produtos).toHaveLength(4);
+    somenteLeituras();
+  });
+
+  it.each([['M005', [0]], ['M006', [1, 2]], ['TODOS', [0, 1, 2, 3]]])('grupo %s restringe relatório, KPIs, gráficos, drill-through e XLSX', async (agrupamento, indices) => {
+    prepararAgrupamentos();
+    const before = globalThis.structuredClone(tables);
+    const selectedCodes = indices.map(codigo);
+    const selection = { ...filters, agrupamento };
+    const masters = await api.getMasters();
+    const history = await api.getHistorico(selection);
+    expect(history.error).toBeNull();
+    const rows = buildReportRows(history.data, masters);
+    expect(rows.map(r => r.codigo).sort()).toEqual(selectedCodes);
+    expect(calculateKpis(rows).totalItens).toBe(indices.length);
+    expect(calculateKpis(rows).totalAlertas).toBe(indices.length);
+    const comparison = await api.getLatestImportComparison(selection);
+    expect(comparison.data.imports.map(r => r.quantidade)).toEqual([indices.length, indices.length]);
+    const top = await api.getTopVariacoesImportacao(selection);
+    expect([...new Set(top.data.semComparativo.map(r => r.codigo_produto))].sort()).toEqual(selectedCodes);
+    for (const code of selectedCodes) {
+      const drill = await api.getProductHistory(code, filters);
+      expect(drill.data).toHaveLength(2);
+      expect(drill.data.every(r => agrupamento === 'TODOS' || r.agrupamento_cod === agrupamento)).toBe(true);
+    }
+    const sheets = [];
+    const xlsx = { utils: { json_to_sheet: data => { sheets.push(data); return {}; }, book_new: () => ({}), book_append_sheet: vi.fn() }, writeFile: vi.fn() };
+    const select = text => ({ options: [{ textContent: text }], selectedIndex: 0 });
+    const dom = { dtStart: { value: filters.start }, dtEnd: { value: filters.end }, selI: { value: 'TODOS' }, selO: select('TODAS'), selF: select('TODAS'), selA: select(agrupamento) };
+    vi.stubGlobal('XLSX', xlsx);
+    vi.stubGlobal('Swal', { fire: async () => ({ isConfirmed: true, value: ['Produto (código)'] }) });
+    try {
+      await createExportController({ dom, state: { reportRows: rows, reportView: { quickFilter: 'all' } },
+        executeOperationalBoundary: async (_name, action) => action(), getOperationalPriority: () => ({ label: 'Estável' }), buildInvestigativeSummary: () => 'Contexto'
+      }).exportReport();
+      expect(sheets[1].map(r => r['Produto (código)']).sort()).toEqual(selectedCodes);
+    } finally { vi.unstubAllGlobals(); }
+    expect(tables).toEqual(before);
+    somenteLeituras();
+  });
+});
 
 const codigo = index => String(100000 + index);
 const filters = { start: '2026-02-01', end: '2027-03-15' };

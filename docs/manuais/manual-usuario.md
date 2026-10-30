@@ -49,6 +49,10 @@ Na área **Custos**, digite código ou descrição na busca rápida e escolha a 
 
 Em Custos, Origem/Família usam a classificação oficial do Master ERP para códigos que existem nele. Produtos fora do Master preservam a classificação operacional. Campo ERP vazio ou sem correspondência no catálogo permanece sem classificação. Agrupamento continua sendo o manual do Kustos. Isso não atualiza o Cadastro Operacional.
 
+Agrupamento mostra somente categorias vinculadas a produtos com histórico de custos na Origem/Família atuais. Sem Família, considera toda a Origem selecionada; sem Origem, todo o universo de Custos. **TODOS** inclui também produtos sem agrupamento. Se só houver TODOS, confira os vínculos operacionais antes de concluir falha da tela; categorias soltas e agrupamentos ERP não criam opções.
+
+Mudar Família limpa Agrupamento e Produto; mudar Origem limpa os três dependentes. Atualização do cadastro mantém somente seleções ainda válidas. Um produto aberto no histórico que saiu do relatório tem o painel fechado; análise vazia não exporta a fila anterior. Classificação é atual; `data_referencia` continua competência e `criado_em` evento/importação. [Contrato e limites da validação local](../auditoria/custos-agrupamento-validacao.md).
+
 Para investigar uma família ERP, escolha Origem → Família, mantenha **Item/Produto = TODOS** e clique **Analisar**. A fila contém todos os produtos dessa família com fatos no período; escolher um produto restringe a análise individual. Gráficos, drill-through e exportação seguem o mesmo conjunto e recorte: `data_referencia` é competência, `criado_em` é importação.
 ### Ler a fila
 
