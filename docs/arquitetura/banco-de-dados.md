@@ -12,6 +12,8 @@ Migração aplicada em `sql/2026-05-25_saneamento_operacional_schema.sql` para a
 
 ## Tabelas centrais e contratos
 
+Conferência somente leitura de identidade/classificação em 30/10/2026: [Auditoria 3](../auditoria/cadastro-mestre-universo-canonico.md). Os tipos de referência abaixo refletem o catálogo real; os relatos de preparação e carga permanecem datados, sem autorizar nova execução.
+
 ### `historico_custos` (FATO)
 
 **Catálogo e migration conferidos em 29/10/2026:** o remoto tem `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `codigo_produto TEXT NULL`, `criado_em TIMESTAMPTZ NULL DEFAULT now()`, `custo_total NUMERIC(15,2) NOT NULL` e componentes de custo NUMERIC sem escala fixa. `data_referencia` é DATE NOT NULL; `unique_produto_data` preservada. A descrição anterior inferiu erroneamente ausência de escala a partir de data_type=NUMERIC; numeric_precision/numeric_scale confirmam 15/2 para o total. Nada foi saneado/alterado nessas colunas. LOG-02 aplicado como 20261029165515: `log_importacao_id BIGINT NULL` sem default, FK RESTRICT não diferível e índice parcial não único. Após DDL, 2.481 legados NULL; duas reimportações reais das mesmas 349 chaves agora apontam ao lote 31, sem mudar valores/IDs/datas/timestamps ou criar linhas; 2.132 legados não tocados seguem NULL. Sem backfill/snapshots. Um chunk por execução; multichunk produtivo pendente. [Contrato](proposta-vinculo-lote-custos.md) e [provas](../auditoria/custos-lote-ativacao-validacao.md). A lista abaixo é estrutura histórica, não o catálogo atual.
@@ -29,8 +31,8 @@ Estrutura descrita no saneamento histórico:
 ### `dicionario_produtos` (DIMENSÃO)
 - `codigo_produto` TEXT NOT NULL
 - `descricao` TEXT
-- `origem_id` UUID
-- `familia_id` UUID
+- `origem_id` TEXT (referência ao ID da categoria de origem)
+- `familia_id` TEXT (referência ao ID da categoria de família, atualmente em formato UUID)
 - `agrupamento_cod` TEXT FK → `categorias_agrupamento.id` (classificação efetiva Kustos)
 - `agrupamento_override_manual_cod` TEXT NULL FK → `categorias_agrupamento.id`
 - `agrupamento_classificacao_origem` TEXT NULL (`MASTER`, `MANUAL`, `LEGADO_NAO_RASTREAVEL`)
@@ -42,7 +44,7 @@ Estrutura descrita no saneamento histórico:
 - `descricao`, `familia_cod`, `origem_cod` TEXT (dados básicos do ERP)
 - `ultima_importacao_cadastro_mestre_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 - `agrupamento_erp_valor` TEXT NULL (Agrup. Prod. bruto recebido do ERP)
-- `agrupamento_comercial_erp_cod` TEXT NULL e `agrupamento_comercial_erp_descricao` TEXT NULL (Agrup. Com. e seu rótulo, opcionais; migration CAD-COM-01 aplicada em produção como 20261019173633 na etapa CAD-COM-PROD-01; ainda sem carga comercial)
+- `agrupamento_comercial_erp_cod` TEXT NULL e `agrupamento_comercial_erp_descricao` TEXT NULL (Agrup. Com. e seu rótulo, opcionais; migration CAD-COM-01 aplicada em produção como 20261019173633 na etapa CAD-COM-PROD-01, que terminou sem carga comercial. A fotografia de 30/10 confirma 162 pares preenchidos e 698 vazios; isso não atribui a origem da carga nem autoriza repeti-la)
 - `agrupamento_erp_importacao_id` BIGINT NULL FK → `log_importacao_cadastro_mestre.id`
 
 É a fonte ERP consultada pelo painel Cadastro Mestre ERP, separada da classificação operacional. As colunas de agrupamento ERP preservam o valor bruto e seu lote, mas não o convertem para categoria Kustos: a ponte ERP → Kustos ainda não existe. `dicionario_produtos` continua sendo a dimensão operacional do runtime. A projeção CUSTOS-ERP-01 enriquece exclusivamente a análise de Custos com origem/família ERP, sem reconciliação ou escrita; presença no Master determina autoridade inclusive quando o campo é vazio. Nenhuma família ERP sem ponte determinística deve ser categorizada por descrição.
@@ -53,12 +55,12 @@ Estrutura descrita no saneamento histórico:
 - o registro de ausência de importações pertence à etapa estrutural original; a primeira carga e reconstrução posteriores estão documentadas nos contratos/evidências, sem nova leitura nesta revisão.
 
 ### `categorias_origem`
-- `id` UUID (chave técnica)
+- `id` TEXT (chave técnica; os 50 valores atuais coincidem com `codigo`)
 - `codigo` TEXT (chave de negócio)
 - `descricao` TEXT
 
 ### `categorias_familia`
-- `id` UUID (chave técnica)
+- `id` TEXT (chave técnica, valores em formato UUID distintos do código de negócio)
 - `codigo` TEXT (chave de negócio)
 - `descricao` TEXT
 
@@ -70,7 +72,7 @@ Estrutura descrita no saneamento histórico:
 ### `log_importacao`
 - `id` BIGINT/IDENTITY/PK existente: identidade reutilizada da execução de Custos (`batchId` textual no retorno).
 - rastreabilidade de execução de import (`status`, volumes, `iniciado_em`, `finalizado_em`, `data_referencia`)
-- LOG-02 parcial: o schema versionado não possui vínculo equivalente do fato `historico_custos` para esse log. O controle do chunk contém o ID, mas o payload do fato não recebe coluna inexistente. Legado não é associado por horário/competência. [Contrato](identidade-lote-custos.md) e [proposta documental separada](proposta-vinculo-lote-custos.md); nenhuma migration aplicada ou retenção de snapshots criada. Catálogo remoto precisa ser conferido antes de qualquer futura alteração autorizada.
+- Na preparação inicial de LOG-02 o vínculo ainda não existia. Situação vigente após a ativação de 29/10: `historico_custos.log_importacao_id` referencia este log no mesmo upsert, conforme a descrição atual do fato acima. Permanecem 2.132 fatos legados NULL e 349 vinculados ao lote 31 na fotografia de 30/10; não associar legado por horário/competência. LOG-02 continua parcial pelo aceite multichunk, sem snapshots de versões. [Contrato](identidade-lote-custos.md) e [provas da ativação](../auditoria/custos-lote-ativacao-validacao.md).
 
 ### `apontamentos_op` e `log_importacao_op`
 - `apontamentos_op` guarda cada evento do relatório de apontamentos de OP, associado opcionalmente a `log_importacao_op`.
@@ -82,8 +84,8 @@ Estrutura descrita no saneamento histórico:
 
 ## Estratégia para órfãos de agrupamento
 
-- Produto sem `agrupamento_cod` recebe fallback explícito `SEM_AGRUPAMENTO`.
-- Inconsistência não é mascarada: usar a view `vw_produtos_orfaos_agrupamento` para triagem (`PENDENTE_CATEGORIZACAO`, `AGRUPAMENTO_INVALIDO`, `OK`).
+- Ausência de `agrupamento_cod` permanece explícita, inclusive NULL; não há preenchimento automático comprovado com `SEM_AGRUPAMENTO`. A sentinela existente indica pendência, não grupo investigativo atribuído.
+- A view legada `vw_produtos_orfaos_agrupamento` deriva do operacional: a sentinela retorna `PENDENTE_CATEGORIZACAO`; referência sem correspondência, inclusive NULL, retorna `AGRUPAMENTO_INVALIDO`; vínculo encontrado retorna `OK`. Ela não cria identidades nem é fonte da leitura atual de diagnóstico da API.
 - O diagnóstico frontend usa apenas `supabase.from()` e não deve depender de uma coluna única de `categorias_agrupamento`; a chave válida é resolvida por `codigo`/`id`/`cod`. Falha de consulta retorna estado `indisponivel`, não `[]`.
 
 ## Índices operacionais críticos
@@ -97,5 +99,5 @@ Estrutura descrita no saneamento histórico:
 ## Regra de identidade
 
 - Frontend exibe `descricao`.
-- Backend usa `codigo`/FK.
+- Produto usa `normalizeCodigoProduto()` compartilhado por `codigo_produto` e `cod_produto` de OP; categorias usam seus códigos/IDs conforme o contrato de cada fonte. Descrição não define identidade nem equivalência entre códigos.
 - UUID é chave técnica, nunca semântica de negócio.

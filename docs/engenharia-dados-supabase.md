@@ -5,18 +5,19 @@ Este documento é uma visão temática do fluxo de Custos; modelo completo e FKs
 ## 1) Modelo de dados principal
 
 ### `categorias_origem`
-- `id` (UUID, chave técnica)
+- `id` (TEXT no catálogo real; os valores atuais coincidem com `codigo`)
 - `codigo` (TEXT, chave de negócio)
 - `descricao` (TEXT)
 
 ### `categorias_familia`
-- `id` (UUID, chave técnica)
+- `id` (TEXT no catálogo real, com valores em formato UUID; chave técnica distinta de `codigo`)
 - `codigo` (TEXT, chave de negócio)
 - `descricao` (TEXT)
 
 ### `categorias_agrupamento`
 - usada para enriquecer `agrupamento_cod` com descrição.
 - o frontend usa `codigo`/`id` normalizado para montar opções de filtro.
+- no catálogo real atual, `id` é TEXT com o código de agrupamento e não existe coluna `codigo`; a resolução respeita o formato disponível.
 
 ### `dicionario_produtos`
 Fonte operacional da hierarquia para a auditoria:
@@ -43,9 +44,10 @@ Constraint documentada no modelo especializado: `unique_produto_data`, UNIQUE (`
 ## 2) Regras de identidade
 
 - `codigo` em categorias é a referência de negócio.
-- `id` UUID é referência técnica (FK).
+- `id` é referência técnica conforme o catálogo de cada categoria; não presumir tipo UUID nem convertê-lo em código de negócio.
 - Frontend exibe `descricao`; backend persiste relacionamento técnico.
 - Não usar descrição textual para definir categoria.
+- Produto usa `normalizeCodigoProduto()` de `core/spreadsheet-engine.js`; `cod_produto` de OP compartilha esse domínio. Identidade, classificação e existência de fatos são conceitos distintos. A [Auditoria 3](auditoria/cadastro-mestre-universo-canonico.md) registra a cobertura observada e uma proposta lógica ainda não implementada.
 
 ---
 
@@ -56,7 +58,8 @@ Cascata da UI:
 **Origem → Família → Agrupamento → Produto**
 
 Fonte de dados usada pelo frontend:
-- `api.getMasters` carrega histórico + dicionário + categorias.
+- `api.getMasters` carrega histórico, dicionário operacional, Master ERP e categorias. Em Custos, origem/família vêm do Master quando o código existe nele, inclusive campos vazios/sem resolução; fallback operacional somente fora do Master. A projeção é em memória, sem sincronizar cadastros.
+- Agrupamento permanece operacional; os cinco agrupamentos ERP não definem automaticamente categoria Kustos. OP conserva a classificação operacional.
 - Filtros exibem apenas valores que aparecem em produtos com custo histórico.
 
 `historico_custos` não armazena lógica de categorização; ele armazena custo por data.

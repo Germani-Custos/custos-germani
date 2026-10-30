@@ -1,0 +1,2482 @@
+{
+  "versao": "AUDITORIA_CONTRATO_RECONSTRUCAO_INCREMENTAL_V1",
+  "status": "CONCLUIDO",
+  "contrato_aprovado": false,
+  "implementado": false,
+  "implementacao_liberada": false,
+  "data": "2026-10-30",
+  "head": "486b646b25d0929dedb80804493cdcd88b34e537",
+  "project_ref": "umpebdovrazzrdndhigc",
+  "fontes": {
+    "documentos_preservados": [
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-classificacao-validacao.md",
+        "Hash": "3F40DED6B9A696769AC4E63CC5EB0B9B388C155A417D715B1ABE2BB5265EB402"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-classificacao-evidencias.json",
+        "Hash": "DA3DBBFA805F94D10A9F0CE601F0745D1FC50EA867BA299EB8BBA53A8C30067E"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-reconciliacao-validacao.md",
+        "Hash": "F1D73F6DB0F20FFEC076D9A3EC8E24970E1A01F9933DD113FE1CA3AB989DF661"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-reconciliacao-evidencias.json",
+        "Hash": "B2351E66EDBE4DD311BB7E6EFB25C12238F528B804DD2ACEB3ED56896F53E399"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-universo-canonico.md",
+        "Hash": "1512F1960D60F564BEAFA95C29C3907053E0CD239372460B917CD36DA39D4DC2"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\auditoria\\cadastro-mestre-universo-canonico-evidencias.json",
+        "Hash": "5DF885D83C8424D3DA326358C5B5A5D6AB927698275CAC8279AC70D2A9DB0928"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\arquitetura\\banco-de-dados.md",
+        "Hash": "ACFBB6E29EE26B9B6D76D877A5B175AFF377290839E1A706ACDC3BE5E3CA88E2"
+      },
+      {
+        "Path": "D:\\Meus Documentos - Aprendiz Custos\\Documentos\\GitHub\\custos-germani\\docs\\engenharia-dados-supabase.md",
+        "Hash": "60159B2A73DB8729B10A564B2A94E51CEAC25E59074F402A3D4A2E2CFBE214DC"
+      }
+    ],
+    "codigo_inspecionado": [
+      {
+        "path": "core/spreadsheet-engine.js",
+        "sha256": "46f84a3a34867328ce093fdf11797377f700b7849178a9a3a885e644bf3427aa"
+      },
+      {
+        "path": "src/services/cadastro-mestre-preview.js",
+        "sha256": "42a6aae60b23ad7e75643e6cdb955da9f7dab3442e384b64f5c7d40ff63e8320"
+      },
+      {
+        "path": "core/cadastro-mestre-preview-engine.js",
+        "sha256": "eac072ee38e2b65d9e57781b6107f5f51281ee3a910f30f24b11711cef0037b1"
+      },
+      {
+        "path": "core/cadastro-mestre-approval-engine.js",
+        "sha256": "3c4f581b4feccdc6546d74ff8c93c23eaf41f5c26e0fac4b28a2f977b8b4c923"
+      },
+      {
+        "path": "core/cadastro-mestre-reconstruction-engine.js",
+        "sha256": "434295dabe2eff358c9caa9a11fb8a73bdd1237bf0375c6ae8596dc7e3ebd3c4"
+      },
+      {
+        "path": "core/cadastro-mestre-execution-data.js",
+        "sha256": "f0a94c3269779d3f19d2e62a46015ef3e745abba909fac00c4d46ff3b12eafc2"
+      },
+      {
+        "path": "core/cadastro-mestre-familias-engine.js",
+        "sha256": "1ce2731afa04f0f289c099368429710952341a5d48a2685babb51b781a517064"
+      },
+      {
+        "path": "scripts/lib/cadastro-mestre-reconstruction.mjs",
+        "sha256": "ac4f0c53ddf8147da7c877d41afa8ba045d0ed73e88ff192f3bd4beba1dd0fd3"
+      },
+      {
+        "path": "scripts/lib/cadastro-mestre-comercial.mjs",
+        "sha256": "3efedd5a1502233ad5f9937725b701ef4c8bdb4ec673dae778acc44c8559570e"
+      },
+      {
+        "path": "scripts/lib/cadastro-mestre-web.mjs",
+        "sha256": "95f747afd4cefa3f908c2d42d5564fba5998319f3aef3e437b81b857e5bbb1e9"
+      },
+      {
+        "path": "src/services/cadastro-mestre-execution.js",
+        "sha256": "a457c0ffddbbb97b5ba1ebb1c70c32ba8f073333653aa857426d17fc22b38b9f"
+      },
+      {
+        "path": "src/services/api.js",
+        "sha256": "27c8c310b8d4515cb421cede50223bed0a32028548e8dcf26235bcf56c5ec5e5"
+      },
+      {
+        "path": "core/custos-classification-engine.js",
+        "sha256": "8f8e5214676b433d14476ed7ee843853cc286c4e2337584f9aa8259e8dd8ceb1"
+      },
+      {
+        "path": "core/product-master-engine.js",
+        "sha256": "29be51f1e0dc8a4b1d2c8b6636d9f637563aa32f1f85b26af653b261f956aabc"
+      },
+      {
+        "path": "view/ui-cadastro-mestre-preview.js",
+        "sha256": "6515eafb192d2d415046dd21f48ef85aecb15322d91e9e7222eb893f9130f69d"
+      }
+    ],
+    "documento_nao_encontrado": "docs/auditoria/auditoria-cadastro-mestre.md",
+    "arquivo": {
+      "path": "D:/Meus Documentos - Aprendiz Custos/Área de Trabalho/pedro/1234/cadastro mestre 22_10.xls",
+      "sha256": "46b308b73f04ee4c1ca019ea2186bfaf4b41b3b2118dbf5a76a0bc4406013dff",
+      "linhas": 6255,
+      "hash_revalidado": true,
+      "reader": "src/services/cadastro-mestre-preview.js#lerArquivoCadastroMestre; dados oficiais das Auditorias 1/2/3 reutilizados após controle integral"
+    },
+    "consultas_controle": [
+      "select now() as capturado_em,jsonb_agg(to_jsonb(x) order by tabela) as fingerprints from (select 'apontamentos_op' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.apontamentos_op t union all select 'categorias_agrupamento' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.categorias_agrupamento t union all select 'categorias_familia' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.categorias_familia t union all select 'categorias_origem' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.categorias_origem t union all select 'dicionario_master_produtos' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.dicionario_master_produtos t union all select 'dicionario_produtos' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.dicionario_produtos t union all select 'familias_base' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.familias_base t union all select 'historico_custos' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.historico_custos t union all select 'log_importacao' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.log_importacao t union all select 'log_importacao_cadastro_mestre' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.log_importacao_cadastro_mestre t union all select 'log_importacao_op' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.log_importacao_op t union all select 'mapa_produtos' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from public.mapa_produtos t) x",
+      "select now() as capturado_em,jsonb_agg(to_jsonb(x) order by tabela) as fingerprints from (select 'audit_kustos.fase1_catalogo_funcoes_triggers' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_catalogo_funcoes_triggers t union all select 'audit_kustos.fase1_contagens_chaves' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_contagens_chaves t union all select 'audit_kustos.fase1_divergencias_descricao' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_divergencias_descricao t union all select 'audit_kustos.fase1_execucao' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_execucao t union all select 'audit_kustos.fase1_mapa_produtos_snapshot' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_mapa_produtos_snapshot t union all select 'audit_kustos.fase1_matriz_familia' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_matriz_familia t union all select 'audit_kustos.fase1_matriz_origem' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_matriz_origem t union all select 'audit_kustos.fase1_mestre_operacional_chaves' as tabela,count(*) as registros,md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as md5 from audit_kustos.fase1_mestre_operacional_chaves t) x"
+    ]
+  },
+  "universos_revalidados": {
+    "master": 860,
+    "operacional": 6113,
+    "custo": 447,
+    "op": 355,
+    "dicionario": 6113,
+    "mapa": 299
+  },
+  "uniao": 6123,
+  "investigativo": 524,
+  "identidade": {
+    "helper": "function normalizeCodigoProduto(value) {\r\n  if (value === null || value === undefined) return '';\r\n\r\n  const raw = String(value)\r\n    .normalize('NFKC')\r\n    .replace(/[\\u200B-\\u200D\\uFEFF]/g, '')\r\n    .trim();\r\n\r\n  if (!raw) return '';\r\n\r\n  const withoutSpaces = raw.replace(/[\\s\\u00A0]+/g, '');\r\n  if (!withoutSpaces) return '';\r\n\r\n  if (/^-/.test(withoutSpaces)) return '';\r\n\r\n  if (/^\\d{1,3}([.,]\\d{3})+$/.test(withoutSpaces)) {\r\n    return withoutSpaces.replace(/[.,]/g, '');\r\n  }\r\n\r\n  const scientificCandidate = withoutSpaces.replace(',', '.');\r\n  if (/^[+-]?\\d+(\\.\\d+)?e[+-]?\\d+$/i.test(scientificCandidate)) {\r\n    const num = Number(scientificCandidate);\r\n    if (!Number.isFinite(num) || !Number.isInteger(num)) return '';\r\n    return num.toLocaleString('fullwide', { useGrouping: false });\r\n  }\r\n\r\n  if (typeof value === 'number') {\r\n    if (!Number.isFinite(value) || !Number.isInteger(value)) return '';\r\n    return value.toLocaleString('fullwide', { useGrouping: false });\r\n  }\r\n\r\n  if (/^[+-]?\\d+[,.]0+$/.test(withoutSpaces)) {\r\n    return withoutSpaces.replace(/[,.]0+$/, '').replace(/^\\+/, '');\r\n  }\r\n\r\n  if (/^[+-]?\\d+[,.]\\d+$/.test(withoutSpaces)) return '';\r\n\r\n  return withoutSpaces.replace(/^\\+/, '');\r\n}",
+    "casos_sinteticos": [
+      {
+        "tipo": "string",
+        "entrada": "000001",
+        "uma_vez": "000001",
+        "duas_vezes": "000001",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "001",
+        "uma_vez": "001",
+        "duas_vezes": "001",
+        "idempotente": true
+      },
+      {
+        "tipo": "number",
+        "entrada": "1",
+        "uma_vez": "1",
+        "duas_vezes": "1",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1.000",
+        "uma_vez": "1000",
+        "duas_vezes": "1000",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1,000",
+        "uma_vez": "1000",
+        "duas_vezes": "1000",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "001.000",
+        "uma_vez": "001000",
+        "duas_vezes": "001000",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1,0",
+        "uma_vez": "1",
+        "duas_vezes": "1",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1.5",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1e3",
+        "uma_vez": "1000",
+        "duas_vezes": "1000",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1e-3",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "1e21",
+        "uma_vez": "1000000000000000000000",
+        "duas_vezes": "1000000000000000000000",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "9007199254740993e0",
+        "uma_vez": "9007199254740992",
+        "duas_vezes": "9007199254740992",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "9007199254740993",
+        "uma_vez": "9007199254740993",
+        "duas_vezes": "9007199254740993",
+        "idempotente": true
+      },
+      {
+        "tipo": "number",
+        "entrada": "9007199254740992",
+        "uma_vez": "9007199254740992",
+        "duas_vezes": "9007199254740992",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "-1",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "+-1",
+        "uma_vez": "-1",
+        "duas_vezes": "",
+        "idempotente": false
+      },
+      {
+        "tipo": "string",
+        "entrada": "++1",
+        "uma_vez": "+1",
+        "duas_vezes": "1",
+        "idempotente": false
+      },
+      {
+        "tipo": "string",
+        "entrada": "+++001",
+        "uma_vez": "++001",
+        "duas_vezes": "+001",
+        "idempotente": false
+      },
+      {
+        "tipo": "string",
+        "entrada": "+001",
+        "uma_vez": "001",
+        "duas_vezes": "001",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "+1.000",
+        "uma_vez": "1",
+        "duas_vezes": "1",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "AB 001",
+        "uma_vez": "AB001",
+        "duas_vezes": "AB001",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "AB​001",
+        "uma_vez": "AB001",
+        "duas_vezes": "AB001",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "ab001",
+        "uma_vez": "ab001",
+        "duas_vezes": "ab001",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "AB001",
+        "uma_vez": "AB001",
+        "duas_vezes": "AB001",
+        "idempotente": true
+      },
+      {
+        "tipo": "object",
+        "entrada": "null",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "undefined",
+        "entrada": "[undefined]",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "",
+        "uma_vez": "",
+        "duas_vezes": "",
+        "idempotente": true
+      },
+      {
+        "tipo": "boolean",
+        "entrada": "true",
+        "uma_vez": "true",
+        "duas_vezes": "true",
+        "idempotente": true
+      },
+      {
+        "tipo": "object",
+        "entrada": "[object Object]",
+        "uma_vez": "[objectObject]",
+        "duas_vezes": "[objectObject]",
+        "idempotente": true
+      },
+      {
+        "tipo": "string",
+        "entrada": "−1",
+        "uma_vez": "−1",
+        "duas_vezes": "−1",
+        "idempotente": true
+      }
+    ],
+    "fronteira_preview": {
+      "fronteira": [
+        {
+          "entrada": "++1",
+          "tipo": "string",
+          "status": "OK",
+          "codigo_preview": "+1",
+          "erros": []
+        },
+        {
+          "entrada": "+-1",
+          "tipo": "string",
+          "status": "OK",
+          "codigo_preview": "-1",
+          "erros": []
+        },
+        {
+          "entrada": "9007199254740993e0",
+          "tipo": "string",
+          "status": "OK",
+          "codigo_preview": "9007199254740992",
+          "erros": []
+        },
+        {
+          "entrada": "9007199254740992",
+          "tipo": "number",
+          "status": "COM_ERROS",
+          "codigo_preview": null,
+          "erros": [
+            {
+              "linha": 2,
+              "codigo_produto": null,
+              "motivo": "Código de produto inválido, vazio ou numericamente impreciso."
+            }
+          ]
+        },
+        {
+          "entrada": "+1.000",
+          "tipo": "string",
+          "status": "OK",
+          "codigo_preview": "1",
+          "erros": []
+        },
+        {
+          "entrada": "−1",
+          "tipo": "string",
+          "status": "OK",
+          "codigo_preview": "−1",
+          "erros": []
+        },
+        {
+          "entrada": "true",
+          "tipo": "boolean",
+          "status": "COM_ERROS",
+          "codigo_preview": null,
+          "erros": [
+            {
+              "linha": 2,
+              "codigo_produto": null,
+              "motivo": "Código de produto inválido, vazio ou numericamente impreciso."
+            }
+          ]
+        }
+      ],
+      "colisao_representacoes": {
+        "status": "COM_ERROS",
+        "erros": [
+          {
+            "linha": 2,
+            "codigo_produto": "1000",
+            "motivo": "Código duplicado no arquivo: linhas 2, 3, 4."
+          }
+        ]
+      }
+    },
+    "codigos_reais": {
+      "total": 6256,
+      "instaveis": [],
+      "alterados": []
+    },
+    "limite": "Idempotência universal falsa em entradas malformadas e estabilidade não prova precisão. Nenhuma alteração do helper; não comprova ocorrência em produção."
+  },
+  "pipeline": [
+    [
+      "Leitura",
+      "src/services/cadastro-mestre-preview.js:mapearPlanilhaCadastroMestre / lerArquivoCadastroMestre",
+      "XLS/XLSX/XLSM → linhas/colunas/aba/linha física; primeira aba por padrão; zeros por máscara 000000 de inteiro seguro",
+      "Só memória",
+      "Outras abas, colunas não mapeadas e linhas completamente vazias ficam fora do transporte; cinco grupos ERP não são todos persistidos"
+    ],
+    [
+      "Identidade",
+      "core/cadastro-mestre-preview-engine.js:codigoSeguro; core/spreadsheet-engine.js:normalizeCodigoProduto",
+      "Número exige safe integer no Preview; texto passa pelo helper; presença física registrada antes do filtro",
+      "Só memória",
+      "Helper não é idempotente universal; texto científico pode perder precisão; valor original não vira chave separada"
+    ],
+    [
+      "Filtro",
+      "core/cadastro-mestre-preview-engine.js:motivoFiltro",
+      "Tipo P/C → /produzido|revenda/i → rejeita /inativo|exluir/i",
+      "Só memória; excluídos com motivo",
+      "PRODUZIDA não passa; EXCLUIR não é EXLUIR; código inválido em linha filtrada pode ficar só como exclusão"
+    ],
+    [
+      "Validação/Preview",
+      "core/cadastro-mestre-preview-engine.js:criarPreviewCadastroMestre",
+      "Duplicidade por código, erros em elegíveis, campos fornecidos/vazios, resolução exata de categorias",
+      "Só memória",
+      "Resolver catálogo é diferente de admitir identidade; pendência de categoria não bloqueia necessariamente dado ERP bruto"
+    ],
+    [
+      "Catálogos",
+      "core/cadastro-mestre-familias-engine.js:proporCatalogoFamiliasCadastroMestre",
+      "Família por código; conflitos em todas as ocorrências do código do universo; comercial também verifica conflitos de rótulos",
+      "Só propostas",
+      "Novo rótulo de categoria pode afetar produtos fora do arquivo"
+    ],
+    [
+      "Reconciliação",
+      "core/cadastro-mestre-approval-engine.js:criarManifestoCadastroMestre",
+      "Com modo RECONSTRUCAO_UNIVERSO, todos Master fora dos elegíveis viram DELETE proposto; preenchidos mudam seis campos ERP; blank comercial limpa",
+      "Só manifesto",
+      "Desaparecimento e filtro causam remoção do Master; proteção física do Operacional não impede efeito analítico em Custos"
+    ],
+    [
+      "Transporte",
+      "core/cadastro-mestre-execution-data.js:criarFonteManifestoDadosCadastroMestre; src/services/cadastro-mestre-preview.js:prepararAprovacaoDadosCadastroMestre",
+      "V3: linha + dez posições; hashes dados/contexto; modo fixo RECONSTRUCAO_UNIVERSO",
+      "Só memória/POST autorizado",
+      "Binário não vai ao servidor web; hash de arquivo é declarado; modo INCREMENTAL histórico não é fluxo executável atual"
+    ],
+    [
+      "Aprovação/plano",
+      "view/ui-cadastro-mestre-preview.js:executarAprovado; core/cadastro-mestre-reconstruction-engine.js:criarPlanoReconstrucaoCadastroMestre",
+      "Todas operações aprovadas, universo não vazio, sem erros; confirmação; V2 obrigatório",
+      "Sem DML no frontend",
+      "Revisão antiga é inválida com contexto/arquivo divergente; aprovação local não é prova de execução"
+    ],
+    [
+      "Persistência geral",
+      "scripts/lib/cadastro-mestre-reconstruction.mjs:executarReconstrucaoCadastroMestre",
+      "Locks; revalidação; log/snapshot durável; INSERT/UPDATE/DELETE Master e famílias aprovadas; provas; COMMIT/rollback",
+      "Escrita real somente quando executor autorizado é chamado; não chamado na auditoria",
+      "DELETE em linha 200; COMMIT perdido é indeterminado; não há restauração automática"
+    ],
+    [
+      "Persistência isolada comercial",
+      "scripts/lib/cadastro-mestre-comercial.mjs:validarCargaComercial / executarCargaComercial",
+      "Fotografia inicial específica: 6230/860/162/324; somente UPDATE dos dois campos comerciais; imagens integrais",
+      "Executor separado; não chamado",
+      "Não é importador incremental; sem novo log/timestamps/FK; segunda execução contra fotografia inicial diverge"
+    ],
+    [
+      "Classificação em leitura",
+      "core/custos-classification-engine.js:classificarCustos; src/services/api.js:getApontamentosOp",
+      "Custos: Master presente manda origem/família; OP: Operacional; grupo permanece operacional",
+      "Projeção sem escrita",
+      "Inclusão/alteração/remoção Master muda classificação atual de Custos sem alterar um único fato"
+    ]
+  ],
+  "admissao": [
+    [
+      "A",
+      "Não existe em nenhuma fonte",
+      "Novo código candidato, não nova chave técnica",
+      "INSERT somente Master se identidade segura, elegibilidade aprovada e revisão integral; não cria Operacional automaticamente",
+      "Sem classe Kustos inventada; categorias resolvidas por código ou pendência explícita",
+      "Aprovar admissão/universo; origem do arquivo/linha e primeiro evento observado"
+    ],
+    [
+      "B",
+      "Novo no Master, já no Operacional",
+      "Mesma identidade existente",
+      "Proposta de acrescentar fonte ERP; preservar Operacional integral",
+      "Simular precedência de Custos antes de incluir Master; manual/unknown protegido",
+      "Revisão dos campos ERP e impacto; registrar ambas as imagens"
+    ],
+    [
+      "C",
+      "Novo no Master, já em Custo",
+      "Mesma identidade do fato",
+      "Preservar todos os fatos; verificar Operacional, mas ausência não cria outra identidade",
+      "Inserir Master pode trocar fallback por ERP; impacto obrigatório",
+      "Revisão de impacto inclusive perda de resolução; não regravar fato"
+    ],
+    [
+      "D",
+      "Novo no Master, já em OP",
+      "Mesma identidade de OP",
+      "Preservar eventos e origem de classificação OP; evidenciar cadastro operacional ausente",
+      "Não criar FK fictícia nem preencher grupo",
+      "Revisar lacunas e admissão ERP; registrar OP como observação anterior"
+    ],
+    [
+      "E",
+      "Existente no Kustos, ausente do arquivo",
+      "Continua existindo",
+      "Não remover/desativar Master/Operacional; marcar ausência apenas na evidência da carga",
+      "Preservar classificação e histórico",
+      "Ausência não significa inatividade; registrar escopo integral/delta e validade da fonte"
+    ],
+    [
+      "F",
+      "Fisicamente no ERP, rejeitado pelo filtro",
+      "Identidade observada/preservada; elegibilidade separada",
+      "Não inserir nem remover automaticamente; exceção depende de regra empresarial aprovada",
+      "Manter classificação existente; sem categoria inferida",
+      "Motivo/língua/código de origem e decisão, sem reescrever filtro nesta auditoria"
+    ]
+  ],
+  "blank": [
+    [
+      "Descrição ERP",
+      "Preserva atual",
+      "Preserva atual",
+      "Continua sem valor; exibir pendência",
+      "Omitido preserva; literal NULL não é comando",
+      "Correção/limpeza não inferida; requer ação/decisão própria"
+    ],
+    [
+      "Origem ERP",
+      "Não altera origem_id Kustos",
+      "Preserva origem_cod anterior",
+      "Permanece NULL/pendente",
+      "Resolver por código exato, não descrição/ID",
+      "Mudança preenchida exige revisão e efeito em Custos"
+    ],
+    [
+      "Família ERP",
+      "Não altera familia_id Kustos",
+      "Preserva familia_cod anterior",
+      "Permanece NULL/pendente",
+      "Não criar categoria automaticamente",
+      "Conflito/novo catálogo exige revisão separada"
+    ],
+    [
+      "Agrup. Prod. ERP",
+      "Não altera agrupamento_cod Kustos",
+      "Preserva agrupamento_erp_valor",
+      "Permanece NULL",
+      "Nenhuma ponte Pxxx→Mxxx",
+      "Remoção explícita exige decisão fora do blank comum"
+    ],
+    [
+      "Agrup. Com. código/descrição",
+      "Jamais apaga campo Kustos",
+      "Coluna presente vazia propõe NULL em cada campo comercial, conforme exceção vigente",
+      "Permanece NULL",
+      "Coluna ausente preserva; par parcial não é completado",
+      "Aplicar somente limpeza ERP comercial explícita e aprovada; não ampliar aos demais"
+    ],
+    [
+      "Agrup. Est./Custos/Fiscal ERP",
+      "Sem efeito Kustos",
+      "Não há persistência equivalente no Master",
+      "Apenas evidência de fonte",
+      "Fora do transporte/destino atuais",
+      "Adicionar persistência/ponte é outra decisão, não parte do contrato base"
+    ],
+    [
+      "Origem/família/agrupamento/override Kustos",
+      "Preservar todo valor preenchido ou NULL",
+      "Não são campos ERP do Master",
+      "Não preencher por inferência",
+      "Somente manutenção Kustos autorizada em outro fluxo",
+      "Marcador textual ERP não manda limpar manual"
+    ]
+  ],
+  "autoridade": [
+    [
+      "codigo_produto",
+      "Observação no arquivo",
+      "Observação no cadastro/fatos",
+      "Não renomeia nem funde código",
+      "Helper existente + validação de segurança; relação por código estável, nunca descrição"
+    ],
+    [
+      "Descrição",
+      "Autoridade sobre descricao do Master",
+      "Autoridade sobre descricao operacional; fatos preservam snapshot",
+      "Editor do seu campo, sem sobrescrita pela carga",
+      "Campos por fonte; ERP preenchido propõe revisão de Master, não padronização transversal"
+    ],
+    [
+      "Origem",
+      "origem_cod bruto; Custos resolve pelo catálogo quando Master existe",
+      "origem_id; OP e fallback Custos",
+      "Preservar valor/autor desconhecido; revisão própria",
+      "Conservar autoridade atual em leitura; mudanças ERP exigem revisão do impacto, não sync"
+    ],
+    [
+      "Família",
+      "familia_cod bruto; propostas de catálogo separadas",
+      "familia_id; OP/fallback",
+      "Preservar valor/override e dependências globais",
+      "Código exato→ID somente na regra existente; sem bridge textual ou recategorização automática"
+    ],
+    [
+      "Agrupamento",
+      "Prod./Com. e demais grupos são dados ERP distintos",
+      "agrupamento_cod efetivo Kustos",
+      "Manutenção Kustos; vazio explícito no editor pode limpar",
+      "Carga ERP não escreve grupo/override/proveniência Kustos"
+    ],
+    [
+      "Override/manual",
+      "Não fornece decisão de override Kustos",
+      "Campos existentes devem permanecer íntegros",
+      "Responsável humano de manutenção decide",
+      "Não ativar novo algoritmo de precedência; colunas de override não provam uso pelo runtime"
+    ]
+  ],
+  "conflitos": [
+    [
+      "Duplicidade por código/canônico",
+      "Mesmo ou diferentes rótulos",
+      "Bloquear lote inteiro; sem first/last-wins nem dedup silencioso",
+      "Preservar todas as linhas físicas"
+    ],
+    [
+      "Código instável/impreciso",
+      "++1; +-1; ciência fora de safe integer",
+      "Bloquear antes de persistir; corrigir fonte/contrato de entrada, não normalizar repetidamente",
+      "Valor bruto, tipo/máscara, resultados 1×/2×"
+    ],
+    [
+      "Descrição diferente",
+      "Master/Operacional ou snapshots",
+      "Não fundir nem copiar entre fontes; propor somente campo ERP e revisar",
+      "Ambos + vigente/recebido + aprovação"
+    ],
+    [
+      "Origem/família diferentes",
+      "Entre ERP e Kustos ou ERP anterior",
+      "Preservar Kustos; patch Master só após impacto aprovado; categoria ambígua bloqueia",
+      "Códigos e IDs separados, classe efetiva antes/depois"
+    ],
+    [
+      "Agrupamentos diferentes",
+      "ERP P/C/U/GAF vs Kustos Mxxx",
+      "Não são equivalentes; não bridge/overwrite",
+      "Cinco campos originais separados do grupo Kustos"
+    ],
+    [
+      "Código de categoria com rótulos conflitantes",
+      "Família/comercial do universo",
+      "Bloquear lote conforme guarda atual; sem vencedor inferido",
+      "Todas ocorrências, inclusive filtradas que referenciam código efetivo"
+    ],
+    [
+      "Categoria nova/ausente",
+      "ERP bruto sem catálogo correspondente",
+      "Pode permanecer dado ERP bruto apenas com pendência e impacto explícitos; criar família exige aprovação separada",
+      "Ausente/ambíguo/vazio não se confundem"
+    ],
+    [
+      "Blank comercial contra valor anterior",
+      "Coluna presente e célula vazia",
+      "Propor limpeza somente comercial; pendente impede lote até decisão",
+      "Imagem anterior, recebido NULL, fornecido=true"
+    ],
+    [
+      "Marcador remover/inativo/excluir",
+      "Texto ou sinal não contratado",
+      "Nenhuma exclusão/desativação automática; revisar sem converter literal em comando",
+      "Estado de observação, fonte e intenção explícita"
+    ],
+    [
+      "Contexto/concorrrência divergente",
+      "Mudança após aprovação",
+      "Bloquear/regerar Preview, sem aplicar subconjunto válido",
+      "Hash/imagem/contexto anterior e novo"
+    ],
+    [
+      "Lote repetido/COMMIT desconhecido",
+      "Mesma intenção ou resposta perdida",
+      "Consultar execução; nunca retry cego; conflito de conteúdo sob mesmo ID bloqueia",
+      "ID estável, hash, status, prova/snapshot"
+    ]
+  ],
+  "integral_delta": [
+    [
+      "Ausência",
+      "Integral pode demonstrar não observação apenas com prova de completude; não exclusão",
+      "Delta nada diz sobre códigos omitidos"
+    ],
+    [
+      "Classificação/manual",
+      "Mesmo arquivo completo não pode sobrescrever Kustos; impacto global deve ser mostrado",
+      "Mesmo cuidado por código recebido e categoria compartilhada"
+    ],
+    [
+      "Risco",
+      "Arquivo incompleto interpretado como universo removível; atual100→90 apaga10Master",
+      "Delta fora de ordem pode restaurar valor antigo; precisa vigência/versão da fonte"
+    ],
+    [
+      "Histórico",
+      "Snapshot antes de toda escrita; fatos preservados",
+      "Imagens antes/depois do patch e contexto íntegro; fatos preservados"
+    ],
+    [
+      "Idempotência",
+      "Identificador da intenção + fonte/política e verificação de contexto",
+      "Mesma base; hash do arquivo sozinho não define intenção ou ordem"
+    ],
+    [
+      "Reprocessamento",
+      "Mesmos bytes com nova intenção podem ser no-op ou requerer revisão após mudança de contexto",
+      "Reaplicar delta antigo deve bloquear se ordem/vigência não comprovada; não usar data do arquivo como versão"
+    ],
+    [
+      "Falha parcial",
+      "Atomicidade do lote completo validado",
+      "Atomicidade do lote delta validado; chunk não vira transação independente"
+    ],
+    [
+      "Auditoria",
+      "Contagem universo recebido/ausente e fonte comprovada",
+      "Contagem códigos recebidos/alterados/preservados; ausência não é estado empresarial"
+    ],
+    [
+      "Reversibilidade",
+      "Snapshot + comparação atual + decisão; sem restauração cega",
+      "Patch inverso condicionado à imagem atual e dependências"
+    ],
+    [
+      "Proveniência",
+      "Arquivo, aba, hash, escopo e observação integral",
+      "Evento/identificador da fonte e ordem, se disponíveis; desconhecido explícito"
+    ]
+  ],
+  "reversibilidade": [
+    [
+      "Inclusão Master",
+      "Reversível com histórico + decisão",
+      "Remover associação ERP só com análise de impacto; nunca apagar identidade/fatos por undo; preservar se passou a ser referenciada"
+    ],
+    [
+      "Descrição ERP",
+      "Reversível com histórico",
+      "Restaurar campo anterior apenas se valor atual ainda é o pós-lote e sem decisão posterior conflitante"
+    ],
+    [
+      "Origem ERP",
+      "Reversível com histórico + decisão",
+      "Mesma condição e recomputar impacto em Custos; não regravar histórico"
+    ],
+    [
+      "Família ERP/catálogo",
+      "Reversível com histórico + decisão",
+      "Catálogo compartilhado exige todos os dependentes; família nova com referências não é removida automaticamente"
+    ],
+    [
+      "Classificação Kustos",
+      "Não deve ocorrer automaticamente",
+      "Fora do fluxo ERP proposto; se alterada por outra operação, recuperação é contrato próprio"
+    ],
+    [
+      "Remoção/desativação",
+      "Não deve ocorrer automaticamente",
+      "Não faz parte do incremental; recuperação de remoções históricas usa snapshot e autorização, nunca completar por inferência"
+    ],
+    [
+      "Transação em falha antes do COMMIT",
+      "Reversível transacionalmente quando rollback confirmado",
+      "Snapshot/log/provas necessários; resposta perdida torna estado indeterminado, não prova de reversão"
+    ]
+  ],
+  "guardrails": [
+    [
+      "Código novo",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — admissão/impacto"
+    ],
+    [
+      "Código ausente",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — escopo/qualidade da fonte"
+    ],
+    [
+      "Campo vazio",
+      "NÃO",
+      "NÃO em Kustos; comercial ERP pode propor limpeza aprovada",
+      "NÃO",
+      "SIM — exceção comercial ou intenção de remoção"
+    ],
+    [
+      "Campo alterado",
+      "NÃO",
+      "NÃO silenciosamente; efeito analítico deve ser revisado",
+      "NÃO",
+      "SIM — patch/impacto"
+    ],
+    [
+      "Produto inativo",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — política de estado futura"
+    ],
+    [
+      "Produto fora do filtro",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — elegibilidade"
+    ],
+    [
+      "Código inválido/ambíguo",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — lote bloqueado"
+    ],
+    [
+      "Duplicidade",
+      "NÃO",
+      "NÃO",
+      "NÃO",
+      "SIM — corrigir fonte, lote bloqueado"
+    ]
+  ],
+  "regras": [
+    [
+      "CAD-01",
+      "Identidade segura",
+      "Usar normalizeCodigoProduto existente; só admitir código não vazio, estável na segunda aplicação e sem perda de precisão/forma ambígua. Não repetir normalização para “consertar”.",
+      "6256 reais estáveis; ++1/+-1 e ciência imprecisa bloqueiam no contrato proposto"
+    ],
+    [
+      "CAD-02",
+      "Sem equivalência inferida",
+      "Descrição/unidade/categoria não renomeia nem funde códigos. Preservar representações brutas e linhas.",
+      "Códigos com rótulo igual continuam distintos; embalagens 9×/10× exigem revisão"
+    ],
+    [
+      "CAD-03",
+      "Admissão por fonte",
+      "Novo no Master não significa novo no Kustos; classificar A–F e admitir Master somente sob política aprovada e revisão integral.",
+      "Código já em OP conserva identidade; sem produto operacional automático"
+    ],
+    [
+      "CAD-04",
+      "Ausência não destrutiva",
+      "Ausência, filtragem e marcador INATIVO não geram DELETE/desativação em nenhuma identidade/cadastro no fluxo incremental proposto.",
+      "100→90 mantém100, evidencia10 ausentes"
+    ],
+    [
+      "CAD-05",
+      "Presença do campo",
+      "Distinguir coluna ausente, célula vazia, valor preenchido e comando explícito contratado; literal NULL não é comando.",
+      "Omitido preserva; blank comum preserva; marcador não contratado exige revisão"
+    ],
+    [
+      "CAD-06",
+      "Exceção comercial delimitada",
+      "Manter regra comercial aprovada: coluna presente vazia pode limpar só respectivo campo ERP após proposta explícita aprovada; não estender a Kustos/Prod./origem/família.",
+      "SIM-03 preserva quatro campos e só limpa dois comerciais após aprovação"
+    ],
+    [
+      "CAD-07",
+      "Patch ERP fechado",
+      "Escrever somente campos ERP/proveniência efetivamente aprovados; sem-operação conserva imagem e timestamps; nenhuma escrita automática antes da aprovação.",
+      "Descrição alterada gera proposta; não publica antes da aprovação"
+    ],
+    [
+      "CAD-08",
+      "Operacional protegido",
+      "Carga ERP não altera descricao/origem_id/familia_id/agrupamento_cod/override/proveniência/manual no Operacional nem mapa. Cadastro ausente vira pendência explícita.",
+      "Matriz de precedência não ativa novo override nem preenche NULL"
+    ],
+    [
+      "CAD-09",
+      "Impacto analítico",
+      "Toda mudança de presença ou origem/família Master e rótulo de categoria deve apresentar classificação efetiva antes/depois de todos afetados; impacto sem aprovação bloqueia lote.",
+      "SIM-10 F1→NULL é exposto e impede inserção sem decisão"
+    ],
+    [
+      "CAD-10",
+      "Categoria por código",
+      "Resolver pelo código exato, sem descrição/ID como chave de negócio. Ambiguidade/conflito bloqueia; ausência é pendência, sem categoria fictícia.",
+      "Revisar familia80002/42502 sem escolher vencedor; não bridge ERP→Kustos"
+    ],
+    [
+      "CAD-11",
+      "Validação integral",
+      "Validar identidades/duplicidades de todas as linhas, inclusive filtradas; uma linha inválida/ambígua ou decisão pendente bloqueia o lote, sem aplicar subconjunto.",
+      "SIM-09 bloqueado; filtro não esconde identidade inválida no futuro contrato"
+    ],
+    [
+      "CAD-12",
+      "Contexto vinculado",
+      "Revalidar arquivo/dados, política, decisões, imagens e impacto sob controle de concorrência; divergência exige novo Preview.",
+      "Mudança após aprovação nunca vira patch best-effort"
+    ],
+    [
+      "CAD-13",
+      "Intenção idempotente",
+      "Mesma intenção conserva identificador e conteúdo; repetição retorna/consulta estado anterior sem novo DML; mesmo ID com conteúdo divergente bloqueia.",
+      "Segundo envio não cria identidade/log de execução duplicado para a mesma intenção"
+    ],
+    [
+      "CAD-14",
+      "Incerteza explícita",
+      "COMMIT/rollback desconhecido não é sucesso nem falha comprovada; consultar lote/provas antes de qualquer reenvio.",
+      "Resposta perdida não autoriza nova chave/retry"
+    ],
+    [
+      "CAD-15",
+      "Auditoria reconciliável",
+      "Registrar contagens e decisões por linha/código/campo, antes/recebido/proposto/efetivo/preservado e execução; informação desconhecida continua desconhecida.",
+      "Linhas e códigos usam denominadores distintos; excluídas não somem do balanço"
+    ],
+    [
+      "CAD-16",
+      "Fatos protegidos",
+      "Nenhuma reconstrução cadastral altera IDs/códigos/descrições snapshot/métricas/data_referencia/criado_em/lotes dos fatos.",
+      "Competência não é data de arquivo; upsert histórico existente não é reescrito"
+    ],
+    [
+      "CAD-17",
+      "Atomicidade e prova",
+      "Lote de patches aprovados é transacional, com snapshot durável e provas; falha não deixa cadastro parcial publicado.",
+      "Falha em N de M operações reverte todas; log de falha é distinto do estado de negócio"
+    ],
+    [
+      "CAD-18",
+      "Reversão condicionada",
+      "Correção usa imagens antes/depois, compara estado atual e exige autorização; não apagar identidade nova com referências nem restaurar snapshot sobre mudanças posteriores.",
+      "Reversível com histórico não significa undo automático"
+    ],
+    [
+      "CAD-19",
+      "Política versionada",
+      "Modo do arquivo, elegibilidade, blank, autoridade, alcance de catálogos e exceções devem integrar política/manifesto aprovado; sem política aprovada não há carga.",
+      "PRODUZIDA e arquivo integral/delta não são decisões inferidas do nome/tamanho"
+    ],
+    [
+      "CAD-20",
+      "Separação de contratos",
+      "A proposta não é compatível por simples troca de flag com o executor integral/comercial isolado; futura versão e testes próprios são pré-condição.",
+      "Plano atual exige V2 e DELETE; executor comercial exige fotografia inicial específica"
+    ]
+  ],
+  "precondicoes": [
+    {
+      "item": "identidade aprovada, incluindo entradas instáveis/imprecisas",
+      "aprovado": false
+    },
+    {
+      "item": "universo canônico e critérios de admissão aprovados",
+      "aprovado": false
+    },
+    {
+      "item": "autoridade por campo aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "regra de blank e exceção comercial aprovadas para o novo contrato",
+      "aprovado": false
+    },
+    {
+      "item": "regra de ausência/inatividade aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "regra de conflito e impacto analítico aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "preservação/classificação Kustos aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "regra PRODUZIDO/PRODUZIDA e EXLUIR/EXCLUIR aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "estratégia integral/delta e ordenação/vigência aprovadas",
+      "aprovado": false
+    },
+    {
+      "item": "proveniência de observação, preservação e execução definida/aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "reversibilidade condicionada definida/aprovada",
+      "aprovado": false
+    },
+    {
+      "item": "falha parcial e COMMIT indeterminado definidos/aprovados",
+      "aprovado": false
+    },
+    {
+      "item": "estratégia de testes e critérios de aceite aprovados",
+      "aprovado": false
+    }
+  ],
+  "produzida": {
+    "resumo": {
+      "total": 114,
+      "custo": 43,
+      "op": 38,
+      "ambos": 38,
+      "sem_fatos": 71,
+      "inativo": 19
+    },
+    "codigos": [
+      {
+        "codigo": "1020123",
+        "linha": 3606,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020123P",
+        "linha": 3607,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020124",
+        "linha": 3608,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020124P",
+        "linha": 3609,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020125",
+        "linha": 3610,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020125P",
+        "linha": 3611,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020131",
+        "linha": 3612,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020131P",
+        "linha": 3613,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020132",
+        "linha": 3614,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020132P",
+        "linha": 3615,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020147",
+        "linha": 3616,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1020147P",
+        "linha": 3617,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020714",
+        "linha": 3628,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1020714P",
+        "linha": 3629,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1021123",
+        "linha": 3632,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1021123P",
+        "linha": 3633,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1021124",
+        "linha": 3634,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1021124P",
+        "linha": 3635,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1021125",
+        "linha": 3636,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1021125P",
+        "linha": 3637,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1021133",
+        "linha": 3638,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1021133P",
+        "linha": 3639,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1021146",
+        "linha": 3640,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1021146P",
+        "linha": 3641,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024123",
+        "linha": 3648,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024123P",
+        "linha": 3649,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024125",
+        "linha": 3650,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024125P",
+        "linha": 3651,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024145",
+        "linha": 3652,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1024145P",
+        "linha": 3653,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1120123",
+        "linha": 3769,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1120123P",
+        "linha": 3770,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1120124",
+        "linha": 3771,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1120124P",
+        "linha": 3772,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1120125",
+        "linha": 3773,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1120125P",
+        "linha": 3774,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1220123",
+        "linha": 3789,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1220123P",
+        "linha": 3790,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1220124",
+        "linha": 3791,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1220124P",
+        "linha": 3792,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1220125",
+        "linha": 3793,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1220125P",
+        "linha": 3794,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1623123",
+        "linha": 4000,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1623123P",
+        "linha": 4001,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1623124",
+        "linha": 4002,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1623124P",
+        "linha": 4003,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "1623125",
+        "linha": 4004,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "1623125P",
+        "linha": 4005,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2120124",
+        "linha": 4615,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2120124P",
+        "linha": 4616,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2120125",
+        "linha": 4617,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2120125P",
+        "linha": 4618,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2320123",
+        "linha": 4625,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2320123P",
+        "linha": 4626,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2320124",
+        "linha": 4627,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2320124P",
+        "linha": 4628,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2320125",
+        "linha": 4629,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2320125P",
+        "linha": 4630,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2321124",
+        "linha": 4631,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2321124P",
+        "linha": 4632,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2321125",
+        "linha": 4633,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2321125P",
+        "linha": 4634,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2420173",
+        "linha": 4635,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2420173P",
+        "linha": 4636,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2421172",
+        "linha": 4637,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2421172P",
+        "linha": 4638,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2421173",
+        "linha": 4639,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2421173P",
+        "linha": 4640,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2521124",
+        "linha": 4641,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2521124P",
+        "linha": 4642,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2621124",
+        "linha": 4643,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2621124P",
+        "linha": 4644,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2721125",
+        "linha": 4645,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2721125P",
+        "linha": 4646,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2821134",
+        "linha": 4651,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": false
+      },
+      {
+        "codigo": "2821134P",
+        "linha": 4652,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2821135",
+        "linha": 4653,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": false
+      },
+      {
+        "codigo": "2821135P",
+        "linha": 4654,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2821173",
+        "linha": 4655,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": false
+      },
+      {
+        "codigo": "2821173P",
+        "linha": 4656,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2920124",
+        "linha": 4657,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2920124P",
+        "linha": 4658,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "2920125",
+        "linha": 4659,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "2920125P",
+        "linha": 4660,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3023129",
+        "linha": 4661,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3023129P",
+        "linha": 4662,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3023141",
+        "linha": 4663,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3023141P",
+        "linha": 4664,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3023169",
+        "linha": 4665,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3023169P",
+        "linha": 4666,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3120123",
+        "linha": 4667,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3120123P",
+        "linha": 4668,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3120124",
+        "linha": 4669,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3120124P",
+        "linha": 4670,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3120125",
+        "linha": 4671,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3120125P",
+        "linha": 4672,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3220123",
+        "linha": 4673,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3220123P",
+        "linha": 4674,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3220124",
+        "linha": 4675,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": true,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3220124P",
+        "linha": 4676,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3420123",
+        "linha": 4679,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3420123P",
+        "linha": 4680,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3420124",
+        "linha": 4681,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3420124P",
+        "linha": 4682,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3420125",
+        "linha": 4683,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3420125P",
+        "linha": 4684,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3524125",
+        "linha": 4685,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": true
+      },
+      {
+        "codigo": "3524125P",
+        "linha": 4686,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3524453",
+        "linha": 4687,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": false
+      },
+      {
+        "codigo": "3524453P",
+        "linha": 4688,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3524454",
+        "linha": 4689,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": true,
+        "op": false
+      },
+      {
+        "codigo": "3524454P",
+        "linha": 4690,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3821657",
+        "linha": 4764,
+        "descr_origem": "MASSA PRODUZIDA FARDO/CX",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      },
+      {
+        "codigo": "3821657P",
+        "linha": 4765,
+        "descr_origem": "MASSA PRODUZIDA PCT",
+        "inativo": false,
+        "custo": false,
+        "op": false
+      }
+    ]
+  },
+  "simulacoes": {
+    "tipo": "Objetos sintéticos em memória. Motores puros reais no lado atual; projeção de operações em clone JS, sem SQL/arquivo de estado. Lado proposto é expectativa, não executor implementado.",
+    "funcoes_reais": [
+      "criarManifestoCadastroMestre",
+      "criarRevisaoCadastroMestre",
+      "decidirOperacoesCadastroMestre",
+      "criarPlanoReconstrucaoCadastroMestre",
+      "criarPreviewCadastroMestre",
+      "classificarCustos"
+    ],
+    "fixture": {
+      "master": "S001..S100",
+      "origem": {
+        "id": "425",
+        "codigo": "425"
+      },
+      "familia": {
+        "id": "F1",
+        "codigo": "42501"
+      },
+      "campos": {
+        "descricao": "Produto N",
+        "agrupamento_erp_valor": "P005",
+        "agrupamento_comercial_erp_cod": "C012",
+        "agrupamento_comercial_erp_descricao": "Comercial"
+      },
+      "arquivo": {
+        "tipo": "P",
+        "descr_origem": "PRODUZIDO"
+      },
+      "extras": "OPONLY e FACT101 são sintéticos, não dados para importar"
+    },
+    "cenarios": [
+      {
+        "id": "SIM-01",
+        "cenario": "Mesma carga duas vezes",
+        "atual": {
+          "primeira_inclusao": 100,
+          "segunda_inclusao": 0,
+          "segunda_atualizacao": 0,
+          "segunda_remocao": 0,
+          "master_final": 100
+        },
+        "proposto": {
+          "primeira": 100,
+          "segunda_escritas_cadastrais": 0,
+          "master_final": 100,
+          "observacao": "No-op de dados; consulta de execução anterior/revalidação continua necessária"
+        }
+      },
+      {
+        "id": "SIM-02",
+        "cenario": "Descrição alterada",
+        "atual": {
+          "updates": 1,
+          "valor": "Descrição alterada"
+        },
+        "proposto": {
+          "antes": "Produto 1",
+          "depois_sem_aprovacao": "Produto 1",
+          "candidatos_revisao": 1,
+          "escritas_sem_aprovacao": 0,
+          "apos_aprovacao": "Descrição alterada"
+        }
+      },
+      {
+        "id": "SIM-03",
+        "cenario": "Campos ERP vazios",
+        "atual": {
+          "produto": {
+            "codigo_produto": "S001",
+            "descricao": "Produto 1",
+            "origem_cod": "425",
+            "familia_cod": "42501",
+            "agrupamento_erp_valor": "P005",
+            "agrupamento_comercial_erp_cod": null,
+            "agrupamento_comercial_erp_descricao": null
+          },
+          "updates_campos": 2
+        },
+        "proposto": {
+          "antes_aprovacao": {
+            "descricao": "Produto 1",
+            "origem_cod": "425",
+            "familia_cod": "42501",
+            "agrupamento_erp_valor": "P005",
+            "agrupamento_comercial_erp_cod": "C012",
+            "agrupamento_comercial_erp_descricao": "Comercial"
+          },
+          "escritas_sem_aprovacao": 0,
+          "apos_aprovacao_especifica": {
+            "descricao": "Produto 1",
+            "origem_cod": "425",
+            "familia_cod": "42501",
+            "agrupamento_erp_valor": "P005",
+            "agrupamento_comercial_erp_cod": null,
+            "agrupamento_comercial_erp_descricao": null
+          },
+          "comercial": "Manter exceção comercial já aprovada: blank em coluna presente pode limpar somente o campo ERP comercial após revisão explícita; Kustos permanece protegido"
+        }
+      },
+      {
+        "id": "SIM-04",
+        "cenario": "100 para 90 produtos no arquivo",
+        "atual": {
+          "master_final": 90,
+          "remocoes": 10,
+          "motivos": [
+            "AUSENTE_NO_ARQUIVO"
+          ]
+        },
+        "proposto": {
+          "master_final": 100,
+          "ausentes": 10,
+          "remocoes": 0,
+          "desativacoes": 0
+        }
+      },
+      {
+        "id": "SIM-05",
+        "cenario": "100 para 110 no arquivo",
+        "atual": {
+          "master_final": 110,
+          "inserts": 10
+        },
+        "proposto": {
+          "master_antes": 100,
+          "novos_candidatos": 10,
+          "master_sem_aprovacao": 100,
+          "master_apos_admissao_aprovada": 110,
+          "remocoes": 0,
+          "operacionais_criados": 0
+        }
+      },
+      {
+        "id": "SIM-06",
+        "cenario": "Código operacional OPONLY ausente do ERP",
+        "atual": {
+          "master_final": 100,
+          "operacional_tocado": false
+        },
+        "proposto": {
+          "identidade": "OPONLY",
+          "operacional_preservado": true,
+          "master_criado": false,
+          "fatos_alterados": 0
+        }
+      },
+      {
+        "id": "SIM-07",
+        "cenario": "Código com Custo/OP fora do ERP filtrado",
+        "atual": {
+          "master_final": 100,
+          "novo_no_master": false
+        },
+        "proposto": {
+          "identidade_preservada": "FACT101",
+          "master_admissao": "PENDENTE_ELEGIBILIDADE",
+          "fatos_preservados": true,
+          "operacional_preservado": true
+        }
+      },
+      {
+        "id": "SIM-08",
+        "cenario": "Código já Master passa a ser filtrado",
+        "atual": {
+          "master_final": 99,
+          "remocoes": [
+            {
+              "codigo": "S001",
+              "motivo": "FORA_DO_CONJUNTO_FILTRADO"
+            }
+          ]
+        },
+        "proposto": {
+          "master_final": 100,
+          "remocoes": 0,
+          "estado": "PRESENTE_FORA_FILTRO"
+        }
+      },
+      {
+        "id": "SIM-09",
+        "cenario": "Duplicidade de código",
+        "atual": {
+          "bloqueado": true,
+          "erros": [
+            {
+              "linha": 2,
+              "codigo_produto": "S001",
+              "motivo": "Código duplicado no arquivo: linhas 2, 102."
+            }
+          ]
+        },
+        "proposto": {
+          "bloqueado": true,
+          "escritas": 0,
+          "last_wins": false
+        }
+      },
+      {
+        "id": "SIM-10",
+        "cenario": "Inserir Master sem família pode degradar classificação de Custos sem tocar no Operacional",
+        "atual": {
+          "familia_antes": "F1",
+          "familia_depois": null,
+          "grupo_antes": "M001",
+          "grupo_depois": "M001"
+        },
+        "proposto": {
+          "sem_aprovacao_impacto": "BLOQUEAR_PATCH",
+          "familia_preservada": "F1",
+          "master_inserido": false
+        }
+      }
+    ]
+  },
+  "proveniencia_atual": {
+    "master": {
+      "criado_em": 110,
+      "atualizado_em": 604,
+      "ultima_importacao_cadastro_mestre_id": 604,
+      "agrupamento_erp_importacao_id": 378
+    },
+    "operacional": {
+      "atualizado_em": 6113,
+      "agrupamento_override_manual_cod": 0,
+      "agrupamento_classificacao_origem": 0
+    },
+    "op": {
+      "eventos": 1469,
+      "lote_preenchido": 1469,
+      "data_preenchida": 1469,
+      "criado_preenchido": 1469,
+      "descricao_ausente": 0
+    },
+    "custos": {
+      "lotes": [
+        31
+      ],
+      "total": 2481,
+      "lote_nulo": 2132,
+      "lote_preenchido": 349
+    }
+  },
+  "preservacao": {
+    "public_antes": {
+      "capturado_em": "2026-10-30 18:04:22.896039+00",
+      "fingerprints": [
+        {
+          "md5": "6587866d881a41a916f7f0c7ff3a22a7",
+          "tabela": "apontamentos_op",
+          "registros": 1469
+        },
+        {
+          "md5": "6ff7dc0862066c93368af64b82e20765",
+          "tabela": "categorias_agrupamento",
+          "registros": 34
+        },
+        {
+          "md5": "1101582c9b3e3bda049795fdfc941ed3",
+          "tabela": "categorias_familia",
+          "registros": 103
+        },
+        {
+          "md5": "d4212f784b38be5b8f392a5eafa41642",
+          "tabela": "categorias_origem",
+          "registros": 50
+        },
+        {
+          "md5": "0d1fbcd0dd1033999aa00a24716e2358",
+          "tabela": "dicionario_master_produtos",
+          "registros": 860
+        },
+        {
+          "md5": "7fca5a2f0972aa19eaa3d28316bb19ae",
+          "tabela": "dicionario_produtos",
+          "registros": 6113
+        },
+        {
+          "md5": "8a5dd9c8eca9f0263fd5ba9c35148f4f",
+          "tabela": "familias_base",
+          "registros": 21
+        },
+        {
+          "md5": "20270b333271e00182179a8b4e61a0c9",
+          "tabela": "historico_custos",
+          "registros": 2481
+        },
+        {
+          "md5": "69bd99d6eabbf325cfd62cfff69681ce",
+          "tabela": "log_importacao",
+          "registros": 31
+        },
+        {
+          "md5": "fb10d0de7f55760fe78fb6afd5e69d3e",
+          "tabela": "log_importacao_cadastro_mestre",
+          "registros": 5
+        },
+        {
+          "md5": "815cc97b28a7764a2f4b5dc05f4d8d91",
+          "tabela": "log_importacao_op",
+          "registros": 8
+        },
+        {
+          "md5": "ae83ac336b493c807425b6f0431e2baf",
+          "tabela": "mapa_produtos",
+          "registros": 299
+        }
+      ]
+    },
+    "audit_kustos_antes": {
+      "capturado_em": "2026-10-30 18:05:31.51901+00",
+      "fingerprints": [
+        {
+          "md5": "a6cfe4593853497e901de780bb361d12",
+          "tabela": "audit_kustos.fase1_catalogo_funcoes_triggers",
+          "registros": 12
+        },
+        {
+          "md5": "ff87740483211c95e9b6bda382f0f7cb",
+          "tabela": "audit_kustos.fase1_contagens_chaves",
+          "registros": 18
+        },
+        {
+          "md5": "c0d7203ba8ac56af7a49df94fc78a2dc",
+          "tabela": "audit_kustos.fase1_divergencias_descricao",
+          "registros": 192
+        },
+        {
+          "md5": "e235dc15cca9ec2af8c2446aa42dd2e5",
+          "tabela": "audit_kustos.fase1_execucao",
+          "registros": 2
+        },
+        {
+          "md5": "c31684b4eef62036eb53a66e2bfdd97d",
+          "tabela": "audit_kustos.fase1_mapa_produtos_snapshot",
+          "registros": 584
+        },
+        {
+          "md5": "b8166295adcebe0473bb2e1377ca34d0",
+          "tabela": "audit_kustos.fase1_matriz_familia",
+          "registros": 11206
+        },
+        {
+          "md5": "8ac83be66250855699bb2135dcf80066",
+          "tabela": "audit_kustos.fase1_matriz_origem",
+          "registros": 11206
+        },
+        {
+          "md5": "8255dbd98aaf0e84aaf409f3a4dbf73e",
+          "tabela": "audit_kustos.fase1_mestre_operacional_chaves",
+          "registros": 11716
+        }
+      ]
+    },
+    "public_depois": {
+      "capturado_em": "2026-10-30 18:14:33.896504+00",
+      "fingerprints": [
+        {
+          "md5": "6587866d881a41a916f7f0c7ff3a22a7",
+          "tabela": "apontamentos_op",
+          "registros": 1469
+        },
+        {
+          "md5": "6ff7dc0862066c93368af64b82e20765",
+          "tabela": "categorias_agrupamento",
+          "registros": 34
+        },
+        {
+          "md5": "1101582c9b3e3bda049795fdfc941ed3",
+          "tabela": "categorias_familia",
+          "registros": 103
+        },
+        {
+          "md5": "d4212f784b38be5b8f392a5eafa41642",
+          "tabela": "categorias_origem",
+          "registros": 50
+        },
+        {
+          "md5": "0d1fbcd0dd1033999aa00a24716e2358",
+          "tabela": "dicionario_master_produtos",
+          "registros": 860
+        },
+        {
+          "md5": "7fca5a2f0972aa19eaa3d28316bb19ae",
+          "tabela": "dicionario_produtos",
+          "registros": 6113
+        },
+        {
+          "md5": "8a5dd9c8eca9f0263fd5ba9c35148f4f",
+          "tabela": "familias_base",
+          "registros": 21
+        },
+        {
+          "md5": "20270b333271e00182179a8b4e61a0c9",
+          "tabela": "historico_custos",
+          "registros": 2481
+        },
+        {
+          "md5": "69bd99d6eabbf325cfd62cfff69681ce",
+          "tabela": "log_importacao",
+          "registros": 31
+        },
+        {
+          "md5": "fb10d0de7f55760fe78fb6afd5e69d3e",
+          "tabela": "log_importacao_cadastro_mestre",
+          "registros": 5
+        },
+        {
+          "md5": "815cc97b28a7764a2f4b5dc05f4d8d91",
+          "tabela": "log_importacao_op",
+          "registros": 8
+        },
+        {
+          "md5": "ae83ac336b493c807425b6f0431e2baf",
+          "tabela": "mapa_produtos",
+          "registros": 299
+        }
+      ]
+    },
+    "audit_kustos_depois": {
+      "capturado_em": "2026-10-30 18:14:35.795619+00",
+      "fingerprints": [
+        {
+          "md5": "a6cfe4593853497e901de780bb361d12",
+          "tabela": "audit_kustos.fase1_catalogo_funcoes_triggers",
+          "registros": 12
+        },
+        {
+          "md5": "ff87740483211c95e9b6bda382f0f7cb",
+          "tabela": "audit_kustos.fase1_contagens_chaves",
+          "registros": 18
+        },
+        {
+          "md5": "c0d7203ba8ac56af7a49df94fc78a2dc",
+          "tabela": "audit_kustos.fase1_divergencias_descricao",
+          "registros": 192
+        },
+        {
+          "md5": "e235dc15cca9ec2af8c2446aa42dd2e5",
+          "tabela": "audit_kustos.fase1_execucao",
+          "registros": 2
+        },
+        {
+          "md5": "c31684b4eef62036eb53a66e2bfdd97d",
+          "tabela": "audit_kustos.fase1_mapa_produtos_snapshot",
+          "registros": 584
+        },
+        {
+          "md5": "b8166295adcebe0473bb2e1377ca34d0",
+          "tabela": "audit_kustos.fase1_matriz_familia",
+          "registros": 11206
+        },
+        {
+          "md5": "8ac83be66250855699bb2135dcf80066",
+          "tabela": "audit_kustos.fase1_matriz_origem",
+          "registros": 11206
+        },
+        {
+          "md5": "8255dbd98aaf0e84aaf409f3a4dbf73e",
+          "tabela": "audit_kustos.fase1_mestre_operacional_chaves",
+          "registros": 11716
+        }
+      ]
+    },
+    "iguais": true,
+    "insert": 0,
+    "update": 0,
+    "delete": 0,
+    "migrations": 0,
+    "importacao_real": false,
+    "rpc": 0,
+    "executores_invocados": 0
+  },
+  "validacao": {
+    "testes_completos": {
+      "total": 990,
+      "arquivos": 52,
+      "duracao_s": 43.69
+    },
+    "testes_relacionados": {
+      "total": 433,
+      "arquivos": 22,
+      "duracao_s": 20.74
+    },
+    "lint": "OK",
+    "typecheck": "OK - tsc --noEmit -p jsconfig.json",
+    "build": "OK - configuração pública em memória; sem publicação",
+    "diff_check": "OK",
+    "simulacoes": {
+      "total": 10,
+      "atuais": "motores puros reais; estado sintético projetado somente em memória",
+      "propostas": "resultados esperados do contrato, sem executor implementado"
+    },
+    "identidade_ensaios": 30,
+    "identidades_reais": 6256,
+    "links": "OK -26 links locais",
+    "json": "OK",
+    "documentacao": {
+      "secoes": 23,
+      "regras": 20,
+      "checklist": 13,
+      "links": 26,
+      "json": "OK",
+      "consistencia": "OK",
+      "documentos_anteriores": "preservados",
+      "codigo": "preservado",
+      "AGENTS": "somente registro de auditoria"
+    }
+  }
+}
