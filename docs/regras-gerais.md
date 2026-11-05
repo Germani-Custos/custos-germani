@@ -92,3 +92,11 @@ A documentação anterior não estabelecia uma hierarquia total entre todos os M
 Em divergência, registrar as duas afirmações e as evidências. Corrigir descrição de implementação somente com leitura do código/contrato; estado remoto exige prova datada do ambiente. Sem evidência suficiente, manter a questão aberta na auditoria; não inventar estado, decisão ou autorização. Esta regra não cria nova precedência de runtime.
 
 Antes de criar arquivo, procurar destino existente com a mesma função. Mover conhecimento fora de lugar, consolidar somente redundância comprovada e manter referências. Números de testes, contagens e deployments são evidências com data/escopo, nunca garantia atual automática. Reorganizações documentais validam links locais (incluindo âncoras), arquivos referenciados, coerência de estados, escopo do diff e `git diff --check`; não precisam executar testes de aplicação quando código não mudou.
+
+## 7. Cadastro Mestre — aprovação, implementação e evidência
+
+O [Contrato operacional do Cadastro Mestre](arquitetura/cadastro-mestre-contrato-operacional.md) é a fonte oficial das DEC-01–07 aprovadas em 05/11/2026. Seu conteúdo e sua correspondência com a numeração histórica estão no próprio contrato. As pendências de aprovação registradas nas auditorias pertencem às datas originais; não devem ser apagadas nem apresentadas como aprovação de código posteriormente entregue.
+
+Toda atualização documental desse fluxo deve distinguir decisão de negócio aprovada, comportamento implementado e prova datada. Geral/Detalhado são papéis aprovados; não declarar novas tabelas, funções ou telas existentes sem implementação. Preservar identidade/histórico e separar elegibilidade de admissão; registrar fonte, data e denominador de contagens. Os quantitativos históricos não são metas de carga.
+
+As sete decisões não precisam de nova aprovação para serem documentadas ou orientar o desenho técnico. Permanecem próprias as validações de implementação, a revisão dos conflitos, o Preview e a aprovação de admissão/execução de cada carga. Aprovação de política não autoriza escrita remota, migration ou deploy, nem transforma um executor integral existente em fluxo incremental.

@@ -1,5 +1,7 @@
 # Auditoria 4.1 — reconciliação do universo de identidade
 
+> **Atualização documental — 05/11/2026:** após esta reconciliação, as decisões de negócio fornecidas pelo responsável foram formalizadas como aprovadas no [contrato operacional DEC-01–07](../arquitetura/cadastro-mestre-contrato-operacional.md). As referências abaixo a decisões pendentes descrevem o escopo histórico da auditoria e sua numeração original; não revogam a aprovação posterior. Os universos e os 133 candidatos permanecem evidências datadas, sem admissão ou implementação automática.
+
 ## 1. Objetivo
 
 **CONCLUÍDO — somente leitura.** Explicar e reproduzir a diferença entre os 6.123 códigos da união persistida e os 6.256 códigos observados nas fontes de dados, sem aprovar produto, universo de admissão ou contrato incremental.

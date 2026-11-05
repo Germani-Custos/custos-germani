@@ -31,6 +31,7 @@ Organização revisada em **16/10/2026**. Comece pela responsabilidade do docume
 
 ### Cadastro Mestre — leitura na ordem dos contratos
 
+- [Contrato operacional — DEC-01–07 aprovadas](cadastro-mestre-contrato-operacional.md): fonte oficial da política, Geral/Detalhado, sucessão da numeração histórica e pendências de implementação; aprovação de negócio não é execução.
 - [Reconstrução do universo ERP](cadastro-mestre-reconstrucao.md): decisão de universo, aprovação integral e executor central.
 - [Execução web e transporte compacto](cadastro-mestre-execucao-web.md): HTTP, segurança, limites, snapshot e recuperação.
 - [Famílias ERP / V2](cadastro-mestre-familias-erp.md): extensão vigente de catálogo, decisões e transação conjunta.

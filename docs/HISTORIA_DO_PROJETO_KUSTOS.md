@@ -8,6 +8,12 @@ Os estados e contagens abaixo pertencem às datas e aos escopos das entregas. Ex
 
 Os registros de entrega preservam proveniência e limitações das provas; não autorizam repetir cargas, migrations, deploys ou mudanças de acesso. Nenhuma evidência foi atualizada por consulta remota nesta reorganização.
 
+## Formalização das decisões do Cadastro Mestre — 05/11/2026
+
+As Auditorias 1–4.1 separaram identidade, elegibilidade, classificação, fatos e proveniência. A reconciliação de universos explicou por que códigos presentes em arquivo não eram automaticamente produtos persistidos; as recomendações técnicas permaneceram distintas da aprovação de negócio.
+
+O responsável declarou aprovadas as sete decisões formalizadas no [contrato operacional DEC-01–07](arquitetura/cadastro-mestre-contrato-operacional.md): preservação de identidade no Geral, recorte elegível no Detalhado, autoridade por campo e proteção manual, blank delimitado, fontes/denominadores explícitos e manutenção incremental com execução auditável e reversível. Essa aprovação orienta a evolução do sistema; a entrega foi exclusivamente documental, sem código, banco ou carga. Os relatórios e suas pendências originais foram preservados, com notas remetendo ao contrato oficial.
+
 ## Da consolidação de planilhas à investigação operacional
 
 A base inicial organizou leitura XLSX, parsing brasileiro, validação por linha e persistência por produto/competência. A separação FATO × DIMENSÃO evitou transformar classificações atuais em reescrita de fatos históricos. Dois eixos precisaram ficar explícitos: `data_referencia` como competência ERP e `criado_em` como evento de importação.

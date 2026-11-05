@@ -1,6 +1,6 @@
 # Roadmap Estratégico — Kustos Germani
 
-Recorte reconciliado em **22/10/2026**. Este documento reúne capacidades futuras e decisões de produto. Problemas existentes, prioridades P0–P3 e critérios de correção pertencem exclusivamente ao [backlog ativo](docs/auditoria/backlog-priorizado.md). A evolução funcional aguarda a decisão humana após a auditoria; esta organização não autoriza implementação, escrita remota ou publicação.
+Recorte do backlog reconciliado em **22/10/2026**. Este documento reúne capacidades futuras e decisões de produto. Problemas existentes, prioridades P0–P3 e critérios de correção pertencem exclusivamente ao [backlog ativo](docs/auditoria/backlog-priorizado.md). Para o Cadastro Mestre, as DEC-01–07 foram aprovadas e formalizadas no [contrato operacional](docs/arquitetura/cadastro-mestre-contrato-operacional.md); essa aprovação de negócio não declara implementação nem autoriza escrita remota ou publicação.
 
 ## Base disponível e evidência de entregas
 
@@ -17,6 +17,12 @@ O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-
 [OP-CUSTO-01 — contrato técnico final](docs/arquitetura/op-custo.md) define a relação por produto + competência, preservando eventos OP e snapshots disponíveis de Custo. **Engine/API e a apresentação mensal da Fase 2 estão implementados localmente, sem publicação.** A entrada exige uma competência explícita na tela OP; o relatório apresenta cobertura, escolha humana de inclusão de produtos sem correspondência, fila e dossiê, com retorno ao contexto anterior. Mantém prioridades separadas, sem causalidade automática ou consolidação numérica sem prova ERP. [Núcleo e limites da Fase 1](docs/auditoria/op-custo-fase1-validacao.md); [escopo e validação da Fase 2](docs/auditoria/op-custo-fase2-validacao.md).
 
 A evolução temporal multi-competência está prevista em seção própria do contrato: seleção explícita de meses, evolução e padrões exigirão novas regras aprovadas. Não pertence à primeira implementação. O contrato não altera TOP-200, não resolve LOG-02/03/04/06 nem autoriza refatoração, escrita remota ou publicação.
+
+## Cadastro Mestre — decisões aprovadas, implementação pendente
+
+O padrão aprovado é atualização incremental com identidade preservada no Geral e recorte elegível no Detalhado. A política inclui PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA, Tipo P/C, validação de código/duplicidades, bloqueio INATIVO/EXCLUIR, autoridade por campo e proteção das classificações/overrides Kustos. Admissão exige Preview e aprovação; candidato observado não vira produto admitido automaticamente.
+
+Ainda precisam de desenho e implementação: mapeamento dos papéis Geral/Detalhado para a estrutura existente, adequação dos filtros/Preview e conflitos, execução incremental, proveniência, idempotência e reversão comprovada. O executor integral existente não se torna incremental por esta formalização. Nenhuma tabela, função, UI, carga ou alteração de produção foi criada. [Critérios, diferenças do checkout e pendências](docs/arquitetura/cadastro-mestre-contrato-operacional.md#12-pendências-para-implementação-e-validação-humana).
 
 ## Próxima evolução funcional — memória operacional
 
@@ -38,8 +44,8 @@ Antes de escolher uma entrega, definir cálculo local versus séries maiores, re
 
 ## Decisões de negócio e dados
 
-- Reconciliação Master ERP → dimensão operacional somente após decisão explícita; a existência de duas visões não autoriza sincronização automática nem exclusão da dimensão operacional.
-- Ponte empresarial aprovada para agrupamento ERP → categoria Kustos; não converter por família, origem, descrição ou semelhança de códigos.
+- DEC-01–07 do Cadastro Mestre estão aprovadas conforme o contrato oficial; seu desenho técnico e sua implementação continuam pendentes. A existência de visões separadas não autoriza sincronização automática, exclusão da identidade ou sobrescrita da classificação operacional.
+- Qualquer ponte empresarial de agrupamento ERP → categoria Kustos exige contrato específico aprovado; DEC-03 não cria essa ponte nem autoriza conversão por família, origem, descrição ou semelhança de códigos.
 - Retenção de evidências e eventual autoria detalhada conforme necessidade e contrato aprovado. A correção do risco atual de acesso/RLS tem prioridade própria em SEC-03, fora da espera por multi-tenant/RBAC futuro.
 
 `data_referencia` permanece competência; `criado_em` permanece importação/proveniência. Nenhuma proposta implica nova fonte de verdade, schema ou carga sem decisão específica.

@@ -73,6 +73,14 @@ A consulta respeita a visibilidade/RLS do cliente e não é snapshot transaciona
 Para conferir a classificação analítica de Custos, recarregue a página, selecione uma origem e família ERP, mantenha Item/Produto em TODOS e compare os códigos da fila com os produtos dessa família que possuem custos no recorte. Depois selecione um produto e abra seu histórico; exportação deriva da mesma fila. Não preencher o operacional como teste. Campos ERP sem resolução não autorizam fallback; erro de página/contagem interrompe a leitura. A projeção reflete o cadastro atual e não é classificação histórica por competência. `data_referencia` continua competência e `criado_em` importação. [Evidências GET e teste local](../auditoria/custos-classificacao-erp.md).
 ## 5. Reconstrução administrativa do Master
 
+### Política aprovada e limite operacional
+
+O [contrato oficial DEC-01–07](../arquitetura/cadastro-mestre-contrato-operacional.md) aprova atualização incremental como padrão e reconstrução integral como exceção explícita com Preview/aprovação. Geral preserva identidade/histórico; Detalhado contém elegíveis; os candidatos observados e as contagens históricas não são autorização de admissão. As sete decisões estão aprovadas, mas sua implementação não foi entregue por esta formalização.
+
+Os passos abaixo descrevem o executor integral existente, não uma rotina incremental já disponível ou prova de implantação de Geral/Detalhado. Não executar esse caminho como substituto do futuro fluxo padrão. Uma execução excepcional continua exigindo autorização própria, revisão de compatibilidade com a preservação das identidades e aprovação do Preview; esta tarefa documental não autoriza carga. Estado indeterminado continua impedindo reenvio cego.
+
+### Procedimento do executor integral existente
+
 O procedimento exige autorização própria. Consulta, seleção do arquivo, decisões e download não executam carga. Não reexecutar a migration pontual da Fase 3.4 nem chamar o importador legado para aplicar o manifesto atual.
 
 1. Confirmar migration comercial aditiva aplicada em etapa autorizada e versão compatível de UI/função V3 e gerar novo Preview do original XLS/XLSX/XLSM contra o contexto atual. Revisão antiga ou divergência de arquivo/contexto exige regeneração.

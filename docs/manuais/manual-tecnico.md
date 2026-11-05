@@ -121,6 +121,14 @@ Nova leitura limpa o resultado e renova a escolha; geração local invalida resp
 
 ## 7. Cadastro Operacional e Master ERP
 
+### Política aprovada e trabalho ainda não implementado
+
+As [DEC-01–07 do contrato operacional](../arquitetura/cadastro-mestre-contrato-operacional.md) estão aprovadas. Devem orientar o padrão incremental, elegibilidade, autoridade por campo, blanks, papéis Geral/Detalhado, denominadores e execução auditável. Esta formalização não alterou o código: os papéis Geral/Detalhado não são novas tabelas/telas existentes, e os métodos atuais não devem ser descritos como executor incremental aderente.
+
+O filtro do checkout ainda contém PRODUZIDO/REVENDA e INATIVO/EXLUIR, enquanto a decisão aprovada inclui PRODUZIDA/MASSA PRODUZIDA e EXCLUIR. A normalização continua sendo a existente, com os limites auditados a tratar tecnicamente. Mapeamento de fontes, conflitos/impacto em Custos, idempotência, proveniência e reversão precisam ser especificados, implementados e validados. Não usar o modo incremental histórico do núcleo ou o executor comercial como atalho. [Pendências e validações](../arquitetura/cadastro-mestre-contrato-operacional.md#12-pendências-para-implementação-e-validação-humana).
+
+### Comportamento implementado no checkout
+
 `dicionario_produtos` segue como cadastro operacional e fonte da OP. A classificação efetiva de Custos é uma projeção em memória, sem sincronização: `classificarCustos()` em `core/custos-classification-engine.js`, usada por `getMasters()` e pelo enriquecimento central do histórico, comparações e drill-through. `masters.dicionario`/`hierarquia` são projeções analíticas, não payloads de escrita. Campos vazios/ambíguos/sem catálogo no Master permanecem sem classificação, sem recuperar o campo operacional. Falhas de leitura bloqueiam a análise; não significam Master vazio. [Contrato CUSTOS-ERP-01](../arquitetura/matriz-contratos-operacionais.md#custos-erp-01--classificação-analítica-em-memória-16102026). Edição manual usa `buildManualProductMasterPayload`: agrupamento explicitamente vazio/null grava NULL; omitido preserva. O legado `buildProductMasterPayload`/`reconcileProductMasterImport` preserva vazios e ausentes; o seletor atual não chama `importProductMasterXlsm`.
 
 Consulta ERP reutiliza `lerContextoCadastroMestrePreview`, código exato por `resolverCodigoExato` e normalização existentes; busca/filtros/páginas de 50 são locais, com datasets/estado independentes. `agrupamento_erp_valor` preserva Agrup. Prod. no modelo, sem coluna na tabela. O renderer reúne `agrupamento_comercial_erp_cod` e `agrupamento_comercial_erp_descricao` na quinta coluna, **Agrupamento comercial**, usando ` — ` e escape HTML; campo parcial mostra somente o valor existente e ambos vazios mostram **Não informado**. Os dois campos permanecem independentes no contrato. Não executar filtros do arquivo para consultar o universo persistido. [Contrato UX](../ux/cadastro-mestre.md).

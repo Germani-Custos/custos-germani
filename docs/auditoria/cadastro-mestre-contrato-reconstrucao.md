@@ -1,5 +1,7 @@
 # Auditoria 4 — contrato de reconstrução incremental do Cadastro Mestre
 
+> **Atualização documental — 05/11/2026:** o responsável declarou aprovadas as sete decisões agora formalizadas no [contrato oficial DEC-01–07](../arquitetura/cadastro-mestre-contrato-operacional.md). A numeração/conteúdo dessa aprovação foi reorganizada em relação às pendências desta auditoria; a correspondência está no contrato. Os estados “não aprovado” e os checklists abaixo descrevem a fotografia de 30/10, preservada como histórico. Não significam que as sete decisões continuem pendentes, nem que todos os detalhes técnicos CAD-01–20 ou a implementação tenham sido automaticamente aprovados/entregues. Nenhuma conclusão, simulação ou JSON histórico foi reescrito.
+
 ## 1. Objetivo, status e fontes
 
 **CONCLUÍDO — auditoria e especificação propostas; contrato não aprovado, não implementado e ainda não liberado para implementação.** Esta etapa responde exatamente quais mudanças a futura carga poderia propor, quais dados deve preservar e quais escolhas precisam de aprovação. Regras abaixo são recomendações verificáveis, não uma alteração da arquitetura oficial.
