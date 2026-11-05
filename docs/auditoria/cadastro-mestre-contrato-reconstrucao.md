@@ -54,6 +54,8 @@ Na repetição, a fotografia inicial NULL deixa de coincidir; o comportamento é
 
 ## 3. Identidade e idempotência do helper
 
+> **Esclarecimento documental — Auditoria 4.1, 30/10/2026:** os 6.256 “códigos reais observados” mencionados abaixo são o universo observado das fontes de dados selecionadas: **6.123 persistidos + 133 presentes somente no arquivo ERP em relação à persistência**. Não são 6.256 registros persistidos nem a união das entradas sintéticas. Os 133 têm linha/descrição no arquivo; 108 também aparecem em 08/10 e 25 apenas em 22/10 entre os dois arquivos examinados. TESTE123 está nos dois universos, fora da diferença. “Reais” não certifica atividade ou validade empresarial. A [reconciliação individual e matemática](cadastro-mestre-universo-identidade-reconciliacao.md) preserva ambos os números e não aprova admissão, DEC-01–07 ou CAD-01–20.
+
 A identidade compartilhada continua sendo **`codigo_produto` normalizado**; `cod_produto` de OP usa o mesmo domínio. Isso não significa que qualquer entrada aceita pelo helper seja segura para admissão empresarial.
 
 Normalização em [spreadsheet-engine](../../core/spreadsheet-engine.js), linhas 157–194: NFKC, remoção de invisíveis/espaços, tratamento de milhar, ciência e decimal terminado em zero; não faz uppercase nem remove zeros de texto por cast generalizado. Preview chama `codigoSeguro`; números precisam ser inteiros seguros e tipo precisa ser string/number.
@@ -333,6 +335,8 @@ Essas são regras da **proposta incremental**, não descrição de remoções do
 **PROPOSTA, não aprovada.** Usar normalizeCodigoProduto existente; só admitir código não vazio, estável na segunda aplicação e sem perda de precisão/forma ambígua. Não repetir normalização para “consertar”.
 
 Aceite: 6256 reais estáveis; ++1/+-1 e ciência imprecisa bloqueiam no contrato proposto.
+
+Escopo esclarecido pela Auditoria 4.1: testar a estabilidade no universo observado de dados (6.256) não o transforma em universo persistido (6.123) ou investigativo (524). Entradas de ensaios são fonte separada; coincidência de valor não prova que o ensaio criou um produto. A regra de identidade permanece proposta, sem alteração funcional ou aprovação.
 
 ### CAD-02 — Sem equivalência inferida
 
