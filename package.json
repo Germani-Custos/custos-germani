@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": { "node": "24.x" },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p jsconfig.json",
