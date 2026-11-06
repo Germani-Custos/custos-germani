@@ -6,7 +6,7 @@ Extensão vigente CAD-COM-01 (19/10/2026): adapter também reconhece Agrup. Com.
 
 ## Contrato vigente desde 09/10/2026 — CAD-REBUILD-01
 
-O motor puro de filtros deste documento permanece intacto. A camada de manifesto/aprovação passa a interpretar produtos fora do conjunto ou ausentes como remoções do Master, conforme [reconstrução do universo](./cadastro-mestre-reconstrucao.md), substituindo a preservação histórica de produtos ausentes descrita abaixo. Campos vazios de produtos que permanecem continuam preservados. O contexto SELECT passa a incluir a imagem completa do Master. Nenhuma mudança de competência `data_referencia` ou evento `criado_em` dos fatos.
+Na entrega de 09/10 o motor puro de filtros permaneceu intacto; a correção local de 05/11 está descrita nos filtros abaixo. A camada de manifesto/aprovação continua interpretando produtos fora do conjunto ou ausentes como remoções propostas do Master, conforme [reconstrução do universo](./cadastro-mestre-reconstrucao.md). Esse executor integral não atende por si só ao padrão Geral/Detalhado e não deve ser usado como rotina incremental. Campos vazios de produtos que permanecem continuam preservados. O contexto SELECT inclui a imagem completa do Master. Nenhuma mudança de competência `data_referencia` ou evento `criado_em` dos fatos.
 
 ## Continuidade — CAD-XLS-01 (08/10/2026)
 
@@ -50,11 +50,19 @@ Após leitura, campos escalares viram texto com trim lateral; vazio vira null. C
 
 SheetJS recebe `bookVBA:false` e `cellFormula:false`. Macros não são executadas/carregadas e fórmulas não são calculadas: só valores cacheados existentes no arquivo podem ser lidos. Sem valor cacheado, a célula permanece vazia. Agrupamento ERP é o escalar bruto após essa normalização mínima, nunca um agrupamento Kustos. A dependência de desenvolvimento SheetJS 0.20.3 usa o [tarball oficial](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/), na mesma versão do CDN atual; serve somente aos testes, sem mudar o runtime.
 
-## Filtros ordenados
+## Filtros ordenados — DEC-02, correção local de 05/11/2026
 
-1. Tipo: somente P/C, com trim e comparação case-insensitive; D e qualquer outro valor são excluídos.
-2. Descr(Origem): deve conter Produzido ou Revenda, case-insensitive.
-3. Descrição: excluir quando contiver inativo ou **EXLUIR** (grafia literal aprovada), case-insensitive.
+1. Tipo: somente P/C; D e qualquer outro valor são excluídos.
+2. Descr(Origem): reconhece PRODUZIDO, PRODUZIDA, MASSA PRODUZIDA ou REVENDA como palavras completas, inclusive com qualificadores CX/PCT/UN/FARDO. Bordas excluem letras Unicode, números e underscore adjacentes; REVENDADEIRA, REPRODUZIDO e PRODUZIDO2 não passam. Não consulta código de origem/catálogo, família ou descrição comercial para decidir elegibilidade.
+3. Descrição: excluir quando **contiver** INATIVO ou EXCLUIR. Não exige palavra inteira nos marcadores; EXLUIR sozinho não é impeditivo.
+
+`avaliarElegibilidadeCadastroMestre()` centraliza esse cálculo puro e retorna `{elegivel,motivo}`: ELEGIVEL, TIPO_NAO_AUTORIZADO, ORIGEM_NAO_INFORMADA, ORIGEM_NAO_AUTORIZADA, PRODUTO_INATIVO ou PRODUTO_EXCLUIR. O primeiro critério impeditivo prevalece; ambos os marcadores resultam em PRODUTO_INATIVO. Código válido e duplicidades seguem sob responsabilidade do Preview, não desse helper isolado.
+
+Somente a comparação reutiliza `normalizeText(textoCadastro(valor) || '')`: caixa/diacríticos/espaços são normalizados sem alterar entrada, identidade ou valor armazenável. Null/ausente/vazio são ausência; números finitos são texto (origem numérica 0 é desconhecida, não vazia); objetos, booleanos e números não finitos mantêm a rejeição escalar existente.
+
+`motivoFiltro()` adapta o resultado ao contrato anterior do Preview: TIPO_NAO_AUTORIZADO, ORIGEM_NAO_AUTORIZADA (inclusive vazia) e DESCRICAO_EXCLUIDA. A interface não ganhou estados ou diagnósticos detalhados persistidos. Origem/categoria sem correspondência continua PENDENTE na resolução separada; não é confundida com valor vazio e não bloqueia por si só.
+
+Elegibilidade não é admissão. Adapter, transporte, API e executor não mudaram. Regenerar Preview/revisão após a atualização; uma revisão cujo resultado/hash divergir é recusada pelas guardas existentes. O executor comercial pontual também reutiliza o motor e sua fotografia antiga pode bloquear com o novo conjunto; não ajustar suas contagens nem executá-lo como atalho. [Provas, reconciliação e alcance](../auditoria/cadastro-mestre-elegibilidade-validacao.md).
 
 Cada exclusão registra linha física, código, primeiro motivo aplicável e se o Mestre existente será preservado. Produto filtrado mas fisicamente presente não é marcado como ausente. Linhas totalmente vazias não são registros; títulos/cabeçalhos não entram em `linhas_lidas`.
 

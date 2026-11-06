@@ -18,11 +18,13 @@ O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-
 
 A evolução temporal multi-competência está prevista em seção própria do contrato: seleção explícita de meses, evolução e padrões exigirão novas regras aprovadas. Não pertence à primeira implementação. O contrato não altera TOP-200, não resolve LOG-02/03/04/06 nem autoriza refatoração, escrita remota ou publicação.
 
-## Cadastro Mestre — decisões aprovadas, implementação pendente
+## Cadastro Mestre — decisões aprovadas, elegibilidade corrigida localmente
 
 O padrão aprovado é atualização incremental com identidade preservada no Geral e recorte elegível no Detalhado. A política inclui PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA, Tipo P/C, validação de código/duplicidades, bloqueio INATIVO/EXCLUIR, autoridade por campo e proteção das classificações/overrides Kustos. Admissão exige Preview e aprovação; candidato observado não vira produto admitido automaticamente.
 
-Ainda precisam de desenho e implementação: mapeamento dos papéis Geral/Detalhado para a estrutura existente, adequação dos filtros/Preview e conflitos, execução incremental, proveniência, idempotência e reversão comprovada. O executor integral existente não se torna incremental por esta formalização. Nenhuma tabela, função, UI, carga ou alteração de produção foi criada. [Critérios, diferenças do checkout e pendências](docs/arquitetura/cadastro-mestre-contrato-operacional.md#12-pendências-para-implementação-e-validação-humana).
+O motor puro local implementa Tipo P/C, o vocabulário aprovado por palavras completas na descrição de origem e os bloqueios INATIVO/EXCLUIR, sem usar família, agrupamento ou catálogo como fallback. A correção não admite produtos e não foi publicada. [Validação e impacto nos consumidores](docs/auditoria/cadastro-mestre-elegibilidade-validacao.md).
+
+Ainda precisam de desenho e implementação: mapeamento dos papéis Geral/Detalhado para a estrutura existente, admissão, Preview de conflitos/impactos, execução incremental, proveniência, idempotência e reversão comprovada. O executor integral continua removível; o comercial isolado mantém seu escopo específico e requer compatibilidade própria. Nenhuma carga ou alteração de produção decorre da correção. [Critérios, diferenças do checkout e pendências](docs/arquitetura/cadastro-mestre-contrato-operacional.md#12-pendências-para-implementação-e-validação-humana).
 
 ## Próxima evolução funcional — memória operacional
 
@@ -44,7 +46,7 @@ Antes de escolher uma entrega, definir cálculo local versus séries maiores, re
 
 ## Decisões de negócio e dados
 
-- DEC-01–07 do Cadastro Mestre estão aprovadas conforme o contrato oficial; seu desenho técnico e sua implementação continuam pendentes. A existência de visões separadas não autoriza sincronização automática, exclusão da identidade ou sobrescrita da classificação operacional.
+- DEC-01–07 do Cadastro Mestre estão aprovadas conforme o contrato oficial; a elegibilidade foi corrigida no motor local, enquanto a implementação completa continua pendente. A existência de visões separadas não autoriza sincronização automática, exclusão da identidade ou sobrescrita da classificação operacional.
 - Qualquer ponte empresarial de agrupamento ERP → categoria Kustos exige contrato específico aprovado; DEC-03 não cria essa ponte nem autoriza conversão por família, origem, descrição ou semelhança de códigos.
 - Retenção de evidências e eventual autoria detalhada conforme necessidade e contrato aprovado. A correção do risco atual de acesso/RLS tem prioridade própria em SEC-03, fora da espera por multi-tenant/RBAC futuro.
 

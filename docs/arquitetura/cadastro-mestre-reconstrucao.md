@@ -30,7 +30,9 @@ Nenhum schema, migration ou política RLS é alterado. O JSONB `metadados_origem
 
 `XLS/XLSX/XLSM → adapter existente → criarPreviewCadastroMestre → criarManifestoCadastroMestre(modo=RECONSTRUCAO_UNIVERSO) → revisão local → criarPlanoReconstrucaoCadastroMestre → executor administrativo`.
 
-O parser e o motor de filtros não mudaram. A UI lê XLS diretamente no navegador, mantendo SheetJS 0.20.3. Filtros na ordem existente: somente Tipo P/C (D e outros excluídos), Descr. (Origem) contendo Produzido/Revenda, descrição sem inativo/**EXLUIR**, com as comparações case-insensitive já validadas.
+O parser não mudou. A UI lê XLS diretamente no navegador, mantendo SheetJS 0.20.3. Na correção local de 05/11/2026, o motor passa a Tipo P/C → Descr. (Origem) com palavras completas PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA e qualificadores → descrição sem INATIVO/EXCLUIR. Normaliza somente a comparação; EXLUIR sozinho não bloqueia. [Regra e limites](cadastro-mestre-preview.md#filtros-ordenados--dec-02-correção-local-de-05112026).
+
+Essa correção altera o conjunto calculado e pode invalidar revisões anteriores. Regerar Preview/aprovação; não usar uma revisão de 860 como autorização para os 955 potenciais observados nos arquivos auditados. Plano/executor continuam integrais, com remoções propostas e aprovação separada; nenhuma carga foi executada, nenhum produto foi admitido e Geral/Detalhado não foram implementados por essa correção. [Provas e auditoria de consumidores](../auditoria/cadastro-mestre-elegibilidade-validacao.md).
 
 O manifesto é `RECONSTRUCAO_UNIVERSO_V1`: inclui códigos do universo, imagem completa dos existentes, INSERTs, UPDATEs por campo e `REMOVER_FORA_UNIVERSO` por código. Remoções distinguem `FORA_DO_CONJUNTO_FILTRADO` e `AUSENTE_NO_ARQUIVO`. A aprovação se vincula ao manifesto integral. Todas as propostas, inclusive remoções, precisam estar aprovadas: rejeitada ou pendente impede a reconstrução inteira. Erros de identidade/validação ou universo vazio bloqueiam a execução, para não reconstruir sobre um arquivo incompleto. O Preview continua apresentando os erros.
 

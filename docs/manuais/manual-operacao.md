@@ -79,6 +79,8 @@ O [contrato oficial DEC-01–07](../arquitetura/cadastro-mestre-contrato-operaci
 
 Os passos abaixo descrevem o executor integral existente, não uma rotina incremental já disponível ou prova de implantação de Geral/Detalhado. Não executar esse caminho como substituto do futuro fluxo padrão. Uma execução excepcional continua exigindo autorização própria, revisão de compatibilidade com a preservação das identidades e aprovação do Preview; esta tarefa documental não autoriza carga. Estado indeterminado continua impedindo reenvio cego.
 
+O motor local de elegibilidade exige Tipo P/C e reconhece PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA como palavras completas em Descr. (Origem), inclusive com qualificadores CX/PCT/UN/FARDO. Caixa, acentos e espaços são normalizados só para comparação; descrição contendo INATIVO/EXCLUIR bloqueia, EXLUIR sozinho não. Família/agrupamento ausentes ou origem sem categoria não bloqueiam automaticamente. Isso não admite produtos nem altera a consulta persistida. Mudança do resultado/hash exige novo Preview/revisão; não reutilizar revisão de 860 como autorização para 955. [Validação local e limites](../auditoria/cadastro-mestre-elegibilidade-validacao.md).
+
 ### Procedimento do executor integral existente
 
 O procedimento exige autorização própria. Consulta, seleção do arquivo, decisões e download não executam carga. Não reexecutar a migration pontual da Fase 3.4 nem chamar o importador legado para aplicar o manifesto atual.
@@ -105,6 +107,8 @@ Detalhes: [execução web](../arquitetura/cadastro-mestre-execucao-web.md), [fam
 ### Carga pontual de Agrup. Com. ERP
 
 Esta carga possui [executor isolado](../arquitetura/cadastro-mestre-comercial-executor-isolado.md) e **não deve usar a reconstrução geral acima**. Guardar manifesto integral da Fase A, SHA-256 canônico conferido, fotografia original e XLS. O CLI `scripts/validar-carga-comercial.mjs` recebe esses quatro argumentos conforme o contrato e somente revalida localmente; não aceita `--executar` e não acessa o banco. Deve reproduzir 860 produtos, 162 com comercial, 698 pares NULL, 29 códigos, 324 valores e zero conflitos/inferências. Divergência bloqueia, sem saneamento automático.
+
+A correção de elegibilidade muda o universo potencial do motor compartilhado. A compatibilidade desse executor pontual precisa de etapa própria antes de uso; não trocar suas contagens por 955 nem relaxar as guardas para aceitar revisão antiga.
 
 Nenhuma carga desta etapa está autorizada. Na etapa futura, autorização humana e confirmação do hash são obrigatórias; Master/catálogos serão rechecados sob locks. Preservar resultado e fotografia fora do banco: esta operação não grava lote/log nem timestamps/proveniência. Em falha/COMMIT incerto, não buscar lote da reconstrução nem repetir automaticamente; conferir contra fotografia/manifesto. `data_referencia` continua competência e `criado_em` importação, intactos.
 

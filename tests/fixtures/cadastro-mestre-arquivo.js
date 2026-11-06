@@ -23,7 +23,7 @@ export function arquivoCadastro(bookType = 'xls', extension = bookType) {
     ['003', 'Produto D', 'D', 'Produzido', '01', 'F1', 'P801'],
     ['004', 'Origem excluída', 'C', 'Comprado', '01', 'F1', 'P801'],
     ['005', 'Produto INATIVO', 'P', 'Produzido', '01', 'F1', 'P801'],
-    ['006', 'Produto EXLUIR', 'C', 'Revenda', '01', 'F1', 'P801'],
+    ['006', 'Produto EXCLUIR', 'C', 'Revenda', '01', 'F1', 'P801'],
     ['1e3', 'Novo revenda', ' c ', 'Revenda nacional', '01', 'F1', 'P302'],
     ['008', 'Sem alteração', 'P', 'Produzido', '01', 'F1', 'P005']
   ]);

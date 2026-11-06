@@ -1,6 +1,6 @@
 // @ts-check
 /* CAD-PREVIEW-01: cálculo puro. Não gera payload de escrita nem classificação operacional. */
-import { normalizeCodigoProduto } from './spreadsheet-engine.js';
+import { normalizeCodigoProduto, normalizeText } from './spreadsheet-engine.js';
 
 /** @typedef {Record<string, unknown>} Registro */
 /** @typedef {{ produtos: Registro[], origens: Registro[], familias: Registro[] }} ContextoPreview */
@@ -35,12 +35,34 @@ function codigoSeguro(value) {
   return normalizeCodigoProduto(value);
 }
 
+// Limites de palavra consideram letras Unicode; qualificadores e pontuação são permitidos.
+const ORIGEM_ELEGIVEL = /(?:^|[^\p{L}\p{N}_])(?:massa produzida|produzido|produzida|revenda)(?=$|[^\p{L}\p{N}_])/u;
+const textoElegibilidade = value => normalizeText(textoCadastro(value) || '');
+
+/**
+ * DEC-02: avalia somente Tipo, Descr(Origem) e marcadores, sem I/O ou admissão.
+ * Código/duplicidades continuam validados pelo Preview. Só a comparação é normalizada.
+ * @param {Registro} row
+ */
+export function avaliarElegibilidadeCadastroMestre(row = {}) {
+  const tipo = textoElegibilidade(row.tipo);
+  if (tipo !== 'p' && tipo !== 'c') return { elegivel: false, motivo: 'TIPO_NAO_AUTORIZADO' };
+  const origem = textoElegibilidade(row.descr_origem);
+  if (!origem) return { elegivel: false, motivo: 'ORIGEM_NAO_INFORMADA' };
+  if (!ORIGEM_ELEGIVEL.test(origem)) return { elegivel: false, motivo: 'ORIGEM_NAO_AUTORIZADA' };
+  const descricao = textoElegibilidade(row.descricao);
+  if (descricao.includes('inativo')) return { elegivel: false, motivo: 'PRODUTO_INATIVO' };
+  if (descricao.includes('excluir')) return { elegivel: false, motivo: 'PRODUTO_EXCLUIR' };
+  return { elegivel: true, motivo: 'ELEGIVEL' };
+}
+
 function motivoFiltro(row) {
-  const tipo = (textoCadastro(row.tipo) || '').toUpperCase();
-  if (tipo !== 'P' && tipo !== 'C') return 'TIPO_NAO_AUTORIZADO';
-  if (!/produzido|revenda/i.test(textoCadastro(row.descr_origem) || '')) return 'ORIGEM_NAO_AUTORIZADA';
-  if (/inativo|exluir/i.test(textoCadastro(row.descricao) || '')) return 'DESCRICAO_EXCLUIDA';
-  return null;
+  const avaliacao = avaliarElegibilidadeCadastroMestre(row);
+  if (avaliacao.elegivel) return null;
+  // Compatibilidade dos motivos gerais já consumidos pelo Preview/manifesto.
+  if (avaliacao.motivo === 'ORIGEM_NAO_INFORMADA') return 'ORIGEM_NAO_AUTORIZADA';
+  if (avaliacao.motivo === 'PRODUTO_INATIVO' || avaliacao.motivo === 'PRODUTO_EXCLUIR') return 'DESCRICAO_EXCLUIDA';
+  return avaliacao.motivo;
 }
 
 /**

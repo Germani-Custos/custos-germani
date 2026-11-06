@@ -27,7 +27,7 @@ describe('Representação compacta — usa todas as linhas relevantes sem workbo
     expect(Object.keys(dados).sort()).toEqual(['fonte', 'linhas', 'versao_transporte']);
     expect(() => validarDadosExecucaoCadastroMestre(dados)).not.toThrow();
     expect(linhasDadosExecucaoCadastroMestre(dados)).toEqual(leituraOriginal.linhas);
-    expect(dados.linhas).toHaveLength(8); // Inclusive D/origem inválida/inativo/EXLUIR.
+    expect(dados.linhas).toHaveLength(8); // Inclusive D/origem inválida/inativo/EXCLUIR.
     expect(dados.linhas.every(r => r.length === 11)).toBe(true);
     const servidor = await prepararAprovacaoDadosCadastroMestre(clone(dados), clone(contexto));
     expect(servidor.manifesto).toEqual(preparado.manifesto);

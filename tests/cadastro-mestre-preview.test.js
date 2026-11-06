@@ -22,6 +22,22 @@ describe('Adaptador de arquivo do Preview', () => {
     expect(result.tipo_arquivo).toBe(extension.toUpperCase());
     expect(result.produtos[0]).toMatchObject({ codigo_produto: '000123', tipo: 'NOVO_PRODUTO', calculado: { descricao: 'Produto teste', origem_cod: '01', familia_cod: 'F1', agrupamento_erp_valor: '00Ab  ERP' } });
   });
+  it.each(['xls', 'xlsx', 'xlsm'])('%s aplica DEC-02 no mesmo núcleo sem reinterpretar campos no adapter', async formato => {
+    const matriz = [headers,
+      ['001', 'Produto MASSA', 'P', 'MASSA PRODUZIDA FARDO/CX', '400', 'F1', null],
+      ['002', 'Produto EXLUIR', 'C', 'REVENDA', '632', 'F1', null],
+      ['003', 'Produto EXCLUIR', 'C', 'REVENDA', '632', 'F1', null],
+      ['004', 'Produto normal', 'P', 'REVENDADEIRA', '632', 'F1', null]
+    ];
+    const result = await previewArquivoCadastroMestre(arquivoExcel(formato, formato, matriz), contexto, SheetJS);
+    expect(result.produtos.map(p => p.codigo_produto)).toEqual(['001', '002']);
+    expect(result.produtos[1].origem.recebido.status).toBe('PENDENTE');
+    expect(result.produtos[1].recebido.descricao).toBe('Produto EXLUIR');
+    expect(result.excluidos.map(p => [p.codigo_produto, p.motivo])).toEqual([
+      ['003', 'DESCRICAO_EXCLUIDA'], ['004', 'ORIGEM_NAO_AUTORIZADA']
+    ]);
+    expect(result.somente_preview).toBe(true);
+  });
   it('XLSM com blob VBA não depende de macro e não o carrega', async () => {
     const read = vi.fn(SheetJS.read);
     const file = arquivoExcel('xlsm', 'xlsm', [headers, data], wb => { wb.vbaraw = new Uint8Array([1, 2, 3]); });

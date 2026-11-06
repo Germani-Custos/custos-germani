@@ -68,7 +68,7 @@ describe('Cadastro Mestre — Preview puro', () => {
   it('origem fora do filtro excluída', () => {
     expect(preview({ descr_origem: 'Despesa' }).excluidos[0].motivo).toBe('ORIGEM_NAO_AUTORIZADA');
   });
-  it.each(['Produto inativo', 'INATIVO produto', 'Produto EXLUIR', 'Produto exluir'])('descrição %s excluída', descricao => {
+  it.each(['Produto inativo', 'INATIVO produto', 'Produto EXCLUIR', 'Produto excluir'])('descrição %s excluída', descricao => {
     expect(preview({ descricao }).excluidos[0].motivo).toBe('DESCRICAO_EXCLUIDA');
   });
   it('filtros têm ordem tipo, origem, descrição', () => {

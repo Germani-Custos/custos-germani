@@ -74,9 +74,9 @@ Pertencer a uma origem aprovada, isoladamente, não admite um produto. Os requis
 
 **95 significa candidatos potenciais, não 95 admissões, nem uma meta de crescimento do Master.** Os 133 candidatos físicos e os 114 MASSA PRODUZIDA são conjuntos diferentes com sobreposição; não somar suas contagens como novos produtos.
 
-A regra aprovada usa **EXCLUIR**. O código inspecionado ainda usa `/inativo|exluir/i` e `/produzido|revenda/i`; portanto, não implementa integralmente este critério. PRODUZIDA/MASSA PRODUZIDA e a grafia EXCLUIR não foram corrigidas por esta formalização.
+A regra aprovada usa **EXCLUIR**. Na formalização, o código inspecionado ainda usava `/inativo|exluir/i` e `/produzido|revenda/i`. A Etapa 4 (05/11/2026) corrigiu localmente esse alcance: Tipo P/C; palavras completas PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA em `descr_origem`, com qualificadores; descrição contendo INATIVO/EXCLUIR. EXLUIR sozinho não bloqueia. A comparação normaliza caixa, diacríticos e espaços, sem alterar valores originais ou identidade. Código e duplicidades continuam validados no Preview; elegibilidade não é admissão. [Implementação, testes e limites](../auditoria/cadastro-mestre-elegibilidade-validacao.md).
 
-**Pendência técnica e de validação:** especificar e testar a correspondência entre os rótulos/códigos ERP e as origens aprovadas, comparação dos marcadores e diagnóstico de duplicidades. Não inventar agora uma regex, uma allowlist de códigos de origem ou uma equivalência por descrição. A validação desse mecanismo aplica a política aprovada; não reabre a aprovação das origens.
+**Limite técnico:** a Etapa 4 reconhece o vocabulário aprovado na descrição ERP da origem, com limites Unicode de letras/números/underscore. Não cria allowlist de códigos, equivalência de catálogo ou fallback por família/descrição comercial. Correspondências futuras de rótulos/códigos ERP, vigência e admissão continuam próprias; categoria sem resolução não bloqueia automaticamente. A aplicação dessa política não reabre a aprovação das origens.
 
 ## 5. DEC-03 — Autoridade
 
@@ -236,7 +236,7 @@ As regras técnicas CAD-01–20, simulações e checklists da Auditoria 4 são i
 | Tema | Estado observado no checkout / evidências | Consequência para a próxima etapa |
 | --- | --- | --- |
 | Normalização | Helper existente compartilhado; há contraexemplos sintéticos de estabilidade/precisão na Auditoria 4 | Validar a fronteira de identidade; não prometer correção já entregue |
-| Filtro ERP | Ainda usa PRODUZIDO/REVENDA e INATIVO/EXLUIR | Adequar ao conteúdo aprovado de DEC-02, com testes |
+| Filtro ERP | Etapa 4 local: Tipo P/C, palavras completas PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA e INATIVO/EXCLUIR; testes e reconciliação em memória | Não equivale a admissão ou implementação integral de DEC-02/01–07; novas revisões e compatibilidade dos executores continuam necessárias |
 | Manutenção do Master | Transporte/manifesto/plano atuais exigem reconstrução do universo e podem propor remoções de Master por ausência/filtro | Projetar o padrão incremental e provar preservação de identidade; não ligar o modo histórico INCREMENTAL como atalho |
 | Geral e Detalhado | Papéis aprovados; consultas/telas/tabelas atuais não foram convertidas | Definir o mapeamento usando a estrutura existente antes de propor qualquer mudança física |
 | Autoridade/classificação | Custos projeta origem/família do Master quando presente; OP conserva fonte operacional; agrupamento operacional | Mostrar conflitos/impactos sem inferir ponte ou sincronização |
@@ -250,7 +250,7 @@ Não foi consultado Supabase nesta tarefa. Estados remotos, contagens e publica�
 ### Trabalho técnico ainda necessário
 
 - Definir representação e consultas de Geral/Detalhado e de candidatura/elegibilidade/observação, reutilizando a estrutura existente e evitando segunda fonte de verdade.
-- Especificar a correspondência das origens aprovadas com os dados ERP, os marcadores de bloqueio, códigos válidos e resolução de duplicidades; cobrir os casos de precisão/estabilidade conhecidos.
+- Acompanhar correspondências futuras de origens com os dados ERP e completar a fronteira de códigos válidos/duplicidades, incluindo precisão/estabilidade conhecidas. O reconhecimento textual e os marcadores foram corrigidos localmente na Etapa 4; isso não resolve admissão, vigência ou identidade.
 - Projetar Preview com valores atuais/recebidos/propostos, limpezas, preservações, conflitos e impacto da classificação de Custos; operações e autorizações precisam ter escopo inequívoco.
 - Desenhar fluxo incremental compatível e exceção integral; definir como tratar arquivos completos/delta, ordem/vigência e alterações de contexto sem presumir política pela data do arquivo.
 - Definir registro dos campos aprovados de proveniência, limites entre observação e última escrita, armazenamento/retenção do snapshot e consulta do resultado da mesma intenção.
