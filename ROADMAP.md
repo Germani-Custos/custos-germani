@@ -26,6 +26,8 @@ O motor puro local implementa Tipo P/C, o vocabulário aprovado por palavras com
 
 Ainda precisam de desenho e implementação: mapeamento dos papéis Geral/Detalhado para a estrutura existente, admissão, Preview de conflitos/impactos, execução incremental, proveniência, idempotência e reversão comprovada. O executor integral continua removível; o comercial isolado mantém seu escopo específico e requer compatibilidade própria. Nenhuma carga ou alteração de produção decorre da correção. [Critérios, diferenças do checkout e pendências](docs/arquitetura/cadastro-mestre-contrato-operacional.md#12-pendências-para-implementação-e-validação-humana).
 
+A Etapa 5 acrescentou apenas o diagnóstico puro do bootstrap histórico: ele distingue prova individual de contagem agregada e mantém admissão pendente. Não é bootstrap implantado nem autoriza execução. [Modelo e limites](docs/arquitetura/cadastro-mestre-bootstrap.md).
+
 ## Próxima evolução funcional — memória operacional
 
 Planejada, sem implementação declarada por esta reorganização:

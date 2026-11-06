@@ -233,6 +233,8 @@ As regras técnicas CAD-01–20, simulações e checklists da Auditoria 4 são i
 
 ## 11. Estado da implementação e diferenças conhecidas
 
+Atualização local de 06/11/2026: a Etapa 5 criou um modelo puro de bootstrap histórico que separa reconhecimento, observação, elegibilidade, decisão individual, execução individual e fatos. Ele não admite identidades; o Detalhado permanece pendente de contrato. Ver [arquitetura do bootstrap](cadastro-mestre-bootstrap.md) e [validação](../auditoria/cadastro-mestre-bootstrap-historico-validacao.md).
+
 | Tema | Estado observado no checkout / evidências | Consequência para a próxima etapa |
 | --- | --- | --- |
 | Normalização | Helper existente compartilhado; há contraexemplos sintéticos de estabilidade/precisão na Auditoria 4 | Validar a fronteira de identidade; não prometer correção já entregue |
