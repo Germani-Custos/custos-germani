@@ -30,13 +30,28 @@ export function prepararConsultaCadastroMestreErp(contexto) {
   const opcoes = campo => [...new Map(produtos.filter(p => p[campo].codigo !== null)
     .map(p => [p[campo].codigo, { value: p[campo].codigo, label: p[campo].label }])).values()]
     .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
-  return { produtos, origens: opcoes('origem'), familias: opcoes('familia') };
+  const comerciaisPorCodigo = new Map();
+  for (const produto of produtos) {
+    const codigo = produto.agrupamento_comercial_erp_cod;
+    if (codigo === null) continue;
+    const descricoes = comerciaisPorCodigo.get(codigo) || new Set();
+    if (produto.agrupamento_comercial_erp_descricao !== null) descricoes.add(produto.agrupamento_comercial_erp_descricao);
+    comerciaisPorCodigo.set(codigo, descricoes);
+  }
+  const agrupamentosComerciais = [...comerciaisPorCodigo.entries()]
+    .filter(([, descricoes]) => descricoes.size < 2)
+    .map(([codigo, descricoes]) => {
+      const descricao = [...descricoes][0] || null;
+      return { value: codigo, label: descricao ? `${codigo} — ${descricao}` : codigo };
+    }).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  return { produtos, origens: opcoes('origem'), familias: opcoes('familia'), agrupamentosComerciais };
 }
 
 export function consultarCadastroMestreErp(produtos, filtros = {}, pagina = 1) {
   const busca = normalizeText(filtros.busca || '');
   const encontrados = produtos.filter(p => (!busca || normalizeText(`${p.codigo_produto} ${p.descricao || ''}`).includes(busca)) &&
-    (!filtros.origem || p.origem.codigo === filtros.origem) && (!filtros.familia || p.familia.codigo === filtros.familia));
+    (!filtros.origem || p.origem.codigo === filtros.origem) && (!filtros.familia || p.familia.codigo === filtros.familia) &&
+    (!filtros.agrupamentoComercial || p.agrupamento_comercial_erp_cod === filtros.agrupamentoComercial));
   const paginas = Math.max(1, Math.ceil(encontrados.length / CADASTRO_MESTRE_ERP_PAGE_SIZE));
   const atual = Math.min(paginas, Math.max(1, Number.isSafeInteger(pagina) ? pagina : 1));
   const inicio = (atual - 1) * CADASTRO_MESTRE_ERP_PAGE_SIZE;

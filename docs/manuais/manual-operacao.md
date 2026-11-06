@@ -81,6 +81,8 @@ Os passos abaixo descrevem o executor integral existente, não uma rotina increm
 
 O motor local de elegibilidade exige Tipo P/C e reconhece PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA como palavras completas em Descr. (Origem), inclusive com qualificadores CX/PCT/UN/FARDO. Caixa, acentos e espaços são normalizados só para comparação; descrição contendo INATIVO/EXCLUIR bloqueia, EXLUIR sozinho não. Família/agrupamento ausentes ou origem sem categoria não bloqueiam automaticamente. Isso não admite produtos nem altera a consulta persistida. Mudança do resultado/hash exige novo Preview/revisão; não reutilizar revisão de 860 como autorização para 955. [Validação local e limites](../auditoria/cadastro-mestre-elegibilidade-validacao.md).
 
+No painel de consulta do Cadastro Mestre ERP, o filtro de agrupamento comercial usa os campos comerciais já lidos do Master e não faz escrita. Se a consulta falhar, trate como indisponível e não conclua que não há agrupamentos; atualizar relê o Master. O filtro investigativo de Custos continua sendo agrupamento Kustos e não é substituído por esse recorte ERP.
+
 ### Procedimento do executor integral existente
 
 O procedimento exige autorização própria. Consulta, seleção do arquivo, decisões e download não executam carga. Não reexecutar a migration pontual da Fase 3.4 nem chamar o importador legado para aplicar o manifesto atual.

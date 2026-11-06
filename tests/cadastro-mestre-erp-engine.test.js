@@ -36,6 +36,22 @@ describe('Consulta pura do Master ERP, sem regras operacionais', () => {
     expect(result.total).toBe(esperados.length);
   });
 
+  it('cria opções comerciais por código, usa descrição como rótulo e exclui conflito ou código vazio', () => {
+    const data = prepararConsultaCadastroMestreErp({ ...contexto, produtos: [
+      { codigo_produto: '1', agrupamento_comercial_erp_cod: ' C006 ', agrupamento_comercial_erp_descricao: ' Biscoito especial ' },
+      { codigo_produto: '2', agrupamento_comercial_erp_cod: 'C006', agrupamento_comercial_erp_descricao: 'Biscoito especial' },
+      { codigo_produto: '3', agrupamento_comercial_erp_cod: 'C001', agrupamento_comercial_erp_descricao: null },
+      { codigo_produto: '4', agrupamento_comercial_erp_cod: 'C009', agrupamento_comercial_erp_descricao: 'Um' },
+      { codigo_produto: '5', agrupamento_comercial_erp_cod: 'C009', agrupamento_comercial_erp_descricao: 'Outro' },
+      { codigo_produto: '6', agrupamento_comercial_erp_cod: null, agrupamento_comercial_erp_descricao: 'Sem código' }
+    ] });
+    expect(data.agrupamentosComerciais).toEqual([
+      { value: 'C001', label: 'C001' }, { value: 'C006', label: 'C006 — Biscoito especial' }
+    ]);
+    expect(consultarCadastroMestreErp(data.produtos, { agrupamentoComercial: 'C006' }).produtos.map(p => p.codigo_produto)).toEqual(['1', '2']);
+    expect(consultarCadastroMestreErp(data.produtos, {}).total).toBe(6);
+  });
+
   it('não resolve por id, descrição, código sem zeros ou primeira correspondência ambígua', () => {
     const data = prepararConsultaCadastroMestreErp({ ...contexto, produtos: [
       { codigo_produto: '1', origem_cod: 'uuid-origem-1', familia_cod: 'Café' },

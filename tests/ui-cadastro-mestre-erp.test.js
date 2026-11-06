@@ -40,7 +40,7 @@ async function setup() {
   const keys = ['masterSearch', 'masterOrigemFilter', 'masterFamiliaFilter', 'masterMissingCount', 'masterTableBody', 'masterNewBtn',
     'masterImportBtn', 'masterImportInput', 'masterCancelBtn', 'masterForm', 'masterCode', 'masterDescription', 'masterOrigem', 'masterFamilia', 'masterAgrupamento',
     'masterOperationalTab', 'masterOperationalCount', 'masterOperationalPanel', 'erpTab', 'erpCount', 'erpPanel',
-    'erpSearch', 'erpOrigemFilter', 'erpFamiliaFilter', 'erpSummary', 'erpTableBody', 'erpPreviousBtn', 'erpNextBtn', 'erpPageInfo', 'erpRefreshBtn',
+    'erpSearch', 'erpOrigemFilter', 'erpFamiliaFilter', 'erpAgrupamentoComercialFilter', 'erpSummary', 'erpTableBody', 'erpPreviousBtn', 'erpNextBtn', 'erpPageInfo', 'erpRefreshBtn',
     'masterImportPending', 'masterImportPendingCount', 'masterImportPendingBody', 'masterImportPendingClear'];
   const dom = Object.fromEntries(keys.map(key => [key, element()]));
   const errors = [];
@@ -159,6 +159,22 @@ describe('Cadastro em duas visões independentes', () => {
     expect(dom.erpTableBody.innerHTML).toContain('Nenhum produto encontrado no Master ERP');
     expect(dom.erpTableBody.innerHTML).toContain('colspan="5"');
     expect(api.getCadastroMestreErp).toHaveBeenCalledOnce();
+  });
+
+  it('preenche e aplica somente o filtro comercial ERP, sem usar agrupamento operacional', async () => {
+    master.produtos[0].agrupamento_comercial_erp_cod = 'C006';
+    master.produtos[0].agrupamento_comercial_erp_descricao = 'BISCOITO ESPECIAL';
+    master.produtos[1].agrupamento_comercial_erp_cod = 'C008';
+    master.produtos[1].agrupamento_comercial_erp_descricao = 'BISCOITO LAMINADO';
+    const { dom } = await setup();
+    expect(dom.erpAgrupamentoComercialFilter.replaceChildren).toHaveBeenCalled();
+    dom.erpAgrupamentoComercialFilter.value = 'C006'; await dom.erpAgrupamentoComercialFilter.emit('change');
+    expect(dom.erpSummary.textContent).toContain('1 registro(s)');
+    expect(dom.erpTableBody.innerHTML).toContain('Café ERP 1');
+    expect(dom.erpTableBody.innerHTML).not.toContain('Café ERP 2');
+    dom.erpAgrupamentoComercialFilter.value = ''; await dom.erpAgrupamentoComercialFilter.emit('change');
+    expect(dom.erpSummary.textContent).toContain('123 registro(s)');
+    expect(dom.erpTableBody.innerHTML).not.toContain('M005');
   });
 
   it('troca de visões preserva buscas, filtros e página separados, sem reler ou mesclar fontes', async () => {

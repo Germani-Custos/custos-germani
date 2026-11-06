@@ -9,7 +9,8 @@ export function createCadastroMestreErpController({ dom, executeOperationalBound
   function render() {
     if (!dados) return;
     const resultado = consultarCadastroMestreErp(dados.produtos, { busca: dom.erpSearch.value,
-      origem: dom.erpOrigemFilter.value, familia: dom.erpFamiliaFilter.value }, pagina);
+      origem: dom.erpOrigemFilter.value, familia: dom.erpFamiliaFilter.value,
+      agrupamentoComercial: dom.erpAgrupamentoComercialFilter.value }, pagina);
     pagina = resultado.pagina;
     dom.erpCount.textContent = dados.produtos.length.toLocaleString('pt-BR');
     dom.erpSummary.textContent = `${resultado.total.toLocaleString('pt-BR')} registro(s) encontrado(s) de ${dados.produtos.length.toLocaleString('pt-BR')} no Master ERP. Somente consulta.`;
@@ -38,6 +39,7 @@ export function createCadastroMestreErpController({ dom, executeOperationalBound
       dados = prepararConsultaCadastroMestreErp(data);
       fillSelect(dom.erpOrigemFilter, dados.origens, { value: '', label: 'Todas as origens ERP' }, dom.erpOrigemFilter.value);
       fillSelect(dom.erpFamiliaFilter, dados.familias, { value: '', label: 'Todas as famílias ERP' }, dom.erpFamiliaFilter.value);
+      fillSelect(dom.erpAgrupamentoComercialFilter, dados.agrupamentosComerciais, { value: '', label: 'Todos os agrupamentos comerciais' }, dom.erpAgrupamentoComercialFilter.value);
       pagina = 1;
       render();
     } catch (error) {
@@ -55,6 +57,7 @@ export function createCadastroMestreErpController({ dom, executeOperationalBound
     dom.erpSearch.addEventListener('input', filtrar);
     dom.erpOrigemFilter.addEventListener('change', filtrar);
     dom.erpFamiliaFilter.addEventListener('change', filtrar);
+    dom.erpAgrupamentoComercialFilter.addEventListener('change', filtrar);
     dom.erpPreviousBtn.addEventListener('click', () => { pagina--; render(); });
     dom.erpNextBtn.addEventListener('click', () => { pagina++; render(); });
     const atualizar = () => executeOperationalBoundary('consultar Cadastro Mestre ERP', reload,
