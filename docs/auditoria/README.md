@@ -26,6 +26,7 @@
 Este conjunto preserva achados e evidências da base analisada em cada data. Não é declaração de que todos os defeitos originais permanecem ativos, nem nova inspeção de produção. Para estados/resoluções, consultar o [backlog](backlog-priorizado.md); para contratos em vigor, a [matriz operacional](../arquitetura/matriz-contratos-operacionais.md).
 
 - [VIS-01 — identidade visual Black + Purple](identidade-visual.md): escopo visual, componentes, conferência local sintética e limites.
+- [OP × CUSTO — Fases 1 a 3B](op-custo-aceite-visual.md): V1 implementada e aprovada com ressalvas; auditoria técnica sem não conformidade funcional concreta e aceite no site publicado limitado ao cenário C de outubro/2026. Consultar também o [registro técnico Fase 2/3A](op-custo-fase2-validacao.md); a evidência não prova equivalência com o checkout local.
 - [DOC-ORG-01 — auditoria e reorganização documental](reorganizacao-documental.md): inventário completo, responsabilidades, movimentos, redundâncias, divergências e validação.
 - Evidências de Cadastro: [reconstrução](cadastro-mestre-reconstrucao-validacao.md), [execução web](cadastro-mestre-execucao-web-validacao.md), [preparação](cadastro-mestre-preparacao-ambiente-validacao.md) e [transporte compacto](cadastro-mestre-payload-validacao.md). Estados remotos pertencem à data de cada prova.
 - [História do Projeto](../HISTORIA_DO_PROJETO_KUSTOS.md): decisões e marcos, separados dos procedimentos atuais.

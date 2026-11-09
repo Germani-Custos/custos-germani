@@ -1,8 +1,8 @@
 # OP × CUSTO — contrato técnico final
 
-**OP-CUSTO-01 · contrato versão 1.0 · 23/10/2026 · Fases 1 e 2 implementadas localmente; sem publicação.**
+**OP-CUSTO-01 · contrato versão 1.0 · 23/10/2026 · V1 implementada e aprovada com ressalvas em 06/11/2026.**
 
-Contrato da investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões aprovadas e da inspeção do checkout `fa9c7bb`. O fechamento original foi exclusivamente documental. Após autorização específica da Fase 1, o núcleo/API foi implementado sobre `16fc9f8`, sem UI ou acesso remoto. As seções de proposta preservam o contrato base; a seção 16 registra o núcleo da Fase 1. A seção 17 registra a apresentação mensal autorizada na Fase 2, sem mudar regras de negócio. Publicação e próximas fases não estão autorizadas. O estado de produção não foi revalidado nesta tarefa.
+Contrato da investigação de **uma competência por vez**, fechado a partir da especificação anterior fornecida no chat, das oito decisões aprovadas e da inspeção do checkout `fa9c7bb`. O fechamento original foi exclusivamente documental. Após autorização específica da Fase 1, o núcleo/API foi implementado sobre `16fc9f8`, sem UI ou acesso remoto. As seções de proposta preservam o contrato base; a seção 16 registra o núcleo da Fase 1 e a seção 17 a apresentação mensal da Fase 2, sem mudar regras de negócio. A seção 18 consolida as evidências posteriores: o aceite visual foi observado no site publicado, mas não prova equivalência com o HEAD local nem autoriza publicação, escrita remota ou novas fases.
 
 ## 1. Escopo e decisões incorporadas
 
@@ -478,7 +478,7 @@ Sem alterações nos motores originais, parser, UI, index/CSS, TOP-200, ranking,
 
 ## 17. Fase 2 — apresentação e integração local
 
-**OP-CUSTO-F2:** apresentação mensal implementada localmente após autorização específica. O engine, a API e seus contratos da Fase 1 permanecem intactos. Os trechos das seções 13–16 que descrevem ausência de UI delimitam as entregas anteriores; não revogam esta integração. [Escopo, verificações e limites da Fase 2](../auditoria/op-custo-fase2-validacao.md). Não houve publicação.
+**OP-CUSTO-F2:** apresentação mensal implementada localmente após autorização específica. O engine, a API e seus contratos da Fase 1 permanecem intactos. Os trechos das seções 13–16 que descrevem ausência de UI delimitam as entregas anteriores; não revogam esta integração. [Escopo, verificações e limites da Fase 2](../auditoria/op-custo-fase2-validacao.md). A observação posterior do site publicado é delimitada pela seção 18; ela não estabelece equivalência com esta base local.
 
 ### 17.1 Entrada e composição
 
@@ -513,3 +513,21 @@ Durante o cruzamento, a superfície OP de origem fica oculta, conservando compet
 Uma geração local identifica a leitura em curso. Fechar ou mudar competência invalida a geração; resposta obsoleta não reabre a tela nem substitui outro contexto. Atualizar leitura inicia novo contexto e nova decisão de inclusão quando aplicável. Filtro local, paginação e clique no dossiê não fazem refetch.
 
 Esta fase não muda engines OP/Custo/relacional, parser, API, TOP-200, ranking, exportação, dados, schema, migrations, RLS/Auth ou executores. Não implementa multi-competência, causa automática, score ou prioridade conjunta. VISION, regras gerais e estados do backlog não mudam por esta entrega. As verificações executadas e eventuais limitações estão somente no relatório de validação, sem presumir contagens ou provas remotas.
+
+## 18. Consolidação das Fases 3A e 3B — estado V1 (06/11/2026)
+
+**OP × CUSTO V1 — IMPLEMENTADO E APROVADO COM RESSALVAS.** Esta classificação consolida o contrato e as provas abaixo; não altera os limites de uma competência por vez nem converte a relação investigativa em causalidade.
+
+### 18.1 Auditoria técnica — Fase 3A
+
+A revisão estática e automatizada não encontrou não conformidade funcional concreta contra este contrato. Os **116/116 testes específicos** de engine, API e UI foram aprovados, assim como lint, build e o typecheck no escopo do `jsconfig.json`. O typecheck não inclui `view/`; os testes UI usam DOM simulado. O resultado final da tentativa de suíte completa não foi conclusivo antes do timeout, portanto esta consolidação **não** declara uma suíte completa aprovada. A API mantém leitura paginada completa e não transacional entre páginas. [Registro técnico da Fase 2 e auditoria final](../auditoria/op-custo-fase2-validacao.md).
+
+### 18.2 Aceite visual manual — Fase 3B
+
+O aceite visual ocorreu no Chrome autenticado do **site publicado**, sem importação ou escrita, na competência **outubro/2026**. A fonte OP estava vazia confirmada e a fonte Custo completa; por isso foi observada a cobertura **C**. Foram conferidos entrada mensal, bloqueio visual de intervalo multi-mês, carregamento, KPIs e escolha de inclusão, fila C com prioridades OP/Custo distintas, dossiê com snapshots e separação entre `data_referencia` e `criado_em`, limitações sem causalidade, retorno por teclado/foco visível e os tamanhos 1920 × 1080, 1366 × 768 e 768 px de largura.
+
+Não foram observados A/B, eventos/estágios OP, leitor de tela nem a rolagem horizontal integral em uso manual. Não são defeitos confirmados: são limites de cobertura. A observação publicada também não comprova que o checkout local/HEAD atual tenha a mesma versão. [Relatório de aceite visual](../auditoria/op-custo-aceite-visual.md).
+
+### 18.3 Limites e continuidade
+
+Permanecem futuras e sujeitas a contrato/autorização próprios: seleção multi-competência, consolidações numéricas de OP, score ou prioridade conjunta e qualquer inferência causal. Esta consolidação é documental; não muda engines, API, regras investigativas, schema, banco, dados, RLS/Auth, importadores ou publicação.
