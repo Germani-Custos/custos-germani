@@ -110,6 +110,49 @@ describe('OP × CUSTO histórico — leitura factual multi-competência', () => 
     onlyReads();
   });
 
+  it('marca apenas OP como incompleta quando sua terceira página falha e preserva a fonte Custo concluída', async () => {
+    tables.apontamentos_op = Array.from({ length: 1001 }, (_, i) => op(i + 1));
+    tables.historico_custos = [custo(1)];
+    alterPage = (request, response) => request.table === 'apontamentos_op' && request.range[0] === 1000
+      ? { data: null, count: null, error: new Error('falha privada na terceira página') } : response;
+    const result = await api.getOpCustoHistorico({ produto: '001', inicioCompetencia: '2026-06', fimCompetencia: '2026-06' });
+    expect(requests.filter(request => request.table === 'apontamentos_op').map(request => request.range)).toEqual([[0, 499], [500, 999], [1000, 1499]]);
+    expect(result.error?.details).toMatchObject({ code: 'FONTE_INDISPONIVEL', fontes: ['op'], completa: false });
+    expect(result.data).toMatchObject({ estado: 'incompleto', qualidade: { completa: false, coberturaPronta: false } });
+    expect(result.data.opEventos).toEqual([]);
+    expect(result.data.fontes.op.estado).toBe('erro');
+    expect(result.data.fontes.custos).toMatchObject({ estado: 'completa', contagem: 1 });
+    expect(result.data).not.toHaveProperty('cobertura');
+    expect(JSON.stringify(result.error.details)).not.toContain('falha privada'); onlyReads();
+  });
+
+  it('inclui as quatro fronteiras de competências distintas e exclui as adjacentes, inclusive através do ano', async () => {
+    const dates = ['2026-05-31', '2026-06-01', '2026-06-30', '2027-01-01', '2027-01-31', '2027-02-01'];
+    tables.apontamentos_op = dates.map((date, index) => ({ ...op(index + 1, date), criado_em: '2030-12-31T23:59:59Z' }));
+    tables.historico_custos = dates.map((date, index) => custo(index + 1, date, '001', '2001-01-01T00:00:00Z'));
+    const { data, error } = await api.getOpCustoHistorico({ produto: '001', inicioCompetencia: '2026-06', fimCompetencia: '2027-01' });
+    expect(error).toBeNull();
+    expect(data.periodo).toMatchObject({ inicio: '2026-06-01', fimInclusivo: '2027-01-31' });
+    expect(data.opEventos.map(row => row.data_referencia)).toEqual(['2026-06-01', '2026-06-30', '2027-01-01', '2027-01-31']);
+    expect(data.custoSnapshots.map(row => row.data_referencia)).toEqual(['2026-06-01', '2026-06-30', '2027-01-01', '2027-01-31']);
+    expect(data.competencias.map(row => row.competencia)).toEqual(['2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12', '2027-01']);
+    expect(data.competencias.at(0)).toMatchObject({ op: { contagem: 2 }, custos: { contagem: 2 } });
+    expect(data.competencias.at(-1)).toMatchObject({ op: { contagem: 2 }, custos: { contagem: 2 } });
+    onlyReads();
+  });
+
+  it('trata uma única competência como mês completo, sem usar criado_em para incluir datas vizinhas', async () => {
+    const dates = ['2026-05-31', '2026-06-01', '2026-06-30', '2026-07-01'];
+    tables.apontamentos_op = dates.map((date, index) => ({ ...op(index + 1, date), criado_em: '2026-06-15T00:00:00Z' }));
+    tables.historico_custos = dates.map((date, index) => custo(index + 1, date, '001', '2026-06-15T00:00:00Z'));
+    const { data, error } = await api.getOpCustoHistorico({ produto: '001', inicioCompetencia: '2026-06', fimCompetencia: '2026-06' });
+    expect(error).toBeNull();
+    expect(data.periodo).toMatchObject({ inicio: '2026-06-01', fimInclusivo: '2026-06-30', competencias: ['2026-06'] });
+    expect(data.opEventos.map(row => row.data_referencia)).toEqual(['2026-06-01', '2026-06-30']);
+    expect(data.custoSnapshots.map(row => row.data_referencia)).toEqual(['2026-06-01', '2026-06-30']);
+    onlyReads();
+  });
+
   it.each(['op', 'custos'])('preserva a fonte concluída, mas não declara completude após falha de %s', async table => {
     tables.apontamentos_op = [op(1)]; tables.historico_custos = [custo(1)];
     alterPage = (request, response) => request.table === (table === 'op' ? 'apontamentos_op' : 'historico_custos')
@@ -123,16 +166,18 @@ describe('OP × CUSTO histórico — leitura factual multi-competência', () => 
     expect(JSON.stringify(result.error.details)).not.toContain('falha privada'); onlyReads();
   });
 
-  it.each(['count', 'short', 'duplicate'])('recusa %s sem classificar leitura como completa', async failure => {
+  it.each(['count', 'short', 'duplicate', 'missing-id'])('recusa %s sem classificar leitura como completa', async failure => {
     tables.apontamentos_op = Array.from({ length: 501 }, (_, i) => op(i + 1)); tables.historico_custos = [custo(1)];
     alterPage = (request, response) => {
       if (request.table !== 'apontamentos_op' || request.range[0] !== 500) return response;
       if (failure === 'count') return { ...response, count: 502 };
       if (failure === 'short') return { ...response, data: [] };
-      return { ...response, data: response.data.map(row => ({ ...row, id: 1 })) };
+      if (failure === 'duplicate') return { ...response, data: response.data.map(row => ({ ...row, id: 1 })) };
+      return { ...response, data: response.data.map(row => ({ ...row, id: null })) };
     };
     const result = await api.getOpCustoHistorico({ produto: '001', inicioCompetencia: '2026-06', fimCompetencia: '2026-06' });
-    expect(result.error).toBeTruthy(); expect(result.data.qualidade.completa).toBe(false);
+    const code = failure === 'duplicate' ? 'IDENTIDADE_REPETIDA' : failure === 'missing-id' ? 'IDENTIDADE_INVALIDA' : 'FONTE_INDISPONIVEL';
+    expect(result.error?.details.code).toBe(code); expect(result.data.qualidade.completa).toBe(false);
     expect(result.data.fontes.op.estado).toBe('erro'); onlyReads();
   });
 
@@ -144,5 +189,19 @@ describe('OP × CUSTO histórico — leitura factual multi-competência', () => 
     expect(error).toBeNull(); expect(data.opEventos).toHaveLength(1); expect(data.custoSnapshots).toHaveLength(1);
     expect(data.diagnosticos.opNaoVinculavel).toHaveLength(1); expect(data.diagnosticos.custoNaoVinculavel).toHaveLength(1);
     expect(data.competencias[0].op).toEqual({ estado: 'completa', contagem: 1 }); onlyReads();
+  });
+
+  it('preserva e diagnostica data_referencia inválida, sem associá-la a competência vazia ou usar criado_em', async () => {
+    tables.apontamentos_op = [op(1)]; tables.historico_custos = [custo(1)];
+    alterPage = (request, response) => ({ ...response, data: response.data.map(row => ({ ...row,
+      data_referencia: 'data inválida', criado_em: '2026-06-15T00:00:00Z' })) });
+    const { data, error } = await api.getOpCustoHistorico({ produto: '001', inicioCompetencia: '2026-06', fimCompetencia: '2026-06' });
+    expect(error).toBeNull();
+    expect(data.opEventos).toMatchObject([{ id: 1, data_referencia: 'data inválida', criado_em: '2026-06-15T00:00:00Z' }]);
+    expect(data.custoSnapshots).toMatchObject([{ id: 1, data_referencia: 'data inválida', criado_em: '2026-06-15T00:00:00Z' }]);
+    expect(data.diagnosticos.opNaoVinculavel).toEqual([{ fonte: 'op', idFonte: 1, motivo: 'data_invalida' }]);
+    expect(data.diagnosticos.custoNaoVinculavel).toEqual([{ fonte: 'custos', idFonte: 1, motivo: 'data_invalida' }]);
+    expect(data.competencias[0]).toEqual({ competencia: '2026-06', op: { estado: 'completa_vazia', contagem: 0 }, custos: { estado: 'completa_vazia', contagem: 0 } });
+    onlyReads();
   });
 });

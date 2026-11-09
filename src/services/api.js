@@ -1083,8 +1083,9 @@ export const api = {
     };
     if (completa) return ok(contexto);
     const fontesFalhas = fontesComErro.map(item => item.fonte);
-    const codigo = fontesComErro.some(item => item.erro?.code === 'IDENTIDADE_REPETIDA' || item.erro?.code === 'IDENTIDADE_INVALIDA')
-      ? 'IDENTIDADE_INVALIDA' : 'FONTE_INDISPONIVEL';
+    const codigo = fontesComErro.some(item => item.erro?.code === 'IDENTIDADE_REPETIDA') ? 'IDENTIDADE_REPETIDA'
+      : fontesComErro.some(item => item.erro?.code === 'IDENTIDADE_INVALIDA') ? 'IDENTIDADE_INVALIDA'
+        : 'FONTE_INDISPONIVEL';
     return { data: contexto, error: createApiError('Leitura histórica OP × Custo incompleta.', { metodo, code: codigo, fontes: fontesFalhas, completa: false }) };
   },
 
