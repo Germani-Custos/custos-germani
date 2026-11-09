@@ -21,6 +21,12 @@ As oito decisões estão encerradas para esta versão:
 
 Os motores atuais continuam independentes e conservam suas classificações, limiares, prioridades e fatos. O novo resultado é uma evidência relacional, não uma reclassificação dos domínios. O TOP-200 existente permanece intacto.
 
+### 1.1 Fase 4C-1 — leitura histórica factual
+
+`api.getOpCustoHistorico({ produto, inicioCompetencia, fimCompetencia })` é a base local da evolução multi-competência. Aceita somente código canônico normalizado e limites explícitos `AAAA-MM`; lê `apontamentos_op` e `historico_custos` com produto e intervalo completos, por paginação/`count: 'exact'`/ordem determinística. Retorna os fatos brutos, código original + `codigo_normalizado`, datas originais, competências solicitadas, diagnósticos e estado separado de cada fonte. Não enriquece, classifica, agrega, reduz snapshots, produz A/B/C/D, calcula recorrência ou expõe interface.
+
+Quando uma fonte falha ou possui identidade técnica inválida/repetida, o retorno é marcado incompleto e contém erro público junto dos fatos já confirmados da outra fonte; nenhuma cobertura histórica é declarada. `completa_vazia` só resulta de leitura integral sem fatos. A leitura entre fontes é não transacional. A composição histórica, inclusive cobertura A/B/C, é exclusiva da Fase 4C-2 após aprovação própria.
+
 ## 2. Diagnóstico da arquitetura e limites atuais
 
 ### 2.1 OP

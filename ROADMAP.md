@@ -18,6 +18,8 @@ O [inventário de reconciliação](docs/auditoria/backlog-reconciliacao-2026-10-
 
 A evolução temporal multi-competência está prevista em seção própria do contrato: seleção explícita de meses, evolução e padrões exigirão novas regras aprovadas. Não pertence à primeira implementação. O contrato não altera TOP-200, não resolve LOG-02/03/04/06 nem autoriza refatoração, escrita remota ou publicação.
 
+**Fase 4C-1 implementada localmente:** a API possui leitura factual por produto canônico e intervalo explícito de competências. Ela usa os leitores paginados existentes, retorna fatos integrais e estado por fonte/competência, sem UI, motor histórico, A/B/C, recorrência, agregação ou prioridade conjunta. Falha de uma fonte não é convertida em ausência da outra. A Fase 4C-2 depende de revisão humana do contrato histórico e não é autorizada por esta entrega. [Provas](docs/auditoria/op-custo-fase4c1-validacao.md).
+
 ## Cadastro Mestre — decisões aprovadas, elegibilidade corrigida localmente
 
 O padrão aprovado é atualização incremental com identidade preservada no Geral e recorte elegível no Detalhado. A política inclui PRODUZIDO/PRODUZIDA/MASSA PRODUZIDA/REVENDA, Tipo P/C, validação de código/duplicidades, bloqueio INATIVO/EXCLUIR, autoridade por campo e proteção das classificações/overrides Kustos. Admissão exige Preview e aprovação; candidato observado não vira produto admitido automaticamente.

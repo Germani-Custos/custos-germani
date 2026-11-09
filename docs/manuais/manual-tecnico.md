@@ -145,6 +145,12 @@ Agrupamentos ERP são opcionais e independentes da classificação investigativa
 
 Executor único permite Master/log e somente INSERT/patch de descrição de famílias aprovados na mesma transação. Snapshot contém Master completo e imagens anteriores apenas de famílias afetadas; catálogo tem prova integral, preservando ID/código/criado_em existentes. Storage sem sobrescrita é conferido por download/hash antes do DML; CLI mantém `wx`/`fsync`. Falha exige rollback conjunto; resposta de COMMIT perdida exige consulta do lote, sem retry. [Contrato central](../arquitetura/cadastro-mestre-reconstrucao.md), [web](../arquitetura/cadastro-mestre-execucao-web.md) e [famílias](../arquitetura/cadastro-mestre-familias-erp.md) prevalecem sobre os relatos de fases anteriores nos seus escopos explicitamente sucedidos.
 
+### Leitura histórica OP × CUSTO (4C-1)
+
+`api.getOpCustoHistorico({ produto, inicioCompetencia, fimCompetencia })` é exclusivamente leitura. Produto passa por `normalizeCodigoProduto`; os dois limites mensais são obrigatórios, explícitos e cronológicos. OP e Custos usam `supabase.from()` pelo leitor paginado existente, com `count: 'exact'`, filtros repetidos em cada página e ordem determinística. O retorno preserva todos os fatos e snapshots, inclusive dados nulos/zero, `data_referencia` e `criado_em` separados.
+
+Cada fonte recebe `completa`, `completa_vazia` ou `erro`. Falha de página, contagem ou ID técnico torna o contexto incompleto: fatos da outra fonte podem ser retornados como diagnóstico, mas não é produzida cobertura A/B/C. O método não chama engines, não enriquece dimensões, não grava, não usa RPC e não substitui a API mensal. Motor histórico e interface são Fase 4C-2, pendentes de aprovação.
+
 ## 8. Ambiente, execução local e qualidade
 
 Para a primeira carga exclusivamente comercial, `scripts/lib/cadastro-mestre-comercial.mjs#executarCargaComercial` exige manifesto/hash/fotografia/XLS revalidados e cliente dedicado, atualiza somente o par comercial e preserva integralmente timestamps/proveniência/logs. Não chama o executor geral nem altera seus consumidores. O CLI `scripts/validar-carga-comercial.mjs` somente valida, sem conexão ou opção de execução. Entrada/saída, limites 860/162/698/324, transação, locks, provas e rollback estão no [contrato isolado](../arquitetura/cadastro-mestre-comercial-executor-isolado.md). Escrita real ainda bloqueada; `data_referencia` continua competência e `criado_em` importação.

@@ -91,7 +91,7 @@ function normalizeCascadeFilters(filters = {}) {
 }
 
 /**
- * @typedef {Error & {details?: Record<string, unknown>}} ApiError
+ * @typedef {Error & {details?: Record<string, unknown>, code?: string}} ApiError
  */
 
 /**
@@ -255,6 +255,52 @@ function applyTemporalFilterToQuery(query, filters = {}) {
   if (start) query = query.gte('data_referencia', start);
   if (end) query = query.lte('data_referencia', end);
   return query;
+}
+
+function competenciaDaData(value) {
+  const iso = normalizeISODate(value);
+  return iso ? iso.slice(0, 7) : null;
+}
+
+function competenciasDoIntervalo(inicioCompetencia, fimCompetencia) {
+  const competencias = [];
+  let [ano, mes] = inicioCompetencia.split('-').map(Number);
+  const [anoFim, mesFim] = fimCompetencia.split('-').map(Number);
+  while (ano < anoFim || (ano === anoFim && mes <= mesFim)) {
+    competencias.push(`${String(ano).padStart(4, '0')}-${String(mes).padStart(2, '0')}`);
+    mes++;
+    if (mes === 13) { ano++; mes = 1; }
+  }
+  return competencias;
+}
+
+function periodoHistoricoOpCusto(inicioCompetencia, fimCompetencia) {
+  const inicio = getOpCustoPeriod(inicioCompetencia);
+  const fim = getOpCustoPeriod(fimCompetencia);
+  if (inicioCompetencia > fimCompetencia) {
+    const error = createApiError('Competência inicial não pode ser posterior à final.', { code: 'INTERVALO_INVERTIDO' });
+    error.code = 'INTERVALO_INVERTIDO';
+    throw error;
+  }
+  return { inicioCompetencia, fimCompetencia, inicio: inicio.inicio, fimInclusivo: fim.fimInclusivo,
+    competencias: competenciasDoIntervalo(inicioCompetencia, fimCompetencia) };
+}
+
+function diagnosticarHistoricoOpCusto(rows, fonte, codigoCampo, periodo) {
+  const naoVinculaveis = [];
+  const foraIntervalo = [];
+  const registros = rows.map(row => {
+    const codigoNormalizado = normalizeCodigoProduto(row?.[codigoCampo]);
+    const competencia = competenciaDaData(row?.data_referencia);
+    const projetado = { ...row, codigo_normalizado: codigoNormalizado };
+    if (!codigoNormalizado || !competencia) {
+      naoVinculaveis.push({ fonte, idFonte: row?.id ?? null, motivo: !codigoNormalizado ? 'codigo_invalido' : 'data_invalida' });
+    } else if (competencia < periodo.inicioCompetencia || competencia > periodo.fimCompetencia) {
+      foraIntervalo.push({ fonte, idFonte: row?.id ?? null, motivo: 'fora_do_intervalo' });
+    }
+    return projetado;
+  });
+  return { registros, naoVinculaveis, foraIntervalo };
 }
 
 /**
@@ -952,6 +998,94 @@ export const api = {
    */
   async getHistorico(filters) {
     return getHistoricoWithClientFallback({ ...normalizeCascadeFilters(filters), ...normalizeTemporalFilters(filters) });
+  },
+
+  /**
+   * Fase 4C-1: leitura factual histórica por produto e intervalo explícito.
+   * Não enriquece, classifica, consolida nem define A/B/C; essas decisões
+   * pertencem ao motor histórico posterior. Em falha, preserva a fonte que
+   * terminou, mas marca o contexto como incompleto e retorna erro público.
+   * @param {{produto:unknown, inicioCompetencia:unknown, fimCompetencia:unknown}} params
+   */
+  async getOpCustoHistorico(params) {
+    const metodo = 'getOpCustoHistorico';
+    let periodo;
+    let produto;
+    try {
+      produto = normalizeCodigoProduto(params?.produto);
+      if (!produto) return fail('Produto consultado inválido.', { metodo, code: 'PRODUTO_INVALIDO' });
+      if (typeof params?.inicioCompetencia !== 'string' || typeof params?.fimCompetencia !== 'string') {
+        return fail('Competências inicial e final são obrigatórias.', { metodo, code: 'COMPETENCIA_INVALIDA' });
+      }
+      periodo = periodoHistoricoOpCusto(params.inicioCompetencia, params.fimCompetencia);
+    } catch (error) {
+      const code = error?.code === 'INTERVALO_INVERTIDO' ? 'INTERVALO_INVERTIDO' : 'COMPETENCIA_INVALIDA';
+      return fail('Intervalo de competências inválido.', { metodo, code });
+    }
+
+    const iniciadoEm = new Date().toISOString();
+    const opOrder = [{ column: 'data_referencia', ascending: true }, 'estagio', 'origem', 'op', 'id'];
+    const custoOrder = HISTORICO_PAGE_ORDER;
+    const configurarOp = query => query.eq('cod_produto', produto)
+      .gte('data_referencia', periodo.inicio).lte('data_referencia', periodo.fimInclusivo);
+    const configurarCustos = query => query.eq('codigo_produto', produto)
+      .gte('data_referencia', periodo.inicio).lte('data_referencia', periodo.fimInclusivo);
+    const [opResult, custosResult] = await Promise.all([
+      lerCompleto(TABLES.apontamentosOp, '*', opOrder, configurarOp),
+      lerCompleto(TABLES.historico, '*', custoOrder, configurarCustos)
+    ]);
+
+    const fontesComErro = [];
+    const registrarIntegridade = (fonte, result) => {
+      if (result.error) {
+        fontesComErro.push({ fonte, erro: result.error });
+        return;
+      }
+      try { assertOpCustoIds(result.data); } catch (erro) { fontesComErro.push({ fonte, erro }); }
+    };
+    registrarIntegridade('op', opResult);
+    registrarIntegridade('custos', custosResult);
+
+    const opDiagnostico = diagnosticarHistoricoOpCusto(opResult.data || [], 'op', 'cod_produto', periodo);
+    const custoDiagnostico = diagnosticarHistoricoOpCusto(custosResult.data || [], 'custos', 'codigo_produto', periodo);
+    const terminadoEm = new Date().toISOString();
+    const metadadoFonte = (nome, result, diagnostico, ordem) => {
+      const falha = fontesComErro.find(item => item.fonte === nome);
+      if (falha) return { estado: 'erro', contagem: null, paginas: null, ordem, lidoEm: terminadoEm };
+      const rows = diagnostico.registros;
+      return { estado: rows.length ? 'completa' : 'completa_vazia', contagem: rows.length,
+        paginas: Math.max(1, Math.ceil(rows.length / PRODUCT_MASTER_PAGE_SIZE)), ordem, lidoEm: terminadoEm };
+    };
+    const fontes = {
+      op: metadadoFonte('op', opResult, opDiagnostico, opOrder),
+      custos: metadadoFonte('custos', custosResult, custoDiagnostico, custoOrder)
+    };
+    const competencias = periodo.competencias.map(competencia => ({
+      competencia,
+      op: fontes.op.estado === 'erro' ? { estado: 'erro', contagem: null } : {
+        estado: opDiagnostico.registros.some(row => competenciaDaData(row.data_referencia) === competencia) ? 'completa' : 'completa_vazia',
+        contagem: opDiagnostico.registros.filter(row => competenciaDaData(row.data_referencia) === competencia).length
+      },
+      custos: fontes.custos.estado === 'erro' ? { estado: 'erro', contagem: null } : {
+        estado: custoDiagnostico.registros.some(row => competenciaDaData(row.data_referencia) === competencia) ? 'completa' : 'completa_vazia',
+        contagem: custoDiagnostico.registros.filter(row => competenciaDaData(row.data_referencia) === competencia).length
+      }
+    }));
+    const completa = fontes.op.estado !== 'erro' && fontes.custos.estado !== 'erro';
+    const contexto = {
+      versao: 'OP_CUSTO_HISTORICO_LEITURA_V1', produto: { codigoNormalizado: produto }, periodo,
+      opEventos: opDiagnostico.registros, custoSnapshots: custoDiagnostico.registros, fontes, competencias,
+      diagnosticos: { opNaoVinculavel: opDiagnostico.naoVinculaveis, custoNaoVinculavel: custoDiagnostico.naoVinculaveis,
+        foraIntervalo: [...opDiagnostico.foraIntervalo, ...custoDiagnostico.foraIntervalo] },
+      estado: completa ? 'completo' : 'incompleto',
+      qualidade: { completa, coberturaPronta: completa },
+      leitura: { iniciadoEm, terminadoEm, consistencia: 'nao_transacional' }
+    };
+    if (completa) return ok(contexto);
+    const fontesFalhas = fontesComErro.map(item => item.fonte);
+    const codigo = fontesComErro.some(item => item.erro?.code === 'IDENTIDADE_REPETIDA' || item.erro?.code === 'IDENTIDADE_INVALIDA')
+      ? 'IDENTIDADE_INVALIDA' : 'FONTE_INDISPONIVEL';
+    return { data: contexto, error: createApiError('Leitura histórica OP × Custo incompleta.', { metodo, code: codigo, fontes: fontesFalhas, completa: false }) };
   },
 
   /**
